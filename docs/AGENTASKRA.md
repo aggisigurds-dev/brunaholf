@@ -204,7 +204,7 @@ Bæði slökkvitæki og brunahólf lesa sama Supabase `osfdzskyvisifcwyjkuk`.
 <!-- SIDUKORT:BEGIN -->
 ## Síðukort — hver á hverja síðu (búið til af `node tools/build-agents-registry.cjs`)
 
-Byggt 2026-11-11 úr `brunaholf/.claude/sidukort.json`, `kjarni/.claude/sidukort.json`. Staða: ✅ eigandi til · ⚠️ eigandi ekki í registry eða skilgreind-skrá finnst ekki · ❌ enginn eigandi. Breyttu síðukortinu, ekki hér.
+Byggt 2026-11-14 úr `brunaholf/.claude/sidukort.json`, `kjarni/.claude/sidukort.json`. Staða: ✅ eigandi til · ⚠️ eigandi ekki í registry eða skilgreind-skrá finnst ekki · ❌ enginn eigandi. Breyttu síðukortinu, ekki hér.
 
 | Vefur | Síða | Leið | Skilgreind | Eigandi | Undiragentar | Staða |
 |---|---|---|---|---|---|---|
@@ -368,6 +368,8 @@ Byggt 2026-11-11 úr `brunaholf/.claude/sidukort.json`, `kjarni/.claude/sidukort
 | kjarni | Einkastúdíó | `/kjarni/artcraft/studio` | `apps/slokkvitaeki/app/kjarni/artcraft/studio/page.tsx` | `artcraft` | — | ✅ |
 | kjarni | Sjálfvirk tól | `/kjarni/artcraft/tol` | `apps/slokkvitaeki/app/kjarni/artcraft/tol/page.tsx` | `artcraft` | — | ✅ |
 | kjarni | Tónsmíð | `/kjarni/artcraft/tonsmid` | `apps/slokkvitaeki/app/kjarni/artcraft/tonsmid/page.tsx` | `artcraft` | — | ✅ |
+| kjarni | Tónklippa (vísar á /coach) | `/kjarni/artcraft/tonklippa` | `apps/slokkvitaeki/app/kjarni/artcraft/tonklippa/page.tsx` | `artcraft` | — | ✅ |
+| kjarni | THE COACH — þjálfaraapp (PWA) með Tónklippu | `/coach` | `apps/slokkvitaeki/app/coach/page.tsx` · `apps/slokkvitaeki/app/coach/manifest.webmanifest/route.ts` · `apps/slokkvitaeki/app/tonklippa/page.tsx` · `apps/slokkvitaeki/public/coach-sw.js` · `apps/database/supabase/schemas/tonklippa.sql` | `artcraft` | — | ✅ |
 | kjarni | Upplyfting | `/kjarni/artcraft/upplyfting` | `apps/slokkvitaeki/app/kjarni/artcraft/upplyfting/page.tsx` | `artcraft` | — | ✅ |
 | kjarni | Útvíkka | `/kjarni/artcraft/utvikka` | `apps/slokkvitaeki/app/kjarni/artcraft/utvikka/page.tsx` | `artcraft` | — | ✅ |
 | kjarni | Myndbanda-upplyfting | `/kjarni/artcraft/video-upplyfting` | `apps/slokkvitaeki/app/kjarni/artcraft/video-upplyfting/page.tsx` | `artcraft` | — | ✅ |
@@ -375,6 +377,8 @@ Byggt 2026-11-11 úr `brunaholf/.claude/sidukort.json`, `kjarni/.claude/sidukort
 | kjarni | Verkbók | `/kjarni/artcraft/vinnslur` | `apps/slokkvitaeki/app/kjarni/artcraft/vinnslur/page.tsx` | `artcraft` | — | ✅ |
 | kjarni | Kjarni — Stjórnstöð | `/kjarni` | `apps/slokkvitaeki/app/kjarni/page.tsx` | `kjarni-vefur` | `joker` · `thema` | ✅ |
 | kjarni | Skráning — flokkar, gátlisti og starfsmenn | `/kjarni/skraning/flokkar` | `apps/slokkvitaeki/app/kjarni/skraning/flokkar/page.tsx` | `skraning` | `gagnaleidslur` · `bokari` | ✅ |
+| kjarni | Skráning — stöðuskýrsla | `/kjarni/skraning/skyrsla` | `apps/slokkvitaeki/app/kjarni/skraning/skyrsla/page.tsx` | `gatakort` | `skraning` | ✅ |
+| kjarni | Skráning — gatakort | `/kjarni/skraning/kort` | `apps/slokkvitaeki/app/kjarni/skraning/kort/page.tsx` | `gatakort` | `skraning` | ✅ |
 | kjarni | Skráning — greining | `/kjarni/skraning/greining` | `apps/slokkvitaeki/app/kjarni/skraning/greining/page.tsx` | `skraning` | `gagnaleidslur` | ✅ |
 | kjarni | Skráning — Kjarni | `/kjarni/skraning` | `apps/slokkvitaeki/app/kjarni/skraning/page.tsx` | `skraning` | `gagnaleidslur` · `bokari` | ✅ |
 | kjarni | Skráning — prenta teikningu | `/kjarni/skraning/prenta` | `apps/slokkvitaeki/app/kjarni/skraning/prenta/page.tsx` | `skraning` | `gagnaleidslur` | ✅ |
@@ -410,8 +414,9 @@ Byggt 2026-11-11 úr `brunaholf/.claude/sidukort.json`, `kjarni/.claude/sidukort
 | kjarni | Marks hlekkjaforskoðun | `/api/marks/preview` | `apps/web/src/app/api/marks/preview/route.ts` | `kjarni-vefur` | — | ✅ |
 | kjarni | Marks — site | `/marks/[boardId]` | `apps/web/src/app/marks/[boardId]/page.tsx` | `kjarni-vefur` | — | ✅ |
 | kjarni | Marks — kjarni bookmarks | `/marks` | `apps/web/src/app/marks/page.tsx` | `kjarni-vefur` | — | ✅ |
+| kjarni | Ljósastýring Langamýri 22 (Hue Remote API) | `/ljos` | `apps/slokkvitaeki/app/ljos/page.tsx` · `apps/slokkvitaeki/app/api/ljos/route.ts` | `kjarni-vefur` | `oryggi` | ✅ |
 
-**Samantekt:** brunaholf 102/102 með eiganda (100%), 0 ⚠️, 0 ❌ · kjarni 95/100 með eiganda (95%), 5 ⚠️, 0 ❌
+**Samantekt:** brunaholf 102/102 með eiganda (100%), 0 ⚠️, 0 ❌ · kjarni 100/105 með eiganda (95%), 5 ⚠️, 0 ❌
 
 ### Síður án eiganda
 

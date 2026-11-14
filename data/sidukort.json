@@ -1,5 +1,5 @@
 {
- "generated": "2026-11-11",
+ "generated": "2026-11-14",
  "_athugasemd": "GENERATED af tools/build-agents-registry.cjs úr <repo>/.claude/sidukort.json — breyttu síðukortunum, ekki hér.",
  "vefir": [
   {
@@ -18,8 +18,8 @@
    "repo": "kjarni",
    "utgafa": 1,
    "vefagent": "kjarni-vefur",
-   "alls": 100,
-   "med_eiganda": 95,
+   "alls": 105,
+   "med_eiganda": 100,
    "vidvorun": 5,
    "an_eiganda": 0,
    "hlutfall": 95
@@ -3805,6 +3805,62 @@
   {
    "vefur": "kjarni",
    "repo": "kjarni",
+   "id": "slokkvitaeki:/kjarni/artcraft/tonklippa",
+   "titill": "Tónklippa (vísar á /coach)",
+   "tegund": "sida",
+   "leid": "/kjarni/artcraft/tonklippa",
+   "skilgreind": [
+    "apps/slokkvitaeki/app/kjarni/artcraft/tonklippa/page.tsx"
+   ],
+   "yfir": null,
+   "eigandi": "artcraft",
+   "undiragentar": [],
+   "kveikjuord": [
+    "Tónklippa"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": [],
+   "eigandi_nafn": "artcraft",
+   "eigandi_utan": false
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "id": "slokkvitaeki:/coach",
+   "titill": "THE COACH — þjálfaraapp (PWA) með Tónklippu",
+   "tegund": "sida",
+   "leid": "/coach",
+   "skilgreind": [
+    "apps/slokkvitaeki/app/coach/page.tsx",
+    "apps/slokkvitaeki/app/coach/manifest.webmanifest/route.ts",
+    "apps/slokkvitaeki/app/tonklippa/page.tsx",
+    "apps/slokkvitaeki/public/coach-sw.js",
+    "apps/database/supabase/schemas/tonklippa.sql"
+   ],
+   "yfir": null,
+   "eigandi": "artcraft",
+   "undiragentar": [],
+   "kveikjuord": [
+    "THE COACH",
+    "þjálfaraapp",
+    "Tónklippa",
+    "klippa tónlist",
+    "skautarútína",
+    "dansrútína",
+    "iðkendur",
+    "heimaskjár",
+    "skúffa"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": [],
+   "eigandi_nafn": "artcraft",
+   "eigandi_utan": false
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
    "id": "slokkvitaeki:/kjarni/artcraft/upplyfting",
    "titill": "Upplyfting",
    "tegund": "sida",
@@ -3969,6 +4025,65 @@
    "stada": "✅",
    "astaeda": [],
    "eigandi_nafn": "skraning",
+   "eigandi_utan": false
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "id": "slokkvitaeki:/kjarni/skraning/skyrsla",
+   "titill": "Skráning — stöðuskýrsla",
+   "tegund": "sida",
+   "leid": "/kjarni/skraning/skyrsla",
+   "skilgreind": [
+    "apps/slokkvitaeki/app/kjarni/skraning/skyrsla/page.tsx"
+   ],
+   "yfir": null,
+   "eigandi": "gatakort",
+   "undiragentar": [
+    "skraning"
+   ],
+   "kveikjuord": [
+    "Stöðuskýrsla",
+    "skýrsla til Landspítalans",
+    "útboðsmagn",
+    "staða per deild",
+    "útboðssamanburður"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": [],
+   "eigandi_nafn": "gatakort",
+   "eigandi_utan": false
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "id": "slokkvitaeki:/kjarni/skraning/kort",
+   "titill": "Skráning — gatakort",
+   "tegund": "sida",
+   "leid": "/kjarni/skraning/kort",
+   "skilgreind": [
+    "apps/slokkvitaeki/app/kjarni/skraning/kort/page.tsx"
+   ],
+   "yfir": null,
+   "eigandi": "gatakort",
+   "undiragentar": [
+    "skraning"
+   ],
+   "kveikjuord": [
+    "Gatakort",
+    "áætluð göt",
+    "lög á teikningu",
+    "brunayfirlit",
+    "kortleggja húsnæði",
+    "púsla saman teikningum",
+    "hinn endann vantar",
+    "nýja Ajour"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": [],
+   "eigandi_nafn": "gatakort",
    "eigandi_utan": false
   },
   {
@@ -4750,6 +4865,34 @@
    "kveikjuord": [
     "Marks",
     "bókamerki"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": [],
+   "eigandi_nafn": "kjarni-vefur",
+   "eigandi_utan": false
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "id": "slokkvitaeki:/ljos",
+   "titill": "Ljósastýring Langamýri 22 (Hue Remote API)",
+   "tegund": "sida",
+   "leid": "/ljos",
+   "skilgreind": [
+    "apps/slokkvitaeki/app/ljos/page.tsx",
+    "apps/slokkvitaeki/app/api/ljos/route.ts"
+   ],
+   "yfir": null,
+   "eigandi": "kjarni-vefur",
+   "undiragentar": [
+    "oryggi"
+   ],
+   "kveikjuord": [
+    "ljós",
+    "ljósastýring",
+    "Langamýri",
+    "Hue"
    ],
    "merki": null,
    "stada": "✅",

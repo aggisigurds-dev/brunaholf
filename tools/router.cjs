@@ -268,6 +268,8 @@ function agentSkra(e) {
   const rot = s.repo === 'notandi' ? G.HEIMA : G.REPO[s.repo];
   if (!rot) return null;
   const p = path.join(rot, s.path.replace(/^~\/\.claude\/|^~\//, ''));
+  // Heimaskráin finnst ekki í repóinu (t.d. kjarni á annarri grein): notandaafritið ~/.claude/agents/<nafn>.md vísar á frumritið.
+  if (!fs.existsSync(p)) { const h = path.join(G.HEIMA, 'agents', e.name + '.md'); if (fs.existsSync(h)) return { slod: h, til: true }; }
   return { slod: p, til: fs.existsSync(p) };
 }
 
