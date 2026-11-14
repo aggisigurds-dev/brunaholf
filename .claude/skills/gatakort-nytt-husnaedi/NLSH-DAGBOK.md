@@ -556,3 +556,14 @@ Færðir punktar · Tillögur · Símaviðmót · Stöðuskýrsla.
   merki. Parað áætlað gat (aðeins ef „Sýna líka áætluð göt sem eiga skráningu" er á) er lítil brotin útlína. Hök, rautt ✕, gult „?" og tölur óbreytt.
 - **Hugmyndin sem hann staðfesti:** staða sést Í merkinu (fylling), ekki með stærra tákni ofan á því. Sama regla á við ný merki framvegis.
 - **Óbreytt:** rauður punktur (eftir, óskráð), appelsínugulur „?" (tillaga), kerfispunktur við merkið, stöðuskýrslan (hún notar sína eigin punkta).
+
+## Hvað rennur saman í eitt merki (14.11.2026)
+- **Orð Agnars:** „Smá hættulegt með þetta 3x 4x … hvort það séu endar á öðrum eða aðrar stærðir, eða viðgerð."
+- **Mælt á sama svæði (6H, símabreidd):** merkið tók STÆRSTU stærðina og taldi allt með. „630 ×4" var 630 og 315; „315 ×3" var 315 og 160.
+- **Nú:** í vinnustækkun (Rs ≥ 7) rennur aðeins sama stærð saman, og lagfæring skráð sem nýtt verk (`lagf = 'A'`) er alltaf sér merki með brotinni
+  útlínu og telst ekki í „×n". Merki sem lenda á sama stað hliðrast meðfram veggnum (aðeins teikningin). Reglur um hinn endann eru ÓBREYTTAR fyrir
+  lagfæringar, svo talningin „Hinn endann vantar" passar við merkin. Yfirlit (Rs < 7) óbreytt.
+- **Prófað og hafnað sama dag:** að skipta líka sömu stærð í eitt merki per lokun (mest tvö stök verk, endar hvort annars). „160 ×5" varð fimm merki í
+  röð fjarri réttum stað, hvert með tvö hök (seinna hakið kemur af `hinnKlar`), sem leit út eins og fimm kláraðar lokanir. Einnig hafnað: að láta
+  lagfæringu sleppa ✕ og verða sjálfkrafa græn; þá hefði talningin ekki passað við merkin.
+- **Eftir stendur:** „×n" af sömu stærð án lagfæringa segir ekki hvort verkin eru endar sömu lokunar eða tveggja. Pikk á merkið sýnir númerin („Í sama merki").
