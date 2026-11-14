@@ -129,6 +129,12 @@
 .c-foot .bh-wrap{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px 24px;padding-block:28px calc(28px + env(safe-area-inset-bottom,0px))}
 .c-foot__l{display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px}
 .c-foot img{height:30px;width:auto}
+/* Facebook-síðan: hlekkur í fætinum, opnast í nýjum flipa */
+.c-foot__r{display:flex;flex-wrap:wrap;align-items:center;gap:10px 24px}
+.c-foot__fb{display:inline-flex;align-items:center;gap:8px;min-height:36px;color:var(--white);font-weight:500;text-decoration:none;text-underline-offset:4px}
+.c-foot__fb:hover{text-decoration:underline}
+.c-foot__fb:focus-visible{outline:3px solid var(--orange);outline-offset:3px}
+.c-foot__fb svg{width:20px;height:20px}
 
 /* ---- the web shop inside this page. It is built in this same design system, so it runs as it is; these rules only fit it
         under the page's header and tabs (its own logo, tabs, footer and cart button are not shown) and tidy a few edges. ---- */

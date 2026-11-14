@@ -147,7 +147,12 @@
 /* footer */
 .bh2 .w-foot{flex-wrap:wrap;gap:12px 24px;margin:8px 0 0;padding-bottom:24px}
 .w-foot__l{display:flex;align-items:center;gap:12px;flex:1 1 260px;min-width:0;line-height:1.5}
-.w-foot__r{margin-left:auto;letter-spacing:0;text-transform:none;font:500 14px/1.2 var(--font-sans);color:var(--ink)}
+.w-foot__r{letter-spacing:0;text-transform:none;font:500 14px/1.2 var(--font-sans);color:var(--ink)}
+/* Facebook-síðan: hlekkur í fætinum, opnast í nýjum flipa */
+.bh2 .w-foot__fb{display:inline-flex;align-items:center;gap:8px;margin-left:auto;min-height:36px;padding:0 4px;border-radius:var(--r-sm);letter-spacing:0;text-transform:none;font:600 14px/1.2 var(--font-sans);color:var(--ink);text-decoration:none;transition:color .16s var(--w-ease)}
+.bh2 .w-foot__fb:hover{color:var(--orange-ink)}
+.bh2 .w-foot__fb:focus-visible{outline:3px solid var(--orange);outline-offset:2px}
+.w-foot__fb .bh2-ic{width:20px;height:20px}
 
 /* ---- the web shop inside V2. Its own stylesheet and script run as they are; these rules only fit it into the V2 shell:
         the shell's top bar and footer replace the shop's own, and the V2 tokens give it its colours, shadows and corners. ---- */
@@ -251,7 +256,8 @@
   .w-notice{flex-wrap:wrap}
   .w-notice p{flex:1 1 200px}
   .w-notice .bh2-btn{width:100%}
-  .w-foot__r{margin-left:0;flex-basis:100%}
+  .bh2 .w-foot__fb{margin-left:0}
+  .w-foot__r{flex-basis:100%}
 }
 @media (max-width:1240px){
   /* mjórri skjáir: myndin heldur hlutfallinu 3:1 neðst í fletinum (húsið alltaf hægra megin við textann) og dofnar upp í bláa litinn */
