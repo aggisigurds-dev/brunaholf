@@ -1,6 +1,7 @@
 /* Efnislag síðunnar. Hleðst fyrst (í <head>) og sér um þrennt:
    1. Bannerasafnið (BANNERAR): það sem forsíðuhausinn getur sýnt. Skriftan neðst í site/router.js setur bannerinn í hausinn.
-   2. Breytingar úr ritlinum: texti (data-e) og myndir (data-m) sem breytt var eru sótt af þjóninum og sett á síðuna.
+   2. Breytingar úr ritlinum: texti (data-e), myndir (data-m), svæði (data-k) og þema síðunnar sem breytt var eru sótt af
+      þjóninum og sett á síðuna.
       Efnið geymir aðeins það sem breytt var; allt annað stendur eins og það er í síðunni sjálfri. Síðasta útgáfa er geymd
       í vafranum svo síðan birtist rétt strax við næstu heimsókn, og er borin saman við þjóninn í hvert sinn.
    3. Ritillinn: ?ritill í slóðinni hleður site/ritill.js og site/ritill.css.
@@ -9,12 +10,18 @@
    Allt sem kemur af þjóninum er hreinsað áður en það fer á síðuna: texti, fáein textamerki og stílar af lista, ekkert annað.
 
    Snið efnisins:
-     t[lykill]  { h: "texti með <b>, <i>, <span style>, <a href>, <br>", s: {ff, fs, fw, lh, ls, ta, it, tt, c}, sm: {…} }
+     t[lykill]  { h: "texti með <b>, <i>, <span style>, <a href>, <br>", href, s: {…stílar}, sm: {…stílar} }
+     k[lykill]  { s: {…stílar}, sm: {…stílar} }      svæði: kafli, spjald, listi, haus, fótur
+     rod[lykill svæðis]  [lyklar barna í þeirri röð sem þau eiga að standa]
+     utlit      { "--tákn": gildi }      þema: litir, letur og mál af listanum í <script id="bh-utlit"> í haus síðunnar
      m[lykill]  { src, fit: "cover"|"contain", pos, z, r, h, w, sm: {h, w, pos, z, fit} }
      hetja      { id: "<banner>" } eða { id: "ser", mynd, pos, ljos }
      litir      litaval ritilsins (mest 15 litir)
      myndasafn  slóðir mynda sem hlaðið var upp í ritlinum
-   s gildir alls staðar og sm aðeins á síma (mjórri en 701 px). */
+   s gildir alls staðar og sm aðeins á síma (mjórri en 701 px).
+   Stílar (í s og sm): letur og texti  ff, fs, fw, lh, ls, ta, it, tt, c
+                       kassi           bg, r, pt, pb, pl, pr, mt, mb, mw, jf, h, bw, bc, sk, op, gap, dal, fal
+   Hvert gildi er tala innan marka, litur (#rrggbb) eða orð af lista; ekkert frjálst CSS kemst á síðuna. */
 (function () {
   'use strict';
   var d = document, s = d.currentScript || {};
@@ -64,7 +71,7 @@
   function slod(h) {
     if (typeof h !== 'string') return null;
     h = h.trim();
-    if (/^#[A-Za-z0-9_-]*$/.test(h) || /^tel:\+?[0-9 ()-]{3,24}$/.test(h) || /^mailto:[^\s<>"']{3,120}$/.test(h)) return h;
+    if (/^#[A-Za-z0-9_\/.=&%-]{0,120}$/.test(h) || /^tel:\+?[0-9 ()-]{3,24}$/.test(h) || /^mailto:[^\s<>"']{3,120}$/.test(h)) return h;
     return /^https:\/\/[^\s<>"']{3,400}$/.test(h) ? h : null;
   }
 
@@ -174,9 +181,51 @@
 
   /* ---- stílar: s gildir alls staðar, sm á síma ---- */
   function imp(r) { return r.map(function (x) { return x + '!important'; }).join(';'); }
+  /* kassastílar: [CSS-eiginleiki, lágmark, hámark, eining]. Eiga við textastök og svæði. */
+  var KASSI = {
+    pt: ['padding-top', 0, 400, 'px'], pb: ['padding-bottom', 0, 400, 'px'], pl: ['padding-left', 0, 400, 'px'], pr: ['padding-right', 0, 400, 'px'],
+    mt: ['margin-top', -200, 400, 'px'], mb: ['margin-bottom', -200, 400, 'px'], mw: ['max-width', 120, 2400, 'px'], h: ['min-height', 0, 2000, 'px'],
+    r: ['border-radius', 0, 200, 'px'], bw: ['border-width', 0, 20, 'px'], gap: ['gap', 0, 200, 'px'], op: ['opacity', 0.05, 1, '']
+  };
+  var SKUGGAR = { none: 'none', s: '0 1px 2px rgba(2,25,60,.06),0 4px 12px rgba(2,25,60,.08)', m: '0 2px 4px rgba(2,25,60,.08),0 14px 32px rgba(2,25,60,.14)',
+    l: '0 8px 16px rgba(2,25,60,.12),0 28px 64px rgba(2,25,60,.22)' };
+  var JOFNUN = { v: ['0', 'auto'], m: ['auto', 'auto'], h: ['auto', '0'] };      /* hvar kassi með mestu breidd stendur: vinstri, miðja, hægri */
+  function hefur(o, k) { return Object.prototype.hasOwnProperty.call(o, k); }
+  function stillKassi(o, r) {
+    var n, k;
+    for (k in KASSI) if (hefur(KASSI, k) && (n = tala(o[k], KASSI[k][1], KASSI[k][2])) !== null) r.push(KASSI[k][0] + ':' + n + KASSI[k][3]);
+    if (tala(o.bw, 0, 20) !== null) r.push('border-style:solid');
+    if (litur(o.bg)) r.push('background:' + litur(o.bg));
+    if (litur(o.bc)) r.push('border-color:' + litur(o.bc));
+    if (typeof o.sk === 'string' && hefur(SKUGGAR, o.sk)) r.push('box-shadow:' + SKUGGAR[o.sk]);
+    if (typeof o.jf === 'string' && hefur(JOFNUN, o.jf)) { r.push('margin-left:' + JOFNUN[o.jf][0]); r.push('margin-right:' + JOFNUN[o.jf][1]); }
+    if ((n = tala(o.dal, 1, 6)) !== null) r.push('grid-template-columns:repeat(' + Math.round(n) + ',minmax(0,1fr))');
+  }
+  /* þematákn síðunnar: listinn stendur í <script type="application/json" id="bh-utlit"> í haus hennar, á undan þessari skrá.
+     Hvert tákn: { k: "--heiti", t: "l" (litur) | "f" (letur) | "px" (mál), n: heiti í ritlinum, h: hópur, min, max } */
+  var TAKN = [];
+  try {
+    var tk = d.getElementById('bh-utlit');
+    (tk ? JSON.parse(tk.textContent) : []).forEach(function (x) {
+      if (x && typeof x.k === 'string' && /^--[a-z0-9-]{1,40}$/.test(x.k) && (x.t === 'l' || x.t === 'f' || x.t === 'px')) TAKN.push(x);
+    });
+  } catch (e) { TAKN = []; }
+  function stilUtlit(u) {
+    var r = [];
+    if (!u || typeof u !== 'object') return '';
+    TAKN.forEach(function (x) {
+      var v = u[x.k], n;
+      if (v === undefined || v === null) return;
+      if (x.t === 'l') { if (litur(v)) r.push(x.k + ':' + litur(v)); }
+      else if (x.t === 'f') { if (leturOk(v)) r.push(x.k + ':"' + v + '",system-ui,-apple-system,"Segoe UI",sans-serif'); }
+      else if ((n = tala(v, typeof x.min === 'number' ? x.min : 0, typeof x.max === 'number' ? x.max : 400)) !== null) r.push(x.k + ':' + n + 'px');
+    });
+    return r.length ? ':root{' + imp(r) + '}' : '';
+  }
   function stillT(o) {
     var r = [], n;
     if (!o || typeof o !== 'object') return '';
+    stillKassi(o, r);
     if (leturOk(o.ff)) r.push('font-family:"' + o.ff + '",sans-serif');
     if ((n = tala(o.fs, 8, 200)) !== null) r.push('font-size:' + n + 'px');
     if ((n = tala(o.fw, 100, 900)) !== null) r.push('font-weight:' + Math.round(n / 100) * 100);
@@ -187,6 +236,15 @@
     if (o.tt === 'uppercase' || o.tt === 'none') r.push('text-transform:' + o.tt);
     if (litur(o.c)) r.push('color:' + litur(o.c));
     return imp(r);
+  }
+  /* tekur síðan þetta gildi gilt í s eða sm? Ritillinn notar þetta til að segja frá gildum sem var sleppt úr svari. */
+  var STILAR = ['ff', 'fs', 'fw', 'lh', 'ls', 'ta', 'it', 'tt', 'c', 'bg', 'bc', 'sk', 'jf', 'dal', 'fal'].concat(Object.keys(KASSI));
+  function giltStil(k, v) {
+    if (STILAR.indexOf(k) < 0) return false;
+    if (k === 'fal' || k === 'it') return v === true;
+    var o = {};
+    o[k] = v;
+    return stillT(o) !== '';
   }
   /* mynd: [mynd með ramma, ramminn, mynd án ramma] */
   function stillM(o) {
@@ -200,13 +258,36 @@
     if ((n = tala(o.w, 10, 100)) !== null) rammi.push('width:' + n + '%');
     return [imp(mynd), imp(rammi), imp(laus)];
   }
+  /* falið stak: gestir sjá það ekki. Í ritlinum (html.brr-syna-falid) sést það dauft með strikalínu, svo hægt sé að velja það og sýna aftur. */
+  var FALID = 'opacity:.38!important;outline:2px dashed #e11d48!important;outline-offset:-2px!important';
   function stilblad(efni) {
-    var a = [], b = [], t = efni.t || {}, m = efni.m || {};
+    var a = [], b = [], t = efni.t || {}, m = efni.m || {}, sv = efni.k || {};
     function regla(listi, val, st) { if (st) listi.push(val + '{' + st + '}'); }
-    Object.keys(t).forEach(function (k) {
-      if (!lykillOk(k) || !t[k]) return;
-      regla(a, '[data-e="' + k + '"]', stillT(t[k].s));
-      regla(b, '[data-e="' + k + '"]', stillT(t[k].sm));
+    function fela(listi, val, o) {
+      if (!o || typeof o !== 'object' || o.fal !== true) return;
+      listi.push('html:not(.brr-syna-falid) ' + val + '{display:none!important}');
+      listi.push('html.brr-syna-falid ' + val + '{' + FALID + '}');
+    }
+    /* litur texta á svæði nær til textanna í því, nema hnappa og hlekkja. Reglan vegur ekkert (:where), svo texti með eigin lit
+       heldur honum, og innra svæði með eigin lit ræður sínum textum (--bh-c erfist niður tréð). */
+    function litSvaedis(val, st) {
+      var c = st && typeof st === 'object' ? litur(st.c) : null;
+      if (!c) return;
+      a.push(val + '{--bh-c:' + c + '}');
+      a.push(':where(' + val + ' [data-e]:not(a,button,a *,button *)){color:var(--bh-c)!important}');
+    }
+    var thema = stilUtlit(efni.utlit);
+    if (thema) a.push(thema);
+    [[t, 'data-e'], [sv, 'data-k']].forEach(function (x) {
+      Object.keys(x[0]).forEach(function (k) {
+        var o = x[0][k], val = '[' + x[1] + '="' + k + '"]';
+        if (!lykillOk(k) || !o || typeof o !== 'object') return;
+        regla(a, val, stillT(o.s));
+        regla(b, val, stillT(o.sm));
+        if (x[1] === 'data-k') litSvaedis(val, o.s);
+        fela(a, val, o.s);
+        fela(b, val, o.sm);
+      });
     });
     Object.keys(m).forEach(function (k) {
       if (!lykillOk(k) || !m[k]) return;
@@ -219,7 +300,9 @@
     return a.join('\n') + (b.length ? '\n@media ' + SIMI + '{\n' + b.join('\n') + '\n}' : '');
   }
   function leturIEfni(efni) {
-    var fundid = {}, t = efni.t || {};
+    var fundid = {}, t = efni.t || {}, sv = efni.k || {}, u = efni.utlit || {};
+    Object.keys(sv).forEach(function (k) { var o = sv[k] || {}; [o.s, o.sm].forEach(function (x) { if (x && leturOk(x.ff)) fundid[x.ff] = 1; }); });
+    if (typeof u === 'object') TAKN.forEach(function (x) { if (x.t === 'f' && leturOk(u[x.k])) fundid[u[x.k]] = 1; });
     Object.keys(t).forEach(function (k) {
       var o = t[k] || {};
       [o.s, o.sm].forEach(function (x) { if (x && leturOk(x.ff)) fundid[x.ff] = 1; });
@@ -274,6 +357,13 @@
     if (el.closest('#vv-app')) return;                     /* verslunin teiknar sín eigin merktu stök */
     var k = el.getAttribute('data-e'), o = (efni.t || {})[k];
     var breytt = o && typeof o.h === 'string';
+    /* hlekkur: stakið sjálft sé það <a>, annars hlekkurinn sem það stendur í */
+    var hl = el.nodeName === 'A' ? el : el.closest('a'), ny = o && typeof o === 'object' ? slod(o.href) : null;
+    if (hl && (ny || hl._bhHref !== undefined)) {
+      if (hl._bhHref === undefined) hl._bhHref = hl.getAttribute('href');
+      var vil = ny || hl._bhHref;
+      if (hl.getAttribute('href') !== vil) { if (vil === null) hl.removeAttribute('href'); else hl.setAttribute('href', vil); }
+    }
     if (!breytt && el._bhFrum === undefined) return;       /* ósnert stak: látið vera */
     if (el._bhFrum === undefined) el._bhFrum = el.innerHTML;
     var html = breytt ? hreinsaFyrir(el, o.h) : el._bhFrum;
@@ -294,6 +384,24 @@
     }
     el.setAttribute('src', src);
   }
+  /* röð svæða: lykluð börn svæðis fá röðina úr rod[lykill svæðis]; börn án lykils standa kyrr í sínum sætum */
+  function rada() {
+    var rod = efni.rod && typeof efni.rod === 'object' ? efni.rod : {};
+    Array.prototype.forEach.call(d.querySelectorAll('[data-k]'), function (p) {
+      if (p.closest('#vv-app')) return;
+      var born = Array.prototype.filter.call(p.children, function (c) { return c.hasAttribute('data-k'); });
+      if (born.length < 2) return;
+      var lykill = function (c) { return c.getAttribute('data-k'); };
+      if (p._bhRod === undefined) p._bhRod = born.map(lykill);      /* upprunalega röðin */
+      var osk = Array.isArray(rod[lykill(p)]) ? rod[lykill(p)] : [], vaent = [];
+      osk.forEach(function (x) { if (typeof x === 'string' && p._bhRod.indexOf(x) >= 0 && vaent.indexOf(x) < 0) vaent.push(x); });
+      p._bhRod.forEach(function (x) { if (vaent.indexOf(x) < 0) vaent.push(x); });
+      if (born.map(lykill).join('|') === vaent.join('|')) return;
+      var eftir = {}, saeti = born.map(function (c) { eftir[lykill(c)] = c; var m = d.createComment(''); p.insertBefore(m, c); return m; });
+      vaent.forEach(function (key, i) { if (saeti[i].nextSibling !== eftir[key]) p.insertBefore(eftir[key], saeti[i].nextSibling); });
+      saeti.forEach(function (m) { p.removeChild(m); });
+    });
+  }
   function reyna(f) { try { f(); } catch (e) {} }
   function setja() {
     if (!blad) { blad = d.createElement('style'); blad.id = 'bh-efni-stilar'; (d.head || d.documentElement).appendChild(blad); }
@@ -302,6 +410,7 @@
     reyna(function () { leturIEfni(efni).forEach(hladaLetri); });
     Array.prototype.forEach.call(d.querySelectorAll('[data-e]'), function (el) { reyna(function () { setjaTexta(el); }); });
     Array.prototype.forEach.call(d.querySelectorAll('[data-m]'), function (el) { reyna(function () { setjaMynd(el); }); });
+    reyna(rada);
     reyna(hetja);
   }
   function beita(nytt, nyttNr) {
@@ -314,7 +423,7 @@
   var bid = null;
   function bida() {
     bid = d.createElement('style');
-    bid.textContent = '[data-e],[data-m]{visibility:hidden!important}';
+    bid.textContent = 'body{visibility:hidden!important}';
     d.head.appendChild(bid);
     setTimeout(synda, 350);
   }
@@ -326,6 +435,7 @@
     efni: function () { return efni; }, nr: function () { return nr; },
     setja: setja, beita: beita, hreinsa: hreinsa, hreinsaFyrir: hreinsaFyrir, hladaLetri: hladaLetri,
     litur: litur, tala: tala, leturOk: leturOk, myndOk: myndOk, stadur: stadur, slod: slod, finnaBanner: finnaBanner,
+    KASSI: KASSI, SKUGGAR: Object.keys(SKUGGAR), TAKN: TAKN, lykillOk: lykillOk, STILAR: STILAR, giltStil: giltStil,
     frum: function (el) { return el._bhFrum; }
   };
 
