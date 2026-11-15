@@ -763,3 +763,11 @@ Agnar: „möguleikann að draga bláa línu yfir sum dyragötin svo sé þægil
 - 6H (teikning 4): sjálfvirku færslurnar 492 (#7638), 493 (#7639) og 502 (#7783) settar `eytt=true`. Þær höfðu fært punktana ~0,9 m til hægri, frá x≈3993 að x≈4023.
   Punktarnir standa nú á Ajour-staðnum (fra_x/fra_y). Engin röð í skr_aaetlud.parad vísar í þessar skráningar, svo pörun var ekki keyrð aftur.
 - Mynd af lifandi korti eftir breytinguna: `stadurA-eftir.png` (scratchpad), engar villur á síðu.
+
+## 15.11.2026 — Lagnir 5H sýndar yfir milliloftsþéttingum 4H
+Agnar: „better to use 5th floor drawing on 4th floor milliloftaþettingar. Then the dots should fit better to the pipes from wc, zinks, showers".
+- 4H (teikning 6) notaði þegar grunnmynd 5H, en lögin voru aðeins LÁNUÐ (falin þar til hakað, og aðeins á þeim skjá). 4H er 367 göt, öll „Gólf Ø 160-200" (194 af teikningu 10, 173 af 17).
+- Nýtt eigið lag á 4H: skr_log id 13 = afrit af lagi 9 (5H M115 Vatnslagnir í lit: frárennsli grænt, kalt/heitt vatn), synilegt=true. Eins á öllum tækjum.
+  Þar sem 4H á nú eigið lag hætta lánuðu lögin (M395, M195) að birtast þar. M195 (þrif/hiti/kæling, þykkar dökkar línur) skyggði á.
+  Til baka: `update skr_log set eytt=true where id=13`.
+- Engar skráningar færðar. Sjónmat á einu svæði (vinstri álma, um (500, 450)): sum göt sitja á frárennsli WC eða vasks, önnur eru 0,5 m eða meira frá lögn eða á gangi. Ekki mælt kerfisbundið.
