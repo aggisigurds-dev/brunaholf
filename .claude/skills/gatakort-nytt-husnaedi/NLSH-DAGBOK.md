@@ -727,3 +727,15 @@ Færðir punktar · Tillögur · Símaviðmót · Stöðuskýrsla.
 - **Pörun við áætluð göt (`skr_aaetlud.parad`) er ÓENDURREIKNUÐ** (síðast 12.11.2026 10:30). Þurrkeyrsla `skraning-gatakort-para.cjs --haed 6H` nú: fullt 639 (geymt 640),
   hluti 55 (55), vantar 50 (49), pöruð stök verk 1.861 (1.863). Munurinn nær til allra færslna síðan 12.11 (líka handfærslur Agnars). Spurt hvort eigi að keyra `--write`.
 - **Ath.:** verði sjálfvirka færslutólið keyrt aftur fyrir 6H gæti það fært þessar fimm á ný; þá þarf að undanskilja þær (ókannað hvernig tólið fer með `eytt = true` línur).
+
+## Eitt hak = eitt stakt verk í merkinu (15.11.2026) — kjarni main 57f17ae
+- **Orð Agnars (skjáskot: blátt 160 á vegg og grátt 160 við hliðina, tvö hök við hvort):** „Þetta er brjálæðislega villandi þegar þú sýnir alltaf 2 V við merki. Þegar það er bara 1 V þarna."
+- **Orsök:** frá 13.11 fékk seinna hakasætið hak ef HINN ENDINN var skráður og kláraður, líka þegar hann var teiknaður sem annað merki (`nh`). Tvö merki með einu verki
+  hvort sýndu þannig fjögur hök. (13.11-kvörtunin, „sýnir næstum alls staðar að bara sé búið öðrum megin", var leyst með þessu og olli nú hinu.)
+- **Nú:** hak eingöngu fyrir klárað verk Í merkinu (`tA`, `tB`; tvö verk sömu megin = tvöfalt hak). Sætið er autt ef hinn endinn er í öðru merki; rautt ✕ ef enginn endi finnst.
+  Svo 13.11-málið komi ekki aftur renna tveir endar sömu lokunar handan veggjar (`hlid = hinum`) í EITT merki innan `ENDA_SAMAN_PX` = 30 px (= ENDI_PX ≈ 0,9 m) í stað 12 px;
+  sama mörk fyrir „ótengdur punktur".
+- **Ósnert:** neonfylling („Tilbúið") reiknast áfram með hinum endanum (`nh`), svo stakt merki með einu haki getur verið grænt ef hinn endinn, lengra en 0,9 m frá eða
+  sömu megin án veggjar, er kláraður.
+- **Prófað** á prófunarþjóni og lifandi síðu í símahermi: staðurinn úr skjáskotinu er eitt merki með einu haki hvorum megin; tvö 160-merki í herbergi við vegg (ekki handan
+  veggjar) sýna eitt hak hvort. Óprófað í síma Agnars.
