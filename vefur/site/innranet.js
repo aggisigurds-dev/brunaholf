@@ -1,15 +1,15 @@
 /* Innskráning starfsfólks á síðunni: „Innranet“ í fætinum, eða ?innranet aftan við slóðina. Hleðst aðeins þá (site/efni.js).
    Innskráningin er sú sama og í stjórnstöðinni og Slökkvitæki-appinu (notendaskrá starfsmanna, cookie hub_user).
    Eftir innskráningu: breyta síðunni, stillingar hennar, og leiðir í innri kerfin. Þær leiðir koma frá þjóninum
-   (/api/vefur-efni?innranet=1) og standa ekki í þessari skrá, svo gestir sjái þær ekki. Útlitið er úr site/ritill.css. */
+   (/api/vefur-efni?innranet=1) og standa ekki í þessari skrá, svo gestir sjái þær ekki.
+   Skjárinn sjálfur (premium útlitið) er í site/innskraning.js og site/innskraning.css, sem hlaðast á undan þessari skrá. */
 (function () {
   'use strict';
-  var E = window.BH_EFNI, d = document;
-  if (!E || !E.api || window.BH_INNRANET) return;
+  var E = window.BH_EFNI, S = window.BH_INNSKRANING, d = document;
+  if (!E || !E.api || !S || window.BH_INNRANET) return;
   var API = E.api, INN = API.replace(/[^\/]*$/, 'hub-adgangar'), LS_NN = 'bh_ritill_nn';
-  var hula = null, fyrriFokus = null;
+  var esc = S.esc, takn = S.takn;
 
-  function esc(s) { return String(s === null || s === undefined ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   function $(sel, rot) { return (rot || d).querySelector(sel); }
   function svarJson(r) { return r.json().catch(function () { return {}; }).then(function (j) { return { status: r.status, j: j || {} }; }); }
   function slodMed(br) {
@@ -17,43 +17,21 @@
     Object.keys(br).forEach(function (k) { if (br[k] === null) u.searchParams.delete(k); else u.searchParams.set(k, br[k]); });
     return u.pathname.replace(/^\/{2,}/, '/') + u.search.replace(/=(?=&|$)/g, '') + u.hash;      /* aldrei tvö skástrik fremst: það væri annað lén */
   }
-  function skilabod(t) {
-    Array.prototype.forEach.call(d.querySelectorAll('.brr-skilabod'), function (x) { x.remove(); });
-    var s = d.createElement('div');
-    s.className = 'brr brr-skilabod'; s.setAttribute('role', 'status'); s.textContent = t;
-    d.body.appendChild(s);
-    setTimeout(function () { s.remove(); }, 3400);
-  }
-  function loka() {
-    if (hula) { hula.remove(); hula = null; }
+  /* þegar skjánum er lokað fer ?innranet úr slóðinni, svo endurhleðsla opni hann ekki aftur */
+  function urSlod() {
     try { if (new URLSearchParams(location.search).has('innranet')) history.replaceState(history.state, '', slodMed({ innranet: null })); } catch (e) {}
-    if (fyrriFokus && fyrriFokus.focus) { try { fyrriFokus.focus({ preventScroll: true }); } catch (e) {} }
-    fyrriFokus = null;
   }
-  function gluggi(html) {
-    if (hula) hula.remove(); else fyrriFokus = d.activeElement;
-    hula = d.createElement('div');
-    hula.className = 'brr brr-hula brr-innranet';
-    hula.innerHTML = '<div class="brr-gluggi" role="dialog" aria-modal="true" aria-labelledby="brr-inn-titill">' + html + '</div>';
-    hula.addEventListener('mousedown', function (e) { if (e.target === hula) loka(); });
-    hula.addEventListener('keydown', function (e) { if (e.key === 'Escape') loka(); });
-    hula.addEventListener('click', function (e) { if (e.target.closest('[data-r="loka"]')) loka(); });
-    d.body.appendChild(hula);
-    return hula;
-  }
+  function skjar(html, breitt) { return S.skjar({ html: html, breitt: breitt, klasi: 'brr-innranet', titillId: 'brr-inn-titill', vidLokun: urSlod }); }
   function stada() { return fetch(API + '?innranet=1', { credentials: 'same-origin', cache: 'no-store' }).then(svarJson); }
 
   function innskraning() {
     var nn = '';
     try { nn = localStorage.getItem(LS_NN) || ''; } catch (e) {}
-    /* glugginn sem allir geta opnað segir ekkert um innri kerfin: aðeins notandanafn og lykilorð */
-    var g = gluggi('<h3 id="brr-inn-titill">Innskráning</h3>' +
-      '<form><label for="brr-inn-nn">Notandanafn</label><input type="text" id="brr-inn-nn" autocomplete="username" autocapitalize="characters" autocorrect="off" spellcheck="false" maxlength="8" value="' + esc(nn) + '">' +
-      '<label for="brr-inn-lykilord">Lykilorð</label><input type="password" id="brr-inn-lykilord" autocomplete="current-password">' +
-      '<p class="brr-villa" data-r="villa" role="alert" hidden></p><div class="brr-hnappar"><button type="button" class="brr-h" data-r="loka">Hætta við</button>' +
-      '<button type="submit" class="brr-h brr-blar">Skrá inn</button></div></form>');
+    /* skjárinn sem allir geta opnað segir ekkert um innri kerfin: aðeins notandanafn og lykilorð */
+    var g = skjar(S.form({ titillId: 'brr-inn-titill', idNn: 'brr-inn-nn', idLyk: 'brr-inn-lykilord', nn: nn, auka: 'Hætta við', aukaR: 'loka' }));
     var takki = $('button[type="submit"]', g), villa = $('[data-r="villa"]', g);
-    function segja(s) { villa.hidden = false; villa.textContent = s; takki.disabled = false; $('#brr-inn-lykilord', g).value = ''; }      /* lykilorðið stendur ekki eftir í reitnum */
+    /* lykilorðið stendur ekki eftir í reitnum, og fókusinn fer í hann: hnappurinn var óvirkur á meðan og sleppti honum */
+    function segja(s) { var lr = $('#brr-inn-lykilord', g); villa.hidden = false; villa.textContent = s; takki.disabled = false; lr.value = ''; lr.focus(); }
     $('form', g).addEventListener('submit', function (e) {
       e.preventDefault();
       var n = $('#brr-inn-nn', g).value.trim().toUpperCase(), lyk = $('#brr-inn-lykilord', g).value;
@@ -71,35 +49,37 @@
     setTimeout(function () { var r = $(nn ? '#brr-inn-lykilord' : '#brr-inn-nn', g); if (r) r.focus(); }, 30);
   }
 
-  function lina(href, heiti, lysing, nyrFlipi) {
-    return '<a class="brr-inn-lina" href="' + esc(href) + '"' + (nyrFlipi ? ' target="_blank" rel="noopener"' : '') + '><span><strong>' + esc(heiti) + '</strong>' + (lysing ? '<small>' + esc(lysing) + '</small>' : '') +
-      '</span><span aria-hidden="true">' + (nyrFlipi ? '↗' : '→') + '</span></a>';
+  function lina(href, heiti, lysing, mynd, nyrFlipi) {
+    return '<a class="bhi-lina" href="' + esc(href) + '"' + (nyrFlipi ? ' target="_blank" rel="noopener"' : '') + '><span class="bhi-takn">' + takn(mynd) + '</span><span class="bhi-linutexti"><strong>' + esc(heiti) + '</strong>' +
+      (lysing ? '<small>' + esc(lysing) + '</small>' : '') + '</span><span class="bhi-or" aria-hidden="true">' + takn(nyrFlipi ? 'orUt' : 'or') + '</span></a>';
   }
   function valmynd(j) {
     var hlekkir = (Array.isArray(j.hlekkir) ? j.hlekkir : []).filter(function (x) { return x && typeof x.heiti === 'string' && typeof x.slod === 'string' && /^https:\/\//.test(x.slod) && E.slod(x.slod); }).slice(0, 12);
-    var g = gluggi('<h3 id="brr-inn-titill">Innranet</h3><p>Skráð inn: <b>' + esc(j.nafn || '') + '</b>' + (j.nn ? ' (' + esc(j.nn) + ')' : '') + '</p>' +
-      '<h4>Þessi vefur</h4>' +
-      lina(slodMed({ ritill: '', hamur: null, innranet: null }), 'Breyta síðunni', 'Texti, myndir, kaflar og litir, beint á síðunni') +
-      lina(slodMed({ ritill: '', hamur: 'itarlegt', innranet: null }), 'Stillingar síðunnar', 'Ítarlegi ritillinn: bil, horn, hver litur og leiðbeiningar fyrir Claude') +
-      (j.ritstjori ? '' : '<p class="brr-hint">Þú ert ekki með hlutverkið Admin: ritillinn opnast í prufuham og vistar ekkert.</p>') +
-      (hlekkir.length ? '<h4>Innri kerfi</h4>' + hlekkir.map(function (x) { return lina(E.slod(x.slod), x.heiti, typeof x.lysing === 'string' ? x.lysing : '', true); }).join('') : '') +
-      '<div class="brr-hnappar"><button type="button" class="brr-h" data-r="utskra">Skrá út</button><button type="button" class="brr-h brr-blar" data-r="loka">Loka</button></div>');
+    var g = skjar('<h2 class="bhi-titill" id="brr-inn-titill">Innranet</h2><p class="bhi-undir">Skráð inn: <b>' + esc(j.nafn || '') + '</b>' + (j.nn ? ' (' + esc(j.nn) + ')' : '') + '</p>' +
+      '<h3 class="bhi-kafli">Þessi vefur</h3>' +
+      lina(slodMed({ ritill: '', hamur: null, innranet: null }), 'Breyta síðunni', 'Texti, myndir, kaflar og litir, beint á síðunni', 'penni') +
+      lina(slodMed({ ritill: '', hamur: 'itarlegt', innranet: null }), 'Stillingar síðunnar', 'Ítarlegi ritillinn: bil, horn, hver litur og leiðbeiningar fyrir Claude', 'stillingar') +
+      (j.ritstjori ? '' : '<p class="bhi-ath">Þú ert ekki með hlutverkið Admin: ritillinn opnast í prufuham og vistar ekkert.</p>') +
+      (hlekkir.length ? '<h3 class="bhi-kafli">Innri kerfi</h3>' + hlekkir.map(function (x) { return lina(E.slod(x.slod), x.heiti, typeof x.lysing === 'string' ? x.lysing : '', 'kerfi', true); }).join('') : '') +
+      '<div class="bhi-hnappar"><button type="button" class="bhi-auka" data-r="utskra">' + takn('ut') + '<span>Skrá út</span></button><button type="button" class="bhi-dokk" data-bhi="loka" data-r="loka">Loka</button></div>', true);
     $('[data-r="utskra"]', g).addEventListener('click', function () {
       fetch(INN, { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'logout' }) }).then(svarJson).then(function (r) {
-        if (r.status === 200) { loka(); skilabod('Þú hefur verið skráð(ur) út'); } else skilabod('Útskráning tókst ekki. Reyndu aftur.');
-      }).catch(function () { skilabod('Útskráning tókst ekki: ekkert samband við þjóninn.'); });
+        if (r.status === 200) { S.loka(); S.skilabod('Þú hefur verið skráð(ur) út'); } else S.skilabod('Útskráning tókst ekki. Reyndu aftur.');
+      }).catch(function () { S.skilabod('Útskráning tókst ekki: ekkert samband við þjóninn.'); });
     });
-    setTimeout(function () { var a = $('.brr-inn-lina', g); if (a) a.focus(); }, 30);
+    setTimeout(function () { var a = $('.bhi-lina', g); if (a) a.focus(); }, 30);
   }
 
   function opna() {
     stada().then(function (r) {
       if (r.status === 200) valmynd(r.j);
       else if (r.status === 401 || r.status === 403) innskraning();
-      else if (r.status === 503) { gluggi('<h3 id="brr-inn-titill">Innskráning</h3><p>Innskráning hefur ekki verið sett upp á þjóninum.</p><div class="brr-hnappar"><button type="button" class="brr-h brr-blar" data-r="loka">Loka</button></div>'); }
-      else skilabod('Ekki náðist samband við þjóninn. Reyndu aftur.');
-    }).catch(function () { skilabod('Ekki náðist samband við þjóninn. Reyndu aftur.'); });
+      else if (r.status === 503) {
+        skjar('<h2 class="bhi-titill" id="brr-inn-titill">Innskráning</h2><p class="bhi-undir">Innskráning hefur ekki verið sett upp á þjóninum.</p>' +
+          '<div class="bhi-hnappar"><button type="button" class="bhi-dokk" data-bhi="loka" data-r="loka">Loka</button></div>');
+      } else S.skilabod('Ekki náðist samband við þjóninn. Reyndu aftur.');
+    }).catch(function () { S.skilabod('Ekki náðist samband við þjóninn. Reyndu aftur.'); });
   }
-  window.BH_INNRANET = { opna: opna, loka: loka };
+  window.BH_INNRANET = { opna: opna, loka: S.loka };
   opna();
 })();

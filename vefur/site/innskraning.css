@@ -1,0 +1,124 @@
+/* Innskráningarskjár starfsfólks (site/innskraning.js) í Brunahólf premium útliti: sama myndefni, kort, reitir og hnappar og
+   á innskráningarsíðu þjónustugáttarinnar. Hleðst aðeins þegar skjárinn er opnaður („Innranet“ í fætinum, ?innranet, ?ritill).
+   Allt ber klasann bhi og heiti sem byrja á bhi-. Hver regla byrjar á .bhi og setur sjálf það sem skiptir máli, og stök inni í
+   skjánum eru fyrst færð aftur á sjálfgildi vafrans, svo stílar síðunnar (h2, p, a, button, input …) nái ekki hingað inn og
+   skjárinn sé eins á öllum þremur útgáfum vefsins (letrið er það sem síðan hefur sótt: Poppins á V2 og V1, Inter á V3).
+   Skjárinn liggur ofan á gluggum ritilsins (2147483100) og undir skilaboðum hans (2147483200). */
+.bhi{position:fixed;inset:0;z-index:2147483150;display:flex;flex-direction:column;align-items:center;overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;
+  margin:0;padding:0 20px 40px;background:#061832 url(../img/innskraning.webp) center center/cover no-repeat;
+  font:400 16px/1.5 Poppins,Inter,"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;color:#142847;text-align:left;letter-spacing:0;text-transform:none;
+  -webkit-text-size-adjust:100%;-webkit-font-smoothing:antialiased;outline:0}
+.bhi :where(div,h2,h3,p,a,button,input,label,form,strong,small,span,b,img,svg){all:revert}
+.bhi,.bhi *,.bhi *::before,.bhi *::after{box-sizing:border-box}
+.bhi [hidden]{display:none!important}
+/* myndin dökknar efst og neðst, svo merkið og hnappurinn efst sjáist á ljósum himni */
+.bhi::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;background:linear-gradient(180deg,rgba(0,12,28,.46) 0%,rgba(0,12,28,.14) 42%,rgba(3,14,31,.30) 100%)}
+
+/* ---- efst: merkið og Loka ---- */
+.bhi .bhi-topp{position:relative;z-index:1;display:flex;align-items:center;justify-content:space-between;gap:16px;flex:none;width:100%;max-width:1180px;min-height:96px;margin:0;padding:24px 0 12px}
+.bhi .bhi-merki{display:block;line-height:0}
+.bhi .bhi-merki img{display:block;width:auto;height:48px;max-width:56vw}
+.bhi .bhi-loka{display:inline-flex;align-items:center;gap:8px;flex:none;min-height:44px;margin:0;padding:0 18px 0 14px;border:1.5px solid rgba(255,255,255,.8);border-radius:22px;background:rgba(6,24,50,.42);color:#fff;
+  font:inherit;font-size:14px;font-weight:600;line-height:1;cursor:pointer;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);transition:background-color .15s,border-color .15s}
+.bhi .bhi-loka:hover{background:rgba(255,255,255,.18);border-color:#fff}
+.bhi .bhi-loka svg{display:block;width:18px;height:18px;flex:none;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.bhi .bhi-loka:focus-visible{outline:3px solid #fff;outline-offset:3px}
+
+/* ---- kortið ---- */
+.bhi .bhi-kort{position:relative;z-index:1;display:block;width:100%;max-width:480px;margin:auto 0;padding:36px 44px 28px;border-radius:22px;
+  background:linear-gradient(150deg,rgba(255,255,255,.99),rgba(246,248,253,.98));box-shadow:0 30px 68px rgba(1,12,35,.36),0 5px 15px rgba(10,26,56,.13)}
+.bhi .bhi-kort.bhi-breitt{max-width:540px}
+.bhi .bhi-titill{display:block;margin:0 0 8px;font-size:28px;font-weight:700;line-height:1.15;letter-spacing:-.02em;color:#0d2145}
+.bhi .bhi-undir{display:block;margin:0 0 26px;font-size:15px;line-height:1.5;color:#52627b}
+.bhi .bhi-undir b{font-weight:600;color:#142847}
+.bhi form{display:block;margin:0;padding:0}
+
+/* ---- reitir ---- */
+.bhi .bhi-reitur{display:block;position:relative;margin:0 0 14px}
+.bhi .bhi-reitur label{position:absolute;width:1px;height:1px;margin:0;padding:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+.bhi .bhi-box{display:block;position:relative}
+.bhi .bhi-box>svg{position:absolute;z-index:1;left:16px;top:50%;width:22px;height:22px;transform:translateY(-50%);fill:none;stroke:#62718c;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;pointer-events:none}
+.bhi .bhi-box input{display:block;width:100%;height:56px;margin:0;padding:12px 52px;border:1px solid #7c8ba6;border-radius:11px;background:rgba(255,255,255,.72);color:#0d2145;
+  font:inherit;font-size:16px;font-weight:500;line-height:1.2;outline:0;-webkit-appearance:none;appearance:none;transition:border-color .15s,box-shadow .15s,background-color .15s}
+.bhi .bhi-box input::placeholder{color:#62718c;opacity:1;font-weight:400;text-transform:none}
+.bhi .bhi-box input[name="username"]{text-transform:uppercase}
+.bhi .bhi-box input:hover{border-color:#52627b}
+.bhi .bhi-box input:focus{border-color:#e9590a;background:#fff;box-shadow:0 0 0 4px rgba(245,106,10,.2)}
+.bhi .bhi-auga{position:absolute;right:6px;top:50%;display:flex;align-items:center;justify-content:center;width:44px;height:44px;margin:0;padding:0;transform:translateY(-50%);border:0;border-radius:10px;background:transparent;color:#62718c;cursor:pointer}
+.bhi .bhi-auga svg{display:block;width:23px;height:23px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.bhi .bhi-auga:hover,.bhi .bhi-auga[aria-pressed="true"]{color:#c2410c}
+.bhi .bhi-villa{display:block;margin:2px 0 14px;padding:10px 14px;border-radius:10px;background:#fdecec;color:#a11616;font-size:14px;line-height:1.45}
+
+/* ---- hnappar ---- */
+.bhi .bhi-adal{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;min-height:56px;margin:10px 0 0;padding:12px 20px;border:0;border-radius:11px;background:linear-gradient(180deg,#f26005,#dc4c00);color:#fff;
+  font:inherit;font-size:17px;font-weight:700;line-height:1.2;text-decoration:none;text-shadow:0 1px 1px rgba(110,36,0,.4);cursor:pointer;box-shadow:0 12px 20px rgba(222,79,16,.29);transition:box-shadow .15s,transform .1s}
+.bhi .bhi-adal svg{display:block;width:22px;height:22px;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+/* hnappurinn lýsist ekki við bendil (hvíti textinn sæist verr): hann lyftist */
+.bhi .bhi-adal:hover{box-shadow:0 16px 28px rgba(222,79,16,.42);transform:translateY(-1px)}
+.bhi .bhi-adal:active{transform:translateY(1px);filter:brightness(.96)}
+.bhi .bhi-adal:disabled{opacity:.6;cursor:default;filter:none;transform:none;box-shadow:none}
+/* dökkblár hnappur: „Loka“ í valmyndinni og á skilaboðaskjá (appelsínuguli hnappurinn er aðeins á „Skrá inn“) */
+.bhi .bhi-dokk{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;min-height:52px;margin:12px 0 0;padding:10px 18px;border:1px solid #0d2145;border-radius:11px;background:#0d2145;color:#fff;
+  font:inherit;font-size:15.5px;font-weight:600;line-height:1.2;text-decoration:none;cursor:pointer;box-shadow:0 8px 18px rgba(4,24,55,.22);transition:background-color .15s}
+.bhi .bhi-dokk:hover{background:#17335f;border-color:#17335f}
+.bhi .bhi-auka{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;min-height:52px;margin:12px 0 0;padding:10px 18px;border:1px solid #becce1;border-radius:11px;background:linear-gradient(180deg,#fff,#f4f7fc);color:#142847;
+  font:inherit;font-size:15px;font-weight:600;line-height:1.2;text-decoration:none;cursor:pointer;box-shadow:0 2px 6px rgba(4,24,55,.04);transition:border-color .15s,background-color .15s}
+.bhi .bhi-auka svg{display:block;width:20px;height:20px;flex:none;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.bhi .bhi-auka:hover{border-color:#e9590a;background:#fff}
+.bhi .bhi-kort :focus-visible{outline:3px solid #e9590a;outline-offset:3px}
+.bhi .bhi-box input:focus-visible{outline:0}
+.bhi .bhi-oryggi{display:block;margin:24px 0 0;font-size:12px;line-height:1.5;color:#485d7e;text-align:center}
+.bhi .bhi-oryggi svg{display:inline-block;width:17px;height:17px;margin:0 6px 0 0;vertical-align:-4px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+
+/* ---- valmyndin eftir innskráningu ---- */
+.bhi .bhi-kafli{display:block;margin:20px 0 10px;font-size:12px;font-weight:700;line-height:1.2;letter-spacing:.14em;text-transform:uppercase;color:#52627b}
+.bhi .bhi-lina{display:flex;align-items:center;gap:14px;min-height:62px;margin:0 0 10px;padding:10px 14px;border:1px solid #d6deeb;border-radius:14px;background:linear-gradient(180deg,#fff,#f6f8fd);color:#0d2145;text-decoration:none;
+  box-shadow:0 2px 6px rgba(4,24,55,.04);cursor:pointer;transition:border-color .15s,box-shadow .15s}
+.bhi .bhi-lina:hover{border-color:#e9590a;box-shadow:0 8px 18px rgba(4,24,55,.1)}
+.bhi .bhi-takn{display:grid;place-items:center;flex:none;width:42px;height:42px;border-radius:11px;background:#fff1e6;color:#c2410c}
+.bhi .bhi-takn svg{display:block;width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.bhi .bhi-linutexti{display:block;flex:1;min-width:0}
+.bhi .bhi-lina strong{display:block;font-size:15.5px;font-weight:600;line-height:1.3;color:#0d2145}
+.bhi .bhi-lina small{display:block;margin-top:2px;font-size:13px;line-height:1.4;color:#52627b}
+.bhi .bhi-or{display:block;flex:none;line-height:0;color:#c2410c}
+.bhi .bhi-or svg{display:block;width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.bhi .bhi-ath{display:block;margin:2px 0 12px;padding:10px 14px;border-radius:10px;background:#fff4e0;color:#6b4100;font-size:13.5px;line-height:1.45}
+.bhi .bhi-hnappar{display:flex;gap:12px;margin:22px 0 0}
+.bhi .bhi-hnappar .bhi-adal,.bhi .bhi-hnappar .bhi-auka,.bhi .bhi-hnappar .bhi-dokk{flex:1;min-height:52px;margin:0;font-size:15.5px}
+
+/* ---- skilaboð neðst á síðunni eftir að skjánum er lokað (t.d. útskráning) ---- */
+.bhi-skilabod{position:fixed;left:50%;bottom:calc(28px + env(safe-area-inset-bottom,0px));z-index:2147483200;transform:translateX(-50%);box-sizing:border-box;max-width:calc(100vw - 24px);margin:0;padding:12px 18px;border-radius:12px;
+  background:#0d2145;color:#fff;font:500 14px/1.4 Poppins,Inter,"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;letter-spacing:0;text-transform:none;text-align:center;box-shadow:0 12px 30px rgba(1,12,35,.35)}
+
+@media (max-width:600px){
+  .bhi{padding:0 14px 24px}
+  .bhi .bhi-topp{min-height:66px;padding:12px 0 6px}
+  .bhi .bhi-merki img{height:36px}
+  .bhi .bhi-kort{padding:24px 20px 20px;border-radius:18px}
+  .bhi .bhi-titill{font-size:24px}
+  .bhi .bhi-undir{margin-bottom:18px;font-size:14px}
+  .bhi .bhi-kafli{margin:16px 0 8px}
+  .bhi .bhi-lina{gap:12px;min-height:60px;margin-bottom:8px;padding:9px 12px}
+  .bhi .bhi-ath{margin-bottom:10px;padding:9px 12px;font-size:13px}
+  .bhi .bhi-hnappar{margin-top:16px}
+  .bhi .bhi-oryggi{margin-top:18px;font-size:11.5px}
+}
+@media (max-width:345px){
+  .bhi .bhi-loka span{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+  .bhi .bhi-loka{padding:0 12px}
+  .bhi .bhi-hnappar{flex-direction:column-reverse}
+}
+/* lægri gluggar (fartölva, 800 px): efsta línan þéttist svo valmyndin rúmist án skruns */
+@media (max-height:860px) and (min-width:601px){
+  .bhi{padding-bottom:24px}
+  .bhi .bhi-topp{min-height:76px;padding:16px 0 8px}
+  .bhi .bhi-merki img{height:42px}
+}
+@media (max-height:720px){
+  .bhi .bhi-topp{min-height:64px;padding:10px 0 6px}
+  .bhi .bhi-merki img{height:36px}
+  .bhi .bhi-kort{padding-top:26px;padding-bottom:20px}
+  .bhi .bhi-undir{margin-bottom:18px}
+  .bhi .bhi-oryggi{margin-top:16px}
+}
+@media (prefers-reduced-motion:reduce){.bhi *{transition:none!important}}

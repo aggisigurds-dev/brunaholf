@@ -201,7 +201,7 @@
 /* reitir og val: 10 px horn, hárlína og fókushringur kerfisins */
 #vv-app .vv-leit:focus-within{outline:3px solid rgba(255,103,2,.45);outline:3px solid color-mix(in srgb,var(--orange) 45%,transparent);outline-offset:0;box-shadow:inset 0 0 0 1px var(--orange),var(--shadow-card)}
 #vv-app .vv-rada select{min-height:44px;border:1px solid var(--line);border-radius:var(--r-md);font:400 14px/1.4 var(--font-sans);color:var(--ink)}
-#vv-app .vv-val,#vv-app .vv-reitir input{border-radius:var(--r-md)}
+#vv-app .vv-val,#vv-app .vv-afh-ath,#vv-app .vv-reitir input{border-radius:var(--r-md)}
 /* letur eftir stiga V2: hetjutitill 44/1.1 700 (30 px á síma), eyebrow 12 px 0.18em, kaflatitill 22 px 700 */
 #vv-app .vv-hetja-yfir{margin-bottom:10px;font:600 12px/1.2 var(--font-sans);letter-spacing:.18em;color:var(--on-navy)}
 #vv-app .vv-hetja h1{margin-bottom:12px;font:700 clamp(30px,2.2vw + 21px,44px)/1.1 var(--font-sans);letter-spacing:-.02em;text-shadow:0 2px 12px rgba(2,25,60,.4);text-shadow:0 2px 12px color-mix(in srgb,var(--navy-950) 40%,transparent)}

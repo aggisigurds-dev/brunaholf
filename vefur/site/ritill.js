@@ -305,7 +305,7 @@
     return false;
   }
   d.addEventListener('click', function (e) {
-    if (!R.breyta || R.hamur === 'hled' || e.target.closest('.brr')) return;
+    if (!R.breyta || R.hamur === 'hled' || e.target.closest('.brr,.bhi')) return;
     var el = e.target.closest('[data-e],[data-m]');
     if (el && el.closest('#vv-app')) el = null;
     /* textareitir í forsíðuhausnum ná yfir alla breidd hans: smellur utan við orðin á við bannerinn á bak við */
@@ -330,8 +330,8 @@
   }, true);
   d.addEventListener('keydown', function (e) {
     var iTexta = /^(INPUT|TEXTAREA|SELECT)$/.test((e.target.tagName || '')) || e.target.isContentEditable;
-    if (e.key === 'Escape' && R.val && !e.target.closest('.brr-hula')) { afvelja(); return; }
-    if (e.key === 'Escape' && !R.val && R.spj && !e.target.closest('.brr-hula')) { R.spj = null; R.takn = null; teiknaSpjald(); return; }
+    if (e.key === 'Escape' && R.val && !e.target.closest('.brr-hula,.bhi')) { afvelja(); return; }
+    if (e.key === 'Escape' && !R.val && R.spj && !e.target.closest('.brr-hula,.bhi')) { R.spj = null; R.takn = null; teiknaSpjald(); return; }
     if ((e.ctrlKey || e.metaKey) && !iTexta) {
       var k = e.key.toLowerCase();
       if (k === 'z' && !e.shiftKey) { e.preventDefault(); afturkalla(); }
@@ -343,7 +343,7 @@
     }
   });
   d.addEventListener('paste', function (e) {
-    if (!R.val || R.val.teg !== 'e' || e.target.closest('.brr') || !R.val.el.contains(e.target)) return;
+    if (!R.val || R.val.teg !== 'e' || e.target.closest('.brr,.bhi') || !R.val.el.contains(e.target)) return;
     e.preventDefault();
     var t = (e.clipboardData || window.clipboardData).getData('text/plain');
     d.execCommand('insertText', false, t);
@@ -965,7 +965,7 @@
   function hlekkirNu() {
     var ut = {};
     all('a[href]').forEach(function (a) {
-      if (a.closest('.brr') || a.closest('#vv-app')) return;
+      if (a.closest('.brr,.bhi') || a.closest('#vv-app')) return;
       var h = a.href;
       if (typeof h === 'string' && h && !Object.prototype.hasOwnProperty.call(ut, h)) ut[h] = a.textContent.replace(/\s+/g, ' ').trim().slice(0, 40);
     });
@@ -1521,19 +1521,20 @@
       }
     });
   }
+  /* Innskráningin er teiknuð á sama skjá og „Innranet“ í fætinum (site/innskraning.js, premium útlitið). Skjárinn segir
+     ekkert um innri kerfin: aðeins notandanafn og lykilorð. */
   function gluggiInnskraning() {
-    var nn = '';
+    var S = window.BH_INNSKRANING, nn = '';
+    if (!S) return skilabod('Innskráningarskjárinn hlóðst ekki. Endurhladdu síðuna.');
     try { nn = localStorage.getItem(LS_NN) || ''; } catch (e) {}
-    var g = gluggi('<h3>Innskráning</h3><p>Sama notandanafn og lykilorð og í stjórnstöðinni og Slökkvitæki-appinu. Með innskráningu vistast breytingarnar á þjóninum og hægt er að birta þær.</p>' +
-      '<form><label for="brr-nn">Notandanafn</label><input type="text" id="brr-nn" autocomplete="username" autocapitalize="characters" autocorrect="off" spellcheck="false" maxlength="8" value="' + esc(nn) + '">' +
-      '<label for="brr-lykilord">Lykilorð</label><input type="password" id="brr-lykilord" autocomplete="current-password">' +
-      '<p class="brr-villa" data-r="villa" hidden></p><div class="brr-hnappar"><button type="button" class="brr-h" data-r="haetta">Skoða án innskráningar</button>' +
-      '<button type="submit" class="brr-h brr-blar">Skrá inn</button></div></form>');
+    var g = S.skjar({ titillId: 'brr-inn-titill', klasi: 'brr-innskraning',
+      html: S.form({ titillId: 'brr-inn-titill', undir: 'Skráðu þig inn til að vista breytingar og birta þær.', idNn: 'brr-nn', idLyk: 'brr-lykilord', nn: nn, auka: 'Skoða án innskráningar', aukaR: 'haetta' }) });
     var takki = $('button[type="submit"]', g);
     $('form', g).addEventListener('submit', function (e) {
       e.preventDefault();
       var villa = $('[data-r="villa"]', g), n = $('#brr-nn', g).value.trim().toUpperCase(), lyk = $('#brr-lykilord', g).value;
-      function segja(s) { villa.hidden = false; villa.textContent = s; takki.disabled = false; $('#brr-lykilord', g).value = ''; }      /* lykilorðið stendur ekki eftir í reitnum */
+      /* lykilorðið stendur ekki eftir í reitnum, og fókusinn fer í hann: hnappurinn var óvirkur á meðan og sleppti honum */
+      function segja(s) { var lr = $('#brr-lykilord', g); villa.hidden = false; villa.textContent = s; takki.disabled = false; lr.value = ''; lr.focus(); }
       if (!n || !lyk) return segja('Notandanafn og lykilorð vantar.');
       takki.disabled = true;
       innskraning({ action: 'login', nn: n, password: lyk }).then(function (r) {
@@ -1546,7 +1547,7 @@
         return saekja('&drog=1').then(function (x) {
           if (x.status === 403) return segja('Notandinn ' + n + ' má ekki breyta vefnum. Aðeins notendur með hlutverkið Admin geta það.');
           if (x.status !== 200) return segja('Drögin náðust ekki. Reyndu aftur.');
-          g.remove();
+          S.loka();
           afvelja();
           innskrad(x.j);
           if (prufa && prufa !== JSON.stringify(R.efni) && prufa !== JSON.stringify(R.birt)) {
