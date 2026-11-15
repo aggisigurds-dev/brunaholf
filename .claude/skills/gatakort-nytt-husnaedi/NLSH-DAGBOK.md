@@ -704,3 +704,16 @@ Færðir punktar · Tillögur · Símaviðmót · Stöðuskýrsla.
 - **Breytt:** spjaldið sýnir efst „Í þessu merki: n stök verk á m stöðum („=" merkir sömu hnit í Ajour): #a = #b · #c = #d …" (`hjaTexti`, `hjaStadir`; flokkað eftir
   Ajour-hnitum x0, y0 með einum aukastaf). Í dýpstu stækkun klofnar merkið í ×2 (#4056 = #4167) og ×4.
 - **Mistök á leiðinni:** fyrsta tilraun til að færa línuna efst færði RANGA línu (rauðröra-ábendingin ber líka klasann `gk-hja`); séð á prófunarmynd og leiðrétt áður en birt var.
+
+## Hvert loftræstimerki er ein lokun (15.11.2026) — kjarni main, commit „Gatakort: hvert loftræstimerki er ein lokun, ×n aðeins við beina tilvísun"
+- **Orð Agnars:** „Jú mætti brjóta upp allar svona 4x-6x bull. Nema það sé bein tilvísun í lýsingu í það gatanúmer um að þurfti að endurgera gatið, eða laga. Þetta er
+  byrjað að líta betur út."
+- **Mælt:** af 10.709 skráningum verksins eru 1.253 með lýsingu og 38 vísa í gatanúmer („lagfæring #926", „repair #471", „Repair work on point 5733", „aukaverk laga aftur
+  punkt 465", „Repairing hole #3902", „yfirfara gat númer #4457"); 35 þeirra eru merktar lagfæring. Stærðir í lýsingu („650 x 400", „2.1metrar") eru ekki tilvísanir.
+- **Regla í KortClient (nærmynd, hópur Loft):** merki með 3+ stök verk er brotið upp í lokanir, mest tvö verk hver, í röðinni (a) sömu Ajour-hnit (pinninn skráður tvisvar),
+  (b) hinn endinn samkvæmt `endar`, (c) næsta skráning innan `PAR_PX` = 12 px, annars stakt merki. Skráning sem vísar í gatanúmer (`TILV`, `tilvisanir`, sótt við ræsingu með
+  `lysing.ilike` á lykilorðin) fylgir lokun þess gats; það er eina ástæðan fyrir „×3" eða hærra. Skörunarvörnin raðar lokunum hlið við hlið.
+- **Dæmi:** „160 ×6" við (669, 1527) → þrjú merki: #4056 = #4167, #4057 = #4601, #4058 = #4595. „160 ×5" við #5974 → þrjú merki (2 + 2 + 1).
+- **Ósnert:** rör (2 × 2 merkið telur áfram pör), rafmagn, gólf og yfirlitsstækkun. Lagfæring A er áfram sér merki með brotinni útlínu.
+- **Liður (c) er nálgun:** tvær skráningar innan 12 px eru settar í eina lokun án þess að gögnin segi að þær séu sitt hvor hliðin. Pikk á merkið sýnir númerin.
+- **Prófað** á prófunarþjóni og lifandi síðu í símahermi; engar villur. Óprófað í síma Agnars.
