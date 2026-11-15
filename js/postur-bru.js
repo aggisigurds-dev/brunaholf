@@ -23,7 +23,7 @@
   // Referrer-Policy: no-referrer, svo þar ræður ?embed=1. Öruggt hvort sem er: postMessage(…, APP) nær
   // aðeins til foreldris sem ER appið — vafrinn hendir skeytinu annars (netvörður 15.11.2026).
   function foreldriErApp() {
-    try { var a = location.ancestorOrigins; if (a && typeof a.length === 'number') return a.length > 0 && a[0] === APP; } catch (e) {}
+    try { var a = location.ancestorOrigins; if (a && typeof a.length === 'number' && a.length > 0 && a[0] === APP) return true; } catch (e) {}
     return embed || String(document.referrer || '').indexOf(APP + '/') === 0;
   }
   var bida = {}, n = 0;
