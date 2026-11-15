@@ -38,7 +38,10 @@ function heimur() {
       // stadfesting_default null → á (regla ritilsins), stadfesting_amount 15.000 hunsað → GR_STADF 20.000. kt aðeins í Verðskrá.
       pg('Grensásvegur 1', { eftirvinna_threshold_per_day: 8, stadfesting_default: null, stadfesting_amount: 15000, customer_name: 'Grensás ehf.', kennitala: '4101012340', heimilisfang: 'Grensásvegi 1' }),
       // Skjólbraut 3: „jól" í nafninu — K.ORUKKANLEGT grípur það, en verk í Verðskrá má hún aldrei loka.
-      pg('Skjólbraut 3'),
+      // … og ber stadfesting_default TRUE (→ 20.000) og source NULL (tómt source leyfist, eins og timavera).
+      pg('Skjólbraut 3', { stadfesting_default: true, source: null }),
+      // Bakskástrik í nafni: in-listinn verður að flýja \ svo falið-merkið finnist.
+      pg('Bak\\slóð 1'),
       pg('Fjarðagata'), pg('Orkureitur'), pg('Skúlagata 26'), pg('Bíldshöfði 9'), pg('Lækjargata 12'),
       pg('Stórhöfði', { fixed_amount: 500000 }),
       pg('Gata Kringlan', { source: 'ajour' }),
@@ -54,6 +57,7 @@ function heimur() {
     minni: ['Orkureitur|2026-11'],
     meta: [
       { inv_key: 'timavera|Fjarðagata|2026-11', hidden: true },
+      { inv_key: 'timavera|Bak\\slóð 1|2026-11', hidden: true },
       { inv_key: 'draftinv|Bíldshöfði 9|2026-11' },
       { inv_key: 'draftinv|Hraunbær 1|2026-11', sent: true },
       { inv_key: 'draftinv|Hraunbær 2|2026-11', done: true },
@@ -71,6 +75,7 @@ function heimur() {
       // Grensásvegur 1: mán 9,25 + þri 3 = 12,25 klst; tímabókin segir 1,25 ev, en án samnings fer allt í dagvinnu (aurar → námundun)
       faersla('2026-11-09', 'Jón', 'Grensásvegur 1', 9.25), faersla('2026-11-10', 'Jón', 'Grensásvegur 1', 3),
       faersla('2026-11-09', 'Jón', 'Skjólbraut 3', 4),
+      faersla('2026-11-09', 'Jón', 'Bak\\slóð 1', 3),
       faersla('2026-11-02', 'Anna', 'Skúlagata 26', 8), faersla('2026-11-03', 'Anna', 'Skúlagata 26', 8),
       faersla('2026-11-02', 'Jón', 'Tindasel', 30), faersla('2026-11-02', 'Jón', 'Smáverk', 0.5),
       faersla('2026-11-02', 'Pétur', 'Landsspitalinn', 50), faersla('2026-11-04', 'Pétur', 'Veikindi', 8),
@@ -133,7 +138,7 @@ function stub(h, opt = {}) {
     if (tafla === 'customer_worksite_map') return svar(h.cwmap);
     if (tafla === 'invoices') return svar(h.invoices);
     if (tafla === 'project_aliases') return svar(h.aliases);
-    if (tafla === 'app_kv') return svar(h.minni ? [{ value: h.minni }] : []);
+    if (tafla === 'app_kv') return opt.kvLesturBilar ? bilun(500) : svar(h.minni ? [{ value: h.minni }] : []);
     if (tafla === 'krofur_yfirlit_meta') { const k = new Set(inGildi(url, 'inv_key')); return svar(h.meta.filter((m) => k.has(m.inv_key))); }
     if (tafla === 'timavera_entries') {
       const fra = dags(url, 'gte'), til = dags(url, 'lt'), nofn = inGildi(url, 'project');
@@ -186,6 +191,7 @@ test('dry-run: þrjú verk fá drög, ástæður hinna standa, ekkert skrifað',
     'Landsspitalinn': 'gata-/Ajour-verk',
     'Veikindi': 'ó-rukkanlegt',
     'Fjarðagata': 'falið í Kröfu yfirliti',
+    'Bak\\slóð 1': 'falið í Kröfu yfirliti',
     'Orkureitur': 'stofnað áður (eytt síðan?) — ekki stofnað aftur',
     'Stórhöfði': 'fast verð',
     'Lækjargata 12': 'fast verð',
@@ -241,6 +247,7 @@ test('keyrsla: minnið skrifast Á UNDAN drögunum, réttir reitir, ný drög ek
   const gr = ins.find((k) => k.body.worksite_name === 'Grensásvegur 1').body;
   assert.equal(gr.stadfesting, 20000, 'staðfesting eftir reglu ritilsins (GR_STADF), ekki stadfesting_amount');
   assert.equal(gr.hours_eftirvinna, 0, 'þröskuldur í Verðskrá án samnings → engin yfirvinna');
+  assert.equal(ins.find((k) => k.body.worksite_name === 'Skjólbraut 3').body.stadfesting, 20000, 'stadfesting_default true → 20.000');
 
   // Uppfærsluáfanginn sér nýju drögin en breytir þeim ekki (Δ = 0); aðeins Skúlagata er PATCH-uð
   assert.equal(uppfLina(ut, FJ).obreytt, true);
@@ -411,10 +418,12 @@ test('timabok: verkheiti með & og " finnur færslurnar sínar (in-listinn er k�
   const h = heimur();
   const ws = 'Gjáhella 5 bil 107 & 110 "B"';
   h.entries.push(faersla('2026-11-09', 'Jón', ws, 7), faersla('2026-11-10', 'Jón', ws, 2));
-  stub(h);
+  const kall = stub(h);
   const r = await T.handler({ httpMethod: 'GET', queryStringParameters: { worksite: ws, month: '2026-11' } });
   assert.equal(r.statusCode, 200, r.body);
   assert.equal(JSON.parse(r.body).totals.hours, 9);
+  const tb = kall.find((k) => new URL(k.url).searchParams.has('project'));
+  assert.equal(new URL(tb.url).searchParams.get('order'), 'date.asc,employee.asc,id.asc', 'einkvæm röðun við síðuskipti');
 });
 
 test('lestur áfanga 1 bregst: keyrslan skilar samt stofnuðu drögunum og villunni (ekkert kast)', async () => {
@@ -438,4 +447,35 @@ test('in-listinn á krofur_yfirlit_meta er bútaður (≤ 40 lyklar í kalli) og
   for (const k of metaKoll) assert.ok(inGildi(k.url, 'inv_key').length <= 40);
   assert.equal(new Set(lyklar).size, lyklar.length, 'enginn lykill tvisvar');
   assert.ok(lyklar.includes('timavera|Verk 30|2026-11') && lyklar.includes(`draftinv|${FJ}|2026-11`));
+});
+
+test('innsetning SÍÐASTA verksins bregst: minnið hreinsað þótt ekkert verk komi á eftir', async () => {
+  const h = heimur();
+  stub(h, { insertBilar: new Set(['Skjólbraut 3']) });   // síðast í stafrófsröð þeirra sem stofnast
+  const ut = await D.keyra({ dry: false, now: NOV });
+  assert.match(stofnLina(ut, 'Skjólbraut 3').villa, /invoice_drafts INSERT: 500/);
+  assert.ok(!h.minni.includes('Skjólbraut 3|2026-11'), 'lykillinn tekinn úr minninu');
+  assert.ok(h.minni.includes(`${FJ}|2026-11`));
+});
+
+test('minnislestur bregst: ENGIN stofnun (eydd drög mega ekki lifna), en uppfærslan heldur áfram', async () => {
+  const h = heimur();
+  const kall = stub(h, { kvLesturBilar: true });
+  const ut = await D.keyra({ dry: false, now: NOV });
+  assert.equal(innsetningar(kall).length, 0, 'engin innsetning án minnis');
+  assert.equal(ut.stofnud, 0);
+  assert.match(ut.stofnun[0].villa, /^stofnun sleppt — minnið \(app_kv\) náðist ekki að lesa/);
+  assert.equal(ut.villur, 1);
+  assert.equal(uppfLina(ut, 'Skúlagata 26').delta, 6, 'áfangi 1 keyrir samt');
+  assert.ok(kall.some((k) => k.method === 'PATCH'));
+});
+
+test('áfangi 1, drög verks UTAN Verðskrár: engin yfirvinna nema drögin beri hana', async () => {
+  const h = heimur();
+  h.drafts.push(drag(30, 'Tindasel', '2026-11', { hours_dagvinna: 20, hours_eftirvinna: 0, timavera_klst_vid_vistun: 20 }));
+  const kall = stub(h);
+  const ut = await D.keyra({ dry: false, now: NOV });
+  const lina = uppfLina(ut, 'Tindasel');
+  assert.equal(lina.dv, 30); assert.equal(lina.ev, 0);   // 30 klst á einum degi: tímabókin segir 22 ev, en enginn samningur
+  assert.equal(kall.find((k) => k.method === 'PATCH' && k.url.includes('id=eq.30')).body.hours_eftirvinna, 0);
 });

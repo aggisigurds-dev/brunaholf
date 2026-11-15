@@ -307,7 +307,8 @@ mánuði verks með hakinu: „🔒tímar" í athugasemd dragsins.
   sjálfvirkt tengd Payday-reikningi (`K.sjalfvirkTenging`) — sein færsla breytir ekki upphæð eftir að skjölin fóru.
 - Stofnuð drög og villur sjást í Sjálfvirkni-spjaldinu (`automation_runs` `drog-timar`: „＋ verk mán klst → kr (greiðandi)",
   „✗ verk mán: villa") og `GET /api/drog-timar` sýnir hvað yrði stofnað og af hverju hin eru sleppt. Próf:
-  `test/drog-timar-stofnun.test.js` (17 próf; 26 stökkbreytingar á vörðunum allar gripnar 15.11).
+  `test/drog-timar-stofnun.test.js` (20 próf; 33 stökkbreytingar á vörðunum allar gripnar 15.11). Bregðist lestur
+  minnisins er stofnun sleppt í þeirri keyrslu (tómt minni lífgaði eydd drög) en uppfærslan heldur áfram.
 - **Röng færsla í Tímaveru fer beint í drögin** (þau spegla Tímaveru): lagaðu hana í Tímaveru og dragið fylgir
   niður í næstu keyrslu. Dæmi 15.11: færsla 13.11 (08:02–12:02, 4 klst) stendur sem 28,011 klst.
 - `GET /api/drog-timar` er nú ALLTAF áætlun (líka án `?dry=1`); keyrsla er `POST` eða áætlunin sjálf. Hvort tveggja er

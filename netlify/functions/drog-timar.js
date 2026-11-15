@@ -249,23 +249,28 @@ async function keyra(opts) {
   const dry = !!(opts && opts.dry);
   const manudir = manudirSemStanda(opts && opts.now);   // `now` aðeins fyrir próf — keyrslan notar rauntíma
   const inMan = manudir.map(encodeURIComponent).join(',');
-  // Sameiginleg gögn beggja áfanga: Verðskrá, greiðendakort og reikningar (greiðandi, sjálfvirk tenging við Payday), öll drög, minnið.
-  const [pgRows, cwmap, reikningar, alltDrog, minniRod] = await Promise.all([
+  // Sameiginleg gögn beggja áfanga: Verðskrá, greiðendakort og reikningar (greiðandi, sjálfvirk tenging við Payday), öll drög.
+  // Minnið er lesið SÉR: bregðist lesturinn má áfangi 0 ekki keyra (tómt minni lífgaði eydd drög), en áfangi 1 heldur áfram.
+  const minniLestur = sbGet(`app_kv?select=value&key=eq.${MINNI}`).then((r) => ({ r }), (e) => ({ e }));
+  const [pgRows, cwmap, reikningar, alltDrog] = await Promise.all([
     sbGet('pricing_guide?select=*').catch(() => []),
     sbGet('customer_worksite_map?select=customer_name,worksite_name,kt_greidanda,confidence,tilvisun,retention_pct'),
     sbAll('invoices?select=id,tilvisun,kt_greidanda,customer_name,gjalddagi,upphaed_total,status,source&order=id.asc'),
     sbAll('invoice_drafts?select=id,worksite_name,work_month,total_m_vsk,customer_name,kennitala,status,payday_invoice_id,merged_into,fixed_total&order=id.asc'),
-    sbGet(`app_kv?select=value&key=eq.${MINNI}`),
   ]);
   const PG = {}; for (const p of pgRows) PG[p.worksite_name] = p;
   const resolvePayer = K.greidendur({ cwmap, pguide: pgRows, invoices: reikningar });
   const tenging = K.sjalfvirkTenging({ drafts: alltDrog, invoices: reikningar, resolvePayer });
-  const minni = new Set(Array.isArray(minniRod[0] && minniRod[0].value) ? minniRod[0].value : []);
   const ut = { manudir, stofnud: 0, stofnun: [], skodud: 0, uppfaerd: 0, obreytt: 0, sleppt: 0, villur: 0, linur: [], dry };
 
   // ÁFANGI 0 — stofna drög líðandi mánaðar (aldrei fyrri mánaðar, þótt hann standi fyrstu 3 dagana).
-  try { await stofnaDrog({ dry, man: manudir[0], PG, alltDrog, resolvePayer, minni, ut }); }
-  catch (e) { ut.villur++; ut.stofnun.push({ m: manudir[0], villa: 'stofnun: ' + String(e.message || e) }); }
+  const ml = await minniLestur;
+  if (ml.e) { ut.villur++; ut.stofnun.push({ m: manudir[0], villa: 'stofnun sleppt — minnið (app_kv) náðist ekki að lesa: ' + String(ml.e.message || ml.e) }); }
+  else {
+    const minni = new Set(Array.isArray(ml.r[0] && ml.r[0].value) ? ml.r[0].value : []);
+    try { await stofnaDrog({ dry, man: manudir[0], PG, alltDrog, resolvePayer, minni, ut }); }
+    catch (e) { ut.villur++; ut.stofnun.push({ m: manudir[0], villa: 'stofnun: ' + String(e.message || e) }); }
+  }
 
   // ÁFANGI 1 — uppfæra ósend Tímaveru-drög mánaðanna sem standa (líka þau sem voru stofnuð rétt í þessu).
   // Bregðist lesturinn skilar keyrslan samt því sem áfangi 0 gerði (skýrslan má ekki týna stofnuðum drögum).
