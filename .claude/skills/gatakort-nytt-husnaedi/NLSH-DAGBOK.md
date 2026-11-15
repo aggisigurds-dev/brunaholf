@@ -776,3 +776,10 @@ Agnar: „better to use 5th floor drawing on 4th floor milliloftaþettingar. The
   Engin kerfisbundin skekkja: meðalvigur að næsta frárennsli er ~3 px (0,1 m) á báðum teikningum, svo vörpunin er rétt og hliðrun alls lagsins bætir ekkert.
   Fjærst: #5549 (4,4 m, utan húss neðst á blaðinu), #5558 og #9633 á brunavegg, #12053 á vegg við lyftu, #6304 í ræstiklefa, #5318 á miðju sjúkrastofugólfi. ENGU breytt.
   Fyrirvari: „lituð lögn" telur allt litað í M115 (líka litaða texta), svo sú tala gæti verið aðeins of hagstæð.
+
+## 15.11.2026 — Eigið spjald fyrir viðbótarverk 4. hæðar í stöðuskýrslu (kjarni main 2a1356d)
+Agnar: „bætt við 4. hæðar aukaverkefnin sem voru að byrja, sem þú púslaðir saman myndunum“ = stútarnir 35 (kaflinn VIÐBÓTARVERK Á 4. HÆÐ, 12.11).
+- Nýtt spjald `stutaspjald` (SkyrslaClient, klasi `.sk-vidbot`, strikaður appelsínugulur rammi) á eftir hæðaspjöldunum. Klárað lesið LIFANDI úr skr eftir
+  `parad.ids` (ekki `parad.skr.stada`, sem fraus við pörun 12.11). Lifandi 15.11: 11 af 35 þéttir (31 %), 8 skráðir ekki kláraðir, 16 án skráningar (7 stútar ekki komnir).
+- Spjaldið er HLUTI af „Gólf 5. hæðar“ (357/505) og er ekki lagt við heildartöluna; textinn segir „Innifalið í gólfi 5. hæðar“.
+- Sannreynt á lifandi skýrslu í símabreidd 412 px, engar villur á síðu.
