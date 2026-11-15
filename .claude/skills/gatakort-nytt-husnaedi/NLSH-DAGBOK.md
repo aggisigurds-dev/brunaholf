@@ -692,3 +692,15 @@ Færðir punktar · Tillögur · Símaviðmót · Stöðuskýrsla.
 - **Leiðrétt:** #5974 var fært með hendi 14.11 kl. 23:47 UTC (í þessari lotu), ekki kvöldið áður; #4739 og #4742 færð 15.11 kl. 00:07–00:08 UTC.
 - **Prófað** á prófunarþjóni og lifandi síðu í símahermi: minnsta miðjubil merkja mælt 2,05 R (k = 0,861, 23–24 merki í sýn); drag á #5974 og pikk á ×5 virka áfram.
   Þekkt: í þéttustu klösunum standa merki allt að 3,5 R frá réttum stað þar til stækkað er inn; merki við jaðar skjás geta hnikast þegar hliðrað er. Óprófað í síma Agnars.
+
+## „160 ×6" við Einangrunarstofu snertismit (15.11.2026) — kjarni main 41c3733
+- **Agnar** sendi klippu úr prófunarmynd minni með rauðum hring um „160 ×6" (6H, veggur milli Einangrunarstofu snertismit og Gáttar snertismit, blaðhnit um (669, 1527)).
+- **Mælt (lesaðeins, `maela_stad.cjs` í scratchpad lotunnar):** merkið er #4056, #4167, #4057, #4601, #4058, #4595; allar Loft Ø125-160, kláraðar, Atli Már Heiðarsson, 09.03.2026.
+  `ajour_gogn.tvitak_af`: #4167 af #4056, #4601 af #4057, #4595 af #4058, þ.e. þrjár skráningar sem hver er skráð TVISVAR á nákvæmlega sömu Ajour-hnitum.
+  Staðir: (666,9; 1519,3), (668,2; 1530,6), (672,1; 1531,1) eftir sjálfvirka færslu. Á teikningunni er einn stokkur gegnum tvær vegglínur með um 11 px bili.
+  ÓMÆLT hvort tvískráningin er hin hliðin á sömu lokun (pinninn afritaður) eða tvítekning; gögnin segja það ekki.
+- **Á 6H alls (loft án raufa, 1.090 skráningar):** 7 merktar tvítak, 75 merktar lagfæring. Merki innan 8 px og sömu stærðar: 615 með 1, 182 með 2, 19 með 3, 11 með 4,
+  2 með 5. Af 32 merkjum með 3+: 3 með tvítaki, 9 með lagfæringu, 20 með hvorugu.
+- **Breytt:** spjaldið sýnir efst „Í þessu merki: n stök verk á m stöðum („=" merkir sömu hnit í Ajour): #a = #b · #c = #d …" (`hjaTexti`, `hjaStadir`; flokkað eftir
+  Ajour-hnitum x0, y0 með einum aukastaf). Í dýpstu stækkun klofnar merkið í ×2 (#4056 = #4167) og ×4.
+- **Mistök á leiðinni:** fyrsta tilraun til að færa línuna efst færði RANGA línu (rauðröra-ábendingin ber líka klasann `gk-hja`); séð á prófunarmynd og leiðrétt áður en birt var.
