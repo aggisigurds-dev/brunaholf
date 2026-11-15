@@ -269,3 +269,34 @@ samreiknuð drög, né drög með **„🔒tímar"** í athugasemd — það er 
 tímunum á drögum í líðandi mánuði. Eldri mánuðir eru ósnertir: þar gildir „＋ nýir tímar"-merkið
 og handvirk sókn eins og áður. `GET /api/drog-timar?dry=1` sýnir áætlunina án þess að vista;
 keyrslur skráast í `automation_runs` (`drog-timar`).
+
+## …og drög líðandi mánaðar STOFNAST sjálf — 15.11.2026
+
+Agnar: *„Fjallaböðin tímar og uppsafnað er ekki að koma sjálfkrafa inn í kröfuyfirlit. Mátt laga það
+varanlega."* Mælt: starfið að ofan UPPFÆRÐI aðeins drög sem voru til — 1. nóvember voru engin drög
+til á neinu verki, svo það gerði ekkert (dry-run: skoðuð 0), og 97,73 klst á Fjallaböðum sátu aðeins
+sem áætlun í „Tími eftir" (þrep 3): án yfirvinnu, án Tímaskýrslu og Efnislista, og birtist 4–6 sek. seint.
+
+Nú **stofnar** sama starf (áfangi 0, á undan uppfærslunni) drög **líðandi mánaðar** — aldrei eldri
+mánaðar — fyrir verk sem uppfylla ÖLL skilyrðin (`stofnaDrog()` í `drog-timar.js`):
+röð í **Verðskrá** (`pricing_guide`) með dagvinnutaxta, ≥ 1 klst í mánuðinum, ekki ó-rukkanlegt
+(`K.ORUKKANLEGT`) né gata/Ajour (`K.GATA` = `isGata` hubbsins, Verðskrá `source ajour`), ekki fast verð,
+engin drög fyrir verk+mánuð í neinni stöðu, ekki merkt/falið í Kröfu yfirliti, greiðandi finnst, samtala > 0.
+Reitirnir eins og „📥 Fylla úr tímabók" + „💾 Vista": taxtar og heimilisfang úr Verðskrá, greiðandi/kt/
+tilvísun eins og þrep 2 hópar, smáhlutagjald á (taxti Verðskrár), staðfesting aðeins ef `stadfesting_default`,
+efni tómt (Efnislistinn forfyllir Redder við opnun). Yfirvinna: skipting tímabókar AÐEINS ef Verðskrá ber
+`eftirvinna_threshold_per_day` (í dag Fjallaböðin — öll drög þess síðan í janúar báru yfirvinnu), annars allt
+í dagvinnu (regla 15.10). Heildin í heilum krónum eins og `compute()`.
+
+- **Verk utan Verðskrár fá EKKI sjálfvirk drög** (Tindasel The farm 112,8 klst, Sidumuli 21 99,5 klst í nóv.):
+  taxtinn er verðákvörðun Agnars. Röð í Verðskrá = sjálfvirkni á það verk.
+- **Eydd drög lifna ekki við:** hvert stofnað verk+mánuður fer í `app_kv['drog_timar_stofnud']` (skrifað Á UNDAN
+  drögunum) og er aldrei stofnað aftur. Innsetning er `INSERT … on_conflict (worksite_name, work_month)
+  ignore-duplicates` — drög sem manneskja vistaði á sömu mínútu eru aldrei yfirskrifuð.
+- **Uppfærslan snertir nú ekki heldur** drög sem eru „📤 Send í bókun" / „📨 Krafa send" (meta `sent`/`done`) eða
+  sjálfvirkt tengd Payday-reikningi (`K.sjalfvirkTenging`) — sein færsla breytir ekki upphæð eftir að skjölin fóru.
+- Stofnuð drög sjást í Sjálfvirkni-spjaldinu (`automation_runs` `drog-timar`: „＋ verk mán klst → kr (greiðandi)")
+  og `GET /api/drog-timar?dry=1` sýnir hvað yrði stofnað og af hverju hin eru sleppt. Próf: `test/drog-timar-stofnun.test.js`.
+- **Röng færsla í Tímaveru fer beint í drögin** (þau spegla Tímaveru): lagaðu hana í Tímaveru og dragið fylgir
+  niður í næstu keyrslu. Dæmi 15.11: færsla 13.11 (08:02–12:02, 4 klst) stendur sem 28,011 klst.
+- `GET /api/drog-timar` er nú ALLTAF áætlun (líka án `?dry=1`); keyrsla er `POST` (starfsmanna-hlið) eða áætlunin sjálf.

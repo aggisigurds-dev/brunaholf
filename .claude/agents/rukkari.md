@@ -192,6 +192,10 @@ Sýnin les `/api/krofu-yfirlit-bru` (spjöld), ekki `krofur-yfirlit` (tafla). Þ
 - **✎ Greiðandi á spjaldinu (12.10.2026):** greiðandi + kt + tilvísun á reikning per VERKSTAÐ → `POST /api/customer-map
   {action:'greidandi'}` skrifar `customer_worksite_map` (confidence `manual`, gengur fyrir) og ósend drög. Tilvísunin
   fer á Efnislistann (VERKKAUPI-blokkin), í ritilinn (`#gr-tilv`) og í Senda í bókun. Áland 6 = Landspítali 500300-2130, tilvísun 21727.
+- **Drög líðandi mánaðar stofnast sjálf (15.11.2026)** — `drog-timar` (á 2 klst fresti) stofnar þau fyrir verk í Verðskrá
+  með dagvinnutaxta (Fjallaböðin, Fjarðagata, Orkureitur); verk utan Verðskrár (Tindasel, Sidumuli 21) standa áfram sem
+  „Tími eftir" í þrepi 3 þar til Agnar setur taxta. Eydd drög stofnast ekki aftur (`app_kv drog_timar_stofnud`). Spurt
+  „af hverju kom ekki drag?" → `GET /api/drog-timar?dry=1`, `stofnun[].sleppt` segir ástæðuna. Reglan: docs/REIKNINGALOTA.md.
 
 ## Ósent og Ajour-verkefnin — gat sem sést hvergi (07.10.2026)
 
