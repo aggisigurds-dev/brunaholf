@@ -717,3 +717,13 @@ Færðir punktar · Tillögur · Símaviðmót · Stöðuskýrsla.
 - **Ósnert:** rör (2 × 2 merkið telur áfram pör), rafmagn, gólf og yfirlitsstækkun. Lagfæring A er áfram sér merki með brotinni útlínu.
 - **Liður (c) er nálgun:** tvær skráningar innan 12 px eru settar í eina lokun án þess að gögnin segi að þær séu sitt hvor hliðin. Pikk á merkið sýnir númerin.
 - **Prófað** á prófunarþjóni og lifandi síðu í símahermi; engar villur. Óprófað í síma Agnars.
+
+## Sjálfvirk færsla tekin af fimm skráningum við hurð hjá #5974 (15.11.2026)
+- **Samþykki Agnars í spjalli:** „svo þær fari aftur á Ajour-staðinn, já" (svar við: á ég að taka sjálfvirku færsluna af skráningunum fimm við hurðina hjá #5974).
+- **Skrifað (sama aðgerð og hnappurinn „Upprunaleg staða", engin hörð eyðing):** `update skr_faerslur set eytt = true where id in (31, 38, 39, 47, 356)`; skráningar
+  #522 (470), #555 (503), #561 (509), #712 (653), #3888 (3424), allar `uppruni = sjalfvirkt` frá 12.11.2026, teikning 4 (6H). Til baka: `eytt = false` á sömu fimm línum.
+- **Eftir:** þær standa á Ajour-stað sínum við lárétta vegginn (x 1502–1546, y 910–925), með grárri útlínu (enginn nemi þar). Á lóðrétta veggnum stendur #5974 ein og
+  sýnir nú „hinn endann vantar" (rautt ✕): þar er aðeins EITT stakt verk skráð, ekki par. Áður taldi kortið eina af fimm sem hinn endann.
+- **Pörun við áætluð göt (`skr_aaetlud.parad`) er ÓENDURREIKNUÐ** (síðast 12.11.2026 10:30). Þurrkeyrsla `skraning-gatakort-para.cjs --haed 6H` nú: fullt 639 (geymt 640),
+  hluti 55 (55), vantar 50 (49), pöruð stök verk 1.861 (1.863). Munurinn nær til allra færslna síðan 12.11 (líka handfærslur Agnars). Spurt hvort eigi að keyra `--write`.
+- **Ath.:** verði sjálfvirka færslutólið keyrt aftur fyrir 6H gæti það fært þessar fimm á ný; þá þarf að undanskilja þær (ókannað hvernig tólið fer með `eytt = true` línur).
