@@ -120,7 +120,7 @@ fært, orðrétt. Hver þeirra hleðst AÐEINS þegar hann er kallaður til.
 | Hraða, hleðslutíma, þung köll, polling — **vélarýmið** | `hradi` | 💥 Bruce Willis |
 | Að ALLAR tengingar/lyklar séu í lagi á Kerfisheilsu | `tengingar` | 😤 Samuel L. Jackson |
 | Dagleg yfirsýn + jarvis.html sjálf — svið, raddir, TTS, cache | `jarvis` | 🎩 Jarvis |
-| **Hvað á ég að einbeita mér að?** Forgangsröðun, betri leiðir, gagnrýni á uppbygginguna (síður, útlit, virkni, verkferla), djarfar hugmyndir — aðalráðgjafinn og **stjórnandi Avengers-teymisins** (fjórar línur hér fyrir neðan + `endurskodandi`, `logfraedingur`); skrifar líka morgunyfirlit Ráðgjafans á Þjónustuborði Agnars (slokkvitaeki 506) | `tony-stark` | 🦾 Tony Stark |
+| **Hvað á ég að einbeita mér að?** **Aðalfyrirtækjaráðgjafinn, ráðinn 15.11.2026 með umboð** (2× tekjur og 3× hagnaður fyrir nóv. 2027; top 10 á morgnana; 2 mánaða planið í `app_kv` `radgjafinn_aaetlun`). Forgangsröðun, betri leiðir, gagnrýni á uppbygginguna (síður, útlit, virkni, verkferla), djarfar hugmyndir — yfirmaður **Avengers-deildarinnar** (fjórar línur hér fyrir neðan + `endurskodandi`, `logfraedingur`); skrifar líka morgunyfirlit Ráðgjafans á Þjónustuborði Agnars (slokkvitaeki 506) | `tony-stark` | 🦾 Tony Stark |
 | Verð keppinauta — hvað aðrir rukka, verðbreytingar, útboð; heldur `competitor_prices`/`service_prices` (flipinn Verðsamanburður) ferskum. Aðeins opinberar heimildir, aldrei samráð | `black-widow` | 🕷️ Black Widow |
 | Innkaup — besta innkaupsverð, birgjar, jafngildar vörur, innflutningur frá EES (verð við komu, tollur, VSK, vottun). Leggur til, pantar aldrei | `hawkeye` | 🏹 Hawkeye |
 | Markaðsmál — Facebook/Instagram-færslur, auglýsingar, efnisdagatal, herferðir. Drög; Agnar birtir | `captain-america` | 🛡️ Captain America |
