@@ -19,10 +19,10 @@
    "utgafa": 1,
    "vefagent": "kjarni-vefur",
    "alls": 105,
-   "med_eiganda": 100,
-   "vidvorun": 5,
+   "med_eiganda": 105,
+   "vidvorun": 0,
    "an_eiganda": 0,
-   "hlutfall": 95
+   "hlutfall": 100
   }
  ],
  "sidur": [
@@ -4710,20 +4710,20 @@
     "apps/web/src/app/3dwork/page.tsx"
    ],
    "yfir": null,
-   "eigandi": "skill:3dJoker",
-   "undiragentar": [],
+   "eigandi": "3dwork",
+   "undiragentar": [
+    "skill:3dJoker"
+   ],
    "kveikjuord": [
     "3dwork",
     "STL",
     "Raða"
    ],
    "merki": null,
-   "stada": "⚠️",
-   "astaeda": [
-    "eigandi „skill:3dJoker“ er ekki í registry"
-   ],
-   "eigandi_nafn": "3dJoker",
-   "eigandi_utan": true
+   "stada": "✅",
+   "astaeda": [],
+   "eigandi_nafn": "3dwork",
+   "eigandi_utan": false
   },
   {
    "vefur": "kjarni",
@@ -4736,16 +4736,16 @@
     "apps/web/src/app/api/3dwork/github/geometry/[id]/route.ts"
    ],
    "yfir": null,
-   "eigandi": "skill:3dJoker",
-   "undiragentar": [],
+   "eigandi": "3dwork",
+   "undiragentar": [
+    "skill:3dJoker"
+   ],
    "kveikjuord": [],
    "merki": null,
-   "stada": "⚠️",
-   "astaeda": [
-    "eigandi „skill:3dJoker“ er ekki í registry"
-   ],
-   "eigandi_nafn": "3dJoker",
-   "eigandi_utan": true
+   "stada": "✅",
+   "astaeda": [],
+   "eigandi_nafn": "3dwork",
+   "eigandi_utan": false
   },
   {
    "vefur": "kjarni",
@@ -4758,16 +4758,16 @@
     "apps/web/src/app/api/3dwork/github/projects/[id]/route.ts"
    ],
    "yfir": null,
-   "eigandi": "skill:3dJoker",
-   "undiragentar": [],
+   "eigandi": "3dwork",
+   "undiragentar": [
+    "skill:3dJoker"
+   ],
    "kveikjuord": [],
    "merki": null,
-   "stada": "⚠️",
-   "astaeda": [
-    "eigandi „skill:3dJoker“ er ekki í registry"
-   ],
-   "eigandi_nafn": "3dJoker",
-   "eigandi_utan": true
+   "stada": "✅",
+   "astaeda": [],
+   "eigandi_nafn": "3dwork",
+   "eigandi_utan": false
   },
   {
    "vefur": "kjarni",
@@ -4780,16 +4780,16 @@
     "apps/web/src/app/api/3dwork/github/projects/route.ts"
    ],
    "yfir": null,
-   "eigandi": "skill:3dJoker",
-   "undiragentar": [],
+   "eigandi": "3dwork",
+   "undiragentar": [
+    "skill:3dJoker"
+   ],
    "kveikjuord": [],
    "merki": null,
-   "stada": "⚠️",
-   "astaeda": [
-    "eigandi „skill:3dJoker“ er ekki í registry"
-   ],
-   "eigandi_nafn": "3dJoker",
-   "eigandi_utan": true
+   "stada": "✅",
+   "astaeda": [],
+   "eigandi_nafn": "3dwork",
+   "eigandi_utan": false
   },
   {
    "vefur": "kjarni",
@@ -4802,16 +4802,16 @@
     "apps/web/src/app/api/3dwork/github/route.ts"
    ],
    "yfir": null,
-   "eigandi": "skill:3dJoker",
-   "undiragentar": [],
+   "eigandi": "3dwork",
+   "undiragentar": [
+    "skill:3dJoker"
+   ],
    "kveikjuord": [],
    "merki": null,
-   "stada": "⚠️",
-   "astaeda": [
-    "eigandi „skill:3dJoker“ er ekki í registry"
-   ],
-   "eigandi_nafn": "3dJoker",
-   "eigandi_utan": true
+   "stada": "✅",
+   "astaeda": [],
+   "eigandi_nafn": "3dwork",
+   "eigandi_utan": false
   },
   {
    "vefur": "kjarni",

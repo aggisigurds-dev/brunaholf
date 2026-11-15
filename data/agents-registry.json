@@ -1,9 +1,84 @@
 {
  "generated": "2026-11-15",
- "agents": 48,
+ "agents": 49,
  "skills": 59,
  "a_odrum_velum": 8,
  "list": [
+  {
+   "id": "agent:3dwork",
+   "type": "agent",
+   "name": "3dwork",
+   "emoji": "🤖",
+   "rodd": null,
+   "flokkur": "len",
+   "svid": null,
+   "lysing": "3dwork-bekkurinn 🔧 — forráðamaður STL-/CAD-bekksins í Kjarna (apps/web, leiðin /3dwork, kjarni-3dwork.vercel.app) — bekkurinn sjálfur, Partasafnið og Söfn, „Raða og mála\", Prufukeyrsla, hamar-reiknivélin, One piece/Subtract/Split, og skýið work3d_projects + bucket work3d. Notaðu þegar eitthvað í 3dwork bilar eða á að breytast, þegar lesa þarf parta eða söfn úr skýinu, þegar prófa á bekkinn án þess að skrifa í verk Agnars, eða þegar fara á yfir hvort það sem smíðað var virki. CAD-vinna á pörtum, merkjaraverkfræði, teikningar og prentun → skill 3dJoker.",
+   "serhaefing": [],
+   "kveikjuord": [
+    "3dwork",
+    "Partasafn",
+    "Söfn",
+    "Raða og mála",
+    "Prufukeyrsla",
+    "One piece",
+    "work3d",
+    "STL-bekkur"
+   ],
+   "aldrei": [],
+   "tools": [
+    "Bash",
+    "Read",
+    "Grep",
+    "Glob",
+    "Edit",
+    "Write"
+   ],
+   "heimili": [
+    "kjarni"
+   ],
+   "skrar": [
+    {
+     "repo": "kjarni",
+     "path": ".claude/agents/3dwork.md",
+     "uppfaert": "2026-11-15",
+     "linur": 126
+    }
+   ],
+   "afbrigdi": [],
+   "uppfaert": "2026-11-15",
+   "sidur": [
+    {
+     "id": "web:/3dwork",
+     "vefur": "kjarni",
+     "titill": "3dwork — STL bench",
+     "hlutverk": "eigandi"
+    },
+    {
+     "id": "web:/api/3dwork/github/geometry/[id] (api)",
+     "vefur": "kjarni",
+     "titill": "3dwork geometry",
+     "hlutverk": "eigandi"
+    },
+    {
+     "id": "web:/api/3dwork/github/projects/[id] (api)",
+     "vefur": "kjarni",
+     "titill": "3dwork eitt verkefni",
+     "hlutverk": "eigandi"
+    },
+    {
+     "id": "web:/api/3dwork/github/projects (api)",
+     "vefur": "kjarni",
+     "titill": "3dwork verkefni",
+     "hlutverk": "eigandi"
+    },
+    {
+     "id": "web:/api/3dwork/github (api)",
+     "vefur": "kjarni",
+     "titill": "3dwork GitHub-sync",
+     "hlutverk": "eigandi"
+    }
+   ]
+  },
   {
    "id": "agent:adstod",
    "type": "agent",
@@ -591,9 +666,17 @@
     "Skill"
    ],
    "heimili": [
+    "brunaholf",
     "slokkvitaeki"
    ],
    "skrar": [
+    {
+     "repo": "brunaholf",
+     "path": ".claude/agents/black-widow.md",
+     "uppfaert": "2026-11-15",
+     "linur": 93,
+     "afrit": true
+    },
     {
      "repo": "slokkvitaeki",
      "path": ".claude/agents/black-widow.md",
@@ -1026,9 +1109,17 @@
     "Skill"
    ],
    "heimili": [
+    "brunaholf",
     "slokkvitaeki"
    ],
    "skrar": [
+    {
+     "repo": "brunaholf",
+     "path": ".claude/agents/captain-america.md",
+     "uppfaert": "2026-11-15",
+     "linur": 98,
+     "afrit": true
+    },
     {
      "repo": "slokkvitaeki",
      "path": ".claude/agents/captain-america.md",
@@ -1867,9 +1958,17 @@
     "Skill"
    ],
    "heimili": [
+    "brunaholf",
     "slokkvitaeki"
    ],
    "skrar": [
+    {
+     "repo": "brunaholf",
+     "path": ".claude/agents/hawkeye.md",
+     "uppfaert": "2026-11-15",
+     "linur": 84,
+     "afrit": true
+    },
     {
      "repo": "slokkvitaeki",
      "path": ".claude/agents/hawkeye.md",
@@ -3172,9 +3271,17 @@
     "Skill"
    ],
    "heimili": [
+    "brunaholf",
     "slokkvitaeki"
    ],
    "skrar": [
+    {
+     "repo": "brunaholf",
+     "path": ".claude/agents/logfraedingur.md",
+     "uppfaert": "2026-11-15",
+     "linur": 96,
+     "afrit": true
+    },
     {
      "repo": "slokkvitaeki",
      "path": ".claude/agents/logfraedingur.md",
@@ -4623,9 +4730,17 @@
     "Skill"
    ],
    "heimili": [
+    "brunaholf",
     "slokkvitaeki"
    ],
    "skrar": [
+    {
+     "repo": "brunaholf",
+     "path": ".claude/agents/spider-man.md",
+     "uppfaert": "2026-11-15",
+     "linur": 98,
+     "afrit": true
+    },
     {
      "repo": "slokkvitaeki",
      "path": ".claude/agents/spider-man.md",
@@ -4928,9 +5043,17 @@
     "mcp__supabase__execute_sql"
    ],
    "heimili": [
+    "brunaholf",
     "slokkvitaeki"
    ],
    "skrar": [
+    {
+     "repo": "brunaholf",
+     "path": ".claude/agents/tony-stark.md",
+     "uppfaert": "2026-11-15",
+     "linur": 156,
+     "afrit": true
+    },
     {
      "repo": "slokkvitaeki",
      "path": ".claude/agents/tony-stark.md",
@@ -12132,20 +12255,20 @@
     "apps/web/src/app/3dwork/page.tsx"
    ],
    "yfir": null,
-   "eigandi": "skill:3dJoker",
-   "undiragentar": [],
+   "eigandi": "3dwork",
+   "undiragentar": [
+    "skill:3dJoker"
+   ],
    "kveikjuord": [
     "3dwork",
     "STL",
     "Raða"
    ],
    "merki": null,
-   "stada": "⚠️",
-   "astaeda": [
-    "eigandi „skill:3dJoker“ er ekki í registry"
-   ],
-   "eigandi_nafn": "3dJoker",
-   "eigandi_utan": true
+   "stada": "✅",
+   "astaeda": [],
+   "eigandi_nafn": "3dwork",
+   "eigandi_utan": false
   },
   {
    "vefur": "kjarni",
@@ -12158,16 +12281,16 @@
     "apps/web/src/app/api/3dwork/github/geometry/[id]/route.ts"
    ],
    "yfir": null,
-   "eigandi": "skill:3dJoker",
-   "undiragentar": [],
+   "eigandi": "3dwork",
+   "undiragentar": [
+    "skill:3dJoker"
+   ],
    "kveikjuord": [],
    "merki": null,
-   "stada": "⚠️",
-   "astaeda": [
-    "eigandi „skill:3dJoker“ er ekki í registry"
-   ],
-   "eigandi_nafn": "3dJoker",
-   "eigandi_utan": true
+   "stada": "✅",
+   "astaeda": [],
+   "eigandi_nafn": "3dwork",
+   "eigandi_utan": false
   },
   {
    "vefur": "kjarni",
@@ -12180,16 +12303,16 @@
     "apps/web/src/app/api/3dwork/github/projects/[id]/route.ts"
    ],
    "yfir": null,
-   "eigandi": "skill:3dJoker",
-   "undiragentar": [],
+   "eigandi": "3dwork",
+   "undiragentar": [
+    "skill:3dJoker"
+   ],
    "kveikjuord": [],
    "merki": null,
-   "stada": "⚠️",
-   "astaeda": [
-    "eigandi „skill:3dJoker“ er ekki í registry"
-   ],
-   "eigandi_nafn": "3dJoker",
-   "eigandi_utan": true
+   "stada": "✅",
+   "astaeda": [],
+   "eigandi_nafn": "3dwork",
+   "eigandi_utan": false
   },
   {
    "vefur": "kjarni",
@@ -12202,16 +12325,16 @@
     "apps/web/src/app/api/3dwork/github/projects/route.ts"
    ],
    "yfir": null,
-   "eigandi": "skill:3dJoker",
-   "undiragentar": [],
+   "eigandi": "3dwork",
+   "undiragentar": [
+    "skill:3dJoker"
+   ],
    "kveikjuord": [],
    "merki": null,
-   "stada": "⚠️",
-   "astaeda": [
-    "eigandi „skill:3dJoker“ er ekki í registry"
-   ],
-   "eigandi_nafn": "3dJoker",
-   "eigandi_utan": true
+   "stada": "✅",
+   "astaeda": [],
+   "eigandi_nafn": "3dwork",
+   "eigandi_utan": false
   },
   {
    "vefur": "kjarni",
@@ -12224,16 +12347,16 @@
     "apps/web/src/app/api/3dwork/github/route.ts"
    ],
    "yfir": null,
-   "eigandi": "skill:3dJoker",
-   "undiragentar": [],
+   "eigandi": "3dwork",
+   "undiragentar": [
+    "skill:3dJoker"
+   ],
    "kveikjuord": [],
    "merki": null,
-   "stada": "⚠️",
-   "astaeda": [
-    "eigandi „skill:3dJoker“ er ekki í registry"
-   ],
-   "eigandi_nafn": "3dJoker",
-   "eigandi_utan": true
+   "stada": "✅",
+   "astaeda": [],
+   "eigandi_nafn": "3dwork",
+   "eigandi_utan": false
   },
   {
    "vefur": "kjarni",
@@ -12347,23 +12470,28 @@
    "utgafa": 1,
    "vefagent": "kjarni-vefur",
    "alls": 105,
-   "med_eiganda": 100,
-   "vidvorun": 5,
+   "med_eiganda": 105,
+   "vidvorun": 0,
    "an_eiganda": 0,
-   "hlutfall": 95
+   "hlutfall": 100
   }
  ],
  "kjarni_afrit_sleppt": [
   "adstod.md",
   "birgdastjori.md",
+  "black-widow.md",
   "bokari.md",
   "bord-flettur.md",
+  "captain-america.md",
+  "center-hotel.md",
   "elon-musk.md",
   "endurskodandi.md",
   "framendi.md",
   "fyrirtaeki.md",
   "gagnaleidslur.md",
   "gatakort.md",
+  "hawkeye.md",
+  "heimaleiga.md",
   "hradi.md",
   "innkaupabokari.md",
   "jarvis.md",
@@ -12387,9 +12515,11 @@
   "sara-coworker.md",
   "sara-organizer.md",
   "skjol.md",
+  "spider-man.md",
   "tengingar.md",
   "thema.md",
   "thjonustugatt.md",
+  "tony-stark.md",
   "utlitsserfraedingur.md",
   "verkstadur.md"
  ]
