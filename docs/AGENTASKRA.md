@@ -422,17 +422,17 @@ Byggt 2026-11-15 úr `brunaholf/.claude/sidukort.json`, `kjarni/.claude/sidukort
 | kjarni | About (sniðmát) | `/about` | `apps/web/src/app/(external-pages)/about/page.tsx` | `kjarni-vefur` | — | ✅ |
 | kjarni | City trips from Keflavík | `/borgarferdir` | `apps/web/src/app/(external-pages)/borgarferdir/page.tsx` | `kjarni-vefur` | — | ✅ |
 | kjarni | Nextbase-sniðmát | `/` | `apps/web/src/app/(external-pages)/page.tsx` | `kjarni-vefur` | — | ✅ |
-| kjarni | 3dwork — STL bench | `/3dwork` | `apps/web/src/app/3dwork/page.tsx` | `skill:3dJoker` | — | ⚠️ eigandi „skill:3dJoker“ er ekki í registry |
-| kjarni | 3dwork geometry | `/api/3dwork/github/geometry/[id]` | `apps/web/src/app/api/3dwork/github/geometry/[id]/route.ts` | `skill:3dJoker` | — | ⚠️ eigandi „skill:3dJoker“ er ekki í registry |
-| kjarni | 3dwork eitt verkefni | `/api/3dwork/github/projects/[id]` | `apps/web/src/app/api/3dwork/github/projects/[id]/route.ts` | `skill:3dJoker` | — | ⚠️ eigandi „skill:3dJoker“ er ekki í registry |
-| kjarni | 3dwork verkefni | `/api/3dwork/github/projects` | `apps/web/src/app/api/3dwork/github/projects/route.ts` | `skill:3dJoker` | — | ⚠️ eigandi „skill:3dJoker“ er ekki í registry |
-| kjarni | 3dwork GitHub-sync | `/api/3dwork/github` | `apps/web/src/app/api/3dwork/github/route.ts` | `skill:3dJoker` | — | ⚠️ eigandi „skill:3dJoker“ er ekki í registry |
+| kjarni | 3dwork — STL bench | `/3dwork` | `apps/web/src/app/3dwork/page.tsx` | `3dwork` | `skill:3dJoker` | ✅ |
+| kjarni | 3dwork geometry | `/api/3dwork/github/geometry/[id]` | `apps/web/src/app/api/3dwork/github/geometry/[id]/route.ts` | `3dwork` | `skill:3dJoker` | ✅ |
+| kjarni | 3dwork eitt verkefni | `/api/3dwork/github/projects/[id]` | `apps/web/src/app/api/3dwork/github/projects/[id]/route.ts` | `3dwork` | `skill:3dJoker` | ✅ |
+| kjarni | 3dwork verkefni | `/api/3dwork/github/projects` | `apps/web/src/app/api/3dwork/github/projects/route.ts` | `3dwork` | `skill:3dJoker` | ✅ |
+| kjarni | 3dwork GitHub-sync | `/api/3dwork/github` | `apps/web/src/app/api/3dwork/github/route.ts` | `3dwork` | `skill:3dJoker` | ✅ |
 | kjarni | Marks hlekkjaforskoðun | `/api/marks/preview` | `apps/web/src/app/api/marks/preview/route.ts` | `kjarni-vefur` | — | ✅ |
 | kjarni | Marks — site | `/marks/[boardId]` | `apps/web/src/app/marks/[boardId]/page.tsx` | `kjarni-vefur` | — | ✅ |
 | kjarni | Marks — kjarni bookmarks | `/marks` | `apps/web/src/app/marks/page.tsx` | `kjarni-vefur` | — | ✅ |
 | kjarni | Ljósastýring Langamýri 22 (Hue Remote API) | `/ljos` | `apps/slokkvitaeki/app/ljos/page.tsx` · `apps/slokkvitaeki/app/api/ljos/route.ts` | `kjarni-vefur` | `oryggi` | ✅ |
 
-**Samantekt:** brunaholf 102/102 með eiganda (100%), 0 ⚠️, 0 ❌ · kjarni 100/105 með eiganda (95%), 5 ⚠️, 0 ❌
+**Samantekt:** brunaholf 102/102 með eiganda (100%), 0 ⚠️, 0 ❌ · kjarni 105/105 með eiganda (100%), 0 ⚠️, 0 ❌
 
 ### Síður án eiganda
 

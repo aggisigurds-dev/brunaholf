@@ -105,6 +105,7 @@ Byggð 2026-11-15. Þessi tafla er dregin beint úr agent- og skill-skránum og 
 
 | Heiti | Tegund | Kveikjuorð | Skrá síðast uppfærð |
 |---|---|---|---|
+| `3dwork` | agent | `3dwork` · `Partasafn` · `Söfn` · `Raða og mála` · `Prufukeyrsla` · `One piece` · `work3d` · `STL-bekkur` | 15.11.2026 |
 | `adstod` | agent | `watchlist` · `banner` · `aðstoð` · `tips` · `Aðstoðarmiðstöð` · `customer brief` · `dot á kúnna` · `punktar á kúnnum` · `snooze` · `fresta` · `þarf athygli` · `áríðandi` · `útrunnin tæki` · `líklegir tvítekningar` · `Pennyworth` | 04.11.2026 |
 | `artcraft` | agent | `ArtCraft` · `Skýjastúdíó` · `Skýjahreyfimynd` · `Einkastúdíó` · `Upplyfting` · `Breyta mynd` · `Útvíkka` · `Endurljós` · `Tónsmíð` · `Verkbók` · `Bakgrunnur` · `Replicate` | 11.11.2026 |
 | `birgdastjori` | agent | `birgðir` · `lager` · `á lager` · `endursala` · `endurrukka` · `rukka áfram` · `efni í verk` · `keypt fyrir verk` · `innkaupapöntun` · `panta inn` · `vantar á lager` · `kostnaðarverð` · `álagning` · `lágmark` · `talning` | 04.11.2026 |
