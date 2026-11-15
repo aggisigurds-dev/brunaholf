@@ -1,8 +1,8 @@
 /* Behaviour test for the ATTACHMENTS_FAILED guard in brunaholf gmail-send.js.
    Stubs ./_google and global.fetch — no network, no live send. */
 const path = require('path');
-const FN = '/home/user/brunaholf/netlify/functions/gmail-send.js';
-const GOOGLE = path.resolve('/home/user/brunaholf/netlify/functions/_google.js');
+const FN = path.join(__dirname, '..', 'netlify', 'functions', 'gmail-send.js');
+const GOOGLE = path.join(__dirname, '..', 'netlify', 'functions', '_google.js');
 
 // Stub _google before gmail-send requires it.
 require.cache[GOOGLE] = {
@@ -44,8 +44,11 @@ process.env.SUPABASE_SERVICE_ROLE_KEY = 'svc';
 delete require.cache[require.resolve(FN)];
 const { handler } = require(FN);
 
+// 15.11.2026: gmail-send krefst innskráningar eða tíma-tóka — prófið sendir gildan tóka (lykill 'svc' að ofan).
+const { posturToki } = require(path.join(__dirname, '..', 'netlify', 'functions', '_postur-toki.js'));
 const call = (attachments, extra = {}) => handler({
   httpMethod: 'POST',
+  headers: { 'x-postur-toki': posturToki() },
   body: JSON.stringify({ account: 'a@b.is', to: ['x@y.is'], subject: 's', html: '<p>h</p>', attachments, ...extra }),
 });
 
