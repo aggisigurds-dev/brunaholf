@@ -587,7 +587,8 @@
     "Glob",
     "WebFetch",
     "WebSearch",
-    "mcp__supabase__execute_sql"
+    "mcp__supabase__execute_sql",
+    "Skill"
    ],
    "heimili": [
     "slokkvitaeki"
@@ -597,7 +598,7 @@
      "repo": "slokkvitaeki",
      "path": ".claude/agents/black-widow.md",
      "uppfaert": "2026-11-15",
-     "linur": 83
+     "linur": 92
     }
    ],
    "afbrigdi": [],
@@ -1032,7 +1033,7 @@
      "repo": "slokkvitaeki",
      "path": ".claude/agents/captain-america.md",
      "uppfaert": "2026-11-15",
-     "linur": 84
+     "linur": 97
     }
    ],
    "afbrigdi": [],
@@ -1232,7 +1233,8 @@
     "Bash",
     "Read",
     "Grep",
-    "Glob"
+    "Glob",
+    "Skill"
    ],
    "heimili": [
     "brunaholf"
@@ -1241,12 +1243,12 @@
     {
      "repo": "brunaholf",
      "path": ".claude/agents/endurskodandi.md",
-     "uppfaert": "2026-11-04",
-     "linur": 119
+     "uppfaert": "2026-11-15",
+     "linur": 127
     }
    ],
    "afbrigdi": [],
-   "uppfaert": "2026-11-04",
+   "uppfaert": "2026-11-15",
    "sidur": [
     {
      "id": "dkplus-products",
@@ -1861,7 +1863,8 @@
     "Glob",
     "WebFetch",
     "WebSearch",
-    "mcp__supabase__execute_sql"
+    "mcp__supabase__execute_sql",
+    "Skill"
    ],
    "heimili": [
     "slokkvitaeki"
@@ -1871,7 +1874,7 @@
      "repo": "slokkvitaeki",
      "path": ".claude/agents/hawkeye.md",
      "uppfaert": "2026-11-15",
-     "linur": 75
+     "linur": 83
     }
    ],
    "afbrigdi": [],
@@ -3165,7 +3168,8 @@
     "Grep",
     "Glob",
     "WebFetch",
-    "WebSearch"
+    "WebSearch",
+    "Skill"
    ],
    "heimili": [
     "slokkvitaeki"
@@ -3174,12 +3178,12 @@
     {
      "repo": "slokkvitaeki",
      "path": ".claude/agents/logfraedingur.md",
-     "uppfaert": "2026-11-04",
-     "linur": 86
+     "uppfaert": "2026-11-15",
+     "linur": 95
     }
    ],
    "afbrigdi": [],
-   "uppfaert": "2026-11-04",
+   "uppfaert": "2026-11-15",
    "sidur": []
   },
   {
@@ -4615,7 +4619,8 @@
     "Glob",
     "WebFetch",
     "WebSearch",
-    "mcp__supabase__execute_sql"
+    "mcp__supabase__execute_sql",
+    "Skill"
    ],
    "heimili": [
     "slokkvitaeki"
@@ -4625,7 +4630,7 @@
      "repo": "slokkvitaeki",
      "path": ".claude/agents/spider-man.md",
      "uppfaert": "2026-11-15",
-     "linur": 89
+     "linur": 97
     }
    ],
    "afbrigdi": [],
@@ -4930,7 +4935,7 @@
      "repo": "slokkvitaeki",
      "path": ".claude/agents/tony-stark.md",
      "uppfaert": "2026-11-15",
-     "linur": 146
+     "linur": 155
     }
    ],
    "afbrigdi": [],
