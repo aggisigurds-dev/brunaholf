@@ -675,3 +675,20 @@ Færðir punktar · Tillögur · Símaviðmót · Stöðuskýrsla.
 - **Athugað:** á staðnum í skjáskotinu er ENGINN nemi á stokknum sem hringað var um (punkturinn hefði annars tengst); „ótengt" segir því aðeins að nemagögnin þekki ekki
   þetta gegnumtak, ekki að punkturinn sé á röngum stað. Nemar ná ekki öllum gegnumtökum.
 - **Prófað** á prófunarþjóni og lifandi síðu í símahermi (grá útlína fannst á lifandi mynd við (399, 250) í `a4lif_naer.png`). Óprófað í síma Agnars.
+
+## Skörun, samruni og stærðarsleði (15.11.2026) — kjarni main 864ca0d
+- **Orð Agnars:** „Merkin eiga ekki að overlappa. Nema þetta sé bara viðgerð á sama gati. Geturðu bara sett inn stýringu fyrir merkjastærðir slider eða að lágmarksstærð sé
+  svipuð og veggjaþykktin. Af hverju er oft 4x til 6x í sama merkinuuu."
+- **Mælt (lesaðeins, `maela_klasa.cjs` í scratchpad lotunnar; færðar loftræstiskráningar með nema, án raufa):** 6H: 842 skráningar, 233 án nema, 403 merki á vegg:
+  232 með 1, 153 með 2, 13 með 3, 4 með 4, 1 með 5. 5H: 586 skráningar, 164 án nema, 289 merki: 169 / 114 / 4 með 3 / 2 með 4. Aðeins 18 + 6 merki eiga í raun 3+ skráningar;
+  í 12 af 18 á 6H eru Ajour-staðirnir dreifðir yfir meira en 0,6 m (sjálfvirka færslan safnaði þeim saman).
+- **Svar við „4x til 6x":** samrunafjarlægðin var 2,4 R, sem er 0,5–0,9 m á blaðinu þegar ekki er stækkað alveg inn (k ≈ 1–2); tveir til þrír stokkar hlið við hlið urðu
+  eitt merki. Nú `D = max(D_FAST = 8 px, 1,2 R)` í nærmynd.
+- **Skörun:** öll merki í nærmynd (allir hópar) ýtast í sundur í allt að 12 umferðum þar til miðjubil er 2,05 R, mælt með hakaásinn þjappaðan um 1,7 (hökin standa 1,5 R
+  til hliðar, eða ofan og neðan við láréttan vegg); mest 3,5 R frá réttum stað. Lagfæring og merkið sem hún lagar mega skarast (0,9 R). Gamla hliðrunin (aðeins Loft,
+  2,1 R í eina átt, allt að 6 sinnum) er farin: hún hafði fært merki allt að 12 R niður eftir veggnum, langt frá réttum stað.
+- **Stærð:** sleðinn „Merki" efst til vinstri á kortinu (`.gk-msledi`, sami `stillingar.taknStaerd` og í Stillingum, 0,5–2,5). `merkisR` ≥ `VEGG_THYKKT / 2 × k` (5,6 px).
+  Nærmynd (`naerm`) ræðst af stækkuninni einni, ekki sleðanum. Pikk velur fyrst úr merkinu sem er TEIKNAÐ undir fingrinum (`merkiRef`).
+- **Leiðrétt:** #5974 var fært með hendi 14.11 kl. 23:47 UTC (í þessari lotu), ekki kvöldið áður; #4739 og #4742 færð 15.11 kl. 00:07–00:08 UTC.
+- **Prófað** á prófunarþjóni og lifandi síðu í símahermi: minnsta miðjubil merkja mælt 2,05 R (k = 0,861, 23–24 merki í sýn); drag á #5974 og pikk á ×5 virka áfram.
+  Þekkt: í þéttustu klösunum standa merki allt að 3,5 R frá réttum stað þar til stækkað er inn; merki við jaðar skjás geta hnikast þegar hliðrað er. Óprófað í síma Agnars.
