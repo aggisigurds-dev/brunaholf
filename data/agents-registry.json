@@ -566,7 +566,8 @@
     "verðsamanburður",
     "verðkönnun",
     "erum við of dýr",
-    "ódýrari",
+    "ódýrari en við",
+    "eru þeir ódýrari",
     "útboð",
     "tilboð keppinauta",
     "markaðsverð",
@@ -601,7 +602,14 @@
    ],
    "afbrigdi": [],
    "uppfaert": "2026-11-15",
-   "sidur": []
+   "sidur": [
+    {
+     "id": "verdsamanburdur",
+     "vefur": "brunaholf",
+     "titill": "Verðsamanburður",
+     "hlutverk": "eigandi"
+    }
+   ]
   },
   {
    "id": "agent:bokari",
@@ -690,7 +698,7 @@
      "id": "verdsamanburdur",
      "vefur": "brunaholf",
      "titill": "Verðsamanburður",
-     "hlutverk": "eigandi"
+     "hlutverk": "undiragent"
     },
     {
      "id": "verkstadir",
@@ -1821,8 +1829,11 @@
     "innkaupsverð",
     "birgjar",
     "birgir",
+    "birgja",
     "hver selur",
     "ódýrari birgir",
+    "ódýrari birgi",
+    "ódýrari birgja",
     "betra verð",
     "kaupa inn",
     "kaupa erlendis",
@@ -1865,7 +1876,14 @@
    ],
    "afbrigdi": [],
    "uppfaert": "2026-11-15",
-   "sidur": []
+   "sidur": [
+    {
+     "id": "verdlisti",
+     "vefur": "brunaholf",
+     "titill": "Verðlisti",
+     "hlutverk": "undiragent"
+    }
+   ]
   },
   {
    "id": "agent:heimaleiga",
@@ -7746,16 +7764,21 @@
     "index.html"
    ],
    "yfir": null,
-   "eigandi": "bokari",
-   "undiragentar": [],
+   "eigandi": "black-widow",
+   "undiragentar": [
+    "bokari"
+   ],
    "kveikjuord": [
     "Verðsamanburður",
-    "samkeppnisverð"
+    "samkeppnisverð",
+    "keppinautar",
+    "verð keppinauta",
+    "competitor_prices"
    ],
    "merki": null,
    "stada": "✅",
    "astaeda": [],
-   "eigandi_nafn": "bokari",
+   "eigandi_nafn": "black-widow",
    "eigandi_utan": false
   },
   {
@@ -8628,7 +8651,8 @@
    "yfir": null,
    "eigandi": "bokari",
    "undiragentar": [
-    "gagnaleidslur"
+    "gagnaleidslur",
+    "hawkeye"
    ],
    "kveikjuord": [
     "Verðlisti",

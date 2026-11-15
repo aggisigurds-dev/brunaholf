@@ -236,7 +236,7 @@ Byggt 2026-11-15 úr `brunaholf/.claude/sidukort.json`, `kjarni/.claude/sidukort
 | brunaholf | Tímavera | `/#timavera` | `index.html#renderTimavera` | `gagnaleidslur` | `bokari` · `verkstadur` | ✅ |
 | brunaholf | Mæting · verkstaðir | `/#tvmaeting` | `index.html#renderTvMaeting` | `verkstadur` | `gagnaleidslur` | ✅ |
 | brunaholf | Frá verkstað | `/#verkstadapostur` | `index.html#renderVerkstadapostur` | `verkstadur` | `bokari` · `framendi` | ✅ |
-| brunaholf | Verðsamanburður | `/#verdsamanburdur` | `index.html` | `bokari` | — | ✅ |
+| brunaholf | Verðsamanburður | `/#verdsamanburdur` | `index.html` | `black-widow` | `bokari` | ✅ |
 | brunaholf | Verkstaðir | `/#verkstadir` | `index.html` | `bokari` | `gagnaleidslur` · `verkstadur` | ✅ |
 | brunaholf | Skuldunautar | `/#skuldunautar` | `index.html#renderSkuldunautar` | `rukkari` | `bokari` | ✅ |
 | brunaholf | Skýrslur | `/#skyrslur` | `index.html#renderSkyrslur` | `rukkari` | `bokari` | ✅ |
@@ -272,7 +272,7 @@ Byggt 2026-11-15 úr `brunaholf/.claude/sidukort.json`, `kjarni/.claude/sidukort
 | brunaholf | Vinnustofa | `/#vinnustofa` | `index.html#renderVinnustofa` | `framendi` | `bokari` · `rukkari` · `jarvis` | ✅ |
 | brunaholf | Verðskrá | `/#verdskra` | `index.html#renderVerdskra` | `bokari` | — | ✅ |
 | brunaholf | Efniskostnaður | `/#efniskostnadur` | `index.html#renderEfniskostnadur` | `bokari` | `rukkari` · `verkstadur` · `gagnaleidslur` | ✅ |
-| brunaholf | Verðlisti | `/#verdlisti` | `index.html#renderVerdlisti` | `bokari` | `gagnaleidslur` | ✅ |
+| brunaholf | Verðlisti | `/#verdlisti` | `index.html#renderVerdlisti` | `bokari` | `gagnaleidslur` · `hawkeye` | ✅ |
 | brunaholf | Vörubirgðir | `/#vorubirgdir` | `index.html#renderVorubirgdir` | `bokari` | `birgdastjori` | ✅ |
 | brunaholf | Útgjöld | `/#utgjold` | `index.html` | `framendi` | `bokari` | ✅ |
 | brunaholf | Sjálfvirkni | `/#sjalfvirkni` | `index.html#renderSjalfvirkni` | `gagnaleidslur` | `kerfisheilsa` | ✅ |
