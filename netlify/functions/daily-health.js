@@ -137,7 +137,8 @@ exports.handler = async (event) => {
   const html = buildHtml({ ok, alerts, sources, checked_at });
 
   try {
-    const r = await fetch(`${origin}/api/gmail-send`, {
+    // Fastur uppruni: tókinn má aldrei fara á hýsil sem kemur úr beiðninni (Host-haus) — netvörður 15.11.2026.
+    const r = await fetch('https://brunaholf.netlify.app/api/gmail-send', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', [POSTUR_HAUS]: posturToki() },
       body: JSON.stringify({ account: ALERT_ACCOUNT, from: ALERT_FROM, to: ALERT_TO, subject, html }),

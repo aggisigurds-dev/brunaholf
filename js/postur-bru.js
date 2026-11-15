@@ -17,9 +17,14 @@
   var APP = 'https://slokkvitaeki.netlify.app';
   var innfellt = true;
   try { innfellt = window.self !== window.top; } catch (e) { innfellt = true; }
+  // Lesið við hleðslu, áður en síðan getur breytt slóðinni. ?embed=1 = innfelld (261-app-profiles.js).
+  var embed = window.__hubEmbed === true || /[?&]embed=1(&|$)/.test(location.search || '');
+  // Chrome/Safari segja hver foreldrið er (ancestorOrigins). Firefox gerir það ekki og appið sendir
+  // Referrer-Policy: no-referrer, svo þar ræður ?embed=1. Öruggt hvort sem er: postMessage(…, APP) nær
+  // aðeins til foreldris sem ER appið — vafrinn hendir skeytinu annars (netvörður 15.11.2026).
   function foreldriErApp() {
-    try { var a = location.ancestorOrigins; if (a && a.length) return a[0] === APP; } catch (e) {}
-    return String(document.referrer || '').indexOf(APP + '/') === 0;
+    try { var a = location.ancestorOrigins; if (a && typeof a.length === 'number') return a.length > 0 && a[0] === APP; } catch (e) {}
+    return embed || String(document.referrer || '').indexOf(APP + '/') === 0;
   }
   var bida = {}, n = 0;
 
