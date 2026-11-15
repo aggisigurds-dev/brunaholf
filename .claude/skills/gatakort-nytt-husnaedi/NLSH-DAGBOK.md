@@ -791,3 +791,20 @@ Agnar: „þessir guide points og aðrir gulir ókláraðir punktar, hvernig kom
   hvítur með rauðum hring = stútur ekki kominn / ómetið. Skýringar í neðri stiku telja gulu og hvítu.
 - Sími á 4H skiptir sjálfur í Gólf-sýn (og aftur í Loftræstingu af 4H). Gólfsýnin sýnir líka vatnslög blaðsins sem eru stillt sýnileg (4H: M115).
 - Pöruðu stútarnir (19) sjást sem skráningar sínar (✓ / opið merki), ekki sem stútur. Sannreynt í símahermi á lifandi vef við S1-S (#6–#10).
+
+### 15.11.2026 — Stútalitir skilgreindir betur (kjarni c969830)
+Agnar: „mætti skilgreina betur, t.d. appelsínugulur eða fleiri litum“. Gult var tvírætt (Hálfnað-merki Ajour vs þéttur stútur án skráningar).
+- Sama í Apex (`STUT_LIT`, skýringar `st-g`/`st-h`/`st-o`) og skýrslu (`STUT`, `HkStutar.ometid`, skýring `eo`):
+  rauður = eftir að þétta (3), **appelsínugulur #f97316** = þétt en skráningu vantar (3), hvítur m. rauðum ramma = stútur ekki kominn (7),
+  **grár #94a3b8** = ómetið í úttekt (3; var áður sami litur og „ekki kominn").
+- Talning 15.11 (verk 4): áætlun 1.098 göt (6H 744, 5H 319, 4H 35), 951 paruð, 147 án skráningar (134 rauðir + 13 stútar).
+  Opnar Ajour-skráningar 236 (6H 16, 5H 206, 4H 10, Viðbótarverkefni-blað 4). Gul merki á korti = „Hálfnað“ (gegnumtak: eitthvað opið
+  en eitthvað klárað, eða hinn endann vantar); merki þar sem ekkert er klárað eru „Opið“ (rautt). Fjöldi gulra merkja er ÓMÆLDUR (reiknast í biðlara).
+- **LEIÐRÉTTING:** af 147 án skráningar eru 71 TILLÖGUR á 5H (`uppruni` 'tillaga:', appelsínugulur hringur með „?“, óstaðfestar), ekki rauðir punktar.
+  Rauðir í raun: 6H 50 + 5H 10 + 4H 3 = 63. Ógert ≈ 236 opnar + 63 rauðir + 13 óskráðir stútar ≈ 312, auk 71 tillögu sem á eftir að meta.
+
+### 15.11.2026 — Stöðusían „Ógert“ (kjarni 0419103)
+Agnar: „get ég séð view með því sem er eftir“. Ný sía fremst á eftir „Allt“: opnar skráningar + áætluð göt án skráningar + áætluð göt sem vantar
+hluta; kláraðar faldar. Talan á hnappnum = opnar + rauðir (án tillagna). Slóðin `/kjarni/skraning/kort?stada=ogert` opnar beint í síunni.
+Sannreynt í símahermi á lifandi vef: 5H, Sýn: allt → „Ógert 216“ (206 opnar + 10 rauðir), Tilbúin 4.525, Í vinnslu 206, Eftir 10.
+Síminn opnast í Loftræstisýn; til að sjá ALLT ógert þarf að velja „Sýn: allt“.
