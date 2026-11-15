@@ -771,3 +771,8 @@ Agnar: „better to use 5th floor drawing on 4th floor milliloftaþettingar. The
   Þar sem 4H á nú eigið lag hætta lánuðu lögin (M395, M195) að birtast þar. M195 (þrif/hiti/kæling, þykkar dökkar línur) skyggði á.
   Til baka: `update skr_log set eytt=true where id=13`.
 - Engar skráningar færðar. Sjónmat á einu svæði (vinstri álma, um (500, 450)): sum göt sitja á frárennsli WC eða vasks, önnur eru 0,5 m eða meira frá lögn eða á gangi. Ekki mælt kerfisbundið.
+- **Mæling (scratchpad `maela_4h_lagnir.py` → `maela_4h.json`, mynd `h4-verst.png`):** fjarlægð hvers 4H-gats (varpað með vorpun teikninga 10/17) að M115-pixlum.
+  Að hvaða litaðri lögn sem er: miðgildi 0,23 m; ≤0,3 m 215/367, ≤0,5 m 270, ≤1 m 335, >2 m 4. Að grænu frárennsli: miðgildi 0,74 m; ≤0,3 m 112, ≤1 m 213, >2 m 100.
+  Engin kerfisbundin skekkja: meðalvigur að næsta frárennsli er ~3 px (0,1 m) á báðum teikningum, svo vörpunin er rétt og hliðrun alls lagsins bætir ekkert.
+  Fjærst: #5549 (4,4 m, utan húss neðst á blaðinu), #5558 og #9633 á brunavegg, #12053 á vegg við lyftu, #6304 í ræstiklefa, #5318 á miðju sjúkrastofugólfi. ENGU breytt.
+  Fyrirvari: „lituð lögn" telur allt litað í M115 (líka litaða texta), svo sú tala gæti verið aðeins of hagstæð.
