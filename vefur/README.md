@@ -41,9 +41,10 @@ Vefurinn er smíðaður úr þremur Claude-artifactum, tillögunum V2, V1 og V3,
 | `site/innranet.js` | Innskráning starfsfólks á síðunni og valmyndin eftir hana. Hleðst aðeins þegar smellt er á „Innranet“ í fætinum eða slóðin ber `?innranet`. |
 | `site/innskraning.js`, `site/innskraning.css` | Innskráningarskjár starfsfólks í premium útliti: sama myndefni, kort, reitir og hnappar og á innskráningarsíðu þjónustugáttarinnar. „Innranet“ og innskráning ritilsins teikna bæði á hann. Hlaðast aðeins með þeim. |
 | `site/router.js` | Sýnirnar þrjár og slóðirnar, og í seinni hlutanum skriftan sem setur bannerinn í forsíðuhausinn og stýrir myndskeiðinu. Sameiginleg öllum síðunum. |
-| `verslun/verslun.js` | Verslunin sjálf, tekin úr `vefverslun/` í kóðasafni Slökkvitækja-appsins og aðlöguð á sjö stöðum sem taldir eru upp efst í skránni. Sameiginleg öllum síðunum. |
+| `verslun/verslun.js` | Verslunin sjálf, tekin úr `vefverslun/` í kóðasafni Slökkvitækja-appsins og aðlöguð á átta stöðum sem taldir eru upp efst í skránni (sá áttundi sækir lifandi vörur). Sameiginleg öllum síðunum. |
 | `verslun/verslun.css` | Útlit verslunarinnar í V2 og V1. |
-| `verslun/gogn.js` | Vörur, verð, birgðir og stillingar verslunarinnar fyrir V2, þar á meðal litir hennar í `efni.thema`. |
+| `verslun/gogn.js` | Stillingar verslunarinnar fyrir V2, þar á meðal litir hennar í `efni.thema`, og afrit af vörunum: það er sýnt þar til lifandi vörur berast (sjá Vörur og verslun). |
+| `manifest.webmanifest`, `img/app-192.png`, `img/app-512.png`, `img/app-maskable-512.png`, `img/apple-touch-icon.png` | Tákn fyrir heimaskjá síma: loginn úr merkinu á dökkbláum grunni. Allar síðurnar nefna táknin; aðalsíðan nefnir líka manifestið, svo flýtileið af henni heitir Brunahólf og opnar aðalsíðuna í vafranum (`display: browser`, gestum er ekki boðið að setja upp app). Flýtileið af `v1.html` eða `v3.html` opnar þá síðu. |
 | `img/`, `vv/v/`, `myndir/` | Merkið, myndskeiðið í forsíðuhausnum og myndir bannerasafnsins (þrjár þeirra í `img/banner/`), bakgrunnur innskráningarskjásins (`img/innskraning.webp`, sama mynd og á innskráningarsíðu þjónustugáttarinnar), vörumyndir (heitið er númer vörunnar) og myndir á vörusíðum. Sameiginlegar. |
 
 ## Slóðir
@@ -134,7 +135,7 @@ Forsíðuhausinn sýnir einn banner úr safni sem er sameiginlegt öllum útgáf
 
 **Breytingar sem texti.** Í „Fleiri aðgerðir“ er allt efnið sýnt sem JSON. „Setja inn“ skiptir öllum breytingunum út fyrir textann.
 
-**Það sem ritillinn gerir ekki.** Nýir kaflar, ný stök og ný tákn (íkon) eru í síðunni sjálfri og þurfa kóðabreytingu. Vörur og verslun koma úr `verslun/gogn.js`. Litir og letur síðunnar í heild eru aðeins í aðalútgáfunni. Í V3 standa kaflarnir í sýn sem ber engan lykil og verða því ekki færðir.
+**Það sem ritillinn gerir ekki.** Nýir kaflar, ný stök og ný tákn (íkon) eru í síðunni sjálfri og þurfa kóðabreytingu. Vörurnar koma lifandi úr vöruskránni og textar verslunarinnar úr `verslun/gogn.js` (sjá Vörur og verslun). Litir og letur síðunnar í heild eru aðeins í aðalútgáfunni. Í V3 standa kaflarnir í sýn sem ber engan lykil og verða því ekki færðir.
 
 ### Hvernig þetta er byggt
 
@@ -145,7 +146,7 @@ Forsíðuhausinn sýnir einn banner úr safni sem er sameiginlegt öllum útgáf
 - **Hjá gestum.** `site/efni.js` sækir birta efnið og setur það á síðuna. Síðasta útgáfa er geymd í vafranum, svo síðan birtist rétt strax við næstu heimsókn; við fyrstu heimsókn bíður breytanlegt efni í mest 0,35 sekúndur eftir þjóninum svo eldri texti blikki ekki. Svar þjónsins er geymt á jaðrinum og getur verið nokkurra mínútna gamalt rétt eftir birtingu; vafri sem hefur séð nýrri útgáfu á síðustu tíu mínútum tekur eldra svar ekki fram yfir hana.
 - **Hreinsun.** Texti er hreinsaður tvisvar: á þjóninum við vistun og í vafranum áður en hann fer á síðuna. Aðeins þessi merki lifa: `b`, `strong`, `i`, `em`, `u`, `s`, `br`, `span`, `small`, `a`, `sup`, `sub`, með stílum og letri af lista. Klasi á texta stendur aðeins ef upprunalegi textinn í sama staki notar hann. Myndir mega aðeins koma úr þessari möppu eða úr `vefverslun/vefur/`. Stillingar (stærðir, letur, litir, bil, horn, rammar, skuggar, dálkar, slóðir hlekkja, staðsetning og hæð mynda, þematákn) eru prófaðar á sama hátt: aðeins þekktir reitir með gildi innan marka eru geymdir og notaðir, og ekkert frjálst CSS kemst á síðuna. Litir eru `#rgb` eða `#rrggbb`, án gegnsæis. Vefslóð þarf vélarheiti strax á eftir `https://` (enginn notandahluti, ekkert öfugt skástrik). Engin regla stílblaðsins sem efnislagið býr til nær inn í verslunina (`#vv-app`). Gallað gildi á einum stað stöðvar ekki hitt efnið. Listarnir eru á tveimur stöðum (`site/efni.js` og fallið) og þurfa að vera eins.
 - **Það sem kemur að utan í ritilinn** (svar frá Claude, innsettur texti, drög úr prufuham) fer í gegnum sömu reglur og þjónninn notar áður en það er notað (`yfirfara` í `site/ritill.js`): óþekktir lyklar, óþekktir reitir og gildi utan marka eru tekin út og talin upp. Ritillinn setur gildi úr efninu aldrei hrátt í spjöldin sín (rennur fá tölur, annað fer gegnum `esc`), og eftir innsetningu les hann af síðunni sjálfri hvert hlekkir vísa og telur upp nýjar slóðir út af vefnum, símanúmer og netföng.
-- **Vörur og verslun** eru ekki í ritlinum: þær koma úr `verslun/gogn.js` (sjá Vörur og verslun).
+- **Vörur og verslun** eru ekki í ritlinum: vörurnar koma lifandi úr vöruskránni og textar verslunarinnar úr `verslun/gogn.js` (sjá Vörur og verslun).
 
 ## Þjónustugáttin
 
@@ -157,15 +158,20 @@ Hlekkur á Facebook-síðuna er í fætinum í öllum síðunum (`a.w-foot__fb` 
 
 ## Vörur og verslun
 
-`verslun/gogn.js` er afrit af vöruskránni frá 12.11.2026, ekki lifandi tenging. Breyting þar sést aðeins á þessum vef.
+**Vörurnar eru lifandi.** Verslunin teiknar sig strax úr afritinu í `verslun/gogn.js` og sækir svo vörurnar af `/api/vefur-vorur` (`netlify/functions/vefur-vorur.js` í rót kóðasafnsins): heiti, flokk, lýsingu, verð, lager, mynd og vöruval. Fallið les vöruskrána gegnum vefverslunarfall Slökkvitækja-appsins (`/api/vefverslun`), sem ræður hvaða vörur eru til sölu á netinu og í hvaða röð. Vefurinn sýnir því sömu vörur og sama verð og vefverslunin þar, og breyting í vöruskránni sést hér á fáeinum mínútum án þess að neitt sé birt (svarið er geymt í 5 mínútur; sjá SKYNDIMINNI efst í fallinu). Vörum, verði og lager er breytt í Slökkvitæki-kerfinu, ekki í þessari möppu.
 
-- Heiti vöru: `efni.t["vara.<id>.nafn"] = {"x": "Nýtt heiti"}`. Taflan `NOFN` í `verslun.js` ræður annars heiti 20 vara og gengur fyrir `nafn` í `vorur`.
-- Verð: `verd` (með vsk) og `an` (án vsk) á vörunni.
-- Fela vöru: bæta númerinu í `efni.vorur.falid`.
-- Röð: röðin í `vorur` er röðin í versluninni, og fyrstu vörurnar sjást í vörukynningunni á forsíðunni.
-- Texti og myndir í versluninni: `efni.t["<lykill>"]` og `efni.m["<lykill>"]`. Lykillinn er `data-e` eða `data-m` á stakinu.
+- Hvaða vörur sjást: þær sem eru á forsíðu söluborðsins og þær sem ritill vefverslunarinnar bætir við, að frátöldum þeim sem hann felur. Vara án verðs er ekki sýnd.
+- Heiti: heitið í vöruskránni. Taflan `NOFN` í `verslun.js` gefur 20 vörum læsilegra heiti og gengur fyrir því; `efni.t["vara.<id>.nafn"] = {"x": "Nýtt heiti"}` í `gogn.js` gengur fyrir báðum.
+- Lýsing: lýsingin í vöruskránni án minnispunkta starfsfólks. Lýsingardálkurinn þar er líka minnisblað (birgjanúmer, birgjareikningar, innkaupsverð), og fallið tekur slíka búta út. Standi eitthvað eftir sem líkist minnispunkti (löng númer, upphæðir, netföng, nöfn birgja) fer lýsingin ekki út og yfirfarna lýsingin úr afritinu stendur. Reglan er efst í fallinu.
+- Myndir: smækkuðu myndirnar í `vv/v/<id>.webp` fylgja vefnum og eru notaðar meðan myndin í vöruskránni er sú sama og þegar afritið var gert (fingrafarið `ms`). Ný vara, eða vara sem fær nýja mynd, sýnir myndina beint úr vöruskránni í fullri stærð.
+- Röð: röðin í vöruskránni er röðin í versluninni, og fyrstu vörurnar sjást í vörukynningunni á forsíðunni.
+- Texti og myndir verslunarinnar sjálfrar (ekki varanna) eru í `gogn.js`: `efni.t["<lykill>"]` og `efni.m["<lykill>"]`. Lykillinn er `data-e` eða `data-m` á stakinu. Sé breytt í `verslun/gogn.js` þarf sama breyting að fara í `v1-skrar/verslun/gogn.js` og `v3-skrar/verslun/gogn.js`.
 
-Sé breytt í `verslun/gogn.js` þarf sama breyting að fara í `v1-skrar/verslun/gogn.js` og `v3-skrar/verslun/gogn.js`.
+**Hvernig síðan fer með lifandi vörur** (`verslun/verslun.js`, kaflinn „Lifandi vörur“). Breyti þær einhverju sem sést er verslunin teiknuð aftur, annars er ekkert snert. Ekki er teiknað meðan skrifað er í reit í versluninni eða hnappi haldið niðri, og það sem stendur í reitum körfunnar helst. Svarið er geymt í vafranum (`bh_vv_lifandi_v1`, aðeins skyndiminni) svo næsta heimsókn byrji á nýjustu vörum. Svarið er sannreynt bæði í fallinu og á síðunni: aðeins reitirnir sem taldir eru upp efst í fallinu fara inn, hver af sinni gerð, og vörutexti er alltaf settur á síðuna sem texti, aldrei sem HTML.
+
+**Þegar fallið næst ekki** stendur afritið: verslunin virkar áfram með vörurnar eins og þær voru þegar það var gert (`sott` efst í `gogn.js`). Sama gildir þar sem fallið er ekki til, til dæmis í tillögunum í Claude og þegar síða er opnuð af diski.
+
+**Afritið endurnýjað.** Þess þarf ekki til að vörur og verð séu rétt, en nýtt afrit lætur fyrstu teikningu passa við lifandi vörur og gefur nýjum vörum smækkaða mynd. Afritið er svar fallsins (`vorur` og `sott` úr `/api/vefur-vorur`) með `mynd` sem vísar á `vv/v/<id>.webp`, sett í `gogn.js` hverrar útgáfu. Lýsing sem fallið hélt eftir (`null`) er þá skoðuð af manni áður en hún fer í afritið.
 
 Verslunin er í prufuham: „Halda áfram í greiðslu“ sýnir skilaboð og sendir ekkert.
 
@@ -175,9 +181,9 @@ Verslunin er í prufuham: „Halda áfram í greiðslu“ sýnir skilaboð og se
 
 1. Stofna sérstakan Netlify-vef fyrir þessa möppu: Base directory `vefur`, engin build-skipun, Publish directory `vefur`. Rót þessa kóðasafns er stjórnstöðin og á ekki að svara á léninu. Vefurinn þarf sömu `ignore`-reglu og er í `netlify.toml` í rótinni, annars kostar hver ýting birtingu. Netlify-vefur stjórnstöðvarinnar bætir auk þess skriftu hennar við hverja HTML-síðu sem hann ber fram, líka þessar; sérstakur vefur gerir það ekki.
 2. Taka línuna `<meta name="robots" content="noindex">` úr öllum síðunum.
-3. Ritillinn: fallið býr á vef stjórnstöðvarinnar. Á nýja léninu verður `data-api` á `<script src="site/efni.js">` að vera full slóð þangað (`https://brunaholf.netlify.app/api/vefur-efni`), svo gestir fái birta efnið. Innskráningin er cookie á vef stjórnstöðvarinnar og fylgir ekki beiðnum frá öðru léni: ritillinn er því áfram notaður á `brunaholf.netlify.app/vefur/?ritill`, ekki á nýja léninu, nema fallið og innskráningin flytjist með. Hlekkurinn „Innranet“ í fætinum vísar þá sjálfkrafa á `brunaholf.netlify.app/vefur/?innranet` (`site/efni.js` sér að þjónninn er á öðru léni).
+3. Ritillinn: fallið býr á vef stjórnstöðvarinnar. Á nýja léninu verður `data-api` á `<script src="site/efni.js">` að vera full slóð þangað (`https://brunaholf.netlify.app/api/vefur-efni`), svo gestir fái birta efnið. Innskráningin er cookie á vef stjórnstöðvarinnar og fylgir ekki beiðnum frá öðru léni: ritillinn er því áfram notaður á `brunaholf.netlify.app/vefur/?ritill`, ekki á nýja léninu, nema fallið og innskráningin flytjist með. Hlekkurinn „Innranet“ í fætinum vísar þá sjálfkrafa á `brunaholf.netlify.app/vefur/?innranet` (`site/efni.js` sér að þjónninn er á öðru léni). Lifandi vörur verslunarinnar fylgja sömu stillingu: slóð fallsins `vefur-vorur` er leidd af `data-api`, og fallið má lesa frá öðru léni.
 4. Við DNS-breytinguna færist aðeins vefvísunin. Póstfærslur lénsins (MX) verða að standa óhreyfðar, annars hættir pósturinn að berast.
-5. Ákveða hvort verslunin fer í loftið með ótengda greiðslu og afrit af vöruskránni, eða bíður.
+5. Ákveða hvort verslunin fer í loftið með ótengda greiðslu, eða bíður.
 
 ## Prófað 14.11.2026
 

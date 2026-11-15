@@ -80,6 +80,10 @@ data from Ajour, Google Drive/Sheets/Gmail integration, and a tilbod
   afhendir eftir innskráningu (`INNRANET` í fallinu), í stjórnborð þjónustugáttar, Slökkvitæki-kerfið og stjórnstöðina.
   Innskráningarskjárinn (`site/innskraning.js`, `site/innskraning.css`) er í premium útliti þjónustugáttarinnar, sýnir gestum aðeins notandanafn og lykilorð,
   og ritillinn notar sama skjá. Verslunin á vefnum afhendir aðeins í Helluhrauni 10 (virka daga 9 til 17); heimsending er ekki í boði enn (README, kaflinn Vörur og verslun).
+  **Lifandi vörur (15.11.2026):** heiti, verð, lager, lýsing, mynd og vöruval verslunarinnar koma úr vöruskránni gegnum `/api/vefur-vorur`
+  (`netlify/functions/vefur-vorur.js`: les `/api/vefverslun` í Slökkvitæki-appinu, enga lykla, hvítlisti reita, minnispunktar starfsfólks teknir úr
+  lýsingum, 5 mín. á CDN). `verslun/gogn.js` er afrit sem er sýnt þar til lifandi vörur berast og þegar fallið næst ekki. Vörum er breytt í
+  Slökkvitæki-kerfinu, ekki í `vefur/`.
   Lyklar staka (`data-e`, `data-m`, `data-k`) mega aldrei breytast.
   Skrár, slóðir, skipti milli útgáfa, færsla breytinga úr Claude-tillögunum og það sem þarf áður en lénið er tengt: `vefur/README.md`.
 - **Brunaþéttingar — verkstaða-appið (`brunathettingar.html`, `/brunathettingar`, 03.09.2026):**
