@@ -1644,12 +1644,12 @@
     {
      "repo": "brunaholf",
      "path": ".claude/agents/gagnaleidslur.md",
-     "uppfaert": "2026-11-11",
-     "linur": 483
+     "uppfaert": "2026-11-15",
+     "linur": 491
     }
    ],
    "afbrigdi": [],
-   "uppfaert": "2026-11-11",
+   "uppfaert": "2026-11-15",
    "sidur": [
     {
      "id": "dagurinn",
@@ -1763,6 +1763,12 @@
      "id": "jarvis-gogn",
      "vefur": "brunaholf",
      "titill": "Gögn (gagnauppsprettur)",
+     "hlutverk": "eigandi"
+    },
+    {
+     "id": "postmoppur",
+     "vefur": "brunaholf",
+     "titill": "Póstmöppur",
      "hlutverk": "eigandi"
     },
     {
@@ -3698,6 +3704,12 @@
      "vefur": "brunaholf",
      "titill": "Svarhjálp — Brunahólf",
      "hlutverk": "eigandi"
+    },
+    {
+     "id": "postmoppur",
+     "vefur": "brunaholf",
+     "titill": "Póstmöppur",
+     "hlutverk": "undiragent"
     }
    ]
   },
@@ -10090,6 +10102,35 @@
    "eigandi_utan": false
   },
   {
+   "vefur": "brunaholf",
+   "repo": "brunaholf",
+   "id": "postmoppur",
+   "titill": "Póstmöppur",
+   "tegund": "sida",
+   "leid": "/postmoppur.html",
+   "skilgreind": [
+    "postmoppur.html",
+    "netlify/functions/postmoppur.js"
+   ],
+   "yfir": null,
+   "eigandi": "gagnaleidslur",
+   "undiragentar": [
+    "postur"
+   ],
+   "kveikjuord": [
+    "Póstmöppur",
+    "Thunderbird-möppur",
+    "kveikja á innsogi",
+    "undirmöppur pósts",
+    "viðhengi úr pósti"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": [],
+   "eigandi_nafn": "gagnaleidslur",
+   "eigandi_utan": false
+  },
+  {
    "vefur": "kjarni",
    "repo": "kjarni",
    "id": "slokkvitaeki:/[slug]",
@@ -12458,8 +12499,8 @@
    "repo": "brunaholf",
    "utgafa": 1,
    "vefagent": "framendi",
-   "alls": 102,
-   "med_eiganda": 102,
+   "alls": 103,
+   "med_eiganda": 103,
    "vidvorun": 0,
    "an_eiganda": 0,
    "hlutfall": 100

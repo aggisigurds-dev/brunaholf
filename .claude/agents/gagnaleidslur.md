@@ -342,10 +342,18 @@ ANNAÐ kerfi en „Efniskostnaður / Kostnaðarreikningar (endurrukkun)" hér a�
   (eini vísirinn er `received_at DESC` = nulls first, enginn á `account`). Vísarnir bíða í
   `sql/2026-10-31_visar_hledsluspa_krokur77.sql` (ÓKEYRT 10.11. — staðfesting Supabase birtist ekki hjá Agnari).
 - **Vitað 04.11.2026 (greiningarlotur 04/06/07):**
-  - **Póstur — undirmöppur ná aldrei inn:** `email_digest` á aðeins INBOX/SENT. Brunaholf@ Sent heitir `Sent Items-1` (2,0 GB) á
-    DESKTOP-M5FO3I6 og passar ekki við `SENT_CANDIDATES` í `luna-bridge/bridge.js` (tillaga: regex `^Sent( Items)?(-\d+)?$`).
-    Undirmöppur (t.d. bokhald@eldklar „Teya uppgjör“, Brunaholf@ „Tilboð send-1“) fara aldrei inn. Póstlesturinn sjálfur er
-    `postur` (Meg Ryan, slokkvitaeki); þú átt innsogið.
+  - **Póstur — undirmöppur (uppfært 15.11.2026):**
+    - Áður átti `email_digest` aðeins INBOX/SENT.
+    - Nú er rofi á **`/postmoppur.html`** (`/api/postmoppur`; aðeins Admin kveikir). `luna-bridge/moppur.js` sendir
+      möppulista hverrar vélar (app_kv `bru_moppur:<vél>`) og les AÐEINS kveiktar möppur (`bru_moppur_kveikt`):
+      - frá byrjun, INSERT-only, `folder` = slóð, `is_question` = false;
+      - PDF-viðhengi í `postur_vidhengi`.
+    - „Viðhengi úr pósti“ á sömu síðu sækir öll viðhengi eins Thunderbird-pósts eftir `email_digest.id`
+      (`bru_vidhengi_bid` → `bru_vidhengi_nidurstada`).
+    - eldklar@ fær engar undirmöppur, því `bh_postur_inn_a_bord` setur póst þess á borðið.
+    - Virkar aðeins eftir `git-pull` + „Keyra póst-brúna“ (Jarvis → Skipanir) á vélinni.
+    - `Sent Items-1` er í `SENT_CANDIDATES` síðan 04.11, en fyrsta keyrsla las aðeins síðasta 1 MB.
+    - Póstlesturinn sjálfur er `postur` (Meg Ryan, slokkvitaeki); þú átt innsogið.
   - **`bank_transactions`: 938 raðir, síðasta færsla 15.06.2026** (BH; SL 15.05) — innsogið hefur legið niðri í 4½ mánuð;
     V6-yfirferð greiðsluhreyfinga bíður þess.
   - **`teya_faerslur` = 0 raðir** — engin Teya-afstemming; verkefni 12ba9ff2 í `beidni` síðan 17.07. Þú smíðar innsogið,

@@ -1829,6 +1829,28 @@
     "öryggisnet",
     "verðir"
    ]
+  },
+  {
+   "id": "postmoppur",
+   "titill": "Póstmöppur",
+   "tegund": "sida",
+   "leid": "/postmoppur.html",
+   "skilgreind": [
+    "postmoppur.html",
+    "netlify/functions/postmoppur.js"
+   ],
+   "yfir": null,
+   "eigandi": "gagnaleidslur",
+   "undiragentar": [
+    "postur"
+   ],
+   "kveikjuord": [
+    "Póstmöppur",
+    "Thunderbird-möppur",
+    "kveikja á innsogi",
+    "undirmöppur pósts",
+    "viðhengi úr pósti"
+   ]
   }
  ]
 }

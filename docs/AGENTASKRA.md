@@ -326,6 +326,7 @@ Byggt 2026-11-15 úr `brunaholf/.claude/sidukort.json`, `kjarni/.claude/sidukort
 | brunaholf | Gloppur | `/jarvis.html#gloppur` | `jarvis.html` | `sara-organizer` | `kunnaskra` | ✅ |
 | brunaholf | Þrýstingur — frammistaða | `/jarvis.html#perf` | `jarvis.html` | `hradi` | `kerfisheilsa` | ✅ |
 | brunaholf | Öryggisnet — verðir | `/jarvis.html#oryggisnet` | `jarvis.html` | `netvordur` | `rambo` | ✅ |
+| brunaholf | Póstmöppur | `/postmoppur.html` | `postmoppur.html` · `netlify/functions/postmoppur.js` | `gagnaleidslur` | `postur` | ✅ |
 | kjarni | Síðuritils-síða | `/[slug]` | `apps/slokkvitaeki/app/[slug]/page.tsx` | `kjarni-vefur` | — | ✅ |
 | kjarni | InstantID | `/api/andlit` | `apps/slokkvitaeki/app/api/andlit/route.ts` | `artcraft` | — | ✅ |
 | kjarni | Nýr bakgrunnur | `/api/breyta/background` | `apps/slokkvitaeki/app/api/breyta/background/route.ts` | `artcraft` | — | ✅ |
@@ -432,7 +433,7 @@ Byggt 2026-11-15 úr `brunaholf/.claude/sidukort.json`, `kjarni/.claude/sidukort
 | kjarni | Marks — kjarni bookmarks | `/marks` | `apps/web/src/app/marks/page.tsx` | `kjarni-vefur` | — | ✅ |
 | kjarni | Ljósastýring Langamýri 22 (Hue Remote API) | `/ljos` | `apps/slokkvitaeki/app/ljos/page.tsx` · `apps/slokkvitaeki/app/api/ljos/route.ts` | `kjarni-vefur` | `oryggi` | ✅ |
 
-**Samantekt:** brunaholf 102/102 með eiganda (100%), 0 ⚠️, 0 ❌ · kjarni 105/105 með eiganda (100%), 0 ⚠️, 0 ❌
+**Samantekt:** brunaholf 103/103 með eiganda (100%), 0 ⚠️, 0 ❌ · kjarni 105/105 með eiganda (100%), 0 ⚠️, 0 ❌
 
 ### Síður án eiganda
 
