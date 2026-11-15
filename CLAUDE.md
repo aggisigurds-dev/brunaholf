@@ -120,7 +120,11 @@ fært, orðrétt. Hver þeirra hleðst AÐEINS þegar hann er kallaður til.
 | Hraða, hleðslutíma, þung köll, polling — **vélarýmið** | `hradi` | 💥 Bruce Willis |
 | Að ALLAR tengingar/lyklar séu í lagi á Kerfisheilsu | `tengingar` | 😤 Samuel L. Jackson |
 | Dagleg yfirsýn + jarvis.html sjálf — svið, raddir, TTS, cache | `jarvis` | 🎩 Jarvis |
-| **Hvað á ég að einbeita mér að?** Forgangsröðun, betri leiðir, gagnrýni á uppbygginguna (síður, útlit, virkni, verkferla), djarfar hugmyndir — aðalráðgjafinn; skrifar líka morgunyfirlit Ráðgjafans á Þjónustuborði Agnars (slokkvitaeki 506) | `tony-stark` | 🦾 Tony Stark |
+| **Hvað á ég að einbeita mér að?** Forgangsröðun, betri leiðir, gagnrýni á uppbygginguna (síður, útlit, virkni, verkferla), djarfar hugmyndir — aðalráðgjafinn og **stjórnandi Avengers-teymisins** (fjórar línur hér fyrir neðan + `endurskodandi`, `logfraedingur`); skrifar líka morgunyfirlit Ráðgjafans á Þjónustuborði Agnars (slokkvitaeki 506) | `tony-stark` | 🦾 Tony Stark |
+| Verð keppinauta — hvað aðrir rukka, verðbreytingar, útboð; heldur `competitor_prices`/`service_prices` (flipinn Verðsamanburður) ferskum. Aðeins opinberar heimildir, aldrei samráð | `black-widow` | 🕷️ Black Widow |
+| Innkaup — besta innkaupsverð, birgjar, jafngildar vörur, innflutningur frá EES (verð við komu, tollur, VSK, vottun). Leggur til, pantar aldrei | `hawkeye` | 🏹 Hawkeye |
+| Markaðsmál — Facebook/Instagram-færslur, auglýsingar, efnisdagatal, herferðir. Drög; Agnar birtir | `captain-america` | 🛡️ Captain America |
+| Sala — nýir kúnnar og endurheimt gamalla, Hunter (sölulistar í Slökkvitæki-appinu), drög að pósti og símtölum. Sendir aldrei | `spider-man` | 🕸️ Spider-Man |
 | RLS, policies, lyklar/tokens, public buckets — öryggið | `oryggi` | 🔒 *(rödd óvalin)* |
 | Hype-yfirlitið — sigrarnir fyrst, svo það sem á að klára | `jarvis` (kafli „Svið yfirlit“) | 🇺🇸 Trump |
 | Staðreyndayfirferð — kerfið segir eitt, gögnin annað (factcheck_bord) | `natalie` | 🌸 Natalie |

@@ -244,11 +244,16 @@
     "index.html"
    ],
    "yfir": null,
-   "eigandi": "bokari",
-   "undiragentar": [],
+   "eigandi": "black-widow",
+   "undiragentar": [
+    "bokari"
+   ],
    "kveikjuord": [
     "Verðsamanburður",
-    "samkeppnisverð"
+    "samkeppnisverð",
+    "keppinautar",
+    "verð keppinauta",
+    "competitor_prices"
    ]
   },
   {
@@ -885,7 +890,8 @@
    "yfir": null,
    "eigandi": "bokari",
    "undiragentar": [
-    "gagnaleidslur"
+    "gagnaleidslur",
+    "hawkeye"
    ],
    "kveikjuord": [
     "Verðlisti",

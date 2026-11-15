@@ -347,16 +347,21 @@
     "index.html"
    ],
    "yfir": null,
-   "eigandi": "bokari",
-   "undiragentar": [],
+   "eigandi": "black-widow",
+   "undiragentar": [
+    "bokari"
+   ],
    "kveikjuord": [
     "Verðsamanburður",
-    "samkeppnisverð"
+    "samkeppnisverð",
+    "keppinautar",
+    "verð keppinauta",
+    "competitor_prices"
    ],
    "merki": null,
    "stada": "✅",
    "astaeda": [],
-   "eigandi_nafn": "bokari",
+   "eigandi_nafn": "black-widow",
    "eigandi_utan": false
   },
   {
@@ -1229,7 +1234,8 @@
    "yfir": null,
    "eigandi": "bokari",
    "undiragentar": [
-    "gagnaleidslur"
+    "gagnaleidslur",
+    "hawkeye"
    ],
    "kveikjuord": [
     "Verðlisti",

@@ -86,6 +86,22 @@ Teljarinn **153/187** (tilbúið-staða) er **óbreyttur**. Hann er ekki hluti a
 
 ---
 
+## Avengers-teymi Tony Stark (15.11.2026)
+
+Agnar 15.11.2026: *„gera hann að manager yfir nokkrum öðrum agents … nota nöfn úr the Avengers"*. Tony er stjóri í
+Agentanetinu (`js/agentanet.js`, `KEDJA['tony-stark']`). Á Avengers-fundi velur hann 1–3 liðsmenn og skrifar
+verkefnin; aðallotan sendir þau (undiragentar geta ekki kallað á aðra) og Tony dregur saman.
+
+| Nafn | Roster | Heim | Slóð | Kveikjur | Aldrei |
+|---|---|---|---|---|---|
+| `tony-stark` | 🦾 Tony Stark — stjórinn | slokkvitaeki | `.claude/agents/tony-stark.md` | `Tony` · `Avengers` · `hvað á ég að einbeita mér að` · `betri leið` | Fleiri en 3 forgangsatriði. Breyta kóða eða gögnum sjálfur |
+| `black-widow` | 🕷️ Black Widow | slokkvitaeki | `.claude/agents/black-widow.md` | `samkeppni` · `verð hjá öðrum` · `verðsamanburður` · `útboð` | Blekking til að fá verð. Samskipti við keppinauta um verð |
+| `hawkeye` | 🏹 Hawkeye | slokkvitaeki | `.claude/agents/hawkeye.md` | `innkaup` · `birgjar` · `kaupa erlendis` · `innflutningur` | Panta eða semja sjálfur. Skrifa í vorur/birgdir |
+| `captain-america` | 🛡️ Captain America | slokkvitaeki | `.claude/agents/captain-america.md` | `markaðsmál` · `Facebook` · `auglýsing` · `herferð` | Birta eða borga sjálfur. Fullyrðing án sönnunar |
+| `spider-man` | 🕸️ Spider-Man | slokkvitaeki | `.claude/agents/spider-man.md` | `sölufulltrúi` · `nýir kúnnar` · `endurheimta` · `Hunter` | Senda sjálfur. Einstaklingur án samþykkis |
+
+Liðsmenn utan nýju fjögurra: `endurskodandi` (🧮 The Accountant) og `logfraedingur` (⚖️ Elle Woods).
+
 ## Grunnreglur allra agenta (04.11.2026)
 
 Samþykkt af Agnari 04.11.2026 (Agentakerfið 2.0). Kaflinn er í hverri agent-skrá; hér er heimildin.
@@ -220,7 +236,7 @@ Byggt 2026-11-15 úr `brunaholf/.claude/sidukort.json`, `kjarni/.claude/sidukort
 | brunaholf | Tímavera | `/#timavera` | `index.html#renderTimavera` | `gagnaleidslur` | `bokari` · `verkstadur` | ✅ |
 | brunaholf | Mæting · verkstaðir | `/#tvmaeting` | `index.html#renderTvMaeting` | `verkstadur` | `gagnaleidslur` | ✅ |
 | brunaholf | Frá verkstað | `/#verkstadapostur` | `index.html#renderVerkstadapostur` | `verkstadur` | `bokari` · `framendi` | ✅ |
-| brunaholf | Verðsamanburður | `/#verdsamanburdur` | `index.html` | `bokari` | — | ✅ |
+| brunaholf | Verðsamanburður | `/#verdsamanburdur` | `index.html` | `black-widow` | `bokari` | ✅ |
 | brunaholf | Verkstaðir | `/#verkstadir` | `index.html` | `bokari` | `gagnaleidslur` · `verkstadur` | ✅ |
 | brunaholf | Skuldunautar | `/#skuldunautar` | `index.html#renderSkuldunautar` | `rukkari` | `bokari` | ✅ |
 | brunaholf | Skýrslur | `/#skyrslur` | `index.html#renderSkyrslur` | `rukkari` | `bokari` | ✅ |
@@ -256,7 +272,7 @@ Byggt 2026-11-15 úr `brunaholf/.claude/sidukort.json`, `kjarni/.claude/sidukort
 | brunaholf | Vinnustofa | `/#vinnustofa` | `index.html#renderVinnustofa` | `framendi` | `bokari` · `rukkari` · `jarvis` | ✅ |
 | brunaholf | Verðskrá | `/#verdskra` | `index.html#renderVerdskra` | `bokari` | — | ✅ |
 | brunaholf | Efniskostnaður | `/#efniskostnadur` | `index.html#renderEfniskostnadur` | `bokari` | `rukkari` · `verkstadur` · `gagnaleidslur` | ✅ |
-| brunaholf | Verðlisti | `/#verdlisti` | `index.html#renderVerdlisti` | `bokari` | `gagnaleidslur` | ✅ |
+| brunaholf | Verðlisti | `/#verdlisti` | `index.html#renderVerdlisti` | `bokari` | `gagnaleidslur` · `hawkeye` | ✅ |
 | brunaholf | Vörubirgðir | `/#vorubirgdir` | `index.html#renderVorubirgdir` | `bokari` | `birgdastjori` | ✅ |
 | brunaholf | Útgjöld | `/#utgjold` | `index.html` | `framendi` | `bokari` | ✅ |
 | brunaholf | Sjálfvirkni | `/#sjalfvirkni` | `index.html#renderSjalfvirkni` | `gagnaleidslur` | `kerfisheilsa` | ✅ |
