@@ -808,3 +808,12 @@ Agnar: „get ég séð view með því sem er eftir“. Ný sía fremst á efti
 hluta; kláraðar faldar. Talan á hnappnum = opnar + rauðir (án tillagna). Slóðin `/kjarni/skraning/kort?stada=ogert` opnar beint í síunni.
 Sannreynt í símahermi á lifandi vef: 5H, Sýn: allt → „Ógert 216“ (206 opnar + 10 rauðir), Tilbúin 4.525, Í vinnslu 206, Eftir 10.
 Síminn opnast í Loftræstisýn; til að sjá ALLT ógert þarf að velja „Sýn: allt“.
+
+
+## 15.11.2026 — Ekki byrjað: rafmagn í 6 af 8 deildum og 5H S5 (teikningar + Ajour, ekkert skrifað)
+
+Agnar: „held að mun meira sé eftir og ekki byrjað á jafnvel“. Procore skoðað aftur (Verkteikningar 5. og 6. hæð, 1.342 blöð): engin ný raf-blöð síðan 11.11; ný eru M215-08 rev F (10.11), M216-17 rev B, M115-02/-06 (27.10). Þakblöð (M117/M217/M317/M717, R1170, R6170) óskoðuð — útboðið er 5.–6. hæð.
+
+Krossar raflagnaleiðar (lag R1150/R1160) við rauðan brunavegg, aðferð tillogur.py (`scratchpad/raf/rafkross.py`): 5H 353 (S1 83, S2 86, S4 93, S5 91), 6H 338 (S1 82, S2 80, S4 85, S5 91). Raf-skráningar í Ajour: 6H S1 133, S2 351, **S4 0, S5 0**; 5H S1 7, S2 66, **S4 0, S5 1**. → Rafmagn óbyrjað í hægra húsi beggja hæða og nær óbyrjað á 5H.
+Loftræsikrossar: 5H S5 100 / 6H S5 87, en loftskráningar 5H S5 70 / 6H S5 263; stál 5H S5 318 / 6H S5 747; plast 145 / 262. → 5H S5 langt á eftir í öllum lögnum. Áætlun 5H nær aðeins yfir loftræstingu S1/S2 (Miro 5H1S/5H2S), svo rauðir punktar sjást ekki í S4/S5.
+Gróft mat (hlutfall 6H, ekki mæling): raf ~1.500 skráningar eftir, 5H S5 ~740, 5H S4 loft ~60, raufar 5H ~90 → ~2.400 skráningar (~1.200 lokanir), ekki 312. Krossatalningin telur líka eitthvað á útvegg (rauð lína), svo hún er nálgun; samanburður hæða notar sömu aðferð.
