@@ -20,6 +20,16 @@ const DRAFT = new Set(['drög', 'drog', 'draft']);
 // invoice_drafts-staða sem þýðir að drögin eru EKKI ósend (reikningsfærð, ógild, sleppt, sameinuð).
 const EKKI_OSENT = new Set(['invoiced', 'void', 'skipped', 'merged']);
 
+/* Ó-rukkanleg „verk" í Tímaveru og gata/Ajour-verk (15.11.2026, sjálfvirk drög í drog-timar.js).
+ * Reglan bjó í fimm afritum sem víkja hvert frá öðru: index.html NON_BILLABLE (×2), fjarmal-yfirlit.js NON_BILLABLE,
+ * unbilled-hours.js (SQL) og field-app.js SKIP. Hér er SAMMENGI þeirra — strangara en hvert afrit, því sjálfvirk drög
+ * mega frekar sleppa verki (það er stofnað handvirkt) en stofna drög á veikindi, frí eða eigin vinnu fyrirtækjanna.
+ * GATA = isGata í index.html (5 afrit, öll eins): rukkað eftir götum/Ajour, aldrei eftir Tímaveru-tímum. EKKI `dalveg|hringbraut` úr
+ * fjarmal-yfirlit.js — mælt 15.11.2026 á 174 verkheitum greip það Dalveg 18/24/26, Endurvinnsluna Dalvegi og Pizzuna Hringbraut,
+ * sem eru tímaverk; aðeins Dalvegur 30 er gata-verk (og ber source 'timavera' í Verðskrá, svo nafnið verður að grípa það). */
+const ORUKKANLEGT = /almennt|veikindi|veik|sick|work.?at.?home|heiman|kaffi|fundir|orlof|fr[ií]|p[aá]ska|jó?l|innr[ií]|sl[oö]kkvit|slokkvit|^brunah[óo]lf|brunahólf verkstæði/i;
+const GATA = /landssp[ií]tal|landsspital|nlsh|heklu|dalvegur\s*30/i;
+
 // Lykillinn sem krofur_yfirlit_meta (greitt/falið/sent) notar.
 const invKey = (r) => `${r.source || 'x'}|${r.tilvisun || r.id}`;
 const draftKey = (d) => `draftinv|${d.worksite_name}|${String(d.work_month || '')}`;
@@ -202,4 +212,4 @@ function kreditPor(invoices) {
   return out;
 }
 
-module.exports = { digits, lc, PAID, CREDIT, DRAFT, EKKI_OSENT, invKey, draftKey, greidendur, sjalfvirkTenging, tvitekinPaydayDrog, flokkaReikning, erOsent, iSummu, tvifarar, kreditPor };
+module.exports = { digits, lc, PAID, CREDIT, DRAFT, EKKI_OSENT, ORUKKANLEGT, GATA, invKey, draftKey, greidendur, sjalfvirkTenging, tvitekinPaydayDrog, flokkaReikning, erOsent, iSummu, tvifarar, kreditPor };

@@ -57,12 +57,13 @@ exports.handler = async (event) => {
   // Strandgata are alias spellings, already folded into `names` above.
   const lunchApplies = [...names].some(n => n.trim().toLowerCase() === 'fjarðagata');
 
-  const inList = [...names].map(n => `"${n.replace(/"/g, '\\"')}"`).join(',');
+  // 15.11.2026: kóðað — verkheiti með & eða # (t.d. „Gjáhella 5 bil 107 & 110“) brutu slóðina, og drog-timar hvílir nú á þessu.
+  const inList = encodeURIComponent('(' + [...names].map(n => `"${n.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`).join(',') + ')');
   let rows;
   try {
     rows = await sb(`timavera_entries?select=date,time_in,time_out,hours,employee,project` +
-      `&project=in.(${inList})&date=gte.${start}&date=lt.${end}` +
-      `&order=date.asc,employee.asc`);
+      `&project=in.${inList}&date=gte.${start}&date=lt.${end}` +
+      `&order=date.asc,employee.asc,id.asc`);   // id: einkvæm röðun svo síðuskipting (1000 raðir) tvítaki/týni engu
   } catch (e) { return json(502, { error: e.message }); }
 
   // Per person-day gross hours — basis for both the lunch deduction and the

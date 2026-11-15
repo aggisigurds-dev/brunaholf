@@ -12,7 +12,11 @@ exports.handler = async () => {
   try { ut = await keyra({ dry: false }); }
   catch (e) { villa = String(e.message || e); }
   const breytt = ut ? ut.linur.filter(l => l.delta != null && !l.villa).map(l => `${l.ws} ${l.m} ${l.delta > 0 ? '+' : ''}${l.delta} klst → ${Math.round(l.total).toLocaleString('is-IS')} kr`) : [];
-  console.log('[drog-timar-background]', villa || JSON.stringify({ skodud: ut.skodud, uppfaerd: ut.uppfaerd, obreytt: ut.obreytt, sleppt: ut.sleppt, villur: ut.villur, breytt }));
+  // 15.11.2026: drög sem starfið STOFNAÐI (áfangi 0) — sjást í Sjálfvirkni-spjaldinu svo Agnar viti hvaðan þau komu.
+  const stofnud = ut ? (ut.stofnun || []).filter(l => l.stofnad).map(l => `＋ ${l.ws} ${l.m} ${l.klst} klst → ${Math.round(l.total).toLocaleString('is-IS')} kr (${l.greidandi})`) : [];
+  // Villur (stofnun eða uppfærsla) fara líka í detail — annars stæði „1 villur" án þess að nokkur sæi hver (yfirferð Lisbeth 15.11).
+  const villuLinur = ut ? [...(ut.stofnun || []), ...(ut.linur || [])].filter(l => l.villa).map(l => `✗ ${[l.ws, l.m].filter(Boolean).join(' ')}: ${String(l.villa).slice(0, 160)}`) : [];
+  console.log('[drog-timar-background]', villa || JSON.stringify({ stofnud: ut.stofnud, skodud: ut.skodud, uppfaerd: ut.uppfaerd, obreytt: ut.obreytt, sleppt: ut.sleppt, villur: ut.villur, breytt, stofnudLinur: stofnud, villuLinur }));
   try {
     await fetch(`${SUPABASE_URL}/rest/v1/automation_runs`, {
       method: 'POST',
@@ -20,7 +24,7 @@ exports.handler = async () => {
       body: JSON.stringify({
         job_name: 'drog-timar', status: villa || (ut && ut.villur) ? 'error' : 'ok', source: 'netlify',
         started_at: hafid, finished_at: new Date().toISOString(),
-        detail: villa ? villa : `${ut.uppfaerd} drög uppfærð · ${ut.obreytt} óbreytt · ${ut.sleppt} sleppt · ${ut.villur} villur` + (breytt.length ? ' — ' + breytt.join('; ') : ''),
+        detail: villa ? villa : `${ut.stofnud || 0} drög stofnuð · ${ut.uppfaerd} uppfærð · ${ut.obreytt} óbreytt · ${ut.sleppt} sleppt · ${ut.villur} villur` + ((stofnud.length || breytt.length || villuLinur.length) ? ' — ' + [...stofnud, ...villuLinur, ...breytt].join('; ') : ''),
       }),
     });
   } catch (_) {}

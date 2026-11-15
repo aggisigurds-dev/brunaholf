@@ -44,6 +44,8 @@ exports.handler = async (event) => {
       // 2026-08-08 (viðskiptavinir-flipi): customer identity + extra billing settings
       'eftirvinna_leyfid', 'eftirvinna_threshold_per_day', 'verkfaeragjald',
       'kennitala', 'heimilisfang', 'lunch_fradrattur_h',
+      // 15.11.2026: samningsbundin yfirvinna á sjálfvirkum drögum (drog-timar). Skrifast AÐEINS sé hann sendur.
+      'yfirvinna_samningur',
     ];
     const payload = { updated_at: new Date().toISOString() };
     for (const k of allowed) if (body[k] !== undefined) payload[k] = body[k];
