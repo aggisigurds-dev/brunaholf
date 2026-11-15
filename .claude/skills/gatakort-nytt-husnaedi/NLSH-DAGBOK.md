@@ -783,3 +783,11 @@ Agnar: „bætt við 4. hæðar aukaverkefnin sem voru að byrja, sem þú púsl
   `parad.ids` (ekki `parad.skr.stada`, sem fraus við pörun 12.11). Lifandi 15.11: 11 af 35 þéttir (31 %), 8 skráðir ekki kláraðir, 16 án skráningar (7 stútar ekki komnir).
 - Spjaldið er HLUTI af „Gólf 5. hæðar“ (357/505) og er ekki lagt við heildartöluna; textinn segir „Innifalið í gólfi 5. hæðar“.
 - Sannreynt á lifandi skýrslu í símabreidd 412 px, engar villur á síðu.
+
+## 15.11.2026 — Stútarnir í Apex eins og í skýrslunni (kjarni main c1c084e)
+Agnar: „þessir guide points og aðrir gulir ókláraðir punktar, hvernig koma þeir fram í Apex“.
+- Áður: óskráður stútur var venjulegur rauður eftir-punktur (úttektin sást aðeins í athugasemd), og síminn opnaðist í Loftræstisýn þar sem EKKERT sést á 4H.
+- Nú: liturinn er Í punktinum (`STUT_LIT`, sami og `STUT` í Haedir.tsx): rauður = eftir að þétta, gulur = þétt í úttekt en skráningu vantar,
+  hvítur með rauðum hring = stútur ekki kominn / ómetið. Skýringar í neðri stiku telja gulu og hvítu.
+- Sími á 4H skiptir sjálfur í Gólf-sýn (og aftur í Loftræstingu af 4H). Gólfsýnin sýnir líka vatnslög blaðsins sem eru stillt sýnileg (4H: M115).
+- Pöruðu stútarnir (19) sjást sem skráningar sínar (✓ / opið merki), ekki sem stútur. Sannreynt í símahermi á lifandi vef við S1-S (#6–#10).
