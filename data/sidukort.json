@@ -7,8 +7,8 @@
    "repo": "brunaholf",
    "utgafa": 1,
    "vefagent": "framendi",
-   "alls": 102,
-   "med_eiganda": 102,
+   "alls": 103,
+   "med_eiganda": 103,
    "vidvorun": 0,
    "an_eiganda": 0,
    "hlutfall": 100
@@ -2542,6 +2542,35 @@
    "stada": "✅",
    "astaeda": [],
    "eigandi_nafn": "netvordur",
+   "eigandi_utan": false
+  },
+  {
+   "vefur": "brunaholf",
+   "repo": "brunaholf",
+   "id": "postmoppur",
+   "titill": "Póstmöppur",
+   "tegund": "sida",
+   "leid": "/postmoppur.html",
+   "skilgreind": [
+    "postmoppur.html",
+    "netlify/functions/postmoppur.js"
+   ],
+   "yfir": null,
+   "eigandi": "gagnaleidslur",
+   "undiragentar": [
+    "postur"
+   ],
+   "kveikjuord": [
+    "Póstmöppur",
+    "Thunderbird-möppur",
+    "kveikja á innsogi",
+    "undirmöppur pósts",
+    "viðhengi úr pósti"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": [],
+   "eigandi_nafn": "gagnaleidslur",
    "eigandi_utan": false
   },
   {

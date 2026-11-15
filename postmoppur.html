@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="is">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Póstmöppur — Brunahólf</title>
+<meta name="robots" content="noindex">
+<link rel="icon" type="image/png" sizes="32x32" href="/img/brunaholf-favicon-32.png?v=flame1">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600;700&display=swap">
+<!-- Agnar 15.11.2026: „Get ég kveikt á innsoginu einhvers staðar?" — rofi fyrir Thunderbird-möppur póst-brúarinnar
+     (luna-bridge/moppur.js) og viðhengi eftir beiðni. Gögn: /api/postmoppur (netlify/functions/postmoppur.js). -->
+<style>
+  :root {
+    --bg:#f4f1ea; --card:#ffffff; --line:#e6e1d6; --border:#cfc8b9; --ink:#161513; --muted:#6f685c;
+    --navy:#161513; --on-dark:#f4f1ea; --on-dark-soft:#c8c1b1; --gold:#c9a54a; --gold-deep:#8f6a1c;
+    --green:#2f7a4a; --red:#b5522a; --blue:#2a4763;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 Inter, system-ui, sans-serif; }
+  header { background: var(--navy); color: var(--on-dark); padding: 18px 16px 16px; border-bottom: 3px solid var(--gold); }
+  header h1 { margin: 0; font: 700 24px/1.2 'Playfair Display', Georgia, serif; }
+  header p { margin: 6px 0 0; color: var(--on-dark-soft); font-size: 14px; max-width: 760px; }
+  main { max-width: 860px; margin: 0 auto; padding: 16px; }
+  .spjald { background: var(--card); border: 1px solid var(--border); border-radius: 10px; margin: 0 0 16px; overflow: hidden; }
+  .spjald h2 { margin: 0; padding: 12px 14px; font-size: 16px; border-bottom: 1px solid var(--line); display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: baseline; }
+  .spjald h2 small { color: var(--muted); font-weight: 400; font-size: 13px; }
+  .holf { padding: 10px 14px 4px; font-weight: 600; color: var(--gold-deep); font-size: 14px; }
+  .rod { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; align-items: center; padding: 10px 14px; border-top: 1px solid var(--line); }
+  .rod:first-of-type { border-top: 0; }
+  .nafn { font-weight: 600; overflow-wrap: anywhere; }
+  .meta { color: var(--muted); font-size: 13px; }
+  .stika { grid-column: 1 / -1; height: 4px; background: var(--line); border-radius: 2px; overflow: hidden; }
+  .stika > i { display: block; height: 100%; background: var(--green); width: 0; }
+  button { font: 600 14px Inter, system-ui, sans-serif; min-height: 44px; min-width: 44px; padding: 0 16px; border-radius: 8px;
+    border: 1px solid var(--border); background: #faf8f4; color: var(--ink); cursor: pointer; }
+  button:focus-visible, input:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+  button[aria-pressed="true"] { background: var(--green); border-color: var(--green); color: #fff; }
+  button:disabled { opacity: .55; cursor: not-allowed; }
+  .ath { padding: 10px 14px; color: var(--muted); font-size: 13px; border-top: 1px solid var(--line); }
+  .tomt { padding: 14px; color: var(--muted); }
+  form.lina { display: flex; flex-wrap: wrap; gap: 8px; padding: 12px 14px; }
+  input { font: 15px Inter, system-ui, sans-serif; min-height: 44px; padding: 0 12px; border-radius: 8px; border: 1px solid var(--border); background: #fff; color: var(--ink); }
+  input[type="number"] { width: 10em; }
+  #stada { min-height: 22px; margin: 0 0 12px; font-size: 14px; }
+  #stada.villa { color: var(--red); }
+  #stada.gott { color: var(--green); }
+  .merki { font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: var(--line); color: var(--ink); white-space: nowrap; }
+  .merki.lokid { background: #dcefe2; color: var(--green); }
+  .merki.villa { background: #f6e0d6; color: var(--red); }
+  #innskraning[hidden], #efni[hidden] { display: none; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Póstmöppur</h1>
+  <p>Kveiktu á Thunderbird-möppu og póst-brúin les hana frá byrjun í næstu keyrslum (á 15 mínútna fresti), með PDF-viðhengjum.
+     Allt er slökkt þar til kveikt er hér.</p>
+</header>
+<main>
+  <p id="stada" role="status" aria-live="polite"></p>
+
+  <section id="innskraning" class="spjald" hidden aria-labelledby="inn-h">
+    <h2 id="inn-h">Innskráning</h2>
+    <form class="lina" id="inn-form">
+      <input id="inn-nn" autocomplete="username" placeholder="Notandanafn" aria-label="Notandanafn" required>
+      <input id="inn-pw" type="password" autocomplete="current-password" placeholder="Lykilorð" aria-label="Lykilorð" required>
+      <button type="submit">Skrá inn</button>
+    </form>
+  </section>
+
+  <div id="efni" hidden>
+    <div id="velar"></div>
+
+    <section class="spjald" aria-labelledby="vh-h">
+      <h2 id="vh-h">Viðhengi úr pósti <small>tölvan sem á pósthólfið sækir skrárnar í næstu keyrslu</small></h2>
+      <form class="lina" id="vh-form">
+        <input id="vh-id" type="number" min="1" inputmode="numeric" placeholder="Númer pósts" aria-label="Númer pósts (email_digest id)" required>
+        <button type="submit" id="vh-takki">Sækja viðhengi</button>
+      </form>
+      <div id="beidnir"></div>
+    </section>
+  </div>
+</main>
+<script>
+(function () {
+  'use strict';
+  var API = '/api/postmoppur';
+  var gogn = null;
+  var $ = function (id) { return document.getElementById(id); };
+
+  function stada(texti, tegund) {
+    var s = $('stada');
+    s.textContent = texti || '';
+    s.className = tegund || '';
+  }
+  function el(tag, cls, texti) {
+    var e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (texti != null) e.textContent = texti;
+    return e;
+  }
+  function mb(b) { return String(Math.round((b || 0) / 1048576 * 10) / 10).replace('.', ',') + ' MB'; }
+  function timi(iso) {
+    if (!iso) return '';
+    var d = new Date(iso);
+    if (isNaN(d)) return '';
+    var tv = function (n) { return (n < 10 ? '0' : '') + n; };
+    return d.getDate() + '.' + (d.getMonth() + 1) + '. kl. ' + tv(d.getHours()) + ':' + tv(d.getMinutes());
+  }
+  function erKveikt(account, mappa) {
+    var k = gogn.kveikt || {};
+    var lykill = Object.keys(k).filter(function (x) { return x.charAt(0) !== '_' && x.toLowerCase() === String(account).toLowerCase(); })[0];
+    return !!(lykill && Array.isArray(k[lykill]) && k[lykill].indexOf(mappa) !== -1);
+  }
+
+  function teikna() {
+    var rot = $('velar');
+    rot.textContent = '';
+    var velar = gogn.velar || [];
+    if (!velar.length) {
+      var t = el('section', 'spjald');
+      t.appendChild(el('h2', null, 'Engar möppur enn'));
+      t.appendChild(el('p', 'tomt', 'Póst-brúin hefur ekki sent möppulista. Í Jarvis: Agentanetið → Skipanir → „git-pull“ og síðan „Keyra póst-brúna“ á tölvunni sem keyrir Thunderbird.'));
+      rot.appendChild(t);
+    }
+    velar.forEach(function (v) {
+      var s = el('section', 'spjald');
+      var h = el('h2', null, v.vel);
+      h.appendChild(el('small', null, 'listi uppfærður ' + timi(v.uppfaert)));
+      s.appendChild(h);
+      Object.keys(v.holf || {}).sort().forEach(function (account) {
+        s.appendChild(el('div', 'holf', account));
+        var moppur = v.holf[account] || [];
+        if (!moppur.length) s.appendChild(el('p', 'tomt', 'Engar notendamöppur.'));
+        moppur.forEach(function (m) {
+          var rod = el('div', 'rod');
+          var vinstri = el('div');
+          vinstri.appendChild(el('div', 'nafn', m.mappa));
+          var hlutfall = m.bytes ? Math.min(100, Math.round((m.lesid || 0) / m.bytes * 100)) : 0;
+          var kveikt = erKveikt(account, m.mappa);
+          var meta = mb(m.bytes) + (kveikt || m.lesid ? ' · lesið ' + hlutfall + '%' : '');
+          if (kveikt && !m.kveikt) meta += ' · byrjar í næstu keyrslu';
+          vinstri.appendChild(el('div', 'meta', meta));
+          var takki = el('button', null, kveikt ? 'Kveikt' : 'Slökkt');
+          takki.type = 'button';
+          takki.setAttribute('aria-pressed', kveikt ? 'true' : 'false');
+          takki.setAttribute('aria-label', (kveikt ? 'Slökkva á ' : 'Kveikja á ') + m.mappa + ' (' + account + ')');
+          takki.disabled = !gogn.stjornandi;
+          takki.addEventListener('click', function () { rofi(account, m.mappa, !kveikt, takki); });
+          rod.appendChild(vinstri);
+          rod.appendChild(takki);
+          var stika = el('div', 'stika');
+          var fylling = el('i');
+          fylling.style.width = hlutfall + '%';
+          stika.appendChild(fylling);
+          if (kveikt || m.lesid) rod.appendChild(stika);
+          s.appendChild(rod);
+        });
+      });
+      (v.utilokad || []).forEach(function (a) {
+        s.appendChild(el('p', 'ath', a + ': undirmöppur ekki í boði, því póstur þess fer sjálfkrafa á Þjónustuborðið.'));
+      });
+      if (!gogn.stjornandi) s.appendChild(el('p', 'ath', 'Aðeins stjórnandi getur kveikt á möppum.'));
+      rot.appendChild(s);
+    });
+    teiknaBeidnir();
+  }
+
+  function teiknaBeidnir() {
+    var rot = $('beidnir');
+    rot.textContent = '';
+    var beidnir = (gogn.beidnir || []).slice().reverse();
+    if (!beidnir.length) { rot.appendChild(el('p', 'tomt', 'Engar beiðnir enn.')); return; }
+    beidnir.forEach(function (b) {
+      var n = (gogn.nidurstada || {})[b.email_id];
+      var afgreitt = n && n.at >= (b.at || '');
+      var rod = el('div', 'rod');
+      var vinstri = el('div');
+      vinstri.appendChild(el('div', 'nafn', '#' + b.email_id + (b.efni ? ' · ' + b.efni : '')));
+      vinstri.appendChild(el('div', 'meta', 'beðið ' + timi(b.at) + (b.af ? ' af ' + b.af : '') + (afgreitt && n.villa ? ' · ' + n.villa : '')));
+      var merki = afgreitt
+        ? el('span', 'merki ' + (n.stada === 'lokid' ? 'lokid' : 'villa'), n.stada === 'lokid' ? 'Lokið: ' + (n.skrar || 0) + ' skrár' : 'Villa')
+        : el('span', 'merki', 'Bíður');
+      rod.appendChild(vinstri);
+      rod.appendChild(merki);
+      rot.appendChild(rod);
+    });
+  }
+
+  function saekja() {
+    return fetch(API, { credentials: 'same-origin', cache: 'no-store' }).then(function (r) {
+      if (r.status === 401) { $('efni').hidden = true; $('innskraning').hidden = false; stada('Skráðu þig inn til að sjá möppurnar.'); return null; }
+      return r.json().then(function (j) {
+        if (!r.ok) throw new Error(j && j.villa || ('Villa ' + r.status));
+        gogn = j;
+        $('innskraning').hidden = true;
+        $('efni').hidden = false;
+        $('vh-takki').disabled = !j.stjornandi;
+        teikna();
+        return j;
+      });
+    }).catch(function (e) { stada(e.message === 'Failed to fetch' ? 'Náði ekki sambandi við þjóninn.' : e.message, 'villa'); });
+  }
+
+  function senda(gogn2) {
+    return fetch(API, { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(gogn2) })
+      .then(function (r) { return r.json().then(function (j) { if (!r.ok) throw new Error(j && j.villa || ('Villa ' + r.status)); return j; }); });
+  }
+
+  function rofi(account, mappa, kveikja, takki) {
+    takki.disabled = true;
+    stada((kveikja ? 'Kveiki á ' : 'Slekk á ') + mappa + '…');
+    senda({ action: 'kveikja', account: account, mappa: mappa, kveikt: kveikja }).then(function (j) {
+      gogn.kveikt = j.kveikt;
+      teikna();
+      stada(kveikja ? mappa + ': kveikt. Brúin byrjar að lesa hana í næstu keyrslu.' : mappa + ': slökkt. Það sem er komið inn stendur.', 'gott');
+    }).catch(function (e) { takki.disabled = false; stada(e.message, 'villa'); });
+  }
+
+  $('vh-form').addEventListener('submit', function (ev) {
+    ev.preventDefault();
+    var id = parseInt($('vh-id').value, 10);
+    if (!(id > 0)) { stada('Sláðu inn númer pósts.', 'villa'); return; }
+    $('vh-takki').disabled = true;
+    senda({ action: 'saekja_vidhengi', email_id: id }).then(function () {
+      $('vh-id').value = '';
+      stada('Beiðni skráð. Tölvan sem á pósthólfið sækir viðhengin í næstu keyrslu.', 'gott');
+      return saekja();
+    }).catch(function (e) { stada(e.message, 'villa'); }).then(function () { $('vh-takki').disabled = !(gogn && gogn.stjornandi); });
+  });
+
+  $('inn-form').addEventListener('submit', function (ev) {
+    ev.preventDefault();
+    stada('Skrái inn…');
+    fetch('/api/hub-adgangar', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'login', nn: $('inn-nn').value.trim(), password: $('inn-pw').value }) })
+      .then(function (r) { return r.json().then(function (j) { if (!r.ok || j.ok === false) throw new Error(j && (j.villa || j.error) || 'Innskráning tókst ekki'); }); })
+      .then(function () { $('inn-pw').value = ''; stada(''); return saekja(); })
+      .catch(function (e) { stada(e.message, 'villa'); });
+  });
+
+  saekja();
+})();
+</script>
+</body>
+</html>
