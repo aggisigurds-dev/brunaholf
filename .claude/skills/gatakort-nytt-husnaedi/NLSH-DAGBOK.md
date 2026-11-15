@@ -675,3 +675,67 @@ Færðir punktar · Tillögur · Símaviðmót · Stöðuskýrsla.
 - **Athugað:** á staðnum í skjáskotinu er ENGINN nemi á stokknum sem hringað var um (punkturinn hefði annars tengst); „ótengt" segir því aðeins að nemagögnin þekki ekki
   þetta gegnumtak, ekki að punkturinn sé á röngum stað. Nemar ná ekki öllum gegnumtökum.
 - **Prófað** á prófunarþjóni og lifandi síðu í símahermi (grá útlína fannst á lifandi mynd við (399, 250) í `a4lif_naer.png`). Óprófað í síma Agnars.
+
+## Skörun, samruni og stærðarsleði (15.11.2026) — kjarni main 864ca0d
+- **Orð Agnars:** „Merkin eiga ekki að overlappa. Nema þetta sé bara viðgerð á sama gati. Geturðu bara sett inn stýringu fyrir merkjastærðir slider eða að lágmarksstærð sé
+  svipuð og veggjaþykktin. Af hverju er oft 4x til 6x í sama merkinuuu."
+- **Mælt (lesaðeins, `maela_klasa.cjs` í scratchpad lotunnar; færðar loftræstiskráningar með nema, án raufa):** 6H: 842 skráningar, 233 án nema, 403 merki á vegg:
+  232 með 1, 153 með 2, 13 með 3, 4 með 4, 1 með 5. 5H: 586 skráningar, 164 án nema, 289 merki: 169 / 114 / 4 með 3 / 2 með 4. Aðeins 18 + 6 merki eiga í raun 3+ skráningar;
+  í 12 af 18 á 6H eru Ajour-staðirnir dreifðir yfir meira en 0,6 m (sjálfvirka færslan safnaði þeim saman).
+- **Svar við „4x til 6x":** samrunafjarlægðin var 2,4 R, sem er 0,5–0,9 m á blaðinu þegar ekki er stækkað alveg inn (k ≈ 1–2); tveir til þrír stokkar hlið við hlið urðu
+  eitt merki. Nú `D = max(D_FAST = 8 px, 1,2 R)` í nærmynd.
+- **Skörun:** öll merki í nærmynd (allir hópar) ýtast í sundur í allt að 12 umferðum þar til miðjubil er 2,05 R, mælt með hakaásinn þjappaðan um 1,7 (hökin standa 1,5 R
+  til hliðar, eða ofan og neðan við láréttan vegg); mest 3,5 R frá réttum stað. Lagfæring og merkið sem hún lagar mega skarast (0,9 R). Gamla hliðrunin (aðeins Loft,
+  2,1 R í eina átt, allt að 6 sinnum) er farin: hún hafði fært merki allt að 12 R niður eftir veggnum, langt frá réttum stað.
+- **Stærð:** sleðinn „Merki" efst til vinstri á kortinu (`.gk-msledi`, sami `stillingar.taknStaerd` og í Stillingum, 0,5–2,5). `merkisR` ≥ `VEGG_THYKKT / 2 × k` (5,6 px).
+  Nærmynd (`naerm`) ræðst af stækkuninni einni, ekki sleðanum. Pikk velur fyrst úr merkinu sem er TEIKNAÐ undir fingrinum (`merkiRef`).
+- **Leiðrétt:** #5974 var fært með hendi 14.11 kl. 23:47 UTC (í þessari lotu), ekki kvöldið áður; #4739 og #4742 færð 15.11 kl. 00:07–00:08 UTC.
+- **Prófað** á prófunarþjóni og lifandi síðu í símahermi: minnsta miðjubil merkja mælt 2,05 R (k = 0,861, 23–24 merki í sýn); drag á #5974 og pikk á ×5 virka áfram.
+  Þekkt: í þéttustu klösunum standa merki allt að 3,5 R frá réttum stað þar til stækkað er inn; merki við jaðar skjás geta hnikast þegar hliðrað er. Óprófað í síma Agnars.
+
+## „160 ×6" við Einangrunarstofu snertismit (15.11.2026) — kjarni main 41c3733
+- **Agnar** sendi klippu úr prófunarmynd minni með rauðum hring um „160 ×6" (6H, veggur milli Einangrunarstofu snertismit og Gáttar snertismit, blaðhnit um (669, 1527)).
+- **Mælt (lesaðeins, `maela_stad.cjs` í scratchpad lotunnar):** merkið er #4056, #4167, #4057, #4601, #4058, #4595; allar Loft Ø125-160, kláraðar, Atli Már Heiðarsson, 09.03.2026.
+  `ajour_gogn.tvitak_af`: #4167 af #4056, #4601 af #4057, #4595 af #4058, þ.e. þrjár skráningar sem hver er skráð TVISVAR á nákvæmlega sömu Ajour-hnitum.
+  Staðir: (666,9; 1519,3), (668,2; 1530,6), (672,1; 1531,1) eftir sjálfvirka færslu. Á teikningunni er einn stokkur gegnum tvær vegglínur með um 11 px bili.
+  ÓMÆLT hvort tvískráningin er hin hliðin á sömu lokun (pinninn afritaður) eða tvítekning; gögnin segja það ekki.
+- **Á 6H alls (loft án raufa, 1.090 skráningar):** 7 merktar tvítak, 75 merktar lagfæring. Merki innan 8 px og sömu stærðar: 615 með 1, 182 með 2, 19 með 3, 11 með 4,
+  2 með 5. Af 32 merkjum með 3+: 3 með tvítaki, 9 með lagfæringu, 20 með hvorugu.
+- **Breytt:** spjaldið sýnir efst „Í þessu merki: n stök verk á m stöðum („=" merkir sömu hnit í Ajour): #a = #b · #c = #d …" (`hjaTexti`, `hjaStadir`; flokkað eftir
+  Ajour-hnitum x0, y0 með einum aukastaf). Í dýpstu stækkun klofnar merkið í ×2 (#4056 = #4167) og ×4.
+- **Mistök á leiðinni:** fyrsta tilraun til að færa línuna efst færði RANGA línu (rauðröra-ábendingin ber líka klasann `gk-hja`); séð á prófunarmynd og leiðrétt áður en birt var.
+
+## Hvert loftræstimerki er ein lokun (15.11.2026) — kjarni main, commit „Gatakort: hvert loftræstimerki er ein lokun, ×n aðeins við beina tilvísun"
+- **Orð Agnars:** „Jú mætti brjóta upp allar svona 4x-6x bull. Nema það sé bein tilvísun í lýsingu í það gatanúmer um að þurfti að endurgera gatið, eða laga. Þetta er
+  byrjað að líta betur út."
+- **Mælt:** af 10.709 skráningum verksins eru 1.253 með lýsingu og 38 vísa í gatanúmer („lagfæring #926", „repair #471", „Repair work on point 5733", „aukaverk laga aftur
+  punkt 465", „Repairing hole #3902", „yfirfara gat númer #4457"); 35 þeirra eru merktar lagfæring. Stærðir í lýsingu („650 x 400", „2.1metrar") eru ekki tilvísanir.
+- **Regla í KortClient (nærmynd, hópur Loft):** merki með 3+ stök verk er brotið upp í lokanir, mest tvö verk hver, í röðinni (a) sömu Ajour-hnit (pinninn skráður tvisvar),
+  (b) hinn endinn samkvæmt `endar`, (c) næsta skráning innan `PAR_PX` = 12 px, annars stakt merki. Skráning sem vísar í gatanúmer (`TILV`, `tilvisanir`, sótt við ræsingu með
+  `lysing.ilike` á lykilorðin) fylgir lokun þess gats; það er eina ástæðan fyrir „×3" eða hærra. Skörunarvörnin raðar lokunum hlið við hlið.
+- **Dæmi:** „160 ×6" við (669, 1527) → þrjú merki: #4056 = #4167, #4057 = #4601, #4058 = #4595. „160 ×5" við #5974 → þrjú merki (2 + 2 + 1).
+- **Ósnert:** rör (2 × 2 merkið telur áfram pör), rafmagn, gólf og yfirlitsstækkun. Lagfæring A er áfram sér merki með brotinni útlínu.
+- **Liður (c) er nálgun:** tvær skráningar innan 12 px eru settar í eina lokun án þess að gögnin segi að þær séu sitt hvor hliðin. Pikk á merkið sýnir númerin.
+- **Prófað** á prófunarþjóni og lifandi síðu í símahermi; engar villur. Óprófað í síma Agnars.
+
+## Sjálfvirk færsla tekin af fimm skráningum við hurð hjá #5974 (15.11.2026)
+- **Samþykki Agnars í spjalli:** „svo þær fari aftur á Ajour-staðinn, já" (svar við: á ég að taka sjálfvirku færsluna af skráningunum fimm við hurðina hjá #5974).
+- **Skrifað (sama aðgerð og hnappurinn „Upprunaleg staða", engin hörð eyðing):** `update skr_faerslur set eytt = true where id in (31, 38, 39, 47, 356)`; skráningar
+  #522 (470), #555 (503), #561 (509), #712 (653), #3888 (3424), allar `uppruni = sjalfvirkt` frá 12.11.2026, teikning 4 (6H). Til baka: `eytt = false` á sömu fimm línum.
+- **Eftir:** þær standa á Ajour-stað sínum við lárétta vegginn (x 1502–1546, y 910–925), með grárri útlínu (enginn nemi þar). Á lóðrétta veggnum stendur #5974 ein og
+  sýnir nú „hinn endann vantar" (rautt ✕): þar er aðeins EITT stakt verk skráð, ekki par. Áður taldi kortið eina af fimm sem hinn endann.
+- **Pörun við áætluð göt (`skr_aaetlud.parad`) er ÓENDURREIKNUÐ** (síðast 12.11.2026 10:30). Þurrkeyrsla `skraning-gatakort-para.cjs --haed 6H` nú: fullt 639 (geymt 640),
+  hluti 55 (55), vantar 50 (49), pöruð stök verk 1.861 (1.863). Munurinn nær til allra færslna síðan 12.11 (líka handfærslur Agnars). Spurt hvort eigi að keyra `--write`.
+- **Ath.:** verði sjálfvirka færslutólið keyrt aftur fyrir 6H gæti það fært þessar fimm á ný; þá þarf að undanskilja þær (ókannað hvernig tólið fer með `eytt = true` línur).
+
+## Eitt hak = eitt stakt verk í merkinu (15.11.2026) — kjarni main 57f17ae
+- **Orð Agnars (skjáskot: blátt 160 á vegg og grátt 160 við hliðina, tvö hök við hvort):** „Þetta er brjálæðislega villandi þegar þú sýnir alltaf 2 V við merki. Þegar það er bara 1 V þarna."
+- **Orsök:** frá 13.11 fékk seinna hakasætið hak ef HINN ENDINN var skráður og kláraður, líka þegar hann var teiknaður sem annað merki (`nh`). Tvö merki með einu verki
+  hvort sýndu þannig fjögur hök. (13.11-kvörtunin, „sýnir næstum alls staðar að bara sé búið öðrum megin", var leyst með þessu og olli nú hinu.)
+- **Nú:** hak eingöngu fyrir klárað verk Í merkinu (`tA`, `tB`; tvö verk sömu megin = tvöfalt hak). Sætið er autt ef hinn endinn er í öðru merki; rautt ✕ ef enginn endi finnst.
+  Svo 13.11-málið komi ekki aftur renna tveir endar sömu lokunar handan veggjar (`hlid = hinum`) í EITT merki innan `ENDA_SAMAN_PX` = 30 px (= ENDI_PX ≈ 0,9 m) í stað 12 px;
+  sama mörk fyrir „ótengdur punktur".
+- **Ósnert:** neonfylling („Tilbúið") reiknast áfram með hinum endanum (`nh`), svo stakt merki með einu haki getur verið grænt ef hinn endinn, lengra en 0,9 m frá eða
+  sömu megin án veggjar, er kláraður.
+- **Prófað** á prófunarþjóni og lifandi síðu í símahermi: staðurinn úr skjáskotinu er eitt merki með einu haki hvorum megin; tvö 160-merki í herbergi við vegg (ekki handan
+  veggjar) sýna eitt hak hvort. Óprófað í síma Agnars.
