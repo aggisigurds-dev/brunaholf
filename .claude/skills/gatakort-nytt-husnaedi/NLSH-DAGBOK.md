@@ -839,3 +839,19 @@ R1150/R1160 sama hlutanúmers (`scratchpad/as_R3150.json` …), styrkur 1,0–1,
 > 12 pt frá miðgildi systurblaða leiðrétt (R3150-18, R5160-02, R5160-14, R3160-19). Blöð án viðmiðs sleppt: R3150-09/-10, R6150-09, R6160-12, R5160-25.
 Skeytt með `-skeyta-lit.py dokkt` (Lágspenna b45309, Smáspenna 7c3aed, Brunaviðvörun 0d9488), skráð með `-log.cjs --write` (rod 41–43).
 Sjónskoðun: tákn lenda rétt í herbergjum. Blöðin sýna aðallega TÆKI (tengla, ljós, nema), fáar lagnaleiðir → engin sjálfvirk áætluð göt.
+
+
+## 15.11.2026 — Úðakerfi og lyfjaloft hlutablöð + gataplön burðarvirkis (M814/M815/M816)
+
+Agnar samþykkti niðurhal: 120 blöð, 30,4 MB (M315 18, M316 16, M715 16, M716 16, M814 20, M815 18, M816 16), `Downloads\nlsh-udi-gas-gat-15nov.dat`
+→ `Documents\NLSH\procore-hlutablod\NLSH-<blað>.pdf` (allir %PDF). „Við lærum í leiðinni“ → tafla „Hvaða skjöl nýtast“ í SKILL.md skref 1.
+- Afstilling: ÁSAMERKI blaðs → M115-NN/M116-NN (q 1,000, frávik ≤ 0,1 pt) → grunnur (as_M115/as_M116). `scratchpad/raf/stilla_asar.py`,
+  `gatavarpa_lib.py`. M315-06/16/18 án ása → `-fylgni.py` við M115 (styrkur 1,67–1,75). Stillingar: `scratchpad/as_M315.json` o.fl.
+- **Gataplön** (rev 0, 06.01.2025): götin lesin úr texta (`raf/gataplan.py`, „ø160“, „150 x 300“), tvítekin á blaðamörkum tekin út:
+  M814 (plata yfir 4H) 582 göt: Ø160 520, Ø220–250 46, kantað 10, annað 6 · M815 (yfir 5H) 535: Ø160 513, Ø220–250 20, annað 2 ·
+  M816 (yfir 6H/þak) 190: Ø160 90, Ø220–300 78, <100 12, >300 10.
+  Samanburður við gólfskráningar 4H+5H (haedarhnit, 45 px): M814 466 með / 116 án (45 af 46 Ø220–250 án), M815 470 / 65 (19 af 20 án).
+  Götin liggja hvert yfir öðru milli platna, svo staður einn segir EKKI hvorri plötu skráning tilheyrir. M816: 6H á aðeins 3–4 gólfskráningar →
+  þakplata óbyrjuð ef hún er í verkinu (ÓMÆLT hvort). Miðbygging/garður í M814 alveg óskráð (gæti verið utan verks).
+  Hringurinn er settur á stærðarTEXTANN, sem stendur 0,3–0,6 m frá gatatákninu.
+- Lög (`-log.cjs`, falin): úði hlutablöð M315/M316 (dokkt 0369a1), lyfjaloft M715/M716 (litur), gataplan M814→4H, M815→5H, M816→6H (fag golf).

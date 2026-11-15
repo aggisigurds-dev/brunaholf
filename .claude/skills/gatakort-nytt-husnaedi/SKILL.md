@@ -106,6 +106,28 @@ og breyttu heitinu sem `.cjs` kallar á. Listinn er mældur með leit í tólunu
 2. Fyrir hverja hæð: eitt yfirlitsblað (PDF, helst vektor), og fyrir hvert fag annaðhvort yfirlitsblað eða öll hlutablöðin.
 3. Skráðu útgáfu og dagsetningu hvers blaðs í `skra.json` í möppunni.
 
+### Hvaða skjöl nýtast (lærdómur NLSH 15.11.2026, Agnar: „við lærum í leiðinni“)
+
+Sæktu í þessari röð. Þetta segir hvað hvert skjal gefur gatakortinu, ekki hvað er til.
+
+| Gagnsemi | Skjal (NLSH-númer) | Hvað það gefur |
+|---|---|---|
+| Ómissandi | **Brunahólfun / brunayfirlit** (A285-31/A286-31) | rauðu EI-veggirnir; allt annað er borið við þá |
+| Mjög mikil | **Gataplan burðarvirkis** (M814/M815/M816) | hvert gat í plötu MEÐ STÆRÐ í texta („ø160“, „150 x 300“) og ásamerki → liðir 1.1/1.2/1.3 beint, óskráð göt sjást. Ajour hefur oft einn gólfflokk. |
+| Mjög mikil | **Lagnaleiðir rafmagns** (R1150/R1160) | kapalstigar; krossar við rauðan vegg = raf-gegnumtök. Engin ásamerki → fylgni við loftræsiblað sama hlutanúmers |
+| Mjög mikil | **Vatnslagnir í lit** (M115/M116) | rautt/blátt = heitt/kalt, brúnt = hiti/kæling, GRÆNT = frárennsli (vaskar, klósett, niðurföll) |
+| Mikil | **Loftræsing hlutablöð** (M215/M216) | fylltir stokkar; ásamerki |
+| Mikil | **Úðakerfi hlutablöð** (M315/M316) | lagnir svartar, DN-merkingar; ásamerki (sum blöð án → fylgni) |
+| Mikil | **Lyfjaloft hlutablöð** (M715/M716) | grænar koparlagnir inn í hverja stofu; ásamerki |
+| Miðlungs | **Veggjayfirlit** (A400-20, A400-21) | hvaða veggtegund hefur EI-kröfu (t.d. lagnaveggur IV-2.24 án EI, IV-2.7 EI60) |
+| Lítil | Lágspenna, smáspenna, brunaviðvörun (R3/R5/R6) | aðallega TÆKI, fáar leiðir → lög til stuðnings, engin sjálfvirk göt |
+| Engin á kort | Kerfismyndir (M049, M349, M449, M549, M649, M749), einlínumyndir (R37x0) | engar staðsetningar |
+| Óskoðað | Upphengjur (U), gólfhiti (M515/M516), þakblöð (M117/M217/M317/M717, R1170) | spyrja hvort þak sé í verkinu |
+
+Gataplön og hlutablöð með **ásamerkjum** stillast af upp á 0,1 pt (blað → fagblað sama hlutanúmers → grunnur, sjá
+`scratchpad/raf/stilla_asar.py` í NLSH-lotu 15.11). Blöð án ásamerkja: FFT-fylgni arkitektagrunns (`-fylgni.py`), athuga frávik
+við systurblöð sama hlutanúmers og leiðrétta > 12 pt í miðgildið.
+
 **Staðfest þegar:** `skra.json` telur öll blöð og engin hæð er án yfirlitsblaðs. Vanti yfirlitsblað: STOPP (þá þarf að púsla því
 saman úr hlutablöðum fyrst, sama aðferð og skref 3b, og segja Agnari að grunnurinn sé samsettur). Sé yfirlitsblað SKÖNNUN (mynd í
 PDF, enginn vektor): STOPP og segja Agnari. Tólin teikna úr vektor og litamörk veggja voru mæld á vektorblöðum; skönnun á NLSH
