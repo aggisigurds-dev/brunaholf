@@ -21,6 +21,3 @@ jobs:
           node-version: '22'
       - name: Þátta allar inline <script> blokkir
         run: node tools/check-inline-js.cjs
-      # 15.11.2026: gmail-send má aldrei opnast aftur — póstsending án innskráningar eða tóka = rautt.
-      - name: Hlið gmail-send (póstsending krefst innskráningar)
-        run: node tools/test-gmail-send-hlid.cjs

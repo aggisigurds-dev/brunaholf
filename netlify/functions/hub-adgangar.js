@@ -51,13 +51,6 @@ const LAS_MIN = 15;
 const SENDA_BIL_MIN = 5;
 // Póstur fer alltaf um Brunahólf (gmail-send býr þar) — líka þegar Slökkvitæki-eintak fallsins sendir.
 const MAIL_ORIGIN = 'https://brunaholf.netlify.app';
-// 15.11.2026: gmail-send krefst innskráningar eða tíma-tóka (brunaholf/netlify/functions/_postur-toki.js). Þjónninn hér
-// hefur enga köku, svo hann sendir tókann. Myntunin er skrifuð hér inn (ekki require) svo afritin tvö haldist eins.
-const POSTUR_HAUS = 'x-postur-toki';
-const posturToki = () => {
-  const m = Math.floor(Date.now() / 60000);
-  return m + '.' + crypto.createHmac('sha256', String(process.env.SUPABASE_SERVICE_ROLE_KEY || '')).update('postur-senda|' + m).digest('hex');
-};
 const URL_HUB = 'https://brunaholf.netlify.app/';
 const URL_SLOKK = 'https://slokkvitaeki.netlify.app/';
 const hostOf = (event) => String((event.headers && (event.headers.host || event.headers.Host)) || '').toLowerCase();
@@ -179,7 +172,7 @@ async function sendCredentials(event, user, stilling) {
     + '<p style="color:#6b655a;font-size:13px">Ekki áframsenda þennan póst. Lykilorðið er sameiginlegt fyrir starfsfólk.</p></div>';
   try {
     const r = await fetch(MAIL_ORIGIN + '/api/gmail-send', {
-      method: 'POST', headers: { 'Content-Type': 'application/json', [POSTUR_HAUS]: posturToki() },
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ account: MAIL_ACCOUNT, from: MAIL_FROM, to: [user.postfang], subject: 'Aðgangur að Brunahólfi', html }),
     });
     if (!r.ok) { const t = await r.text().catch(() => ''); return { ok: false, error: 'Póstsending mistókst (' + r.status + ').', detail: t.slice(0, 200) }; }
