@@ -1,6 +1,6 @@
 {
  "utgafa": 1,
- "nyjast": "2026-11-11",
+ "nyjast": "2026-11-14",
  "throskuldur": 6,
  "osnert_dagar": 30,
  "uppspretta": "slokkvitaeki/tools/audit-agentar.cjs --json",
@@ -240,9 +240,9 @@
    "sidast": "2026-11-11",
    "skrif": 12,
    "gaetir": 13,
-   "breytt": 0,
+   "breytt": 1,
    "daudir": [],
-   "merki": "🟢",
+   "merki": "🟡",
    "lysing": "Netvörður — gætir öryggisnetsins: kallaðu á hann ÁÐUR og EFTIR breytingu á vörðum leiðum (reikninga-OUT 10/233/254, kennitala 121/pos.js, payday-push, tilbúið 1"
   },
   {
@@ -842,10 +842,25 @@
    "sidast": "2026-11-11",
    "skrif": 38,
    "gaetir": 13,
+   "breytt": 1,
+   "daudir": [],
+   "merki": "🟡",
+   "lysing": "Gagnaleiðslurnar — Tímavera, Ajour, Payday, Redder, email-innsog, luna-bridge róbótarnir og sjálfvirkni-skráin. Notaðu þegar gögn vantar, innsog brotnar eða spu"
+  },
+  {
+   "nafn": "gatakort",
+   "tegund": "agent",
+   "heim": "brunaholf",
+   "slod": ".claude/agents/gatakort.md",
+   "hud": null,
+   "emoji": null,
+   "sidast": "2026-11-14",
+   "skrif": 5,
+   "gaetir": 1,
    "breytt": 0,
    "daudir": [],
    "merki": "🟢",
-   "lysing": "Gagnaleiðslurnar — Tímavera, Ajour, Payday, Redder, email-innsog, luna-bridge róbótarnir og sjálfvirkni-skráin. Notaðu þegar gögn vantar, innsog brotnar eða spu"
+   "lysing": "Jackie Chan 🥋 — sérfræðingur Apex Ajour: Gatakortsins og stöðuskýrslunnar í nýja Ajour (Skráning í Kjarna, /kjarni/skraning/kort og /kjarni/skraning/skyrsla): "
   },
   {
    "nafn": "hradi",
@@ -872,7 +887,7 @@
    "sidast": "2026-11-11",
    "skrif": 16,
    "gaetir": 13,
-   "breytt": 0,
+   "breytt": 3,
    "daudir": [
     "docs/LISTASKRA.md"
    ],
@@ -919,7 +934,7 @@
    "sidast": "2026-11-10",
    "skrif": 3,
    "gaetir": 10,
-   "breytt": 1,
+   "breytt": 2,
    "daudir": [
     "netlify/functions/_adgangur.js"
    ],
@@ -963,8 +978,8 @@
    "slod": ".claude/agents/oryggi.md",
    "hud": "Arnold (RLS-rödd)",
    "emoji": "💪",
-   "sidast": "2026-11-10",
-   "skrif": 12,
+   "sidast": "2026-11-14",
+   "skrif": 14,
    "gaetir": 8,
    "breytt": 1,
    "daudir": [],
@@ -996,9 +1011,9 @@
    "sidast": "2026-11-11",
    "skrif": 24,
    "gaetir": 11,
-   "breytt": 0,
+   "breytt": 1,
    "daudir": [],
-   "merki": "🟢",
+   "merki": "🟡",
    "lysing": "Rukkarinn — einn agent fyrir öll rukkunarmál beggja félaga (Brunahólf + Slökkvitæki): les REIKNINGALOTA-kynninguna, tengingar, Drög-stöð og Þjónustuborð sjálfur"
   },
   {
@@ -1165,6 +1180,21 @@
    "daudir": [],
    "merki": "🟢",
    "lysing": "Mánaðarlok gata-verkanna tveggja — Landsspítalinn (NLSH, ÞG verktakar) og Heklureitur (Framkvæmdafélagið Laugavegur) — í Gerð reikninga: hvaða gluggi, hvaða mán"
+  },
+  {
+   "nafn": "gatakort-nytt-husnaedi",
+   "tegund": "skill",
+   "heim": "brunaholf",
+   "slod": ".claude/skills/gatakort-nytt-husnaedi/SKILL.md",
+   "hud": null,
+   "emoji": null,
+   "sidast": "2026-11-14",
+   "skrif": 3,
+   "gaetir": 0,
+   "breytt": 0,
+   "daudir": [],
+   "merki": "🟢",
+   "lysing": "Kortleggja húsnæði á Gatakortið í nýja Ajour (Skráning í Kjarna): frá teikningum að korti með skráningum, lögum, pörun og stöðuskýrslu. Skref fyrir skref: safna"
   },
   {
    "nafn": "google-drive",
