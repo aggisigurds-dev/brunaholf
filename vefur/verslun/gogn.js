@@ -1,12 +1,20 @@
-/* Gögn verslunarinnar: afrit af því sem /api/vefverslun skilaði 12.11.2026 (vörur, verð, lager) ásamt stillingum þessarar síðu.
-   vorur       hver vara: id, nafn, flokkur, lysing, verd (með vsk), an (án vsk), birgdir, mynd (vv/v/<id>.webp)
+/* Gögn verslunarinnar: afrit af vörunum eins og þær voru 15.11.2026 (heiti, verð, lager) ásamt stillingum þessarar síðu.
+   Verslunin teiknar sig úr þessu afriti og sækir svo lifandi vörur af /api/vefur-vorur (verslun/verslun.js, kaflinn
+   „Lifandi vörur“): heiti, verð, lager, myndir og vöruval hér sjást því aðeins andartak, eða þegar fallið næst ekki.
+   Lýsingarnar (lysing) eru hins vegar alltaf þessar: þær eru yfirfarnar, því lýsingar vöruskrárinnar geyma líka
+   minnispunkta starfsfólks. Ný eða breytt lýsing birtist þegar afritið er endurnýjað.
+   sott        hvenær vöruskráin var lesin
+   vorur       hver vara: id, nafn, flokkur, lysing, verd (með vsk), an (án vsk), birgdir, mynd (vv/v/<id>.webp) og
+               ms (fingrafar myndarinnar í vöruskránni: breytist það sækir verslunin myndina þaðan)
+   efni.vorur  vöruval: falid (faldar vörur), profill (vörur með ítarlega vörusíðu)
    efni.thema  litir, letur og horn verslunarinnar á þessari síðu (vanti það notar verslunin sín eigin)
    efni.m      myndir sem skipt var út og hvar ramminn sker þær (pos)
    efni.t      textar sem skipt var út
-   Minnispunktar starfsfólks í vörulýsingum (birgjanúmer, birgjareikningar, innkaupsverð) voru teknir út úr afritinu.
-   Lifandi verslunin les ekki þessa skrá: breyting hér sést aðeins á þessari síðu. */
+   Minnispunktar starfsfólks í vörulýsingum (birgjanúmer, birgjareikningar, innkaupsverð) eru ekki í afritinu.
+   Vöruskránni sjálfri er breytt í Slökkvitæki-kerfinu, ekki hér. */
 window.BH_VV_GOGN = {
  "stada": "prufa",
+ "sott": "2026-11-15T00:29:38.000Z",
  "efni": {
   "vorur": {
    "falid": [],
@@ -26,18 +34,7 @@ window.BH_VV_GOGN = {
     "340": true,
     "361": true,
     "437": true
-   },
-   "aukalega": [
-    86,
-    373,
-    141,
-    101,
-    102,
-    140,
-    104,
-    437,
-    365
-   ]
+   }
   },
   "m": {
    "forsida.hetja.mynd": {
@@ -89,9 +86,6 @@ window.BH_VV_GOGN = {
    "takkar": "runad"
   }
  },
- "drog_uppfaert": "2026-10-13T01:02:03.407+00:00",
- "virkjad": null,
- "utgafa": 0,
  "vorur": [
   {
    "id": 12,
@@ -101,9 +95,8 @@ window.BH_VV_GOGN = {
    "verd": 8500,
    "an": 6855,
    "birgdir": 362,
-   "rodun": 10,
-   "forsida": true,
-   "mynd": "vv/v/12.webp"
+   "mynd": "vv/v/12.webp",
+   "ms": "65b97d7d1e97"
   },
   {
    "id": 1,
@@ -113,9 +106,8 @@ window.BH_VV_GOGN = {
    "verd": 13500,
    "an": 10887,
    "birgdir": 207,
-   "rodun": 20,
-   "forsida": true,
-   "mynd": "vv/v/1.webp"
+   "mynd": "vv/v/1.webp",
+   "ms": "dcc58f60c3d2"
   },
   {
    "id": 2,
@@ -125,9 +117,8 @@ window.BH_VV_GOGN = {
    "verd": 16440,
    "an": 13258,
    "birgdir": 40,
-   "rodun": 30,
-   "forsida": true,
-   "mynd": "vv/v/2.webp"
+   "mynd": "vv/v/2.webp",
+   "ms": "4fcd1954a10c"
   },
   {
    "id": 25,
@@ -137,9 +128,8 @@ window.BH_VV_GOGN = {
    "verd": 29500,
    "an": 23790,
    "birgdir": -1,
-   "rodun": 40,
-   "forsida": true,
-   "mynd": "vv/v/25.webp"
+   "mynd": "vv/v/25.webp",
+   "ms": "e70350664fdf"
   },
   {
    "id": 174,
@@ -149,9 +139,8 @@ window.BH_VV_GOGN = {
    "verd": 11500,
    "an": 9274,
    "birgdir": 6,
-   "rodun": 50,
-   "forsida": true,
-   "mynd": "vv/v/174.webp"
+   "mynd": "vv/v/174.webp",
+   "ms": "6cb08a2597ab"
   },
   {
    "id": 18,
@@ -161,9 +150,8 @@ window.BH_VV_GOGN = {
    "verd": 14480,
    "an": 11677,
    "birgdir": 244,
-   "rodun": 60,
-   "forsida": true,
-   "mynd": "vv/v/18.webp"
+   "mynd": "vv/v/18.webp",
+   "ms": "5c6bcbd7c359"
   },
   {
    "id": 437,
@@ -173,9 +161,8 @@ window.BH_VV_GOGN = {
    "verd": 22900,
    "an": 18468,
    "birgdir": null,
-   "rodun": 70,
-   "forsida": true,
-   "mynd": "vv/v/437.webp"
+   "mynd": "vv/v/437.webp",
+   "ms": "0b4a200edf52"
   },
   {
    "id": 4,
@@ -185,9 +172,8 @@ window.BH_VV_GOGN = {
    "verd": 3890,
    "an": 3137,
    "birgdir": 19,
-   "rodun": 90,
-   "forsida": true,
-   "mynd": "vv/v/4.webp"
+   "mynd": "vv/v/4.webp",
+   "ms": "c287136cbd39"
   },
   {
    "id": 340,
@@ -197,9 +183,8 @@ window.BH_VV_GOGN = {
    "verd": 4990,
    "an": 4024,
    "birgdir": 4,
-   "rodun": 100,
-   "forsida": true,
-   "mynd": "vv/v/340.webp"
+   "mynd": "vv/v/340.webp",
+   "ms": "2ccbe32e0374"
   },
   {
    "id": 451,
@@ -209,9 +194,8 @@ window.BH_VV_GOGN = {
    "verd": 1995,
    "an": 1609,
    "birgdir": 5,
-   "rodun": 110,
-   "forsida": true,
-   "mynd": "vv/v/451.webp"
+   "mynd": "vv/v/451.webp",
+   "ms": "0cec2b0a5628"
   },
   {
    "id": 339,
@@ -221,9 +205,8 @@ window.BH_VV_GOGN = {
    "verd": 1995,
    "an": 1609,
    "birgdir": 5,
-   "rodun": 120,
-   "forsida": true,
-   "mynd": "vv/v/339.webp"
+   "mynd": "vv/v/339.webp",
+   "ms": "fa9124238a36"
   },
   {
    "id": 453,
@@ -233,9 +216,8 @@ window.BH_VV_GOGN = {
    "verd": 10306,
    "an": 8311,
    "birgdir": 4,
-   "rodun": 130,
-   "forsida": true,
-   "mynd": "vv/v/453.webp"
+   "mynd": "vv/v/453.webp",
+   "ms": "2df42ed180cd"
   },
   {
    "id": 452,
@@ -245,9 +227,8 @@ window.BH_VV_GOGN = {
    "verd": 11573,
    "an": 9333,
    "birgdir": 4,
-   "rodun": 140,
-   "forsida": true,
-   "mynd": "vv/v/452.webp"
+   "mynd": "vv/v/452.webp",
+   "ms": "60712d8cfab5"
   },
   {
    "id": 338,
@@ -257,9 +238,8 @@ window.BH_VV_GOGN = {
    "verd": 19950,
    "an": 16089,
    "birgdir": 2,
-   "rodun": 150,
-   "forsida": true,
-   "mynd": "vv/v/338.webp"
+   "mynd": "vv/v/338.webp",
+   "ms": "da099f655552"
   },
   {
    "id": 337,
@@ -269,9 +249,8 @@ window.BH_VV_GOGN = {
    "verd": 28350,
    "an": 22863,
    "birgdir": 1,
-   "rodun": 160,
-   "forsida": true,
-   "mynd": "vv/v/337.webp"
+   "mynd": "vv/v/337.webp",
+   "ms": "028e3ce89fef"
   },
   {
    "id": 13,
@@ -281,9 +260,8 @@ window.BH_VV_GOGN = {
    "verd": 2722,
    "an": 2195,
    "birgdir": 12,
-   "rodun": 170,
-   "forsida": true,
-   "mynd": "vv/v/13.webp"
+   "mynd": "vv/v/13.webp",
+   "ms": "1f4f3c9cb7b7"
   },
   {
    "id": 3,
@@ -293,9 +271,8 @@ window.BH_VV_GOGN = {
    "verd": 4490,
    "an": 3621,
    "birgdir": 8,
-   "rodun": 190,
-   "forsida": true,
-   "mynd": "vv/v/3.webp"
+   "mynd": "vv/v/3.webp",
+   "ms": "d500220ee592"
   },
   {
    "id": 14,
@@ -305,9 +282,8 @@ window.BH_VV_GOGN = {
    "verd": 6650,
    "an": 5363,
    "birgdir": 30,
-   "rodun": 200,
-   "forsida": true,
-   "mynd": "vv/v/14.webp"
+   "mynd": "vv/v/14.webp",
+   "ms": "986ebe19e974"
   },
   {
    "id": 449,
@@ -317,9 +293,8 @@ window.BH_VV_GOGN = {
    "verd": 4290,
    "an": 3460,
    "birgdir": 4,
-   "rodun": 210,
-   "forsida": true,
-   "mynd": "vv/v/449.webp"
+   "mynd": "vv/v/449.webp",
+   "ms": "d68acd7cd3d9"
   },
   {
    "id": 448,
@@ -329,9 +304,8 @@ window.BH_VV_GOGN = {
    "verd": 4390,
    "an": 3540,
    "birgdir": 2,
-   "rodun": 220,
-   "forsida": true,
-   "mynd": "vv/v/448.webp"
+   "mynd": "vv/v/448.webp",
+   "ms": "1f067fe8731a"
   },
   {
    "id": 461,
@@ -341,9 +315,8 @@ window.BH_VV_GOGN = {
    "verd": 6990,
    "an": 5637,
    "birgdir": 21,
-   "rodun": 230,
-   "forsida": true,
-   "mynd": "vv/v/461.webp"
+   "mynd": "vv/v/461.webp",
+   "ms": "44503fd40ddb"
   },
   {
    "id": 462,
@@ -353,9 +326,8 @@ window.BH_VV_GOGN = {
    "verd": 12990,
    "an": 10476,
    "birgdir": 3,
-   "rodun": 240,
-   "forsida": true,
-   "mynd": "vv/v/462.webp"
+   "mynd": "vv/v/462.webp",
+   "ms": "92e575df0419"
   },
   {
    "id": 463,
@@ -365,9 +337,8 @@ window.BH_VV_GOGN = {
    "verd": 5990,
    "an": 4831,
    "birgdir": 6,
-   "rodun": 250,
-   "forsida": true,
-   "mynd": "vv/v/463.webp"
+   "mynd": "vv/v/463.webp",
+   "ms": "4be9763a366e"
   },
   {
    "id": 342,
@@ -377,9 +348,8 @@ window.BH_VV_GOGN = {
    "verd": 5990,
    "an": 4831,
    "birgdir": 8,
-   "rodun": 260,
-   "forsida": true,
-   "mynd": "vv/v/342.webp"
+   "mynd": "vv/v/342.webp",
+   "ms": "c00af2ffd880"
   },
   {
    "id": 195,
@@ -389,9 +359,8 @@ window.BH_VV_GOGN = {
    "verd": 5990,
    "an": 4831,
    "birgdir": 1,
-   "rodun": 270,
-   "forsida": true,
-   "mynd": "vv/v/195.webp"
+   "mynd": "vv/v/195.webp",
+   "ms": "838cb04255e9"
   },
   {
    "id": 455,
@@ -401,9 +370,8 @@ window.BH_VV_GOGN = {
    "verd": 7728,
    "an": 6232,
    "birgdir": 5,
-   "rodun": 280,
-   "forsida": true,
-   "mynd": "vv/v/455.webp"
+   "mynd": "vv/v/455.webp",
+   "ms": "abb537aa7b45"
   },
   {
    "id": 341,
@@ -413,9 +381,8 @@ window.BH_VV_GOGN = {
    "verd": 7990,
    "an": 6444,
    "birgdir": 10,
-   "rodun": 290,
-   "forsida": true,
-   "mynd": "vv/v/341.webp"
+   "mynd": "vv/v/341.webp",
+   "ms": "67852f6ab074"
   },
   {
    "id": 113,
@@ -425,9 +392,8 @@ window.BH_VV_GOGN = {
    "verd": 8634,
    "an": 6963,
    "birgdir": 40,
-   "rodun": 300,
-   "forsida": true,
-   "mynd": "vv/v/113.webp"
+   "mynd": "vv/v/113.webp",
+   "ms": "8efb20c40fd6"
   },
   {
    "id": 456,
@@ -437,9 +403,8 @@ window.BH_VV_GOGN = {
    "verd": 1586,
    "an": 1279,
    "birgdir": 10,
-   "rodun": 310,
-   "forsida": true,
-   "mynd": "vv/v/456.webp"
+   "mynd": "vv/v/456.webp",
+   "ms": "1a1e4b38d1bc"
   },
   {
    "id": 457,
@@ -449,9 +414,8 @@ window.BH_VV_GOGN = {
    "verd": 4128,
    "an": 3329,
    "birgdir": 1,
-   "rodun": 320,
-   "forsida": true,
-   "mynd": "vv/v/457.webp"
+   "mynd": "vv/v/457.webp",
+   "ms": "944eb4ef9f28"
   },
   {
    "id": 458,
@@ -461,9 +425,8 @@ window.BH_VV_GOGN = {
    "verd": 1586,
    "an": 1279,
    "birgdir": 1,
-   "rodun": 330,
-   "forsida": true,
-   "mynd": "vv/v/458.webp"
+   "mynd": "vv/v/458.webp",
+   "ms": "a5e55dc53e0c"
   },
   {
    "id": 459,
@@ -473,9 +436,8 @@ window.BH_VV_GOGN = {
    "verd": 1893,
    "an": 1527,
    "birgdir": 1,
-   "rodun": 340,
-   "forsida": true,
-   "mynd": "vv/v/459.webp"
+   "mynd": "vv/v/459.webp",
+   "ms": "be8ad5115c5d"
   },
   {
    "id": 460,
@@ -485,9 +447,8 @@ window.BH_VV_GOGN = {
    "verd": 1893,
    "an": 1527,
    "birgdir": 1,
-   "rodun": 350,
-   "forsida": true,
-   "mynd": "vv/v/460.webp"
+   "mynd": "vv/v/460.webp",
+   "ms": "b030e9fe9fad"
   },
   {
    "id": 387,
@@ -497,9 +458,8 @@ window.BH_VV_GOGN = {
    "verd": 999,
    "an": 806,
    "birgdir": -4,
-   "rodun": 380,
-   "forsida": true,
-   "mynd": "vv/v/387.webp"
+   "mynd": "vv/v/387.webp",
+   "ms": "345f0f97eadf"
   },
   {
    "id": 86,
@@ -509,9 +469,8 @@ window.BH_VV_GOGN = {
    "verd": 5201,
    "an": 4194,
    "birgdir": 122,
-   "rodun": null,
-   "forsida": false,
-   "mynd": "vv/v/86.webp"
+   "mynd": "vv/v/86.webp",
+   "ms": "329333bd4066"
   },
   {
    "id": 101,
@@ -521,9 +480,8 @@ window.BH_VV_GOGN = {
    "verd": 3500,
    "an": 2823,
    "birgdir": 56,
-   "rodun": null,
-   "forsida": false,
-   "mynd": "vv/v/101.webp"
+   "mynd": "vv/v/101.webp",
+   "ms": "7351ee43e2df"
   },
   {
    "id": 102,
@@ -533,9 +491,8 @@ window.BH_VV_GOGN = {
    "verd": 3958,
    "an": 3192,
    "birgdir": 361,
-   "rodun": null,
-   "forsida": false,
-   "mynd": "vv/v/102.webp"
+   "mynd": "vv/v/102.webp",
+   "ms": "55e4b16dbe04"
   },
   {
    "id": 104,
@@ -545,9 +502,8 @@ window.BH_VV_GOGN = {
    "verd": 4635,
    "an": 3738,
    "birgdir": 3,
-   "rodun": null,
-   "forsida": false,
-   "mynd": "vv/v/104.webp"
+   "mynd": "vv/v/104.webp",
+   "ms": "a650e8ab135f"
   },
   {
    "id": 140,
@@ -557,9 +513,8 @@ window.BH_VV_GOGN = {
    "verd": 1690,
    "an": 1363,
    "birgdir": -3,
-   "rodun": null,
-   "forsida": false,
-   "mynd": "vv/v/140.webp"
+   "mynd": "vv/v/140.webp",
+   "ms": "0af07b095f2c"
   },
   {
    "id": 141,
@@ -569,9 +524,8 @@ window.BH_VV_GOGN = {
    "verd": 1690,
    "an": 1363,
    "birgdir": 193,
-   "rodun": null,
-   "forsida": false,
-   "mynd": "vv/v/141.webp"
+   "mynd": "vv/v/141.webp",
+   "ms": "37f18adbd220"
   },
   {
    "id": 365,
@@ -581,9 +535,8 @@ window.BH_VV_GOGN = {
    "verd": 2990,
    "an": 2411,
    "birgdir": 10,
-   "rodun": null,
-   "forsida": false,
-   "mynd": "vv/v/365.webp"
+   "mynd": "vv/v/365.webp",
+   "ms": "f3fb054f5fef"
   },
   {
    "id": 373,
@@ -593,9 +546,8 @@ window.BH_VV_GOGN = {
    "verd": 3500,
    "an": 2823,
    "birgdir": 408,
-   "rodun": null,
-   "forsida": false,
-   "mynd": "vv/v/373.webp"
+   "mynd": "vv/v/373.webp",
+   "ms": "d24073547eec"
   }
  ]
 };

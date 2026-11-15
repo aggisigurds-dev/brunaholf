@@ -7,6 +7,8 @@
    5. „Fá tilboð“ leiðir í #hafa-samband á þessari síðu
    6. titill síðunnar er látinn ósnertur
    7. karfan segir „1 vara“
+   8. lifandi vörur: eftir fyrstu teikningu eru heiti, verð, lager, mynd og vöruval sótt af /api/vefur-vorur (kaflinn
+      „Lifandi vörur“ neðst í skránni). Lýsingar koma úr gogn.js. Afritið þar er notað þangað til og þegar fallið næst ekki.
    Greiðsla er ekki tengd: „Halda áfram í greiðslu“ sýnir aðeins skilaboð og sendir ekkert. */
 // Vefverslun Brunahólfs — síðurnar (forsíða verslunar, vörusíða, karfa).
 //
@@ -883,6 +885,7 @@ ${E('p', 'karfa.greidsluleidir', 'Greiðsluleiðir: kort, millifærsla eða reik
     VV.sida = r;
     const app = document.getElementById('vv-app');
     const y = window.scrollY;
+    VV.teikningar = (VV.teikningar || 0) + 1;
     const midja = r.s === 'vara' ? sidaVara(r.id) : r.s === 'karfa' ? sidaKarfa() : sidaForsida();
     app.innerHTML = haus() + midja + fotur();
     if (efst) window.scrollTo(0, 0); else window.scrollTo(0, y);
@@ -1041,6 +1044,147 @@ ${E('p', 'karfa.greidsluleidir', 'Greiðsluleiðir: kort, millifærsla eða reik
   }
   VV.saekja = saekja;
 
+  // ── Lifandi vörur (aðlögun 8 á þessari síðu) ───────────────────────────────
+  // Verslunin er teiknuð strax úr afritinu í verslun/gogn.js. Síðan eru lifandi vörur sóttar af /api/vefur-vorur: heiti,
+  // flokkur, verð, lager, mynd og vöruval (hvaða vörur eru faldar og hverjar hafa ítarlega vörusíðu). Breyti þær einhverju
+  // sem sést er teiknað aftur; annars er ekkert snert. Lýsingar koma ekki frá fallinu: þær eru yfirfarnar og standa í
+  // afritinu, og ný vara hefur enga lýsingu fyrr en afritið er endurnýjað. Svarið er líka geymt í vafranum, svo næsta
+  // heimsókn byrji á nýjustu vörum (aðeins skyndiminni: þjónninn ræður alltaf). Þar sem fallið er ekki til (tillögurnar í
+  // Claude, skrá opnuð af diski) eða svarar ekki stendur afritið óbreytt.
+  const lifandi = (() => {
+    const efniApi = (window.BH_EFNI && window.BH_EFNI.api) || '';
+    const SLOD = efniApi ? efniApi.replace(/[^\/]*$/, 'vefur-vorur') : '';
+    const LYKILL = 'bh_vv_lifandi_v1';
+    const GAMALT = 10 * 60 * 1000;                // eldra svar en þetta kom úr skyndiminni þjónsins: spurt er einu sinni aftur
+    const MAX_ALDUR = 7 * 24 * 3600 * 1000;       // eldra eintak í vafranum en þetta er ekki notað
+    const FRAMTID = 10 * 60 * 1000;               // klukkur vafrans og þjónsins mega skeika þessu, ekki meira
+    // sömu myndaslóðir og fallið hleypir út: myndin úr vöruskránni, eða úr myndageymslu vefverslunarinnar
+    const MYND = /^https:\/\/(?:slokkvitaeki\.netlify\.app\/api\/vefverslun\?mynd=[1-9]\d{0,9}&v=\d{1,12}|osfdzskyvisifcwyjkuk\.supabase\.co\/storage\/v1\/object\/public\/vefverslun\/[A-Za-z0-9][A-Za-z0-9._~\/-]{0,300})$/;
+    const REITIR = 'input, textarea, select';
+    const FOKUS = 'a[href], button, ' + REITIR;
+    let afrit = null, nyjast = 0, nidri = false, skrun = 0;
+
+    const heil = (n, min) => typeof n === 'number' && Number.isInteger(n) && n >= min;
+    // Svarið er sannreynt hér aftur, hvort sem það kemur af þjóninum eða úr vafranum: aðeins þessir reitir, af þessum
+    // gerðum og innan sömu marka og fallið setur, fara inn í verslunina. Standist ein vara ekki er öllu svarinu hafnað.
+    function lesa(d) {
+      if (!d || typeof d !== 'object' || !Array.isArray(d.vorur) || !d.vorur.length || d.vorur.length > 400) return null;
+      const sott = typeof d.sott === 'string' ? Date.parse(d.sott) : NaN;
+      if (!isFinite(sott) || sott > Date.now() + FRAMTID) return null;
+      const vorur = [], sed = new Set();
+      for (const x of d.vorur) {
+        if (!x || typeof x !== 'object' || !heil(x.id, 1) || sed.has(x.id) ||
+          typeof x.nafn !== 'string' || !x.nafn || x.nafn.length > 160 || typeof x.flokkur !== 'string' || !x.flokkur || x.flokkur.length > 80 ||
+          /\S{41}/.test(x.nafn + ' ' + x.flokkur) || !heil(x.verd, 1) || !heil(x.an, 0) || !(x.birgdir === null || heil(x.birgdir, -1e6)) ||
+          typeof x.mynd !== 'string' || (x.mynd && (!MYND.test(x.mynd) || x.mynd.includes('..'))) || typeof x.ms !== 'string') return null;
+        sed.add(x.id);
+        vorur.push({ id: x.id, nafn: x.nafn, flokkur: x.flokkur, verd: x.verd, an: x.an, birgdir: x.birgdir, mynd: x.mynd, ms: x.ms });
+      }
+      const val = d.val && typeof d.val === 'object' ? d.val : {};
+      const falid = (Array.isArray(val.falid) ? val.falid : []).filter((n) => heil(n, 1));
+      const profill = {};
+      if (val.profill && typeof val.profill === 'object') for (const k of Object.keys(val.profill)) if (/^[1-9]\d{0,9}$/.test(k)) profill[k] = val.profill[k] === true;
+      return { vorur, falid, profill, sott, texti: d.sott };
+    }
+    // Lifandi vörur taka við af þeim sem verslunin hefur. Lýsingin er yfirfarna lýsingin úr afritinu. Mynd: smækkaða afritið
+    // sem fylgir síðunni (vv/v/<id>.webp) meðan myndin í vöruskránni er sú sama og þegar afritið var gert (fingrafarið ms),
+    // annars myndin úr vöruskránni.
+    function setja(l) {
+      if (!afrit) {
+        afrit = new Map();
+        (window.BH_VV_GOGN.vorur || []).forEach((v) => afrit.set(v.id, { mynd: v.mynd || '', ms: v.ms || '', lysing: v.lysing || '' }));
+      }
+      VV.vorur = lagaVorur(l.vorur.map((x) => {
+        const a = afrit.get(x.id);
+        return {
+          id: x.id, nafn: x.nafn, flokkur: x.flokkur, lysing: a ? a.lysing : '', verd: x.verd, an: x.an, birgdir: x.birgdir,
+          mynd: a && a.ms && a.ms === x.ms ? a.mynd : x.mynd || (a ? a.mynd : ''), ms: x.ms,
+        };
+      }));
+      VV.efni.vorur = Object.assign({}, VV.efni.vorur, { falid: l.falid, profill: l.profill });
+      nyjast = l.sott;
+    }
+    const html = () => { const r = leid(); return haus() + (r.s === 'vara' ? sidaVara(r.id) : r.s === 'karfa' ? sidaKarfa() : sidaForsida()) + fotur(); };
+
+    // Teiknað er aftur þegar það truflar engan: ekki meðan fingri eða músarhnappi er haldið niðri (smellurinn týndist með
+    // stakinu sem hvarf), ekki meðan síðan skrunar (fingur á síma, hjól) og ekki meðan bendillinn er í reit í versluninni
+    // (reiturinn hyrfi undan þeim sem skrifar).
+    window.addEventListener('pointerdown', () => { nidri = true; }, true);
+    ['pointerup', 'pointercancel'].forEach((n) => window.addEventListener(n, () => { nidri = false; }, true));
+    window.addEventListener('scroll', () => { skrun = Date.now(); }, { capture: true, passive: true });
+    function thegarKyrrt(f) {
+      const app = document.getElementById('vv-app'), a = document.activeElement;
+      const aftur = (ms) => setTimeout(() => thegarKyrrt(f), ms || 80);
+      if (nidri) {
+        const sleppt = () => { window.removeEventListener('pointerup', sleppt, true); window.removeEventListener('pointercancel', sleppt, true); aftur(); };
+        window.addEventListener('pointerup', sleppt, true); window.addEventListener('pointercancel', sleppt, true);
+        return;
+      }
+      if (Date.now() - skrun < 400) { aftur(200); return; }
+      if (a && app.contains(a) && a.matches(REITIR)) { a.addEventListener('blur', () => aftur(), { once: true }); return; }
+      f();
+    }
+    // Stak þekkist eftir því hvað það gerir (vara, aðgerð, slóð, tegund reits), ekki eftir sæti: breytist röð varanna stendur
+    // fókusinn á sama hnappi og textinn í sama reit.
+    const audk = (e) => [e.nodeName, e.getAttribute('data-act'), e.getAttribute('data-id'), e.getAttribute('href'), e.getAttribute('autocomplete'),
+      e.getAttribute('type'), e.getAttribute('inputmode'), e.getAttribute('placeholder'), e.getAttribute('aria-label')].join('|');
+    function teikna() {
+      const app = document.getElementById('vv-app'), a = document.activeElement;
+      const gildi = {};
+      app.querySelectorAll(REITIR).forEach((r) => { (gildi[audk(r)] = gildi[audk(r)] || []).push(r.value); });
+      let fk = null, nr = 0;
+      if (a && app.contains(a) && a.matches(FOKUS)) { fk = audk(a); nr = Array.from(app.querySelectorAll(FOKUS)).filter((e) => audk(e) === fk).indexOf(a); }
+      render(false);
+      const nota = {};
+      app.querySelectorAll(REITIR).forEach((r) => {
+        const k = audk(r), i = (nota[k] = (nota[k] || 0) + 1) - 1, g = gildi[k];
+        if (g && i < g.length && r.value !== g[i]) r.value = g[i];
+      });
+      if (fk) {
+        const m = Array.from(app.querySelectorAll(FOKUS)).filter((e) => audk(e) === fk), t = m[nr] || m[0];
+        if (t) t.focus({ preventScroll: true });
+      }
+    }
+    // lifandi vörur sem berast eftir að síðan var teiknuð
+    function beita(l) {
+      const fyrir = html();
+      setja(l);
+      const tharf = html() !== fyrir, taldi = VV.teikningar;
+      thegarKyrrt(() => {
+        if (tharf && VV.teikningar === taldi) teikna();      // hafi verslunin teiknað sig sjálf í millitíðinni sýnir hún þegar nýju vörurnar
+        if (window.BHV2 && window.BHV2.nyjarVorur) window.BHV2.nyjarVorur();      // vörukynningin á forsíðunni
+      });
+    }
+    return {
+      // fyrir fyrstu teikningu: eintakið úr síðustu heimsókn, sé það nýrra en afritið sem fylgir síðunni
+      urGeymslu() {
+        if (!SLOD) return;
+        try {
+          const l = lesa(JSON.parse(localStorage.getItem(LYKILL) || 'null'));
+          const afritFra = Date.parse(window.BH_VV_GOGN.sott || '') || 0;
+          if (l && l.sott > afritFra && Date.now() - l.sott < MAX_ALDUR) setja(l);
+        } catch (_) {}
+      },
+      // eftir fyrstu teikningu: lifandi vörur af þjóninum. aftur = seinni spurningin, sem fer framhjá skyndiminni vafrans
+      saekja(aftur) {
+        if (!SLOD || !window.fetch) return;
+        const o = { credentials: 'omit' };
+        if (aftur) o.cache = 'no-cache';
+        if (window.AbortSignal && AbortSignal.timeout) o.signal = AbortSignal.timeout(15000);
+        fetch(SLOD, o).then((r) => (r.ok ? r.json() : null)).then((d) => {
+          const l = lesa(d);
+          if (!l) return;
+          if (l.sott > nyjast) {      // aldrei aftur í tímann: eintakið í vafranum getur verið nýrra en gamalt svar úr skyndiminni þjónsins
+            try { localStorage.setItem(LYKILL, JSON.stringify({ vorur: l.vorur, val: { falid: l.falid, profill: l.profill }, sott: l.texti })); } catch (_) {}
+            beita(l);
+          }
+          // gamalt svar þýðir að þjónninn afhenti eldra eintak á meðan hann sótti nýtt: það er tilbúið eftir andartak
+          if (!aftur && Date.now() - l.sott > GAMALT) setTimeout(() => lifandi.saekja(true), 8000);
+        }).catch(() => {});
+      },
+    };
+  })();
+
   (async () => {
     const q = new URLSearchParams(location.search);
     const breyta = q.has('breyta') || q.has('ritill');   // ?ritill=1 hleður ritlinum en kveikir EKKI á breytingahamnum (ritill.js: aðeins ?breyta kveikir) — hliðarstikan (23.10.2026)
@@ -1053,7 +1197,9 @@ ${E('p', 'karfa.greidsluleidir', 'Greiðsluleiðir: kort, millifærsla eða reik
     if (KASSI) document.body.classList.add('vv-kassi');
     if (SKODA) document.body.classList.add('vv-skoda');
     beitaThema();
+    lifandi.urGeymslu();
     render(false);
+    lifandi.saekja();
     if (KASSI) sendaKassa({ vvKassi: 'tilbuin' });
     if (VV.breytaLeyft) {
       const s = document.createElement('script');

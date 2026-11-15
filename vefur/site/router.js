@@ -104,16 +104,25 @@
     s.mynd = VV.myndSrc('vara.' + v.id + '.mynd', v.mynd);
     return s;
   }
-  var kynnt = false;
+  var kynnt = false, kynntHtml = null;
   function kynning() {
     var VV = window.VV, ul = d.getElementById('kynning');
     if (kynnt || !ul || !VV || !VV.vorur.length) return;
     kynnt = true;
     var vorur = VV.synilegar();
-    ul.innerHTML = vorur.slice(0, C.kynningFjoldi).map(function (v) { return C.kynningarKort(synd(v, VV), VV); }).join('');
-    var n = d.getElementById('allar-n');
-    if (n) n.textContent = ' (' + vorur.length + ')';
-    afturAdKafla();
+    var html = vorur.slice(0, C.kynningFjoldi).map(function (v) { return C.kynningarKort(synd(v, VV), VV); }).join('');
+    /* lifandi vörur sem breyta engu hér snerta ekki listann; breyti þær honum helst fókusinn á sama vörukorti */
+    var breytt = html !== kynntHtml;
+    if (breytt) {
+      var a = d.activeElement, href = a && ul.contains(a) ? a.getAttribute('href') : null;
+      kynntHtml = html;
+      ul.innerHTML = html;
+      var t = href && /^#vara-\d+$/.test(href) ? ul.querySelector('a[href="' + href + '"]') : null;
+      if (t) t.focus({ preventScroll: true });
+    }
+    var n = d.getElementById('allar-n'), fj = ' (' + vorur.length + ')';
+    if (n && n.textContent !== fj) n.textContent = fj;
+    if (breytt) afturAdKafla();
   }
   function uppfaera() {
     var n = fjoldi(), merki = d.getElementById('w-cart-n');
@@ -142,7 +151,9 @@
 
   window.BHV2 = {
     iVerslun: iVerslun,
-    tengja: function () { if (window.VV) window.VV.eftirTeikningu = uppfaera; uppfaera(); }
+    tengja: function () { if (window.VV) window.VV.eftirTeikningu = uppfaera; uppfaera(); },
+    /* verslunin kallar hingað þegar lifandi vörur hafa tekið við af afritinu (verslun/verslun.js, kaflinn „Lifandi vörur“) */
+    nyjarVorur: function () { kynnt = false; uppfaera(); }
   };
   syna(true);
 })();
