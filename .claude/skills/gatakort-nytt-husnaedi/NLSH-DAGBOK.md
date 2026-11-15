@@ -758,3 +758,8 @@ Agnar: „möguleikann að draga bláa línu yfir sum dyragötin svo sé þægil
 - Vistað í `skr_verk.stillingar.hurdalinur["<teikning_id>"]` = flatt [x1,y1,x2,y2,…] í px blaðsins. Eins á öllum tækjum.
 - Línurnar bætast við veggjanetið (`veggir.v`): skerVegg/fjarVegg/veggurLarettur → punktar sitt hvorum megin verða „hinum“ og renna í eitt merki. Nemar EKKI endurreiknaðir (python-tól); línan hefur því ekki áhrif á skráningar sem þegar eru á nema.
 - Engin skráning, færsla eða pörun áætlaðra gata breytist. Prófað í símahermi á dev og lifandi vef, skrif gripin.
+
+## 15.11.2026 — Staður A færður aftur á Ajour-staðinn (Agnar: „Já færa þá")
+- 6H (teikning 4): sjálfvirku færslurnar 492 (#7638), 493 (#7639) og 502 (#7783) settar `eytt=true`. Þær höfðu fært punktana ~0,9 m til hægri, frá x≈3993 að x≈4023.
+  Punktarnir standa nú á Ajour-staðnum (fra_x/fra_y). Engin röð í skr_aaetlud.parad vísar í þessar skráningar, svo pörun var ekki keyrð aftur.
+- Mynd af lifandi korti eftir breytinguna: `stadurA-eftir.png` (scratchpad), engar villur á síðu.
