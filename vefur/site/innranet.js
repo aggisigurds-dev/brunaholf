@@ -30,7 +30,8 @@
     /* skjárinn sem allir geta opnað segir ekkert um innri kerfin: aðeins notandanafn og lykilorð */
     var g = skjar(S.form({ titillId: 'brr-inn-titill', idNn: 'brr-inn-nn', idLyk: 'brr-inn-lykilord', nn: nn, auka: 'Hætta við', aukaR: 'loka' }));
     var takki = $('button[type="submit"]', g), villa = $('[data-r="villa"]', g);
-    function segja(s) { villa.hidden = false; villa.textContent = s; takki.disabled = false; $('#brr-inn-lykilord', g).value = ''; }      /* lykilorðið stendur ekki eftir í reitnum */
+    /* lykilorðið stendur ekki eftir í reitnum, og fókusinn fer í hann: hnappurinn var óvirkur á meðan og sleppti honum */
+    function segja(s) { var lr = $('#brr-inn-lykilord', g); villa.hidden = false; villa.textContent = s; takki.disabled = false; lr.value = ''; lr.focus(); }
     $('form', g).addEventListener('submit', function (e) {
       e.preventDefault();
       var n = $('#brr-inn-nn', g).value.trim().toUpperCase(), lyk = $('#brr-inn-lykilord', g).value;
@@ -60,7 +61,7 @@
       lina(slodMed({ ritill: '', hamur: 'itarlegt', innranet: null }), 'Stillingar síðunnar', 'Ítarlegi ritillinn: bil, horn, hver litur og leiðbeiningar fyrir Claude', 'stillingar') +
       (j.ritstjori ? '' : '<p class="bhi-ath">Þú ert ekki með hlutverkið Admin: ritillinn opnast í prufuham og vistar ekkert.</p>') +
       (hlekkir.length ? '<h3 class="bhi-kafli">Innri kerfi</h3>' + hlekkir.map(function (x) { return lina(E.slod(x.slod), x.heiti, typeof x.lysing === 'string' ? x.lysing : '', 'kerfi', true); }).join('') : '') +
-      '<div class="bhi-hnappar"><button type="button" class="bhi-auka" data-r="utskra">' + takn('ut') + '<span>Skrá út</span></button><button type="button" class="bhi-adal" data-bhi="loka" data-r="loka">Loka</button></div>', true);
+      '<div class="bhi-hnappar"><button type="button" class="bhi-auka" data-r="utskra">' + takn('ut') + '<span>Skrá út</span></button><button type="button" class="bhi-dokk" data-bhi="loka" data-r="loka">Loka</button></div>', true);
     $('[data-r="utskra"]', g).addEventListener('click', function () {
       fetch(INN, { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'logout' }) }).then(svarJson).then(function (r) {
         if (r.status === 200) { S.loka(); S.skilabod('Þú hefur verið skráð(ur) út'); } else S.skilabod('Útskráning tókst ekki. Reyndu aftur.');
@@ -75,7 +76,7 @@
       else if (r.status === 401 || r.status === 403) innskraning();
       else if (r.status === 503) {
         skjar('<h2 class="bhi-titill" id="brr-inn-titill">Innskráning</h2><p class="bhi-undir">Innskráning hefur ekki verið sett upp á þjóninum.</p>' +
-          '<div class="bhi-hnappar"><button type="button" class="bhi-adal" data-bhi="loka" data-r="loka">Loka</button></div>');
+          '<div class="bhi-hnappar"><button type="button" class="bhi-dokk" data-bhi="loka" data-r="loka">Loka</button></div>');
       } else S.skilabod('Ekki náðist samband við þjóninn. Reyndu aftur.');
     }).catch(function () { S.skilabod('Ekki náðist samband við þjóninn. Reyndu aftur.'); });
   }

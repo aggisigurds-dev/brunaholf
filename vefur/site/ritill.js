@@ -1533,7 +1533,8 @@
     $('form', g).addEventListener('submit', function (e) {
       e.preventDefault();
       var villa = $('[data-r="villa"]', g), n = $('#brr-nn', g).value.trim().toUpperCase(), lyk = $('#brr-lykilord', g).value;
-      function segja(s) { villa.hidden = false; villa.textContent = s; takki.disabled = false; $('#brr-lykilord', g).value = ''; }      /* lykilorðið stendur ekki eftir í reitnum */
+      /* lykilorðið stendur ekki eftir í reitnum, og fókusinn fer í hann: hnappurinn var óvirkur á meðan og sleppti honum */
+      function segja(s) { var lr = $('#brr-lykilord', g); villa.hidden = false; villa.textContent = s; takki.disabled = false; lr.value = ''; lr.focus(); }
       if (!n || !lyk) return segja('Notandanafn og lykilorð vantar.');
       takki.disabled = true;
       innskraning({ action: 'login', nn: n, password: lyk }).then(function (r) {

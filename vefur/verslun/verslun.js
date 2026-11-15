@@ -246,13 +246,18 @@ ${uppselt ? `<a class="vv-btn ghost sm" href="#vara-${v.id}">${E('span', 'kort.l
   }
   // ── Afhending ───────────────────────────────────────────────────────────────
   // Vörur eru sóttar í Helluhraun 10. Reglulegar heimsendingar eru ekki hafnar (Agnar 14.11.2026), svo í stað valsins
-  // „Fá sent heim“ stendur ábending um að senda póst. Netfangið í hlekknum er lesið úr textanum sjálfum: sé textanum
-  // breytt í ritlinum fylgir hlekkurinn með.
-  const HEIM_ATH = 'Því miður erum við ekki byrjaðir á reglulegum heimsendingum, en þið getið sent okkur póst á {slokkvitaeki@brunaholf.is} og þá græjum við það í hvelli.';
+  // „Fá sent heim“ stendur ábending um að senda póst. Hlekkurinn opnar póst á netfang verslunarinnar. Standi annað
+  // netfang á léni félagsins í textanum (á eftir bili, sviga eða gæsalöpp) fer pósturinn þangað. Netfang á öðru léni
+  // er aldrei notað í hlekkinn: texta má breyta í ritlinum, en hann á ekki að geta beint pósti viðskiptavina annað.
+  const NETFANG = 'slokkvitaeki@brunaholf.is';
+  const HEIM_ATH = 'Því miður erum við ekki byrjaðir á reglulegum heimsendingum, en þið getið sent okkur póst á {' + NETFANG + '} og þá græjum við það í hvelli.';
+  const netfangUrTexta = (s) => {
+    const m = /(?:^|[\s{(„“"'])([A-Za-z0-9._+-]{1,64}@brunaholf\.is)(?![A-Za-z0-9-]|\.[A-Za-z0-9])/i.exec(String(s == null ? '' : s).slice(0, 600));
+    return m ? m[1].toLowerCase() : NETFANG;
+  };
   function afhending() {
-    const netfang = (texti('afh.heim.ath', HEIM_ATH).match(/[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+/) || ['slokkvitaeki@brunaholf.is'])[0];
     return `<div class="vv-val valid"><span class="punktur"></span><span style="flex:1">${E('b', 'afh.saekja.t', 'Sækja hjá okkur')}${E('small', 'afh.saekja.x', 'Helluhrauni 10, Hafnarfirði · virka daga 9 til 17')}</span>${E('b', 'afh.saekja.verd', '0 kr')}</div>
-<a class="vv-afh-ath" href="mailto:${esc(netfang)}">${ico('bill')}${E('span', 'afh.heim.ath', HEIM_ATH)}</a>`;
+<a class="vv-afh-ath" href="mailto:${esc(netfangUrTexta(texti('afh.heim.ath', HEIM_ATH)))}">${ico('bill')}${E('span', 'afh.heim.ath', HEIM_ATH)}</a>`;
   }
 
   function sidaForsida() {

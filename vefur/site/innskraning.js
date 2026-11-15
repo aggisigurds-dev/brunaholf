@@ -1,6 +1,7 @@
 /* Innskráningarskjár starfsfólks í Brunahólf premium útliti: sama myndefni, kort, reitir og hnappar og á innskráningarsíðu
    þjónustugáttarinnar. Notaður af site/innranet.js („Innranet“ í fætinum og valmyndin eftir innskráningu) og site/ritill.js
    (innskráning ritilsins). Útlitið er í site/innskraning.css.
+   Letrið er það sem síðan hefur þegar sótt: Poppins á V2 og V1, Inter á V3.
    Hér er aðeins skjárinn sjálfur: bakgrunnur, merki, kort, reitir, sýna og fela lykilorð, lyklaborð og lokun. Hvað gerist við
    innskráningu ræður sá sem kallar. Skjárinn segir ekkert um innri kerfin: það sem gestur getur opnað er aðeins notandanafn
    og lykilorð (Agnar 14.11.2026). */
@@ -36,12 +37,20 @@
     var f = faanleg(opinn.hula)[0];
     if (f) f.focus({ preventScroll: true });
   }
+  /* Escape lokar skjánum hvar sem fókusinn er (hnappur sem varð óvirkur sleppir honum á <body>). Hlustað er á glugganum í
+     fangfasa og atburðurinn stöðvaður þar, svo ritillinn undir bregðist ekki við sama lykli. */
+  function escLokar(e) {
+    if (!opinn || e.key !== 'Escape') return;
+    e.preventDefault(); e.stopPropagation();
+    loka();
+  }
   /* kallarinn = false: skjárinn víkur fyrir öðrum (innskráning → valmynd), svo fókus og skrun síðunnar bíða þess næsta */
   function loka(kallarinn) {
     if (!opinn) return;
     var o = opinn;
     opinn = null;
     d.removeEventListener('focusin', haldaFokus, true);
+    window.removeEventListener('keydown', escLokar, true);
     o.hula.remove();
     if (kallarinn === false) return o;
     d.documentElement.style.overflow = o.yfirflaedi;
@@ -64,7 +73,7 @@
       if (r) r.focus({ preventScroll: true });
     };
     l.addEventListener('load', syna);
-    l.addEventListener('error', syna);
+    l.addEventListener('error', function () { l.remove(); syna(); });      /* næsta opnun reynir stílblaðið aftur */
     setTimeout(syna, 3000);
   }
   /* o: { html (það sem fer í kortið), titillId, breitt, klasi, vidLokun (kallað þegar skjánum er lokað, ekki þegar annar tekur við) } */
@@ -73,11 +82,13 @@
     var h = d.createElement('div');
     h.className = 'bhi' + (o.klasi ? ' ' + o.klasi : '');
     h.tabIndex = -1;
+    h.setAttribute('role', 'dialog');
+    h.setAttribute('aria-modal', 'true');
+    if (o.titillId) h.setAttribute('aria-labelledby', o.titillId);
     h.innerHTML = '<div class="bhi-topp"><span class="bhi-merki"><img src="' + esc(IMG + 'logo.webp') + '" alt="Brunahólf" width="500" height="150"></span>' +
       '<button type="button" class="bhi-loka" data-bhi="loka">' + takn('x') + '<span>Loka</span></button></div>' +
-      '<div class="bhi-kort' + (o.breitt ? ' bhi-breitt' : '') + '" role="dialog" aria-modal="true"' + (o.titillId ? ' aria-labelledby="' + esc(o.titillId) + '"' : '') + '>' + o.html + '</div>';
+      '<div class="bhi-kort' + (o.breitt ? ' bhi-breitt' : '') + '">' + o.html + '</div>';
     h.addEventListener('keydown', function (e) {
-      if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); loka(); return; }      /* ritillinn hlustar líka á Escape: það sem hér er lokað á ekki að afvelja þar */
       if (e.key !== 'Tab') return;
       var f = faanleg(h);
       if (!f.length) return;
@@ -89,8 +100,7 @@
       if (a) {
         var reitur = a.parentNode.querySelector('input'), syna = reitur.type === 'password';
         reitur.type = syna ? 'text' : 'password';
-        a.setAttribute('aria-pressed', String(syna));
-        a.setAttribute('aria-label', syna ? 'Fela lykilorð' : 'Sýna lykilorð');
+        a.setAttribute('aria-pressed', String(syna));      /* rofi: heitið stendur, aðeins staðan breytist */
         reitur.focus();
         return;
       }
@@ -101,6 +111,9 @@
     opinn = { hula: h, fyrriFokus: fyrri ? fyrri.fyrriFokus : d.activeElement, yfirflaedi: fyrri ? fyrri.yfirflaedi : d.documentElement.style.overflow, vidLokun: o.vidLokun };
     d.documentElement.style.overflow = 'hidden';      /* síðan undir skrunar ekki á meðan */
     d.addEventListener('focusin', haldaFokus, true);
+    window.addEventListener('keydown', escLokar, true);
+    /* fókusinn fer strax inn á skjáinn (kallarinn velur svo sinn reit); falinn skjár fær hann þegar hann birtist */
+    if (!h.style.visibility) { var f0 = h.querySelector('.bhi-kort input, .bhi-kort a[href], .bhi-kort button'); (f0 || h).focus({ preventScroll: true }); }
     return h;
   }
   /* reitirnir tveir. Heitin eru falin sjónrænt eins og í þjónustugáttinni (staðgengilstexti og tákn sýna hvað á að slá inn)
