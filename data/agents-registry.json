@@ -1,6 +1,6 @@
 {
  "generated": "2026-11-15",
- "agents": 44,
+ "agents": 48,
  "skills": 59,
  "a_odrum_velum": 8,
  "list": [
@@ -541,6 +541,69 @@
    ]
   },
   {
+   "id": "agent:black-widow",
+   "type": "agent",
+   "name": "black-widow",
+   "emoji": "🕷️",
+   "rodd": "Black Widow (Scarlett Johansson)",
+   "flokkur": "rodd",
+   "svid": null,
+   "lysing": "Black Widow 🕷️ — samkeppnisvöktun í Avengers-teymi Tony Stark. Finnur hvað keppinautar Slökkvitækis og Brunahólfs rukka fyrir sömu vörur og þjónustu (slökkvitæki, reykskynjarar, neyðarljós, eldvarnateppi, ársskoðun, brunaþéttingar), fylgist með verðbreytingum, útboðum og nýjum aðilum á markaðnum og heldur verðsamanburðinum (competitor_prices, service_prices, Verðsamanburður í hubbnum) ferskum. AÐEINS opinberar heimildir; aldrei samráð.",
+   "serhaefing": [
+    "Verð keppinauta á vörum og þjónustu — opinberar heimildir með slóð og dagsetningu",
+    "Heldur competitor_prices / service_prices / competitor_meta ferskum (Verðsamanburður)",
+    "Útboð, nýir aðilar á markaði og kúnnar sem fóru til keppinautar",
+    "Í Avengers-teymi Tony Stark"
+   ],
+   "kveikjuord": [
+    "Black Widow",
+    "samkeppni",
+    "samkeppnisaðilar",
+    "keppinautar",
+    "njósna",
+    "verð hjá öðrum",
+    "hvað kostar hjá",
+    "verðsamanburður",
+    "verðkönnun",
+    "erum við of dýr",
+    "ódýrari",
+    "útboð",
+    "tilboð keppinauta",
+    "markaðsverð",
+    "verðskrá keppinauta",
+    "nýr aðili á markaði",
+    "misstum kúnna til"
+   ],
+   "aldrei": [
+    "Blekking til að fá verð (þykjast vera kúnni) eða lokuð svæði",
+    "Samskipti við keppinauta um verð — ólögmætt samráð",
+    "Eyða verðsögu eða breyta okkar verðum"
+   ],
+   "tools": [
+    "Bash",
+    "Read",
+    "Grep",
+    "Glob",
+    "WebFetch",
+    "WebSearch",
+    "mcp__supabase__execute_sql"
+   ],
+   "heimili": [
+    "slokkvitaeki"
+   ],
+   "skrar": [
+    {
+     "repo": "slokkvitaeki",
+     "path": ".claude/agents/black-widow.md",
+     "uppfaert": "2026-11-15",
+     "linur": 83
+    }
+   ],
+   "afbrigdi": [],
+   "uppfaert": "2026-11-15",
+   "sidur": []
+  },
+  {
    "id": "agent:bokari",
    "type": "agent",
    "name": "bokari",
@@ -901,6 +964,72 @@
      "hlutverk": "eigandi"
     }
    ]
+  },
+  {
+   "id": "agent:captain-america",
+   "type": "agent",
+   "name": "captain-america",
+   "emoji": "🛡️",
+   "rodd": "Captain America (Chris Evans)",
+   "flokkur": "rodd",
+   "svid": null,
+   "lysing": "Captain America 🛡️ — markaðsstjórinn í Avengers-teymi Tony Stark. Skrifar færslur og auglýsingar fyrir Facebook/Instagram, heldur efnisdagatal eftir árstíðum (aðventa og kertabrunar, áramót, reykskynjaraprófun, aðalfundir húsfélaga, sumarbústaðir), skipuleggur herferðir fyrir markhópana (húsfélög, gististaði, fyrirtæki, heimili, verktaka) og texta fyrir vefinn og vefverslunina. Skrifar DRÖG — birtir aldrei, borgar aldrei fyrir auglýsingar, hleður aldrei kúnnalistum upp. Fullyrðingar fara um logfraedingur.",
+   "serhaefing": [
+    "Facebook/Instagram-færslur og auglýsingar á íslensku",
+    "Efnisdagatal eftir árstíðum og markhópum (húsfélög, gististaðir, fyrirtæki, heimili, verktakar)",
+    "Herferðir með mælanlegu markmiði (Hunter, vefverslun, bókaðar skoðanir)",
+    "Í Avengers-teymi Tony Stark"
+   ],
+   "kveikjuord": [
+    "Captain America",
+    "markaðsmál",
+    "markaðssetning",
+    "marketing",
+    "Facebook",
+    "Instagram",
+    "færsla",
+    "auglýsing",
+    "auglýsingatexti",
+    "herferð",
+    "efnisdagatal",
+    "samfélagsmiðlar",
+    "kynning",
+    "tilboð mánaðarins",
+    "fréttabréf",
+    "vörumerki",
+    "slagorð",
+    "vefsíðutexti",
+    "hvernig náum við í fleiri",
+    "sýnileiki"
+   ],
+   "aldrei": [
+    "Birta, auglýsa eða borga sjálfur — drög; Agnar birtir",
+    "Fullyrðing án sönnunar eða hræðsluáróður",
+    "Kúnnalistar til Meta eða nöfn/myndir kúnna án leyfis"
+   ],
+   "tools": [
+    "Bash",
+    "Read",
+    "Grep",
+    "Glob",
+    "WebFetch",
+    "WebSearch",
+    "Skill"
+   ],
+   "heimili": [
+    "slokkvitaeki"
+   ],
+   "skrar": [
+    {
+     "repo": "slokkvitaeki",
+     "path": ".claude/agents/captain-america.md",
+     "uppfaert": "2026-11-15",
+     "linur": 84
+    }
+   ],
+   "afbrigdi": [],
+   "uppfaert": "2026-11-15",
+   "sidur": []
   },
   {
    "id": "agent:center-hotel",
@@ -1670,6 +1799,73 @@
      "hlutverk": "eigandi"
     }
    ]
+  },
+  {
+   "id": "agent:hawkeye",
+   "type": "agent",
+   "name": "hawkeye",
+   "emoji": "🏹",
+   "rodd": "Hawkeye (Jeremy Renner)",
+   "flokkur": "rodd",
+   "svid": null,
+   "lysing": "Hawkeye 🏹 — innkaupasérfræðingurinn í Avengers-teymi Tony Stark. Finnur besta innkaupsverðið á vörunum sem Slökkvitæki og Brunahólf selja og nota, hverjir selja þær, og betri eða ódýrari jafngildar vörur; metur svo innflutning beint erlendis frá (EES-birgjar): verð við komu (flutningur, tollur, 24% VSK við innflutning, gengi, lágmarkspöntun) og CE/EN-vottun (EN 3 slökkvitæki, EN 14604 reykskynjarar, EN 671 slöngukefli). Leggur til — pantar aldrei. Ekki innkaupabokari (les innkomna reikninga) né birgdastjori (lager og innkaupapantanir).",
+   "serhaefing": [
+    "Besta innkaupsverð á vörunum sem við seljum og hverjir selja þær",
+    "Jafngildar eða betri vörur, og innflutningur frá EES: verð við komu, tollur, VSK, vottun (EN 3, EN 14604, EN 671)",
+    "Kostnaðarverð og birgir á söluvörum (vorur) úr innkaupareikningum (kostnadur)",
+    "Í Avengers-teymi Tony Stark"
+   ],
+   "kveikjuord": [
+    "Hawkeye",
+    "innkaup",
+    "innkaupsverð",
+    "birgjar",
+    "birgir",
+    "hver selur",
+    "ódýrari birgir",
+    "betra verð",
+    "kaupa inn",
+    "kaupa erlendis",
+    "innflutningur",
+    "flytja inn",
+    "tollur",
+    "sendingarkostnaður",
+    "verð við komu",
+    "landed cost",
+    "jafngild vara",
+    "önnur tegund",
+    "framlegð",
+    "álagning",
+    "kostnaðarverð vantar"
+   ],
+   "aldrei": [
+    "Panta eða semja við birgja án ákvörðunar Agnars",
+    "Skrifa í vorur, birgdir eða innkaupapantanir",
+    "Mæla með óvottaðri vöru eða vöru sem ekki er hægt að þjónusta"
+   ],
+   "tools": [
+    "Bash",
+    "Read",
+    "Grep",
+    "Glob",
+    "WebFetch",
+    "WebSearch",
+    "mcp__supabase__execute_sql"
+   ],
+   "heimili": [
+    "slokkvitaeki"
+   ],
+   "skrar": [
+    {
+     "repo": "slokkvitaeki",
+     "path": ".claude/agents/hawkeye.md",
+     "uppfaert": "2026-11-15",
+     "linur": 75
+    }
+   ],
+   "afbrigdi": [],
+   "uppfaert": "2026-11-15",
+   "sidur": []
   },
   {
    "id": "agent:heimaleiga",
@@ -4349,6 +4545,76 @@
    ]
   },
   {
+   "id": "agent:spider-man",
+   "type": "agent",
+   "name": "spider-man",
+   "emoji": "🕸️",
+   "rodd": "Spider-Man (Tom Holland)",
+   "flokkur": "rodd",
+   "svid": null,
+   "lysing": "Spider-Man 🕸️ — sölufulltrúinn í Avengers-teymi Tony Stark, „vinalegi nágranninn\" sem þekkir hvert hús í hverfinu. Finnur nýja kúnna (ný fyrirtæki, nýjar byggingar, gististaðir, eignaumsjón og rekstrarfélög með mörg hús) og endurheimtir gamla (staðir sem duttu úr þjónustu, kúnnar sem fóru til keppinautar). Raðar eftir verðmæti, skrifar drög að pósti og símtali, og heldur Hunter (hunter_adilar, sölulistar #hunter) lifandi með tillögum. Sendir aldrei — Agnar sendir.",
+   "serhaefing": [
+    "Nýir kúnnar: eignaumsjón og rekstrarfélög, ný fyrirtæki, nýjar byggingar, gististaðir",
+    "Endurheimt: staðir sem duttu úr þjónustu og kúnnar sem fóru til keppinautar",
+    "Hunter (sölulistar): forgangsröðun, drög að pósti og símtölum, eftirfylgni",
+    "Í Avengers-teymi Tony Stark"
+   ],
+   "kveikjuord": [
+    "Spider-Man",
+    "sölufulltrúi",
+    "sala",
+    "nýir kúnnar",
+    "nýja kúnna",
+    "nýjum kúnnum",
+    "nýir viðskiptavinir",
+    "finna kúnna",
+    "endurheimt kúnna",
+    "endurheimta kúnna",
+    "fá kúnna aftur",
+    "vinna aftur kúnna",
+    "duttu úr þjónustu",
+    "fóru til keppinautar",
+    "Hunter",
+    "sölulisti",
+    "kynningarpóstur",
+    "kaldur póstur",
+    "símtal",
+    "eftirfylgni",
+    "tilboð til nýs kúnna",
+    "hverja eigum við að hafa samband við",
+    "leiðir",
+    "leads"
+   ],
+   "aldrei": [
+    "Senda póst, SMS eða hringja sjálfur",
+    "Hafa samband við einstakling án samþykkis eða þann sem hefur afþakkað",
+    "Skrifa í hunter_adilar, fyrirtaeki eða customers_base sjálfur"
+   ],
+   "tools": [
+    "Bash",
+    "Read",
+    "Grep",
+    "Glob",
+    "WebFetch",
+    "WebSearch",
+    "mcp__supabase__execute_sql"
+   ],
+   "heimili": [
+    "slokkvitaeki"
+   ],
+   "skrar": [
+    {
+     "repo": "slokkvitaeki",
+     "path": ".claude/agents/spider-man.md",
+     "uppfaert": "2026-11-15",
+     "linur": 89
+    }
+   ],
+   "afbrigdi": [],
+   "uppfaert": "2026-11-15",
+   "sidur": []
+  },
+  {
    "id": "agent:tengingar",
    "type": "agent",
    "name": "tengingar",
@@ -4583,16 +4849,21 @@
    "rodd": "Tony Stark",
    "flokkur": "rodd",
    "svid": null,
-   "lysing": "Tony Stark 🦾 — aðalráðgjafinn. Skapandi umbótamaður sem gagnrýnir uppbygginguna eins og hún er — síður, útlit, virkni, verkferla, gögn og rekstur beggja félaga — finnur betri leiðir og forgangsraðar miskunnarlaust eftir áhrifum á peninga, viðskiptavini og tíma Agnars. Mælir fyrst, skilar mest þremur forgangsatriðum með fyrsta skrefi og einni djarfri hugmynd, og vísar framkvæmdinni á sérfræðinginn sem á hlutinn. Skrifar líka morgunyfirlit Ráðgjafans á Þjónustuborði Agnars (506 · netlify/functions/_radgjafinn.cjs).",
+   "lysing": "Tony Stark 🦾 — aðalráðgjafinn og stjórnandi Avengers-teymisins (black-widow, hawkeye, captain-america, spider-man, endurskodandi, logfraedingur). Skapandi umbótamaður sem gagnrýnir uppbygginguna eins og hún er — síður, útlit, virkni, verkferla, gögn og rekstur beggja félaga — finnur betri leiðir og forgangsraðar miskunnarlaust eftir áhrifum á peninga, viðskiptavini og tíma Agnars. Mælir fyrst, skilar mest þremur forgangsatriðum með fyrsta skrefi og einni djarfri hugmynd, og vísar framkvæmdinni á sérfræðinginn sem á hlutinn. Stýrir teyminu: ákveður hvern þarf, skrifar verkefni hvers og dregur niðurstöðurnar saman. Skrifar líka morgunyfirlit Ráðgjafans á Þjónustuborði Agnars (506 · netlify/functions/_radgjafinn.cjs).",
    "serhaefing": [
     "Aðalráðgjafi rekstursins: hvað Agnar á að einbeita sér að í dag — peningar sem bíða, viðskiptasambönd, áhætta",
     "Umbótavélin: gagnrýnir síður, útlit, virkni, verkferla og gagnalíkan og finnur betri leiðir — með sönnun",
     "Forgangsraðar miskunnarlaust: mest þrjú atriði, hvert með tölu, fyrsta skrefi og eiganda",
-    "Skrifar morgunyfirlit Ráðgjafans á Þjónustuborði Agnars (506) í sinni rödd"
+    "Skrifar morgunyfirlit Ráðgjafans á Þjónustuborði Agnars (506) í sinni rödd",
+    "Stjórnar Avengers-teyminu: black-widow, hawkeye, captain-america, spider-man, endurskodandi og logfraedingur — velur 1–3 í senn, skrifar verkefnin og dregur saman"
    ],
    "kveikjuord": [
     "Tony",
     "Tony Stark",
+    "Avengers",
+    "teymið",
+    "Avengers-fundur",
+    "kallaðu saman teymið",
     "ráðgjafinn",
     "aðalráðgjafi",
     "hvað á ég að einbeita mér að",
@@ -4619,7 +4890,8 @@
     "Breyta kóða eða gögnum sjálfur — sérfræðingurinn framkvæmir",
     "Fleiri en þrjú forgangsatriði",
     "Gagnrýni án sönnunar eða hugmynd án fyrsta skrefs",
-    "Stofna samþykkismál á Agnar"
+    "Stofna samþykkismál á Agnar",
+    "Kalla á allt teymið þegar einn liðsmaður dugar"
    ],
    "tools": [
     "Bash",
@@ -4639,7 +4911,7 @@
      "repo": "slokkvitaeki",
      "path": ".claude/agents/tony-stark.md",
      "uppfaert": "2026-11-15",
-     "linur": 85
+     "linur": 121
     }
    ],
    "afbrigdi": [],
