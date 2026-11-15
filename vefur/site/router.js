@@ -111,11 +111,18 @@
     kynnt = true;
     var vorur = VV.synilegar();
     var html = vorur.slice(0, C.kynningFjoldi).map(function (v) { return C.kynningarKort(synd(v, VV), VV); }).join('');
-    /* lifandi vörur sem breyta engu hér snerta ekki listann */
-    if (html !== kynntHtml) { kynntHtml = html; ul.innerHTML = html; }
+    /* lifandi vörur sem breyta engu hér snerta ekki listann; breyti þær honum helst fókusinn á sama vörukorti */
+    var breytt = html !== kynntHtml;
+    if (breytt) {
+      var a = d.activeElement, href = a && ul.contains(a) ? a.getAttribute('href') : null;
+      kynntHtml = html;
+      ul.innerHTML = html;
+      var t = href && /^#vara-\d+$/.test(href) ? ul.querySelector('a[href="' + href + '"]') : null;
+      if (t) t.focus({ preventScroll: true });
+    }
     var n = d.getElementById('allar-n'), fj = ' (' + vorur.length + ')';
     if (n && n.textContent !== fj) n.textContent = fj;
-    afturAdKafla();
+    if (breytt) afturAdKafla();
   }
   function uppfaera() {
     var n = fjoldi(), merki = d.getElementById('w-cart-n');

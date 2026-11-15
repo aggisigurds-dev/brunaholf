@@ -1,6 +1,8 @@
 /* Gögn verslunarinnar: afrit af vörunum eins og þær voru 15.11.2026 (heiti, verð, lager) ásamt stillingum þessarar síðu.
    Verslunin teiknar sig úr þessu afriti og sækir svo lifandi vörur af /api/vefur-vorur (verslun/verslun.js, kaflinn
-   „Lifandi vörur“): það sem stendur hér um vörur sést því aðeins andartak, eða þegar fallið næst ekki.
+   „Lifandi vörur“): heiti, verð, lager, myndir og vöruval hér sjást því aðeins andartak, eða þegar fallið næst ekki.
+   Lýsingarnar (lysing) eru hins vegar alltaf þessar: þær eru yfirfarnar, því lýsingar vöruskrárinnar geyma líka
+   minnispunkta starfsfólks. Ný eða breytt lýsing birtist þegar afritið er endurnýjað.
    sott        hvenær vöruskráin var lesin
    vorur       hver vara: id, nafn, flokkur, lysing, verd (með vsk), an (án vsk), birgdir, mynd (vv/v/<id>.webp) og
                ms (fingrafar myndarinnar í vöruskránni: breytist það sækir verslunin myndina þaðan)
@@ -8,8 +10,8 @@
    efni.thema  litir, letur og horn verslunarinnar á þessari síðu (vanti það notar verslunin sín eigin)
    efni.m      myndir sem skipt var út og hvar ramminn sker þær (pos)
    efni.t      textar sem skipt var út
-   Minnispunktar starfsfólks í vörulýsingum (birgjanúmer, birgjareikningar, innkaupsverð) eru ekki í afritinu, og
-   fallið tekur þá líka úr lifandi lýsingum. Vöruskránni sjálfri er breytt í Slökkvitæki-kerfinu, ekki hér. */
+   Minnispunktar starfsfólks í vörulýsingum (birgjanúmer, birgjareikningar, innkaupsverð) eru ekki í afritinu.
+   Vöruskránni sjálfri er breytt í Slökkvitæki-kerfinu, ekki hér. */
 window.BH_VV_GOGN = {
  "stada": "prufa",
  "sott": "2026-11-15T00:29:38.000Z",

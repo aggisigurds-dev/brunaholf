@@ -7,8 +7,8 @@
    5. „Fá tilboð“ leiðir í #hafa-samband á þessari síðu
    6. titill síðunnar er látinn ósnertur
    7. karfan segir „1 vara“
-   8. lifandi vörur: eftir fyrstu teikningu eru heiti, verð, lager, lýsing, mynd og vöruval sótt af /api/vefur-vorur
-      (kaflinn „Lifandi vörur“ neðst í skránni). Afritið í gogn.js er notað þangað til og þegar fallið næst ekki.
+   8. lifandi vörur: eftir fyrstu teikningu eru heiti, verð, lager, mynd og vöruval sótt af /api/vefur-vorur (kaflinn
+      „Lifandi vörur“ neðst í skránni). Lýsingar koma úr gogn.js. Afritið þar er notað þangað til og þegar fallið næst ekki.
    Greiðsla er ekki tengd: „Halda áfram í greiðslu“ sýnir aðeins skilaboð og sendir ekkert. */
 // Vefverslun Brunahólfs — síðurnar (forsíða verslunar, vörusíða, karfa).
 //
@@ -1046,33 +1046,39 @@ ${E('p', 'karfa.greidsluleidir', 'Greiðsluleiðir: kort, millifærsla eða reik
 
   // ── Lifandi vörur (aðlögun 8 á þessari síðu) ───────────────────────────────
   // Verslunin er teiknuð strax úr afritinu í verslun/gogn.js. Síðan eru lifandi vörur sóttar af /api/vefur-vorur: heiti,
-  // flokkur, lýsing, verð, lager, mynd og vöruval (hvaða vörur eru faldar og hverjar hafa ítarlega vörusíðu). Breyti þær
-  // einhverju sem sést er teiknað aftur; annars er ekkert snert. Svarið er líka geymt í vafranum, svo næsta heimsókn
-  // byrji á nýjustu vörum (aðeins skyndiminni: þjónninn ræður alltaf). Þar sem fallið er ekki til (tillögurnar í Claude,
-  // skrá opnuð af diski) eða svarar ekki stendur afritið óbreytt.
+  // flokkur, verð, lager, mynd og vöruval (hvaða vörur eru faldar og hverjar hafa ítarlega vörusíðu). Breyti þær einhverju
+  // sem sést er teiknað aftur; annars er ekkert snert. Lýsingar koma ekki frá fallinu: þær eru yfirfarnar og standa í
+  // afritinu, og ný vara hefur enga lýsingu fyrr en afritið er endurnýjað. Svarið er líka geymt í vafranum, svo næsta
+  // heimsókn byrji á nýjustu vörum (aðeins skyndiminni: þjónninn ræður alltaf). Þar sem fallið er ekki til (tillögurnar í
+  // Claude, skrá opnuð af diski) eða svarar ekki stendur afritið óbreytt.
   const lifandi = (() => {
     const efniApi = (window.BH_EFNI && window.BH_EFNI.api) || '';
     const SLOD = efniApi ? efniApi.replace(/[^\/]*$/, 'vefur-vorur') : '';
     const LYKILL = 'bh_vv_lifandi_v1';
     const GAMALT = 10 * 60 * 1000;                // eldra svar en þetta kom úr skyndiminni þjónsins: spurt er einu sinni aftur
     const MAX_ALDUR = 7 * 24 * 3600 * 1000;       // eldra eintak í vafranum en þetta er ekki notað
+    const FRAMTID = 10 * 60 * 1000;               // klukkur vafrans og þjónsins mega skeika þessu, ekki meira
+    // sömu myndaslóðir og fallið hleypir út: myndin úr vöruskránni, eða úr myndageymslu vefverslunarinnar
+    const MYND = /^https:\/\/(?:slokkvitaeki\.netlify\.app\/api\/vefverslun\?mynd=[1-9]\d{0,9}&v=\d{1,12}|osfdzskyvisifcwyjkuk\.supabase\.co\/storage\/v1\/object\/public\/vefverslun\/[A-Za-z0-9][A-Za-z0-9._~\/-]{0,300})$/;
     const REITIR = 'input, textarea, select';
-    let afrit = null, nyjast = 0, nidri = false;
+    const FOKUS = 'a[href], button, ' + REITIR;
+    let afrit = null, nyjast = 0, nidri = false, skrun = 0;
 
     const heil = (n, min) => typeof n === 'number' && Number.isInteger(n) && n >= min;
     // Svarið er sannreynt hér aftur, hvort sem það kemur af þjóninum eða úr vafranum: aðeins þessir reitir, af þessum
-    // gerðum, fara inn í verslunina. Standist ein vara ekki er öllu svarinu hafnað.
+    // gerðum og innan sömu marka og fallið setur, fara inn í verslunina. Standist ein vara ekki er öllu svarinu hafnað.
     function lesa(d) {
       if (!d || typeof d !== 'object' || !Array.isArray(d.vorur) || !d.vorur.length || d.vorur.length > 400) return null;
       const sott = typeof d.sott === 'string' ? Date.parse(d.sott) : NaN;
-      if (!isFinite(sott)) return null;
+      if (!isFinite(sott) || sott > Date.now() + FRAMTID) return null;
       const vorur = [], sed = new Set();
       for (const x of d.vorur) {
-        if (!x || typeof x !== 'object' || !heil(x.id, 1) || sed.has(x.id) || typeof x.nafn !== 'string' || !x.nafn || typeof x.flokkur !== 'string' || !x.flokkur ||
-          !heil(x.verd, 1) || !heil(x.an, 0) || !(x.lysing === null || typeof x.lysing === 'string') || !(x.birgdir === null || heil(x.birgdir, -1e6)) ||
-          typeof x.mynd !== 'string' || (x.mynd && !/^https:\/\//.test(x.mynd)) || typeof x.ms !== 'string') return null;
+        if (!x || typeof x !== 'object' || !heil(x.id, 1) || sed.has(x.id) ||
+          typeof x.nafn !== 'string' || !x.nafn || x.nafn.length > 160 || typeof x.flokkur !== 'string' || !x.flokkur || x.flokkur.length > 80 ||
+          /\S{41}/.test(x.nafn + ' ' + x.flokkur) || !heil(x.verd, 1) || !heil(x.an, 0) || !(x.birgdir === null || heil(x.birgdir, -1e6)) ||
+          typeof x.mynd !== 'string' || (x.mynd && (!MYND.test(x.mynd) || x.mynd.includes('..'))) || typeof x.ms !== 'string') return null;
         sed.add(x.id);
-        vorur.push({ id: x.id, nafn: x.nafn, flokkur: x.flokkur, lysing: x.lysing, verd: x.verd, an: x.an, birgdir: x.birgdir, mynd: x.mynd, ms: x.ms });
+        vorur.push({ id: x.id, nafn: x.nafn, flokkur: x.flokkur, verd: x.verd, an: x.an, birgdir: x.birgdir, mynd: x.mynd, ms: x.ms });
       }
       const val = d.val && typeof d.val === 'object' ? d.val : {};
       const falid = (Array.isArray(val.falid) ? val.falid : []).filter((n) => heil(n, 1));
@@ -1080,9 +1086,9 @@ ${E('p', 'karfa.greidsluleidir', 'Greiðsluleiðir: kort, millifærsla eða reik
       if (val.profill && typeof val.profill === 'object') for (const k of Object.keys(val.profill)) if (/^[1-9]\d{0,9}$/.test(k)) profill[k] = val.profill[k] === true;
       return { vorur, falid, profill, sott, texti: d.sott };
     }
-    // Lifandi vörur taka við af þeim sem verslunin hefur. Mynd: smækkaða afritið sem fylgir síðunni (vv/v/<id>.webp) meðan
-    // myndin í vöruskránni er sú sama og þegar afritið var gert (fingrafarið ms), annars myndin úr vöruskránni.
-    // Lýsing sem þjónninn hélt eftir (null, hún líktist minnispunkti starfsfólks) víkur fyrir yfirförnu lýsingunni úr afritinu.
+    // Lifandi vörur taka við af þeim sem verslunin hefur. Lýsingin er yfirfarna lýsingin úr afritinu. Mynd: smækkaða afritið
+    // sem fylgir síðunni (vv/v/<id>.webp) meðan myndin í vöruskránni er sú sama og þegar afritið var gert (fingrafarið ms),
+    // annars myndin úr vöruskránni.
     function setja(l) {
       if (!afrit) {
         afrit = new Map();
@@ -1091,7 +1097,7 @@ ${E('p', 'karfa.greidsluleidir', 'Greiðsluleiðir: kort, millifærsla eða reik
       VV.vorur = lagaVorur(l.vorur.map((x) => {
         const a = afrit.get(x.id);
         return {
-          id: x.id, nafn: x.nafn, flokkur: x.flokkur, lysing: x.lysing === null ? (a ? a.lysing : '') : x.lysing, verd: x.verd, an: x.an, birgdir: x.birgdir,
+          id: x.id, nafn: x.nafn, flokkur: x.flokkur, lysing: a ? a.lysing : '', verd: x.verd, an: x.an, birgdir: x.birgdir,
           mynd: a && a.ms && a.ms === x.ms ? a.mynd : x.mynd || (a ? a.mynd : ''), ms: x.ms,
         };
       }));
@@ -1101,32 +1107,43 @@ ${E('p', 'karfa.greidsluleidir', 'Greiðsluleiðir: kort, millifærsla eða reik
     const html = () => { const r = leid(); return haus() + (r.s === 'vara' ? sidaVara(r.id) : r.s === 'karfa' ? sidaKarfa() : sidaForsida()) + fotur(); };
 
     // Teiknað er aftur þegar það truflar engan: ekki meðan fingri eða músarhnappi er haldið niðri (smellurinn týndist með
-    // stakinu sem hvarf) og ekki meðan bendillinn er í reit í versluninni (reiturinn hyrfi undan þeim sem skrifar).
+    // stakinu sem hvarf), ekki meðan síðan skrunar (fingur á síma, hjól) og ekki meðan bendillinn er í reit í versluninni
+    // (reiturinn hyrfi undan þeim sem skrifar).
     window.addEventListener('pointerdown', () => { nidri = true; }, true);
     ['pointerup', 'pointercancel'].forEach((n) => window.addEventListener(n, () => { nidri = false; }, true));
+    window.addEventListener('scroll', () => { skrun = Date.now(); }, { capture: true, passive: true });
     function thegarKyrrt(f) {
       const app = document.getElementById('vv-app'), a = document.activeElement;
-      const aftur = () => setTimeout(() => thegarKyrrt(f), 80);
+      const aftur = (ms) => setTimeout(() => thegarKyrrt(f), ms || 80);
       if (nidri) {
         const sleppt = () => { window.removeEventListener('pointerup', sleppt, true); window.removeEventListener('pointercancel', sleppt, true); aftur(); };
         window.addEventListener('pointerup', sleppt, true); window.addEventListener('pointercancel', sleppt, true);
         return;
       }
-      if (a && app.contains(a) && a.matches(REITIR)) { a.addEventListener('blur', aftur, { once: true }); return; }
+      if (Date.now() - skrun < 400) { aftur(200); return; }
+      if (a && app.contains(a) && a.matches(REITIR)) { a.addEventListener('blur', () => aftur(), { once: true }); return; }
       f();
     }
-    // Það sem stendur í reitum (nafn og netfang í körfunni) lifir aðeins á síðunni sjálfri: því er haldið yfir teikninguna,
-    // og sá sem fer um síðuna með lyklaborði heldur sínum stað.
+    // Stak þekkist eftir því hvað það gerir (vara, aðgerð, slóð, tegund reits), ekki eftir sæti: breytist röð varanna stendur
+    // fókusinn á sama hnappi og textinn í sama reit.
+    const audk = (e) => [e.nodeName, e.getAttribute('data-act'), e.getAttribute('data-id'), e.getAttribute('href'), e.getAttribute('autocomplete'),
+      e.getAttribute('type'), e.getAttribute('inputmode'), e.getAttribute('placeholder'), e.getAttribute('aria-label')].join('|');
     function teikna() {
-      const app = document.getElementById('vv-app');
-      const gildi = Array.from(app.querySelectorAll(REITIR)).map((r) => r.value);
-      const FOKUS = 'a[href], button, ' + REITIR;
-      const fyrir = Array.from(app.querySelectorAll(FOKUS)), stadur = fyrir.indexOf(document.activeElement);
+      const app = document.getElementById('vv-app'), a = document.activeElement;
+      const gildi = {};
+      app.querySelectorAll(REITIR).forEach((r) => { (gildi[audk(r)] = gildi[audk(r)] || []).push(r.value); });
+      let fk = null, nr = 0;
+      if (a && app.contains(a) && a.matches(FOKUS)) { fk = audk(a); nr = Array.from(app.querySelectorAll(FOKUS)).filter((e) => audk(e) === fk).indexOf(a); }
       render(false);
-      const reitir = app.querySelectorAll(REITIR);
-      if (reitir.length === gildi.length) reitir.forEach((r, i) => { if (r.value !== gildi[i]) r.value = gildi[i]; });
-      const eftir = app.querySelectorAll(FOKUS);
-      if (stadur >= 0 && eftir.length === fyrir.length && eftir[stadur].nodeName === fyrir[stadur].nodeName) eftir[stadur].focus({ preventScroll: true });
+      const nota = {};
+      app.querySelectorAll(REITIR).forEach((r) => {
+        const k = audk(r), i = (nota[k] = (nota[k] || 0) + 1) - 1, g = gildi[k];
+        if (g && i < g.length && r.value !== g[i]) r.value = g[i];
+      });
+      if (fk) {
+        const m = Array.from(app.querySelectorAll(FOKUS)).filter((e) => audk(e) === fk), t = m[nr] || m[0];
+        if (t) t.focus({ preventScroll: true });
+      }
     }
     // lifandi vörur sem berast eftir að síðan var teiknuð
     function beita(l) {
