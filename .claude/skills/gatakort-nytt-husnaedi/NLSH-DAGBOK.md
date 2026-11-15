@@ -739,3 +739,15 @@ Færðir punktar · Tillögur · Símaviðmót · Stöðuskýrsla.
   sömu megin án veggjar, er kláraður.
 - **Prófað** á prófunarþjóni og lifandi síðu í símahermi: staðurinn úr skjáskotinu er eitt merki með einu haki hvorum megin; tvö 160-merki í herbergi við vegg (ekki handan
   veggjar) sýna eitt hak hvort. Óprófað í síma Agnars.
+
+## Pörun endurreiknuð og leit að fleiri söfnuðum klösum (15.11.2026) — kjarni main, commit „Gatakort-pörun: tillögur parast ekki"
+- **Leyfi Agnars:** „Já mátt halda áfram að matcha og stilla til."
+- **Villa fundin í tólinu fyrir keyrslu:** `skraning-gatakort-para.cjs` paraði líka óstaðfestar tillögur (`uppruni = tillaga:*`, 71 á 5H) og hefði tekið skráningar frá raunverulegum
+  götum (þurrkeyrsla sýndi 319 göt á 5H í stað 248). Lagað: `uppruni=not.like.tillaga:*` (uppruni aldrei tómur: miro 992, tillaga 71, vidbot 35).
+- **4H EKKI keyrð:** tólið finnur 0 skráningar á 4H (gólfgötin eru pöruð með öðru tóli 12.11 kl. 19:18); `--write` hefði þurrkað 19 paranir.
+- **Afrit** af öllu `skr_aaetlud.parad` (1.098 raðir) fyrir keyrslu: `afrit_parad_2026-11-150122.json` í scratchpad lotunnar.
+- **Keyrt `--write` 6H og 5H (15.11 kl. 01:23 UTC):** 6H fullt 640 → 639, hluti 55 → 55, vantar 49 → 50 (nýtt: gat 156, loftræsting ×2 við (1516, 971), neðan við #5974);
+  pöruð stök verk 1.863 → 1.861. 5H óbreytt: 222 / 16 / 10. Tillögur ósnertar (parad tómt).
+- **Leit að klösum eins og við hurðina:** `maela_klasa2.cjs`: merki með 3+ stök verk á nema þar sem Ajour-staðir dreifast > 0,6 m: 10 á 6H, 3 á 5H. Þrír með mestu færslu skoðaðir
+  með Ajour-staði sýnda (`stadir.png`): C (5H #5212/#6777/#3120 við (1873, 2671)) og B (6H #873/#536/#421 við (1874, 617)) líta rétt út, stokkurinn fer gegnum vegginn þar;
+  A (6H #7783/#7639/#7638 við (4023, 334), allar færðar ~0,9 m til hægri) er óljóst. ENGU breytt; spurt Agnar um A.
