@@ -22,6 +22,9 @@
 //     subject/html) fyrir ?send=1. (Var /api/email-send/Resend — 403 á
 //     eldklar.is-léninu sem er óstaðfest hjá Resend, sjá gmail-send.js.)
 
+// gmail-send krefst innskráningar eða tíma-tóka frá 15.11.2026 — þjónn án köku sendir tókann (_postur-toki.js).
+const { HAUS: POSTUR_HAUS, posturToki } = require('./_postur-toki');
+
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
@@ -134,9 +137,10 @@ exports.handler = async (event) => {
   const html = buildHtml({ ok, alerts, sources, checked_at });
 
   try {
-    const r = await fetch(`${origin}/api/gmail-send`, {
+    // Fastur uppruni: tókinn má aldrei fara á hýsil sem kemur úr beiðninni (Host-haus) — netvörður 15.11.2026.
+    const r = await fetch('https://brunaholf.netlify.app/api/gmail-send', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', [POSTUR_HAUS]: posturToki() },
       body: JSON.stringify({ account: ALERT_ACCOUNT, from: ALERT_FROM, to: ALERT_TO, subject, html }),
     });
     const data = await r.json().catch(() => ({}));
