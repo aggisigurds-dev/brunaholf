@@ -867,3 +867,13 @@ Agnar samþykkti niðurhal: 120 blöð, 30,4 MB (M315 18, M316 16, M715 16, M716
 - Rafmagn, loft, vatn og frárennsli óbreytt (punktarnir komu þegar af hlutablöðum). Leifar í búnum svæðum (6H: loft 25, vatn 12, úði 31,
   lyfjaloft 13; 5H: loft 21, vatn 20, úði 36) EKKI settar inn — 5–8 % af krossum, líklega skráning > 1,8 m frá eða í öðrum flokki.
 - Lærdómur í SKILL.md: aldrei áætluð göt úr yfirlitsmynd fags þegar hlutablöð eru til.
+
+
+## 15.11.2026 — Gólfgöt liður 1.3: 9 Ø220-göt við lagnastokka sett inn (fag golf, uppruni `teikning:M81x-gataplan`)
+
+Agnar: „prófaðu það ef þú finnur góða vísbendingu“. `raf/gat13.py`: Ø210–300 af M814/M815, stærðartexti festur á næsta hringtákn (45 af 66),
+vísbendingar A engin gólfskráning 1,35 m · B engin skráning í neinum flokki 0,75 m · C utan miðbyggingar · D lögn á lagi 20 px.
+M814: 46 → A+B+C 19; M815: 20 → 6. Sjónskoðun (`raf/gat13-flisar.png`): Ø250 í ljósgörðum, garði og við gler tengibyggingar = líklega
+niðurföll út, ekki hæðaskil → SLEPPT (16). Ø220 öll við horn lagnastokka með lögn → 9 sett inn (`gat13_setja.cjs`, fjoldi 1, flokkur null):
+4H (M814) 5, 5H (M815) 4. Apex Eftir: 4H 16 → 21, 5H 403 → 407.
+ÓMÆLT: hvort lagnastokkarnir séu sjálfstæð brunahólf (þá væri þéttingin í stokkveggnum, ekki plötunni) — spyrja Agnar ef hann efast.
