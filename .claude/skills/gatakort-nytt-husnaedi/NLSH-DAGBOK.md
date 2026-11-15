@@ -665,3 +665,13 @@ Færðir punktar · Tillögur · Símaviðmót · Stöðuskýrsla.
 - **Prófað** á prófunarþjóni og lifandi síðu í símahermi, skrif með gervisvari: #5974 valin í færsluham og dregin 9 px upp → `PATCH skr_faerslur {x 1524,8; y 945}`
   (áður hefði hún farið á 954,1); pikk á ×5 merkið telur upp skráningarnar; parið #8656/#10835 við (4041, 546) er eitt merki í dýpstu stækkun.
   Prófunarskriftur: `apex_adal2_prof.cjs`, `apex_klipa_skyrsla_prof2.cjs`. Óprófað í síma Agnars.
+
+## Ótengdir punktar sem full merki (15.11.2026) — kjarni main 141521e
+- **Orð Agnars (skjáskot af 6H S1 í færsluham, dýpsta stækkun, hringað um stokk gegnum láréttan vegg með tveimur litlum gráum plúsum):** „Hvernig í andsk. á ég að sjá þetta."
+- **Var:** ótengdur loftræstipunktur = plús í 0,6 R, hvít fylling, grá útlína, engin stærð, engin staða. Auð gegnumtök í færsluham = dauf grá brotin útlína (sást ekki á rauðum vegg).
+- **Nú:** ótengdur punktur fer um venjulegu hópunina með `ot = true` og teiknast sem FULLT merki (stærð, stöðufylling, hök); aðeins útlínan er grá (`OTENGT` #475569) í stað
+  stærðarlitar. Ótengd merki renna aðeins saman við önnur ótengd, aldrei við aðalmerki. Auð gegnumtök í færsluham: svört brotin lína á hvítu undirlagi þvert yfir breidd
+  stokksins á miðlínu veggjar.
+- **Athugað:** á staðnum í skjáskotinu er ENGINN nemi á stokknum sem hringað var um (punkturinn hefði annars tengst); „ótengt" segir því aðeins að nemagögnin þekki ekki
+  þetta gegnumtak, ekki að punkturinn sé á röngum stað. Nemar ná ekki öllum gegnumtökum.
+- **Prófað** á prófunarþjóni og lifandi síðu í símahermi (grá útlína fannst á lifandi mynd við (399, 250) í `a4lif_naer.png`). Óprófað í síma Agnars.
