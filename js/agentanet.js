@@ -41,7 +41,10 @@
     'kjarni-vefur': ['artcraft', 'skraning', 'gatakort', '3dJoker', 'arnold'],   // gatakort (Jackie Chan, Apex Ajour) 14.11.2026
     rukkari: ['bokari', 'postur', 'logfraedingur', 'endurskodandi'],
     // Avengers-teymi Tony Stark (Agnar 15.11.2026: „gera hann að manager … nota nöfn úr the Avengers")
-    'tony-stark': ['black-widow', 'hawkeye', 'captain-america', 'spider-man', 'endurskodandi', 'logfraedingur']
+    // + allur hópurinn í agentaskránni (Agnar 15.11: „líka notast við aðra sem eru til … Joker o.fl., Jarvis“).
+    // Verðir og jarvis teiknast ekki sem línur (eru ekki í ser), en birtast í „Kallar á“ í hliðarspjaldi Tonys.
+    'tony-stark': ['black-widow', 'hawkeye', 'captain-america', 'spider-man', 'endurskodandi', 'logfraedingur',
+      'joker', 'utlitsserfraedingur', 'kerfisrynir', 'hradi', 'jarvis']
   };
   var NYIR = ['fyrirtaeki', 'postur', 'thjonustugatt', 'logfraedingur', 'endurskodandi', 'innkaupabokari', 'birgdastjori', 'kodafraedingur',
     'utlitsserfraedingur', 'opp', 'verkstadur', 'kjarni-vefur', 'artcraft', 'skraning'];   // merkið segir „nýr 04.11“: aðeins agentar frá þeim degi
