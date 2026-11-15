@@ -751,3 +751,10 @@ Færðir punktar · Tillögur · Símaviðmót · Stöðuskýrsla.
 - **Leit að klösum eins og við hurðina:** `maela_klasa2.cjs`: merki með 3+ stök verk á nema þar sem Ajour-staðir dreifast > 0,6 m: 10 á 6H, 3 á 5H. Þrír með mestu færslu skoðaðir
   með Ajour-staði sýnda (`stadir.png`): C (5H #5212/#6777/#3120 við (1873, 2671)) og B (6H #873/#536/#421 við (1874, 617)) líta rétt út, stokkurinn fer gegnum vegginn þar;
   A (6H #7783/#7639/#7638 við (4023, 334), allar færðar ~0,9 m til hægri) er óljóst. ENGU breytt; spurt Agnar um A.
+
+## 15.11.2026 — Hurðalína sem Agnar dregur sjálfur (kjarni main 8ac749e)
+Agnar: „möguleikann að draga bláa línu yfir sum dyragötin svo sé þægilegra að para saman“. Sjálfvirku hurðalínurnar (veggir/*.json „hurdir“, ~340 per hæð) ná ekki öllum dyraopum.
+- Hnappur **Lína** (neðri stika í síma) / **Hurðalína** (tölva), aðeins á 5H/6H (þar sem veggjagögn eru). Dregið með einum fingri; endar smella að rauðum vegg innan 16 skjápx; pikk á línu → staðfesting → eytt.
+- Vistað í `skr_verk.stillingar.hurdalinur["<teikning_id>"]` = flatt [x1,y1,x2,y2,…] í px blaðsins. Eins á öllum tækjum.
+- Línurnar bætast við veggjanetið (`veggir.v`): skerVegg/fjarVegg/veggurLarettur → punktar sitt hvorum megin verða „hinum“ og renna í eitt merki. Nemar EKKI endurreiknaðir (python-tól); línan hefur því ekki áhrif á skráningar sem þegar eru á nema.
+- Engin skráning, færsla eða pörun áætlaðra gata breytist. Prófað í símahermi á dev og lifandi vef, skrif gripin.
