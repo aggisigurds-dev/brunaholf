@@ -1,6 +1,6 @@
 {
- "generated": "2026-11-14",
- "agents": 43,
+ "generated": "2026-11-15",
+ "agents": 44,
  "skills": 59,
  "a_odrum_velum": 8,
  "list": [
@@ -1651,7 +1651,7 @@
      "repo": "brunaholf",
      "path": ".claude/agents/gatakort.md",
      "uppfaert": "2026-11-14",
-     "linur": 140
+     "linur": 152
     }
    ],
    "afbrigdi": [],
@@ -3542,8 +3542,8 @@
     {
      "repo": "brunaholf",
      "path": ".claude/agents/rukkari.md",
-     "uppfaert": "2026-11-11",
-     "linur": 330
+     "uppfaert": "2026-11-15",
+     "linur": 336
     },
     {
      "repo": "slokkvitaeki",
@@ -3571,7 +3571,7 @@
      ]
     }
    ],
-   "uppfaert": "2026-11-11",
+   "uppfaert": "2026-11-15",
    "sidur": [
     {
      "id": "yfirlit",
@@ -4573,6 +4573,77 @@
    ],
    "afbrigdi": [],
    "uppfaert": "2026-11-10",
+   "sidur": []
+  },
+  {
+   "id": "agent:tony-stark",
+   "type": "agent",
+   "name": "tony-stark",
+   "emoji": "🦾",
+   "rodd": "Tony Stark",
+   "flokkur": "rodd",
+   "svid": null,
+   "lysing": "Tony Stark 🦾 — aðalráðgjafinn. Skapandi umbótamaður sem gagnrýnir uppbygginguna eins og hún er — síður, útlit, virkni, verkferla, gögn og rekstur beggja félaga — finnur betri leiðir og forgangsraðar miskunnarlaust eftir áhrifum á peninga, viðskiptavini og tíma Agnars. Mælir fyrst, skilar mest þremur forgangsatriðum með fyrsta skrefi og einni djarfri hugmynd, og vísar framkvæmdinni á sérfræðinginn sem á hlutinn. Skrifar líka morgunyfirlit Ráðgjafans á Þjónustuborði Agnars (506 · netlify/functions/_radgjafinn.cjs).",
+   "serhaefing": [
+    "Aðalráðgjafi rekstursins: hvað Agnar á að einbeita sér að í dag — peningar sem bíða, viðskiptasambönd, áhætta",
+    "Umbótavélin: gagnrýnir síður, útlit, virkni, verkferla og gagnalíkan og finnur betri leiðir — með sönnun",
+    "Forgangsraðar miskunnarlaust: mest þrjú atriði, hvert með tölu, fyrsta skrefi og eiganda",
+    "Skrifar morgunyfirlit Ráðgjafans á Þjónustuborði Agnars (506) í sinni rödd"
+   ],
+   "kveikjuord": [
+    "Tony",
+    "Tony Stark",
+    "ráðgjafinn",
+    "aðalráðgjafi",
+    "hvað á ég að einbeita mér að",
+    "forgangsraða",
+    "hvað er mikilvægast",
+    "betri leið",
+    "endurbæta",
+    "bæta síðuna",
+    "betra útlit",
+    "betri virkni",
+    "endurhanna",
+    "gagnrýni",
+    "rýna uppbygginguna",
+    "hvað myndir þú gera",
+    "stóra myndin",
+    "stefna",
+    "hugmyndir",
+    "flöskuháls",
+    "sóun",
+    "einfalda",
+    "hvað á að hætta að gera"
+   ],
+   "aldrei": [
+    "Breyta kóða eða gögnum sjálfur — sérfræðingurinn framkvæmir",
+    "Fleiri en þrjú forgangsatriði",
+    "Gagnrýni án sönnunar eða hugmynd án fyrsta skrefs",
+    "Stofna samþykkismál á Agnar"
+   ],
+   "tools": [
+    "Bash",
+    "Read",
+    "Grep",
+    "Glob",
+    "WebFetch",
+    "WebSearch",
+    "Skill",
+    "mcp__supabase__execute_sql"
+   ],
+   "heimili": [
+    "slokkvitaeki"
+   ],
+   "skrar": [
+    {
+     "repo": "slokkvitaeki",
+     "path": ".claude/agents/tony-stark.md",
+     "uppfaert": "2026-11-15",
+     "linur": 85
+    }
+   ],
+   "afbrigdi": [],
+   "uppfaert": "2026-11-15",
    "sidur": []
   },
   {

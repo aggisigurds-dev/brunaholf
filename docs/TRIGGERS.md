@@ -101,7 +101,7 @@ Bæði slökkvitæki og brunahólf lesa sama Supabase `osfdzskyvisifcwyjkuk`.
 <!-- AGENT-KVEIKJUR:BEGIN -->
 ## Sjálfvirk tafla — kveikjuorð úr `description` (búin til af `node tools/build-agents-registry.cjs`)
 
-Byggð 2026-11-14. Þessi tafla er dregin beint úr agent- og skill-skránum og gildir ef hún stangast á við handskrifuðu töfluna hér að ofan. Breyttu kveikjuorðum í `description:` skrárinnar, ekki hér.
+Byggð 2026-11-15. Þessi tafla er dregin beint úr agent- og skill-skránum og gildir ef hún stangast á við handskrifuðu töfluna hér að ofan. Breyttu kveikjuorðum í `description:` skrárinnar, ekki hér.
 
 | Heiti | Tegund | Kveikjuorð | Skrá síðast uppfærð |
 |---|---|---|---|
@@ -146,6 +146,7 @@ Byggð 2026-11-14. Þessi tafla er dregin beint úr agent- og skill-skránum og 
 | `tengingar` | agent | `tengingar` · `lykill` · `gult` · `rautt` · `tengja pósthólf` · `tengja GitHub` · `tengja MCP` · `samstilla vélar` · `VEL_HEARTBEAT_TOKEN` · `google-auth` · `rótera lykil` · `næ ekki að tengja` | 04.11.2026 |
 | `thema` | agent | `þema` · `skinna` · `Brunastál` · `theme.css` · `litur á takka` · `of mikið appelsínugult` · `dökkblár málmur` · `málmhnappur` · `LITASKRA` · `hönnunarkerfi` | 04.11.2026 |
 | `thjonustugatt` | agent | `þjónustugátt` · `gátt` · `gatt-admin` · `kúnnavefur` · `þjónustuvefur` · `Viðskiptavinavefir` · `opinn aðgangur` · `opna sem kúnni` · `Tilkynna` · `rýmingaráætlun` · `skoda.html` · `vefverslun` · `vefrýni` · `eldvarnabók` · `Heimdall` | 10.11.2026 |
+| `tony-stark` | agent | `Tony` · `Tony Stark` · `ráðgjafinn` · `aðalráðgjafi` · `hvað á ég að einbeita mér að` · `forgangsraða` · `hvað er mikilvægast` · `betri leið` · `endurbæta` · `bæta síðuna` · `betra útlit` · `betri virkni` · `endurhanna` · `gagnrýni` · `rýna uppbygginguna` · `hvað myndir þú gera` · `stóra myndin` · `stefna` · `hugmyndir` · `flöskuháls` · `sóun` · `einfalda` · `hvað á að hætta að gera` | 15.11.2026 |
 | `utlitsserfraedingur` | agent | `farðu yfir útlitið` · `samþykkja útlit` · `kontrast` · `svart á svörtu` · `hvítt á hvítu` · `snertiflötur` · `of smátt` · `hlutföll` · `mobile` · `Miranda` | 04.11.2026 |
 | `verkstadur` | agent | `Frá verkstað` · `vettvangsapp` · `Brunaþéttingar-appið` · `field-app` · `verkstjóri` · `efni af lager` · `sérkaup` · `efniskostnaður verkstjóra` · `gr-materials` · `kvittun` · `nýtt verk á staðnum` · `Deilt með verkstað` | 10.11.2026 |
 | `3dJoker` | skill | `power tube` · `hamar/ventill/striker` · `leiðari` · `merkjari` · `marker` · `CO2` · `bolti` · `hleðslublokk` · `breech` · `gengja/thread` · `3mf` · `build123d` · `renna/prenta/lóða` · `Bambu Studio` · `P1S` · `support/yfirhang` · `seam/saumur` · `flow/shrinkage` · `slicer` · `saumbursti` · `klóna/clone stamp` · `One piece` · `vatnsþétt/watertight` · `bd_warehouse` · `meshlib` | 24.10.2026 |
