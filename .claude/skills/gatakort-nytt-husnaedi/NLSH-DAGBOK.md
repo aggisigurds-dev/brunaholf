@@ -829,3 +829,13 @@ Pörun (para.cjs) EKKI keyrð með --write: nýju punktarnir eru óparaðir = ra
 LEIÐRÉTTING á mati fyrr í dag (~2.400 skráningar): krossar án skráningar eru 617 → ~1.234 stök verk ≈ 617 lokanir + eldri 63 rauðir + 236 opnar. 5H S5 hefur færri skráningar en 6H S5 en flestir krossar þar eiga skráningu innan 1,8 m.
 Kragarör: frárennsliskrossar 5H 259 / 6H 277 (alls 536 ≈ útboð 600), en 236/259 og 263/277 eiga plast-skráningu nærri (oftast Plast Ø20-34). Agnar: forveggur (lagnaveggur) við klósettkassa í smíðum — grunar brunaheldan. Veggjayfirlit A400-20 rev D: IV-2.24 „flísar-lagnaveggur“ er skráður án EI-kröfu; IV-2.3 og IV-2.7 („veggur fyrir stærri stamma“) EI60. A400-21 „Veggjayfirlit – lagnir í vegg“ sýnir engar EI-kröfur. Hvaða veggtegund er við klósettin á grunnmynd (A255/A256): ÓMÆLT.
 Procore-lög ekki á korti: R3150/R3160 Lágspenna, Smáspenna, R6150/R6160 Brunaviðvörun, R7150/R7160 Aðgangs-/öryggiskerfi, M715/M716 lyfjaloft hlutablöð, M515/M516 gólfhiti, U-Upphengjur, þakblöð.
+
+
+## 15.11.2026 — Lágspenna, Smáspenna, Brunaviðvörun sem lög (skr_log, fag rafmagn, falin sjálfgefið)
+
+Agnar samþykkti niðurhal: 107 blöð, 47,5 MB (R3150 20, R3160 16, R5150 18, R5160 17, R6150 19, R6160 17) úr Procore, sótt sem einn pakki
+(`Downloads\nlsh-raf-log-15nov.dat`) og skipt í `Documents\NLSH\procore-hlutablod\NLSH-<blað>.pdf` (allir %PDF). Afstilling: `-fylgni.py` við
+R1150/R1160 sama hlutanúmers (`scratchpad/as_R3150.json` …), styrkur 1,0–1,7; x-hliðrun ≈ 0, y 0 eða −20…−50 pt eftir blaði. Fjögur frávik
+> 12 pt frá miðgildi systurblaða leiðrétt (R3150-18, R5160-02, R5160-14, R3160-19). Blöð án viðmiðs sleppt: R3150-09/-10, R6150-09, R6160-12, R5160-25.
+Skeytt með `-skeyta-lit.py dokkt` (Lágspenna b45309, Smáspenna 7c3aed, Brunaviðvörun 0d9488), skráð með `-log.cjs --write` (rod 41–43).
+Sjónskoðun: tákn lenda rétt í herbergjum. Blöðin sýna aðallega TÆKI (tengla, ljós, nema), fáar lagnaleiðir → engin sjálfvirk áætluð göt.
