@@ -120,6 +120,7 @@ fært, orðrétt. Hver þeirra hleðst AÐEINS þegar hann er kallaður til.
 | Hraða, hleðslutíma, þung köll, polling — **vélarýmið** | `hradi` | 💥 Bruce Willis |
 | Að ALLAR tengingar/lyklar séu í lagi á Kerfisheilsu | `tengingar` | 😤 Samuel L. Jackson |
 | Dagleg yfirsýn + jarvis.html sjálf — svið, raddir, TTS, cache | `jarvis` | 🎩 Jarvis |
+| **Hvað á ég að einbeita mér að?** Forgangsröðun, betri leiðir, gagnrýni á uppbygginguna (síður, útlit, virkni, verkferla), djarfar hugmyndir — aðalráðgjafinn; skrifar líka morgunyfirlit Ráðgjafans á Þjónustuborði Agnars (slokkvitaeki 506) | `tony-stark` | 🦾 Tony Stark |
 | RLS, policies, lyklar/tokens, public buckets — öryggið | `oryggi` | 🔒 *(rödd óvalin)* |
 | Hype-yfirlitið — sigrarnir fyrst, svo það sem á að klára | `jarvis` (kafli „Svið yfirlit“) | 🇺🇸 Trump |
 | Staðreyndayfirferð — kerfið segir eitt, gögnin annað (factcheck_bord) | `natalie` | 🌸 Natalie |

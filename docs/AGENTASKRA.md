@@ -204,7 +204,7 @@ Bæði slökkvitæki og brunahólf lesa sama Supabase `osfdzskyvisifcwyjkuk`.
 <!-- SIDUKORT:BEGIN -->
 ## Síðukort — hver á hverja síðu (búið til af `node tools/build-agents-registry.cjs`)
 
-Byggt 2026-11-14 úr `brunaholf/.claude/sidukort.json`, `kjarni/.claude/sidukort.json`. Staða: ✅ eigandi til · ⚠️ eigandi ekki í registry eða skilgreind-skrá finnst ekki · ❌ enginn eigandi. Breyttu síðukortinu, ekki hér.
+Byggt 2026-11-15 úr `brunaholf/.claude/sidukort.json`, `kjarni/.claude/sidukort.json`. Staða: ✅ eigandi til · ⚠️ eigandi ekki í registry eða skilgreind-skrá finnst ekki · ❌ enginn eigandi. Breyttu síðukortinu, ekki hér.
 
 | Vefur | Síða | Leið | Skilgreind | Eigandi | Undiragentar | Staða |
 |---|---|---|---|---|---|---|
