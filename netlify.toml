@@ -260,8 +260,9 @@
 # dv/ev úr /api/timabok, smáhlutagjald endurreiknað, akstur/efni/afsláttur óbreytt, timavera_klst_vid_vistun
 # uppfært. Snertir ALDREI fast verð, Ajour-drög, send/samreiknuð drög né drög með „🔒tímar" í notes.
 # 15.11.2026: STOFNAR líka drög líðandi mánaðar fyrir verk í Verðskrá (Fjallaböðin) — aldrei eldri mánaðar, aldrei
-# aftur eftir eyðingu (app_kv drog_timar_stofnud); snertir ekki send/Payday-tengd drög. Sjá docs/REIKNINGALOTA.md.
-# Keyrslan skráist í automation_runs (job_name drog-timar). HTTP-tvíburinn /api/drog-timar?dry=1 sýnir áætlunina.
+# aftur eftir eyðingu (app_kv drog_timar_stofnud); snertir ekki send/Payday-tengd drög. Yfirvinna aðeins með
+# pricing_guide.yfirvinna_samningur. HTTP-fallið er bak við requireStaff. Sjá docs/REIKNINGALOTA.md.
+# Keyrslan skráist í automation_runs (job_name drog-timar). HTTP-tvíburinn GET /api/drog-timar sýnir áætlunina.
 [functions."drog-timar-background"]
   schedule = "25 */2 * * *"
 

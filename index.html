@@ -12602,7 +12602,9 @@ async function renderGerdReikninga(t){
        * námundun. Hann eyddi tíma í að elta hala sem var ekki til.
        *
        * Og frá sama degi setur `drog-timar` alla tíma í dagvinnu (Agnar vill
-       * enga yfirvinnu). Héldi gamli samanburðurinn sér myndi hver einustu drög
+       * enga yfirvinnu) — nema drögin beri þegar yfirvinnu eða Verðskrá hafi
+       * „Yfirvinna samkvæmt samningi" (yfirvinna_samningur, 15.11.2026: Fjallaböðin).
+       * Héldi gamli samanburðurinn sér myndi hver einustu drög
        * loga rauð að eilífu, því tímabókin skiptir áfram við 8 klst/dag.
        *
        * Rétta spurningin er hvort SAMA VINNAN standi báðum megin — þ.e. heildin.
@@ -24133,6 +24135,9 @@ async function rgOpenWorkcenter(project, allSites, months){
           <label>Greiðslufrestur (dagar)<input type="number" id="wc-pt" value="${pricing.payment_terms_days ?? ''}" step="1" placeholder="—"></label>
           <label><input type="checkbox" id="wc-stadf" ${pricing.stadfesting_default?'checked':''}> Staðfesting brunaþéttinga sjálfvirkt</label>
         </div>
+        <div class="wc-row">
+          <label title="Sjálfvirk drög úr Tímaveru skipta tímum eftir tímabók: yfir 8 klst á dag á mann og helgar fara á yfirvinnutaxta. Án haks fer allt í dagvinnu."><input type="checkbox" id="wc-yfirv" ${pricing.yfirvinna_samningur?'checked':''}> Yfirvinna samkvæmt samningi</label>
+        </div>
         <div class="wc-row wc-row-full">
           <label>Athugasemd<textarea id="wc-notes" rows="2" placeholder="—">${escapeHtml(pricing.notes || '')}</textarea></label>
         </div>
@@ -24240,6 +24245,7 @@ async function rgOpenWorkcenter(project, allSites, months){
       retention_pct: Number(document.getElementById('wc-ret').value) || 0,
       payment_terms_days: document.getElementById('wc-pt').value ? Number(document.getElementById('wc-pt').value) : null,
       stadfesting_default: document.getElementById('wc-stadf').checked,
+      yfirvinna_samningur: document.getElementById('wc-yfirv').checked,   // 15.11.2026 — sjálfvirk drög (drog-timar) skipta tímum
       notes: document.getElementById('wc-notes').value || null,
       updated_by: 'workcenter',
     };

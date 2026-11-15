@@ -195,7 +195,9 @@ Sýnin les `/api/krofu-yfirlit-bru` (spjöld), ekki `krofur-yfirlit` (tafla). Þ
 - **Drög líðandi mánaðar stofnast sjálf (15.11.2026)** — `drog-timar` (á 2 klst fresti) stofnar þau fyrir verk í Verðskrá
   með dagvinnutaxta (Fjallaböðin, Fjarðagata, Orkureitur); verk utan Verðskrár (Tindasel, Sidumuli 21) standa áfram sem
   „Tími eftir" í þrepi 3 þar til Agnar setur taxta. Eydd drög stofnast ekki aftur (`app_kv drog_timar_stofnud`). Spurt
-  „af hverju kom ekki drag?" → `GET /api/drog-timar?dry=1`, `stofnun[].sleppt` segir ástæðuna. Reglan: docs/REIKNINGALOTA.md.
+  „af hverju kom ekki drag?" → `GET /api/drog-timar` (starfsmanna-hlið), `stofnun[].sleppt` segir ástæðuna. Yfirvinna á
+  sjálfvirkum drögum = hakið „Yfirvinna samkvæmt samningi" í Verðreglum (`pricing_guide.yfirvinna_samningur`, í dag aðeins
+  Fjallaböðin) — ALDREI `eftirvinna_threshold_per_day`, sem Viðskiptavinir-glugginn skrifar sjálfgefið. Reglan: docs/REIKNINGALOTA.md.
 
 ## Ósent og Ajour-verkefnin — gat sem sést hvergi (07.10.2026)
 
