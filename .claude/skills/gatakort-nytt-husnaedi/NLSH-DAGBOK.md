@@ -613,3 +613,55 @@ Færðir punktar · Tillögur · Símaviðmót · Stöðuskýrsla.
   opið eða klárað fyrr en hann er tengdur.
 - **Prófað** á þróunarþjóni í símasýn: grár punktur (#5356) valinn í færsluham og dreginn 12 px að merkinu, teljarinn fór 24 → 23 og hakið birtist; skrifin
   (`PATCH skr_faerslur`) fengu gervisvar, ekkert fór í grunninn. Prófunarskriftur: `apex_adal_prof.cjs`, `apex_adal_drag2.cjs` (scratchpad lotunnar).
+
+## Flýtileiðir með Apex-tákninu (15.11.2026) — kjarni main 9ebdb59
+- **Orð Agnars:** „Hver er linkurinn á aðalkerfið og síðan reportkerfið. Gæti ég downloadað shortcut með apex merkingu" og, þegar ég ætlaði að gera skýrslutáknið
+  appelsínugult: „Oj. Nei eins og logoið. Hvíta og síðan bláa útgáfan." → táknin eru lógóið óbreytt: hvíta útgáfan = aðalkerfið, bláa = skýrslan. Engin ný litaafbrigði.
+- **Útfært:** `public/apex/kort.webmanifest` (Apex Ajour, `/kjarni/skraning/kort`, hvítt tákn) og `public/apex/skyrsla.webmanifest` (Apex skýrsla,
+  `/kjarni/skraning/skyrsla?kynning=1`, blátt tákn); `manifest`, `appleWebApp` og `icons` í `kort/page.tsx` og `skyrsla/page.tsx`. Tákn: `icon-192/512`,
+  `icon-maskable-512`, `apple-touch-icon`, `apex.ico` (og `skyrsla-` afbrigðin), smíðuð með `apex-logo/takn.cjs` (scratchpad lotunnar).
+- **Ósnert:** `public/skraning/manifest.webmanifest` (vinnuútgáfan `/vinna`, eldra pinnatákn) er á sviði `skraning`.
+- **Skjáborð skrifstofuvélar:** `Apex Ajour.url` og `Apex skýrsla.url`, tákn í `%LOCALAPPDATA%\ApexAjour\`.
+
+## Áttur alltaf á hlið (15.11.2026) — kjarni main 479ef69
+- **Orð Agnars:** „2 x 2 áttu að vera 8 á hlið x 2 vatnslagnir... tígull með eldingu fyrir rafmagn stakur. Já flott merki."
+- **Var:** áttan lá ÞVERT á brunavegginn, svo hún stóð upprétt (8) við láréttan vegg og 2 × 2 varð tvær uppréttar áttur hlið við hlið.
+- **Nú:** `attuMidjur` / `attur` taka ekki lengur stefnu veggjar. Rörapar = ein átta á hlið (∞); 2 × 2 = tvær áttur á hlið, hvor ofan á annarri með bili (0,62 R),
+  rauð (`HEITT`) og blá (`KALT`) á stálrörum. Hökin fylgja veggnum áfram (ofan og neðan við láréttan vegg).
+- **Rafmagn:** óbreytt, stakur tígull með eldingu (sannreynt á lifandi síðu).
+- **Opið:** stálrör með ÓÞEKKT kerfi teiknast enn sem blómhringur. Mælt 15.11: 381 af 5.692 stálskráningum á verki 4 eiga enga `skr_kerfi`-röð án vafa
+  (4.176 vatn, 1.135 úði). Spurt Agnar hvort þau eigi líka að verða áttur.
+
+## Klípa á hæðarteikningum skýrslunnar (15.11.2026) — kjarni main 4b429ee
+- **Orð Agnars:** „Zoom pirringur. Get ekkert pinch-zoomað kringum teikningarnar, til að sjá aðeins betur.. og í að sjá stærra næ ég engan veginn að zooma nægilega mikið."
+- **Orsök (mæld í símahermi á lifandi síðu fyrir breytingu):** `Haedarkort` í `skyrsla/Haedir.tsx` studdi ENGA klípu á snertiskjá (aðeins +, tvísmell, Ctrl + skrun),
+  `touch-action: pan-y` lokaði á klípu síðunnar yfir teikningunni, og þakið var fast 8×. Tíu klípur skiluðu scale(1).
+- **Nú:** snertiatburðir (`touchstart`/`touchmove`, ekki passive) á `.sk-hk-mynd`: tveir fingur stækka um miðjuna á milli sín og færa teikninguna með sér; eins fingurs
+  drag og val á punkti óvirkt þar til allir fingur eru farnir af (`klipa.current`). Þak `zMest` = 3 skjápixlar á pixil teikningar, 8–60× (52× í 334 px glugga).
+  Einn fingur skrunar síðunni áfram í fullri sýn. Gatakortið: tveir fingur færa nú líka blaðið meðan klipið er (`drag.current.mx/my`).
+- **Prófað** með CDP `Input.dispatchTouchEvent` (tveir snertipunktar) í símahermi, prófunarþjónn og lifandi síða: 1 klípa → 4×, 3 → 52× (þak), tveggja fingra
+  færsla breytir hliðrun, klípa inn → 1×, eins fingurs strok skrunar síðunni (2857 → 3042). Prófunarskrifta: `apex_klipa_skyrsla_prof.cjs` (scratchpad lotunnar).
+- **Óvíst:** ég gekk út frá því að hann ætti við skýrsluna (þar var klípan dauð); á gatakortinu virkaði klípan í hermi fyrir breytingu. Myndin sjálf er 5.790 px breið,
+  svo dýpsta stækkun er óskýr; skarpari mynd þyrfti hærri upplausn á yfirlitsblaðinu. Óprófað í síma Agnars.
+
+## Aðalmerki endurskoðuð: breiðir nemar, smellur, klofin pör (15.11.2026) — kjarni main f36e6ee + 35db290
+- **Orð Agnars (þrjú skjáskot af 6H úr símanum):** „Nú get ég ekki fært helvítis draslið. Og punktarnir minnka svo extreme með", „af hverju í andsk. splittast þetta upp...
+  eru þetta 2 eða 4 göt", „og 5x andskotans hvað", síðar „5x götin eru líklegast út af hurðinni til hliðar. Ætti bara vera 1 par á veggnum sjálfum."
+- **Mælt:** neminn við #5974 (6H, vísir 875) er á (1520,9; 954,1) með hb = 20,5 → 41 px = 1,2 m breiður meðfram veggnum. Nemar eru oft breiðari en eitt gegnumtak:
+  hb miðgildi 7,5, mest 31,9; breiðari en 0,6 m: 133 af 514 á 6H og 101 af 489 á 5H; breiðari en 0,9 m: 76 og 56. Fyrsta útgáfa aðalmerkja (ad14f49) setti merkið á
+  MIÐJU nemans og gamli smellurinn dró dreginn punkt alltaf þangað, svo punktur komst ekki að raunverulega stokknum 9 px ofar.
+- **Lagað í KortClient:** (1) `smella` færir punkt aðeins ÞVERT á vegginn (SMELL_PX frá miðlínu); meðfram veggnum stendur hann þar sem honum var sleppt, innan hb.
+  Nær mest `min(14, 30/k)` px frá vegg. `fest` = handfærð og SMELL_PX frá miðlínu, hvar sem er innan nemans. (2) `adalKlasar`: skráningar sama nema og stærðar
+  flokkaðar eftir stöðu meðfram vegg (bil > `KLASA_BIL` = 6 px → nýtt merki); merkið á miðlínu veggjar við meðalstöðu klasans. Handfærð skráning sem er ekki fest er
+  ekki í klasa. (3) Tveir endar sömu lokunar án nema (`hlid = hinum`, innan `PAR_PX` = 12 px) eru eitt merki í hvaða stækkun sem er (`hopAf`); áður klofnaði parið í
+  tvö merki með tvö hök hvort þegar D = 2,4 R varð minna en bilið. (4) „Ótengdur punktur" er aðeins stakur punktur við nema: par á vegg og handfærður punktur eru
+  venjuleg merki. (5) `merkisR` vex áfram eftir 13 px, upp í 22 px í dýpstu stækkun. (6) „Í sama merki (n stök verk): #…" telur upp klasann.
+- **„160 ×5" við #5974:** #522, #555, #561, #712, #3888 (Loft Ø125-160, allar kláraðar, 06.10.2025–06.03.2026). Ajour-staðir þeirra: x 1502–1546, y 910–925, þ.e. í röð
+  meðfram LÁRÉTTA veggnum ofan við, en sjálfvirka færslan (12.11.2026) setti þær allar á efri enda breiða nemans á lóðrétta veggnum (y ≈ 934–937). Agnar: þær eiga
+  heima við hurðina, á veggnum sjálfum á aðeins að vera eitt par. Færslurnar fimm eru ÓBREYTTAR; spurt hvort eigi að taka sjálfvirku færsluna af þeim.
+- **Almenn hætta:** sjálfvirka færslan (`skraning-gatakort-*`) treystir nemum; á breiðum nemum getur hún hafa sett punkta á rangan vegg. Ómælt hve víða.
+- **Stöðuskýrsla (Haedir.tsx):** klípa hlustar á alla hæðina (.sk-hk-haed) og lok hennar á glugganum; fyrsta útgáfan (4b429ee) læsti færslu og vali ef fingur lenti
+  utan teikningar. Punktar stækka sem z^0,75 (mest 14 px) í stað z^0,45.
+- **Prófað** á prófunarþjóni og lifandi síðu í símahermi, skrif með gervisvari: #5974 valin í færsluham og dregin 9 px upp → `PATCH skr_faerslur {x 1524,8; y 945}`
+  (áður hefði hún farið á 954,1); pikk á ×5 merkið telur upp skráningarnar; parið #8656/#10835 við (4041, 546) er eitt merki í dýpstu stækkun.
+  Prófunarskriftur: `apex_adal2_prof.cjs`, `apex_klipa_skyrsla_prof2.cjs`. Óprófað í síma Agnars.
