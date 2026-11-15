@@ -855,3 +855,15 @@ Agnar samþykkti niðurhal: 120 blöð, 30,4 MB (M315 18, M316 16, M715 16, M716
   þakplata óbyrjuð ef hún er í verkinu (ÓMÆLT hvort). Miðbygging/garður í M814 alveg óskráð (gæti verið utan verks).
   Hringurinn er settur á stærðarTEXTANN, sem stendur 0,3–0,6 m frá gatatákninu.
 - Lög (`-log.cjs`, falin): úði hlutablöð M315/M316 (dokkt 0369a1), lyfjaloft M715/M716 (litur), gataplan M814→4H, M815→5H, M816→6H (fag golf).
+
+
+## 15.11.2026 — Yfirferð aftur með nýju lögunum (Agnar: „fara í gegnum allt aftur og sjá hvort þetta breytist eða matchast betur“)
+
+`scratchpad/raf/yfirferd.cjs`: krossar per lag × hæð → skráning sama hóps innan 60 px / áætlað gat innan 30 px / EKKERT.
+- Úði hlutablöð M315 (5H): 399 krossar, 351 skráðir, 12 áætlað, 36 ekkert (S2 22). M316 (6H): 439 / 397 / 11 / 31. → 5H S5 er EKKI á eftir í úða.
+- Lyfjaloft hlutablöð M715 (5H): 114 / 102 / 7 / 5. M716 (6H): 168 / 150 / 5 / 13. → nær allt skráð.
+- Úði yfirlit M395 studdi aðeins 4 af 40 áður settum úðapunktum á 5H S5 → 36 sett eytt=true (`udi_leidretta.cjs`, ástæða í athugasemd).
+  Apex 5H „Eftir“ 439 → 403.
+- Rafmagn, loft, vatn og frárennsli óbreytt (punktarnir komu þegar af hlutablöðum). Leifar í búnum svæðum (6H: loft 25, vatn 12, úði 31,
+  lyfjaloft 13; 5H: loft 21, vatn 20, úði 36) EKKI settar inn — 5–8 % af krossum, líklega skráning > 1,8 m frá eða í öðrum flokki.
+- Lærdómur í SKILL.md: aldrei áætluð göt úr yfirlitsmynd fags þegar hlutablöð eru til.

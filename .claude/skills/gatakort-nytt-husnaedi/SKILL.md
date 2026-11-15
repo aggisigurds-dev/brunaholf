@@ -124,6 +124,9 @@ Sæktu í þessari röð. Þetta segir hvað hvert skjal gefur gatakortinu, ekki
 | Engin á kort | Kerfismyndir (M049, M349, M449, M549, M649, M749), einlínumyndir (R37x0) | engar staðsetningar |
 | Óskoðað | Upphengjur (U), gólfhiti (M515/M516), þakblöð (M117/M217/M317/M717, R1170) | spyrja hvort þak sé í verkinu |
 
+**Búðu aldrei til áætluð göt úr YFIRLITSMYND fags (M195/M395/M795) þegar hlutablöð eru til:** á NLSH féllu 36 af 40 úðapunktum
+úr M395 þegar hlutablöð M315 komu (15.11.2026). Yfirlitsmyndir duga sem lög til að skoða, ekki til krossa.
+
 Gataplön og hlutablöð með **ásamerkjum** stillast af upp á 0,1 pt (blað → fagblað sama hlutanúmers → grunnur, sjá
 `scratchpad/raf/stilla_asar.py` í NLSH-lotu 15.11). Blöð án ásamerkja: FFT-fylgni arkitektagrunns (`-fylgni.py`), athuga frávik
 við systurblöð sama hlutanúmers og leiðrétta > 12 pt í miðgildið.
