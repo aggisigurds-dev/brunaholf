@@ -643,3 +643,25 @@ Færðir punktar · Tillögur · Símaviðmót · Stöðuskýrsla.
   færsla breytir hliðrun, klípa inn → 1×, eins fingurs strok skrunar síðunni (2857 → 3042). Prófunarskrifta: `apex_klipa_skyrsla_prof.cjs` (scratchpad lotunnar).
 - **Óvíst:** ég gekk út frá því að hann ætti við skýrsluna (þar var klípan dauð); á gatakortinu virkaði klípan í hermi fyrir breytingu. Myndin sjálf er 5.790 px breið,
   svo dýpsta stækkun er óskýr; skarpari mynd þyrfti hærri upplausn á yfirlitsblaðinu. Óprófað í síma Agnars.
+
+## Aðalmerki endurskoðuð: breiðir nemar, smellur, klofin pör (15.11.2026) — kjarni main f36e6ee + 35db290
+- **Orð Agnars (þrjú skjáskot af 6H úr símanum):** „Nú get ég ekki fært helvítis draslið. Og punktarnir minnka svo extreme með", „af hverju í andsk. splittast þetta upp...
+  eru þetta 2 eða 4 göt", „og 5x andskotans hvað", síðar „5x götin eru líklegast út af hurðinni til hliðar. Ætti bara vera 1 par á veggnum sjálfum."
+- **Mælt:** neminn við #5974 (6H, vísir 875) er á (1520,9; 954,1) með hb = 20,5 → 41 px = 1,2 m breiður meðfram veggnum. Nemar eru oft breiðari en eitt gegnumtak:
+  hb miðgildi 7,5, mest 31,9; breiðari en 0,6 m: 133 af 514 á 6H og 101 af 489 á 5H; breiðari en 0,9 m: 76 og 56. Fyrsta útgáfa aðalmerkja (ad14f49) setti merkið á
+  MIÐJU nemans og gamli smellurinn dró dreginn punkt alltaf þangað, svo punktur komst ekki að raunverulega stokknum 9 px ofar.
+- **Lagað í KortClient:** (1) `smella` færir punkt aðeins ÞVERT á vegginn (SMELL_PX frá miðlínu); meðfram veggnum stendur hann þar sem honum var sleppt, innan hb.
+  Nær mest `min(14, 30/k)` px frá vegg. `fest` = handfærð og SMELL_PX frá miðlínu, hvar sem er innan nemans. (2) `adalKlasar`: skráningar sama nema og stærðar
+  flokkaðar eftir stöðu meðfram vegg (bil > `KLASA_BIL` = 6 px → nýtt merki); merkið á miðlínu veggjar við meðalstöðu klasans. Handfærð skráning sem er ekki fest er
+  ekki í klasa. (3) Tveir endar sömu lokunar án nema (`hlid = hinum`, innan `PAR_PX` = 12 px) eru eitt merki í hvaða stækkun sem er (`hopAf`); áður klofnaði parið í
+  tvö merki með tvö hök hvort þegar D = 2,4 R varð minna en bilið. (4) „Ótengdur punktur" er aðeins stakur punktur við nema: par á vegg og handfærður punktur eru
+  venjuleg merki. (5) `merkisR` vex áfram eftir 13 px, upp í 22 px í dýpstu stækkun. (6) „Í sama merki (n stök verk): #…" telur upp klasann.
+- **„160 ×5" við #5974:** #522, #555, #561, #712, #3888 (Loft Ø125-160, allar kláraðar, 06.10.2025–06.03.2026). Ajour-staðir þeirra: x 1502–1546, y 910–925, þ.e. í röð
+  meðfram LÁRÉTTA veggnum ofan við, en sjálfvirka færslan (12.11.2026) setti þær allar á efri enda breiða nemans á lóðrétta veggnum (y ≈ 934–937). Agnar: þær eiga
+  heima við hurðina, á veggnum sjálfum á aðeins að vera eitt par. Færslurnar fimm eru ÓBREYTTAR; spurt hvort eigi að taka sjálfvirku færsluna af þeim.
+- **Almenn hætta:** sjálfvirka færslan (`skraning-gatakort-*`) treystir nemum; á breiðum nemum getur hún hafa sett punkta á rangan vegg. Ómælt hve víða.
+- **Stöðuskýrsla (Haedir.tsx):** klípa hlustar á alla hæðina (.sk-hk-haed) og lok hennar á glugganum; fyrsta útgáfan (4b429ee) læsti færslu og vali ef fingur lenti
+  utan teikningar. Punktar stækka sem z^0,75 (mest 14 px) í stað z^0,45.
+- **Prófað** á prófunarþjóni og lifandi síðu í símahermi, skrif með gervisvari: #5974 valin í færsluham og dregin 9 px upp → `PATCH skr_faerslur {x 1524,8; y 945}`
+  (áður hefði hún farið á 954,1); pikk á ×5 merkið telur upp skráningarnar; parið #8656/#10835 við (4041, 546) er eitt merki í dýpstu stækkun.
+  Prófunarskriftur: `apex_adal2_prof.cjs`, `apex_klipa_skyrsla_prof2.cjs`. Óprófað í síma Agnars.
