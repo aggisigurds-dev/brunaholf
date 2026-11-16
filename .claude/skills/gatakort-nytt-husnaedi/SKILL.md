@@ -125,6 +125,10 @@ Sæktu í þessari röð. Þetta segir hvað hvert skjal gefur gatakortinu, ekki
 | Engin á kort | Kerfismyndir (M049, M349, M449, M549, M649, M749), einlínumyndir (R37x0) | engar staðsetningar |
 | Óskoðað | Upphengjur (U), gólfhiti (M515/M516), þakblöð (M117/M217/M317/M717, R1170) | spyrja hvort þak sé í verkinu |
 
+**Kröfuskjal brunaþéttinga:** lestu „Almennar skýringar“ hvers fags (NLSH: M109-01/-02, M209-01, M329-01, M709-002, R1080-01) og
+veggjayfirlit (A400-20), og skrifaðu `<VERK>-BRUNATHETTINGAR.md` hér í möppunni: hvernig hver lagnategund er þétt gegnum hvaða byggingarhluta,
+EI-kröfur, efni lagna (ræður útboðslið) og tækjanúmer. Fyrirmynd: `NLSH-BRUNATHETTINGAR.md` (16.11.2026).
+
 **Búðu aldrei til áætluð göt úr YFIRLITSMYND fags (M195/M395/M795) þegar hlutablöð eru til:** á NLSH féllu 36 af 40 úðapunktum
 úr M395 þegar hlutablöð M315 komu (15.11.2026). Yfirlitsmyndir duga sem lög til að skoða, ekki til krossa.
 

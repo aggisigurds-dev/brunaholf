@@ -927,3 +927,27 @@ salerni 90, sturta 61, niðurfall 9. → Ø35-50 kragi er við HANDLAUGAR og STU
 Salernakrossar alls 101 ≈ útboðsliður 2.3 Ø75-100 plaströr 100 göt (21 skráð, engin með hæðarhnit). → 82 fravatn-punktar við salerni fá flokk
 Plast Ø75-100 (`salerni_flokkur.cjs`). Eftir standa ~197 kragapunktar (Ø35-50) við handlaugar/sturtur.
 Lærdómur: tækjanúmer + skýringablað fagsins (M109) er besta leiðin til að vita HVAÐA tæki lögn þjónar.
+
+
+## 16.11.2026 — Herbergjatalning (Agnar: „alltaf handlaug í hverju herbergi utan baðherbergis … finna fjölda herbergja og baðherbergja“)
+
+`raf/herbergi.py`: herbergjanúmer XXX.YY.ZZZ + heiti af M715/M716 (lyfjaloftsblöðin bera öll herbergjaheiti), varpað á yfirlit.
+| | 5H | 6H |
+|---|---|---|
+| Sjúkrastofur (+einangrunarstofur) | 96 (24 per deild) | 97 |
+| Baðherbergi | 100 | 99 |
+| Snyrtingar | 12 | 13 |
+| Skol/ræsting | 12 | 12 |
+| Lyf | 24 | 24 |
+Tæki (tækjanúmer M115/M116): handlaugar 247/250, sturtur 99/98, salerni 109/112.
+Útboðsrök: handlaug í hverri sjúkrastofu (≈ 193) + handlaug í hverju baðherbergi (≈ 199) + sturta (≈ 197) ≈ 590 tæki með Ø40-50 frárennsli
+≈ útboðsliður 2.2 kragi 600 göt. Salerni ≈ 221, en aðeins 101 frárennsli gegnum brunavegg ≈ liður 2.3 (100).
+Frárennsliskross × tæki × herbergi (skráð / vantar): handlaug í sjúkrastofu 5H 52/6, 6H 41/29 · sturta í baðh. 5H 15/31, 6H 13/14 ·
+handlaug í baðh. 5H 17/12, 6H 19/18 · salerni í baðh. 5H 4/37, 6H 3/43 (→ 2.3).
+Skráð Ø35-50: 313 stök (5H 178, 6H 135). Ef hvert tæki = eitt kragagat eru ~290 eftir skv. útboði; á kortinu eru ~197 kragapunktar →
+allt að ~90 kragagöt sem krossagreiningin sér ekki (lögn gegnum vegg sem ekki er rauður á A285/A286, eða niður í plötu). ÓMÆLT hver.
+
+
+## 16.11.2026 — PDF: brunalokanir, staðsetning og gerð
+
+`Documents\NLSH\NLSH-brunalokanir-stadsetning-og-gerd.pdf` (10 síður, A4): almennar kröfur (M109-01, R1080-01), HVAR (A285/A286 rauðir veggir og hurðamerki, veggtegundir A400-20, gataplön M814–M816, EI120 lóðrétt raf, tækjanúmer og herbergi), HVERNIG (deili M109-02, M329-01, M209-01 með myndum), efni lagna → útboðsliðir, opin atriði. Smíðað úr `scratchpad/pdf/brunalokanir.html` með Playwright (`prenta.cjs`); myndir eru sneiðar skoðaðar í vafra. Textinn sjálfur: `NLSH-BRUNATHETTINGAR.md`.
