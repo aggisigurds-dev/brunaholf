@@ -32,10 +32,31 @@ exports.handler = async (event) => {
     return json(400, { error: 'worksite and month=YYYY-MM (eða from/to=YYYY-MM-DD) required' });
   }
 
+  // 16.11.2026 — samreikningur sóttur eftir MÁNUÐI spannar sjálfur allt tímabilið. Áður þurfti hver
+  // kallandi að muna from/to; endursókn í Efnislistanum og Tímaskýrslan í Kröfu yfirliti gerðu það
+  // ekki og fyrri mánuðurinn datt út (Tindasel okt+nóv: 112,79 í stað 152,84 klst). Nú les fallið
+  // drögin: beri drög verkstaðar+mánaðar merged_from, gildir tímabil þeirra (period_from/to, annars
+  // fyrsti dagur elsta mánaðar → síðasti dagur þessa). Upprunamánuður (status merged) er óbreyttur.
+  let rFrom = isRange ? from : '', rTo = isRange ? to : '';
+  if (!isRange) {
+    try {
+      const d = (await sb(`invoice_drafts?select=period_from,period_to,merged_from` +
+        `&worksite_name=eq.${encodeURIComponent(worksite)}&work_month=eq.${encodeURIComponent(month)}&limit=1`))[0];
+      if (d && Array.isArray(d.merged_from) && d.merged_from.length) {
+        const mans = d.merged_from.map((x) => String((x && x.work_month) || '')).filter((m) => /^\d{4}-\d{2}$/.test(m)).concat([month]).sort();
+        const [ly, lm] = month.split('-').map(Number);
+        const sidasti = `${month}-${String(new Date(ly, lm, 0).getDate()).padStart(2, '0')}`;
+        rFrom = /^\d{4}-\d{2}-\d{2}/.test(String(d.period_from || '')) ? String(d.period_from).slice(0, 10) : `${mans[0]}-01`;
+        rTo = /^\d{4}-\d{2}-\d{2}/.test(String(d.period_to || '')) ? String(d.period_to).slice(0, 10) : sidasti;
+      }
+    } catch { /* drögin ólæsileg → venjulegur mánuður */ }
+  }
+  const useRange = !!(rFrom && rTo);
+
   let start, end;
-  if (isRange) {
-    start = from;
-    const t = new Date(to + 'T00:00:00'); t.setDate(t.getDate() + 1);   // `end` er útilokað (lt.)
+  if (useRange) {
+    start = rFrom;
+    const t = new Date(rTo + 'T00:00:00'); t.setDate(t.getDate() + 1);   // `end` er útilokað (lt.)
     end = `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, '0')}-${String(t.getDate()).padStart(2, '0')}`;
   } else {
     start = `${month}-01`;
@@ -142,7 +163,7 @@ exports.handler = async (event) => {
     .sort((a, b) => b.hours - a.hours);
 
   return json(200, {
-    worksite, month, period: isRange ? { from, to } : null,
+    worksite, month, period: useRange ? { from: rFrom, to: rTo } : null,
     matched_names: [...names],
     rows: out,
     by_employee,
