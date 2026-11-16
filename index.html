@@ -19212,8 +19212,26 @@ async function renderKrofuyfirlit(t){
 
   // „🔗 Sameina" — gulur hnappur á þrep-2 fyrirtækja-kort: sameinar ALLA mánuði
   // eins verkstaðar í einn efnislista og felur upprunalegu drögin (status:'skipped').
-  function sameinaBtn(t2inv){
+  // 16.11.2026 (Agnar: „ég þarf að geta sameinað nóv og okt, það var til en hefur dottið út" / „vill geta klárað allt bara í
+  // kröfuyfirlit"): hnappurinn sá aðeins VISTUÐ drög, svo verk sem stóð sem „Tími eftir" (engin drög enn) var aldrei
+  // sameinanlegt. Nú telst hver mánuður SAMA verkstaðar — vistuð drög eða Tími eftir-röð — og hnappurinn birtist þegar
+  // verkið á tvo eða fleiri. Drögin sem vantar stofnast við sameininguna (/api/invoice-drafts stofna_ur_timaveru).
+  // Drög sem eru þegar samreikningur (merged_from) eru ekki boðin aftur — ný sameining myndi týna uppruna-mánuðunum.
+  const erTimaRod = i => !!i && String(i.inv_key||'').startsWith('timavera|') && !i.vidbot && !!i.worksite && !!i.work_month;
+  function sameinaBtn(t2inv, t3inv){
     const invs = (t2inv||[]).filter(i => !i._hidden && !i._done && i.source==='gerd-drög' && i.worksite && i.work_month);
+    const timar = (t3inv||[]).filter(i => !i._hidden && !i._done && erTimaRod(i));
+    const hopar = new Map();
+    for(const i of [...invs.filter(i => !((REVIEWS[i.worksite+'|'+i.work_month]||{}).merged_from||[]).length), ...timar]){
+      const h = hopar.get(i.worksite) || new Map(); if(!h.has(i.work_month)) h.set(i.work_month, i); hopar.set(i.worksite, h);
+    }
+    const fl = [...hopar.entries()].filter(([, m]) => m.size >= 2);
+    if(fl.length) return fl.map(([ws, m]) => {
+      const rod = [...m.values()].sort((a,b) => String(a.work_month).localeCompare(String(b.work_month)));
+      const man = rod.map(i => (MNAMES[+String(i.work_month).slice(5)-1] || String(i.work_month).slice(5)).slice(0,3).toLowerCase()).join(' + ');
+      return '<button class="kyf-sameina-all boss-btn gold sm" data-keys="'+rod.map(i => esc(i.inv_key)).join('~')+'" type="button" '
+        +'title="Sameina '+esc(ws)+' ('+esc(man)+') í einn reikning — drög stofnast sjálf fyrir mánuði sem standa sem Tími eftir">🔗 Sameina '+esc(man)+(fl.length>1 ? ' · '+esc(ws) : '')+'</button>';
+    }).join(' ');
     if(invs.length < 2) return '';
     const keys = invs.map(i => esc(i.inv_key)).join('~');
     return '<button class="kyf-sameina-all boss-btn gold sm" data-keys="'+keys+'" type="button" '
@@ -19492,7 +19510,11 @@ async function renderKrofuyfirlit(t){
       : (wsName ? esc(wsDisp(wsName)) : ('#' + esc(inv.id || '')));
     let sub;
     if(tier===3){
-      sub = esc(monthLbl(inv.work_month)) + (inv.hours!=null ? ' · '+inv.hours.toFixed(0)+'t' : '') + (inv.partial && state.newest ? ' · til '+esc(dayMon(state.newest)) : '')
+      // 16.11.2026: „＋ Stofna drög" beint á röðinni — verður að Ósendum drögum með raunverulegri upphæð, án ferðar í Gerð reikninga.
+      const stofnaHtml = erTimaRod(inv)
+        ? ' · <button type="button" class="ky-stofna-drog" data-ws="'+esc(inv.worksite)+'" data-m="'+esc(inv.work_month)+'" title="Stofna drög úr Tímaveru fyrir þennan mánuð: tímar × taxti verksins + smáhlutagjald. Akstur og efni bætirðu við á eftir." style="border:1px solid var(--gold-600,#b8892e);background:transparent;border-radius:6px;padding:1px 8px;font:inherit;font-size:11.5px;font-weight:600;color:var(--ink);cursor:pointer">＋ Stofna drög</button>'
+        : '';
+      sub = esc(monthLbl(inv.work_month)) + (inv.hours!=null ? ' · '+inv.hours.toFixed(0)+'t' : '') + (inv.partial && state.newest ? ' · til '+esc(dayMon(state.newest)) : '') + stofnaHtml
         + (inv.vidbot ? ' · <b title="Drögin í Gerð Reikninga voru vistuð '+esc(fmtDate(inv.vistad_dags))+' með '+(Math.round((Number(inv.vistad_klst)||0)*10)/10).toLocaleString('is-IS')+' klst. Þetta eru tímarnir sem hafa bæst við í Tímaveru síðan — þeir eru ekki í drögunum. Meðan mánuðurinn stendur fara þeir sjálfir inn á 2 tíma fresti (drog-timar); eldri mánuði: opnaðu Gerð Reikninga, 📥 sæktu tímana og vistaðu.">＋ nýir tímar síðan drög voru vistuð '+esc(fmtDate(inv.vistad_dags))+'</b>' : '');
     } else {
       sub = esc(inv.source||'');
@@ -19668,7 +19690,7 @@ async function renderKrofuyfirlit(t){
           ${bannerMynd([...((c.t[1]||{}).invoices||[]), ...((c.t[2]||{}).invoices||[]), ...((c.t[3]||{}).invoices||[])])}
           <div style="display:flex;flex-direction:column;gap:6px;min-width:0">
             <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap">${nafnTengill(c.customer, c.kt, wsDisp(c.customer)||'(óþekkt)')}${c.kt?`<span class="ky-kt">kt ${esc(ktFmt(c.kt))}</span>`:''}${greidHaus([...((c.t[2]||{}).invoices||[]), ...((c.t[3]||{}).invoices||[])], c.customer, c.kt)}</div>
-            <div class="ky-tags" style="margin-top:0">${c.s1?badge('ogreitt','Ógreitt',c.s1):''}${c.s2?badge('osent','Ósent',c.s2):''}${c.s3?badge('','Tími',c.s3):''}${sameinaBtn((c.t[2]||{}).invoices||[])}</div>
+            <div class="ky-tags" style="margin-top:0">${c.s1?badge('ogreitt','Ógreitt',c.s1):''}${c.s2?badge('osent','Ósent',c.s2):''}${c.s3?badge('','Tími',c.s3):''}${sameinaBtn((c.t[2]||{}).invoices||[], (c.t[3]||{}).invoices||[])}</div>
           </div>
           <div class="ky-total"><div class="l">Samtals</div><div class="v ky-num">${fmtNum(c.total)} <span class="boss-kr">kr</span></div></div>
         </div>
@@ -19794,10 +19816,13 @@ async function renderKrofuyfirlit(t){
       : 0;
     const sumTotal = invs.reduce((a,iv)=>a+(Number(iv.amount)||0),0);
     const vskF = (()=>{ const d=full(target); const n=Number(d.net_an_vsk)||0; return n>0 ? (Number(d.vsk_amount)||0)/n : 0.24; })();
+    // 16.11.2026: mánuðir sem standa sem „Tími eftir" (engin drög enn) sameinast líka — drögin stofnast úr Tímaveru við „Sameina".
+    const vantarDrog = invs.filter(erTimaRod).map(iv=>iv.work_month);
     const rowsHtml = months.map(m=>{
       const d = full(m), iv = invs.find(x=>x.work_month===m) || {};
-      const h = (Number(d.hours_dagvinna)||0)+(Number(d.hours_eftirvinna)||0);
-      return `<div class="mm-r"><span>${esc(monthLbl(m))}</span><span class="ky-num" style="color:var(--muted)">${h?h.toFixed(2).replace('.',','):'—'} klst</span><span class="ky-num" style="font-weight:700">${fmtKr(iv.amount||d.total_m_vsk)}</span></div>`;
+      const h = ((Number(d.hours_dagvinna)||0)+(Number(d.hours_eftirvinna)||0)) || Number(iv.hours) || 0;
+      const ny = vantarDrog.includes(m);
+      return `<div class="mm-r"><span>${esc(monthLbl(m))}${ny?' <small style="color:var(--muted);font-weight:400">· Tími eftir, drög stofnast</small>':''}</span><span class="ky-num" style="color:var(--muted)">${h?h.toFixed(2).replace('.',','):'—'} klst</span><span class="ky-num" style="font-weight:700">${ny?'≈ ':''}${fmtKr(iv.amount||d.total_m_vsk)}</span></div>`;
     }).join('');
     const bg = document.createElement('div');
     bg.className = 'mm-bg';
@@ -19809,7 +19834,8 @@ async function renderKrofuyfirlit(t){
           <div class="mm-well"><input type="date" id="mm-from"><span>→</span><input type="date" id="mm-to"><span class="mm-hint" id="mm-hint">sæki dagsetningar…</span></div>
         </div>
         ${stadfDup>0 ? `<label class="mm-opt on" id="mm-stadf-l"><input type="checkbox" id="mm-stadf" checked><span><b>Staðfesting brunaþéttinga aðeins einu sinni</b><small>Hún stendur á ${stadfMonths.length} mánuðum. Sé hvor sendur í sínu lagi rukkast hún ${stadfMonths.length}×.</small></span><b class="ky-num">−${fmtKr(Math.round(stadfDup*(1+vskF)))}</b></label>` : ''}
-        <div class="mm-tot"><span>Samtals með vsk</span><b class="ky-num" id="mm-total">${fmtKr(sumTotal - (stadfDup>0?Math.round(stadfDup*(1+vskF)):0))}</b></div>
+        <div class="mm-tot"><span>${vantarDrog.length?'Áætlað samtals með vsk':'Samtals með vsk'}</span><b class="ky-num" id="mm-total">${fmtKr(sumTotal - (stadfDup>0?Math.round(stadfDup*(1+vskF)):0))}</b></div>
+        ${vantarDrog.length ? `<div class="mm-note"><b>${vantarDrog.map(m=>esc(monthLbl(m))).join(' og ')}</b> ${vantarDrog.length>1?'eiga':'á'} engin drög enn. Þau stofnast úr Tímaveru við sameininguna á taxta verksins (Verðskrá, annars síðasti sendi reikningur) með smáhlutagjaldi — endanleg upphæð birtist á röðinni á eftir. Akstur og efni bætirðu við í Efnislistanum.</div>` : ''}
         <div class="mm-note">Mánuðirnir sem sameinast fá stöðuna <b>„í samreikningi"</b> — þeim er ekki eytt og hægt er að aftengja þá aftur. Reikningurinn lendir í <b>${esc(monthLbl(target))}</b>, tímaskýrslan nær yfir allt tímabilið.</div>
       </div>
       <div class="mm-a"><button type="button" class="boss-btn ivory" id="mm-cancel">Hætta við</button><button type="button" class="boss-btn gold" id="mm-ok">⧉ Sameina</button></div>
@@ -19837,7 +19863,16 @@ async function renderKrofuyfirlit(t){
     if($('#mm-stadf')) $('#mm-stadf').onchange = recalc;
     $('#mm-ok').onclick = async () => {
       const btn = $('#mm-ok'); btn.disabled = true; btn.textContent = '⏳ Sameinar…';
+      let stofnad = null;
       try{
+        if(vantarDrog.length){
+          btn.textContent = '⏳ Stofna drög…';
+          stofnad = await kyStofnaDrog(ws, vantarDrog);
+          const komin = new Set([...(stofnad.stofnud||[]), ...(stofnad.til||[])].map(x=>x.m));
+          const vantarEnn = (stofnad.sleppt||[]).filter(x=>!komin.has(x.m));
+          if(vantarEnn.length) throw new Error('náði ekki að stofna drög fyrir ' + vantarEnn.map(x=>monthLbl(x.m)+' ('+x.astaeda+')').join(', '));
+          btn.textContent = '⏳ Sameinar…';
+        }
         const r = await fetch('/api/invoice-drafts', { method:'POST', headers:{'content-type':'application/json'},
           body: JSON.stringify({ action:'merge', worksite_name: ws, months,
             period_from: $('#mm-from').value || null, period_to: $('#mm-to').value || null,
@@ -19846,12 +19881,56 @@ async function renderKrofuyfirlit(t){
         if(!r.ok || j.error) throw new Error(j.error || ('HTTP '+r.status));
         close();
         t2Selected.clear(); t2SelectMode = false;
+        // Staðfestingin kemur STRAX — endurhleðslan á eftir getur tekið nokkrar sekúndur.
+        kyTilkynna('⧉ <b>'+esc(ws)+'</b> sameinað í einn reikning ('+months.map(m=>esc(monthLbl(m))).join(' + ')+')'
+          + ((j.combined && j.combined.total_m_vsk) ? ' — <b>'+fmtKr(j.combined.total_m_vsk)+'</b> m/vsk' : '') + '. Akstur og efni bætirðu við með 📄 Efnisl.' + kyTaxtaAth(stofnad));
         try{ await load(true); }catch(_){}
       }catch(e){
-        alert('Sameining mistókst: '+(e.message||e));
+        // Hafi drög verið stofnuð en sameiningin brugðist standa þau sem venjuleg ósend drög — sýna þau strax.
+        if(stofnad && (stofnad.stofnud||[]).length){ try{ await load(true); }catch(_){} }
+        alert('Sameining mistókst: '+(e.message||e) + ((stofnad && (stofnad.stofnud||[]).length) ? '\n\nDrögin voru samt stofnuð og standa sem Ósent — reyndu Sameina aftur.' : ''));
         btn.disabled = false; btn.textContent = '⧉ Sameina';
       }
     };
+  }
+
+  // ── Drög beint úr Tíma eftir-röð (16.11.2026) ─────────────────────────────────────────────────────────────
+  // Eitt kall á þjóninn, sem reiknar drögin með sömu reglu og sjálfvirka stofnunin. Skilar { stofnud, til, sleppt, taxti_ur }.
+  async function kyStofnaDrog(ws, months){
+    const r = await fetch('/api/invoice-drafts', { method:'POST', headers:{'content-type':'application/json'},
+      body: JSON.stringify({ action:'stofna_ur_timaveru', worksite_name: ws, months, updated_by: (typeof bhMe==='function' && bhMe()) || 'kröfuyfirlit' }) });
+    const j = await r.json().catch(()=>({}));
+    if(!r.ok || j.error) throw new Error(j.error || ('HTTP '+r.status));
+    return j;
+  }
+  const kyTaxtaAth = s => (s && (s.stofnud||[]).length && s.taxti_ur === 'sjalfgefinn')
+    ? '<br><span style="opacity:.85">Athugaðu taxtann: verkið er hvorki í Verðskrá né á eldri reikningi, svo sjálfgefinn 9.951 kr/klst var notaður.</span>' : '';
+  // Lítil tilkynning neðst á skjánum — hverfur sjálf, lokast við smell. Stöðvar ekkert (engin alert-gluggi).
+  function kyTilkynna(html, villa){
+    const gamalt = document.getElementById('ky-tilkynning'); if(gamalt) gamalt.remove();
+    const el = document.createElement('div'); el.id = 'ky-tilkynning'; el.setAttribute('role','status');
+    el.style.cssText = 'position:fixed;left:50%;bottom:26px;transform:translateX(-50%);z-index:100090;max-width:min(680px,92vw);padding:12px 18px;border-radius:12px;'
+      + 'background:#161513;color:#f5efe0;border:1px solid '+(villa?'#b5442f':'#b8892e')+';box-shadow:0 10px 30px rgba(0,0,0,.35);font-size:13.5px;line-height:1.45;cursor:pointer';
+    el.innerHTML = html; el.title = 'Smelltu til að loka'; el.onclick = () => el.remove();
+    document.body.appendChild(el);
+    setTimeout(() => { if(el.isConnected) el.remove(); }, villa ? 15000 : 9000);
+  }
+  async function kyStofnaDrogSmellur(btn){
+    const ws = btn.dataset.ws, m = btn.dataset.m; if(!ws || !m) return;
+    const old = btn.textContent; btn.disabled = true; btn.textContent = '⏳ Stofna…';
+    try{
+      const s = await kyStofnaDrog(ws, [m]);
+      const ny = (s.stofnud||[])[0];
+      if(!ny && (s.sleppt||[]).length) throw new Error(s.sleppt[0].astaeda);
+      btn.textContent = '✓ Stofnað';
+      kyTilkynna(ny
+        ? '＋ Drög stofnuð: <b>'+esc(ws)+'</b> · '+esc(monthLbl(m))+' — '+String(ny.klst).replace('.',',')+' klst × '+fmtNum(ny.taxti)+' kr'+(ny.stadfesting?' + staðfesting '+fmtNum(ny.stadfesting):'')+' = <b>'+fmtKr(ny.total)+'</b> m/vsk. Akstur og efni bætirðu við með 📄 Efnisl.'+kyTaxtaAth(s)
+        : 'Drög voru þegar til fyrir <b>'+esc(ws)+'</b> · '+esc(monthLbl(m))+' — sýnd í Ósent.');
+      try{ await load(true); }catch(_){}
+    }catch(e){
+      btn.disabled = false; btn.textContent = old;
+      kyTilkynna('Gat ekki stofnað drög fyrir <b>'+esc(ws)+'</b>: '+esc(String(e.message||e)), true);
+    }
   }
 
   // ➕ Stofna nýtt verk (Agnar 04.09.2026: „þar getur maður sett allt inn handvirkt á
@@ -20204,6 +20283,7 @@ async function renderKrofuyfirlit(t){
     listEl.querySelectorAll('.ky-greid-btn').forEach(b=>b.addEventListener('click', e=>{ e.stopPropagation(); openGreidandiForm(b); }));
     listEl.querySelectorAll('.ky-wsm[data-wsm]').forEach(b=>b.addEventListener('click', e=>{ e.stopPropagation(); const card = b.closest('.ky-card'), nm = card && card.querySelector('.ky-name'); openVerkstadur(b.dataset.wsm, String(b.dataset.wsl||'').split('~').filter(Boolean), nm ? nm.textContent.trim() : ''); }));
     listEl.querySelectorAll('.ky-name-lk').forEach(a=>a.addEventListener('click', e=>{ e.preventDefault(); e.stopPropagation(); opnaVidskiptavin(a.dataset.vkNafn, a.dataset.vkKt); }));
+    listEl.querySelectorAll('.ky-stofna-drog').forEach(b=>b.addEventListener('click', e=>{ e.stopPropagation(); kyStofnaDrogSmellur(b); }));
     listEl.querySelectorAll('.kyf-sameina-all').forEach(b=>b.addEventListener('click',(e)=>{
       e.stopPropagation();
       const keys=(b.dataset.keys||'').split('~').filter(Boolean);

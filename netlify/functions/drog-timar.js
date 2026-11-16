@@ -357,7 +357,95 @@ async function keyra(opts) {
   return ut;
 }
 
+/* HANDVIRK STOFNUN úr Kröfu yfirliti (16.11.2026, Agnar: „ég vill ekki þurfa að fara inn í gerð reikninga, vill geta klárað
+ * allt bara í kröfuyfirlit"). „＋ Stofna drög" og „🔗 Sameina" á Tími eftir-röðum kalla hingað um /api/invoice-drafts
+ * (action 'stofna_ur_timaveru'). Reiknireglan er SÚ SAMA og í áfanga 0 (reikna + skipting tímabókar), en Agnar ákveður með
+ * smellinum — svo varnir sjálfvirkninnar gilda ekki: hvaða mánuður sem er, verk utan Verðskrár leyfð, minnið ekki spurt.
+ * Taxti: Verðskrá → síðustu drög sama verks með taxta („sendur reikningur er verðið") → sjálfgefinn 9.951 (merkt í svari).
+ * Yfirvinna aðeins ef Verðskrá segir samningsbundna og leyfða; annars allt í dagvinnu. Staðfesting eftir reglu ritilsins.
+ * Mánuður sem á drög fyrir (í hvaða stöðu sem er) er aldrei snertur — honum er skilað sem `til`. Gata-/Ajour-verk og fast
+ * verð eru ekki stofnuð hér. INSERT … ignore-duplicates, svo samtímis vistun manneskju yfirskrifast ekki. */
+async function stofnaHandvirkt({ worksite, months, by }) {
+  const ws = String(worksite || '').trim();
+  const man = [...new Set((months || []).map((m) => String(m).trim()).filter((m) => /^\d{4}-\d{2}$/.test(m)))].sort();
+  if (!ws || !man.length) return { status: 400, error: 'worksite_name og a.m.k. einn mánuður (months) þarf' };
+  if (K.GATA.test(ws)) return { status: 409, error: 'Gata-/Ajour-verk er gert upp eftir götum, ekki tímum — notaðu Efnislista · göt.' };
+  const [pgRows, cwmap, reikningar, wsDrog] = await Promise.all([
+    sbGet('pricing_guide?select=*').catch(() => []),
+    sbGet('customer_worksite_map?select=customer_name,worksite_name,kt_greidanda,confidence,tilvisun,retention_pct'),
+    sbAll('invoices?select=id,tilvisun,kt_greidanda,customer_name,gjalddagi,upphaed_total,status,source&order=id.asc'),
+    sbGet(`invoice_drafts?select=id,work_month,status,rate_dagvinna,rate_eftirvinna,customer_name,kennitala,heimilisfang,netfang,tilvisun,fixed_total&worksite_name=eq.${encodeURIComponent(ws)}&order=work_month.desc`),
+  ]);
+  const pg = pgRows.find((p) => p.worksite_name === ws) || null;
+  const src = pg ? String(pg.source || '') : '';
+  if (src && src !== 'timavera') return { status: 409, error: src === 'ajour' ? 'Verkið er Ajour-verk í Verðskrá — gert upp eftir götum.' : 'Verkið er á föstu verði í Verðskrá — stofnaðu drögin í Efnislistanum.' };
+  if (pg && Number(pg.fixed_amount) > 0) return { status: 409, error: 'Verkið er á föstu verði í Verðskrá — stofnaðu drögin í Efnislistanum.' };
+  const payer = K.greidendur({ cwmap, pguide: pgRows, invoices: reikningar })(ws) || null;
+  const fyrri = wsDrog.find((d) => Number(d.rate_dagvinna) > 0) || null;          // nýjustu drög verksins með taxta
+  const fyrriGr = wsDrog.find((d) => d.customer_name) || null;
+  const dvR = (pg && Number(pg.dagvinna_rate) > 0) ? Number(pg.dagvinna_rate) : (fyrri ? Number(fyrri.rate_dagvinna) : 9951);
+  const evR = (pg && Number(pg.eftirvinna_rate) > 0) ? Number(pg.eftirvinna_rate) : ((fyrri && Number(fyrri.rate_eftirvinna) > 0) ? Number(fyrri.rate_eftirvinna) : 14927);
+  const taxtiUr = (pg && Number(pg.dagvinna_rate) > 0) ? 'verdskra' : (fyrri ? 'fyrri_drog' : 'sjalfgefinn');
+  const medYfirvinnu = !!pg && pg.yfirvinna_samningur === true && pg.eftirvinna_leyfid !== false;
+  const stadf = ((pg ? pg.stadfesting_default : undefined) !== false) ? GR_STADF : 0;   // regla ritilsins (rateFor)
+  const customer = (payer && payer.customer) || (fyrriGr && fyrriGr.customer_name) || (pg && pg.customer_name) || null;
+  const kt = ktSnid(payer && payer.kt) || ktSnid(pg && pg.kennitala) || ktSnid(fyrriGr && fyrriGr.kennitala);
+  const ut = { ok: true, worksite_name: ws, stofnud: [], til: [], sleppt: [], taxti_ur: taxtiUr, greidandi: customer };
+
+  for (const m of man) {
+    const fyrir = wsDrog.find((d) => d.work_month === m);
+    if (fyrir) { ut.til.push({ m, id: fyrir.id, status: fyrir.status }); continue; }
+    try {
+      const svar = await timabok.handler({ httpMethod: 'GET', queryStringParameters: { worksite: ws, month: m } });
+      const tb = JSON.parse(svar.body || '{}');
+      if (svar.statusCode !== 200) throw new Error('timabok: ' + (tb.error || svar.statusCode));
+      const tvNu = r2(Number((tb.totals || {}).hours) || 0);
+      if (!(tvNu > 0)) { ut.sleppt.push({ m, astaeda: 'engir tímar í Tímaveru' }); continue; }
+      const sp = tb.split || {};
+      const spDv = Number(sp.hours_dagvinna) || 0, spEv = Number(sp.hours_eftirvinna) || 0;
+      const dvH = r2(medYfirvinnu ? spDv : spDv + spEv), evH = r2(medYfirvinnu ? spEv : 0);
+      const frae = { rate_dagvinna: dvR, rate_eftirvinna: evR, akstur_km: 0, akstur_ferdir: 0, akstur_gjald: 0, smahlutagjald: 1,
+        stadfesting: stadf, materials_jsonb: [], materials_total: 0, discount_pct: 0 };
+      const c = reikna(frae, pg || {}, dvH, evH);
+      if (!(c.total > 0)) { ut.sleppt.push({ m, astaeda: '0 kr' }); continue; }
+      const rod = {
+        worksite_name: ws, work_month: m, source: 'timavera', status: 'draft',
+        customer_name: customer, kennitala: kt, heimilisfang: (pg && pg.heimilisfang) || (fyrriGr && fyrriGr.heimilisfang) || null,
+        tilvisun: (payer && payer.tilvisun) || null, netfang: (fyrriGr && fyrriGr.netfang) || null,
+        hours_dagvinna: dvH, hours_eftirvinna: evH, rate_dagvinna: dvR, rate_eftirvinna: evR,
+        akstur_km: 0, akstur_ferdir: 0, smahlutagjald: c.sma, stadfesting: stadf,
+        materials_jsonb: [], materials_total: 0, discount_pct: 0,
+        net_an_vsk: c.net, vsk_amount: c.vsk, total_m_vsk: c.total,
+        timavera_klst_vid_vistun: tvNu,
+        updated_at: new Date().toISOString(), updated_by: (by ? String(by).slice(0, 40) + ' · ' : '') + 'stofnað í Kröfu yfirliti',
+      };
+      const r = await fetch(`${SUPABASE_URL}/rest/v1/invoice_drafts?on_conflict=worksite_name,work_month`, {
+        method: 'POST',
+        headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json', Prefer: 'resolution=ignore-duplicates,return=representation' },
+        body: JSON.stringify(rod),
+      });
+      if (!r.ok) throw new Error(`invoice_drafts INSERT: ${r.status} ${(await r.text()).slice(0, 200)}`);
+      const inn = await r.json();
+      if (!Array.isArray(inn) || !inn.length) { ut.til.push({ m, status: 'draft', samtimis: true }); continue; }   // manneskja vistaði á sama augnabliki
+      ut.stofnud.push({ m, id: inn[0].id, klst: r2(dvH + evH), dv: dvH, ev: evH, taxti: dvR, smahlutir: c.sma, stadfesting: stadf, total: c.total });
+    } catch (e) {
+      ut.sleppt.push({ m, astaeda: String(e.message || e) });
+    }
+  }
+  // Minnið: handstofnuð drög sem er eytt síðar mega ekki lifna við í sjálfvirku stofnuninni. Bregðist þetta er það ekki villa.
+  if (ut.stofnud.length) {
+    try {
+      const ml = await sbGet(`app_kv?select=value&key=eq.${MINNI}`);
+      const minni = new Set(Array.isArray(ml[0] && ml[0].value) ? ml[0].value : []);
+      for (const s of ut.stofnud) minni.add(`${ws}|${s.m}`);
+      await sbUpsertKv(MINNI, [...minni]);
+    } catch (_) { /* aukaatriði */ }
+  }
+  return ut;
+}
+
 exports.keyra = keyra;
+exports.stofnaHandvirkt = stofnaHandvirkt;
 exports.handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') return resp(204, '', cors());
   if (!SUPABASE_URL || !SUPABASE_KEY) return json(500, { error: 'Supabase env missing' });

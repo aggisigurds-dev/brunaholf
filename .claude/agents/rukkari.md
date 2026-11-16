@@ -172,6 +172,15 @@ bankagreiðsla.
 
 ## Kröfu yfirlit Brunahólfs — þrepin þrjú og hvar línur týnast (07.10.2026)
 
+> **16.11.2026 — allt klárað í Kröfu yfirliti (Agnar: „ég vill ekki þurfa að fara inn í gerð reikninga").** Tími eftir-röð
+> (`timavera|verk|mánuður`, ekki vidbot) ber „＋ Stofna drög", og „🔗 Sameina <mán + mán>" í haus fyrirtækisins birtist þegar
+> SAMA verk á ≥ 2 mánuði — vistuð drög eða Tími eftir (áður aðeins vistuð gerd-drög, svo verk utan sjálfvirku stofnunarinnar
+> var aldrei sameinanlegt). Bæði kalla `POST /api/invoice-drafts {action:'stofna_ur_timaveru', worksite_name, months}` →
+> `drog-timar.js stofnaHandvirkt`: sama reikniregla og sjálfvirka stofnunin, taxti úr Verðskrá → síðustu drögum verksins →
+> 9.951 (merkt `taxti_ur:'sjalfgefinn'`), yfirvinna aðeins ef Verðskrá segir samningsbundna, drög sem eru til eru ALDREI
+> snert (`til`), gata-/fastverðsverk fá 409. Sameiningin stofnar fyrst og kallar svo `merge`. Drög sem eru þegar
+> samreikningur (`merged_from`) eru ekki boðin í nýja sameiningu. Próf: `test/drog-timar-handvirkt.test.js`.
+
 Sýnin les `/api/krofu-yfirlit-bru` (spjöld), ekki `krofur-yfirlit` (tafla). Þrep 1 = reikningar
 (Payday), þrep 2 = drög (`invoice_drafts`, úr fallinu), þrep 3 = reiknað í vafranum
 (`computeTier3` í index.html → `state.tier3`, lyklar `timavera|<ws>|<mán>`, `nlsh|<mán>`,

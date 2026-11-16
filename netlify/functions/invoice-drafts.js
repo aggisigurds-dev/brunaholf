@@ -48,6 +48,14 @@ exports.handler = async (event) => {
     // sjálfum svo tvær vélar geti ekki sent ósamhljóða tölur.
     if (body.action === 'merge') return mergeMonths(body);
     if (body.action === 'unmerge') return unmergeMonths(body);
+    // 16.11.2026: „＋ Stofna drög" / „🔗 Sameina" á Tími eftir-röðum í Kröfu yfirliti — drög úr Tímaveru fyrir verk + mánuði,
+    // reiknað server-megin með sömu reglu og sjálfvirka stofnunin (drog-timar.js stofnaHandvirkt). Snertir aldrei drög sem eru til.
+    if (body.action === 'stofna_ur_timaveru') {
+      try {
+        const ut = await require('./drog-timar').stofnaHandvirkt({ worksite: body.worksite_name, months: body.months, by: body.updated_by });
+        return json(ut.status || 200, ut.status ? { error: ut.error } : ut);
+      } catch (e) { return json(502, { error: String(e.message || e) }); }
+    }
     if (!body.worksite_name || !body.work_month) return json(400, { error: 'worksite_name + work_month required' });
 
     const allowed = [
