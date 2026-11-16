@@ -166,10 +166,9 @@ eða `get_advisors` (security) fyrir heildarlistann með remediation-hlekkjum.
     því óafgreiddur — mælt sama dag: RLS enn af, 3 raðir, óbreyttar. Hann er annars eðlis en ákvörðunin í #1536 og
     stendur nú sem sjálfstætt forgangsmál #1650 (`odin_reglur` regla 19: opinn aðgangur fer beint til Agnars með
     skrefinu sem hann tekur og er EKKI sameinaður öðru máli), með dagsettri línu á verki b6a4bc81. Ekki keyra án hans.
-  - **Kúnnaminni og tengiliðir (16.11.2026):** símanúmer, netföng og kennitölur einstaklinga eiga heima í
-    `charlize_contacts` (RLS á), ekki í `charlize_knowledge` — reglan er í `charlize/references/kunnaminni.md`
-    (slokkvitaeki). `tools/minni.cjs --skra --scope kunni` neitar slíkum texta frá 16.11.; innflutningur með SQL fer
-    framhjá. Mælingin og það sem bíður ákvörðunar stendur á verki b6a4bc81, ekki hér (opinbert repó).
+  - **Kúnnaminni og tengiliðir (16.11.2026):** símanúmer og netföng TENGILIÐA mega standa í kúnnaminni (Agnar 16.11.2026:
+    „símanúmer tengiliða er fínt líka") — engin hreinsun. Kennitölur einstaklinga fara ekki þangað;
+    `tools/minni.cjs --skra --scope kunni` (slokkvitaeki) hafnar þeim.
   - **Tillaga sem er eldri en ákvörðun er úrelt.** SQL-skráin var skrifuð 31.10.; Agnar ákvað 07.11. (#1536) að RLS sé hans
     ákvörðun einni. Lestu Þjónustuborðið (`thjonustubeidni`, tag `agent:oryggi` / `skrad-akvordun`) ÁÐUR en „tilbúin" skrá er keyrð.
   - **Afritstöflur fæðast opnar:** 110 → 165 á tíu dögum (31.10. → 10.11.), RLS-lausar töflur alls 232 → 288. Hver
