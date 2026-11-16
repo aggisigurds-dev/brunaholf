@@ -493,6 +493,16 @@ ANNAÐ kerfi en „Efniskostnaður / Kostnaðarreikningar (endurrukkun)" hér a�
   `ajour-ingest.lesa()` = 11.218 raðir, enginn mismunur. `ajour-ingest.py` skilar nú villukóða ef lota fellur í upsert.
 - **Lesa aldrei `count(*)` úr `ajour_registrations` sem fjölda skráninga** — notaðu `count(distinct serial_number)` per verk.
 
+## Thunderbird-brúin á heimavélinni DESKTOP-M5FO3I6 (mælt 16.11.2026, lota 2ef635f0)
+
+- **Pósthólf tengjast ekki möppum með nafni; bridge.js les prefs.js og mappar:** `outlook.office365.com` = **Brunaholf@brunaholf.is**, `outlook.office365-1.com` = **bokhald@brunaholf.is**, `outlook.office365-2.com` = **slokkvitaeki@brunaholf.is**; `imap.gmail-1.com` = eldklar@, `-2.com` = brunaholfehf@, `-3.com` = bokhald@eldklar@. **Þessi mapping er ÖFUG við skrifstofuvélina DESKTOP-509MN7M** (sjá `slokkvitaeki/.claude/agents/postur.md`). Ekki treysta hostnafni — les prefs.js. Profíll heimavélarinnar er `euqr38aw.default-release`.
+- **Möppuheiti á diski eru Modified UTF-7 (IMAP-útgáfa):** „Sl&APY-kkvit&AOY-ki.sbd" = „Slökkvitæki.sbd" (ö → &APY-, æ → &AOE-, á → &AM0-, ð → &APA-). bridge.js afkóðar sjálfvirkt þegar skrifað er í state.json og email_digest.
+- **Lykill í state.json er „<host>/MAPPA:<notandavæn slóð>"**, t.d. `outlook.office365-1.com/MAPPA:INBOX/Reikninga - 2026`. position = byte-offset í mbox sem síðast var lesin.
+- **20 MB-þakið per keyrslu á möppu:** stór mappa (INBOX/Reikninga - 2026, 190 MB) þarf 8–10 keyrslur. Þegar `position >= skráarstærð` birtist sem „0 msgs (skipped)". Heiti sem er þegar fullesið er hunsað þar til ný skeyti bætast við. **Ein brú í einu** (bridge.lock); ekki keyra tvær samtímis. Ekki keyra fulla möppu-endurlesningu (yfirskrifar handvirka verkstaða-tengingu — sjá Redder kafla).
+- **Keyra núna úr hubbnum:** `uppskrift='bru'` í `vel_skipanir` tekur heartbeat.js við á vélinni. **Ein skipun per heartbeat-keyrslu** — fyrir margar þarf að keyra heartbeat endurtekið (eða bíða eftir áætlaðri LunaBridge-Heartbeat 30 mín.). Útkoma er læs þegar `stada='lokid'`; „bid" = ekki tekin, „villa" = exit ≠ 0.
+- **Gæsalappir á Windows-slóðir:** heartbeat.js kallar `spawn(cmd, args, {shell: true})` á Windows → slóð með bili (`C:\Program Files\nodejs\node.exe`) verður að hafa gæsalappir (q()-fallið í heartbeat.js, PR #15, 9299aa6). Bygging skipunarlínu annars staðar þarf sama.
+- **Hugsa fyrir ANNARRI vélinni:** DESKTOP-M5FO3I6 keyrir LunaBridge- (Watcher 1 mín, Email 15 mín, Heartbeat 30 mín, Redder daglega 07:45). DESKTOP-509MN7M keyrir LunaBridge2- (sama + Ajour 06:45, AjourYfirlit 07:15, AjourVakandi 10 mín). Heimavélin sendir heartbeat (VEL_HEARTBEAT_TOKEN), skrifstofan EKKI (token vantar í .env hennar).
+
 ## Grunnreglur allra agenta (04.11.2026)
 1. Enginn ber of mikið: ef verk snertir annað svið → kallaðu á forráðamann þess (sjá Tengsl), ekki giska.
 2. Veiddu úr þínum töflum (gagnakortið í docs/AGENTASKRA.md) og skráðu reglur sem bíta í charlize_knowledge (topic = þitt heiti).

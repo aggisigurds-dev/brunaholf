@@ -755,6 +755,22 @@ punktar. `ready` = allt grænt. Sameinuð/sleppt/rukkuð drög og `paid` í meta
 - **Skeytamiðlun:** Center Hotels taka ekki við reikningi nema með skeytamiðlun; `payday_delivery` tómt á 12 stöðum og 1,21 m.kr. sat fast. Athugaðu það áður en ógreiddur reikningur er talinn vanskil.
 - **Sýnur:** `v_krafa_ekki_send`, `v_kredit_an_endurgerdar`, `v_verk_an_reiknings`, `v_skodun_gleymd`, `v_taekjatolur_misraemi`, `v_erindi_osvarad`, `v_skeytamidlun_vantar` — gildrurnar í `select obj_description('<sýn>'::regclass)`.
 
+## Eimskip-innflutningur: tvö skjöl, aðeins annað er reikningur (mælt 16.11.2026, lota 2ef635f0)
+
+- **TE-númerið er TOLLSKJALANÚMER, EKKI reikningsnúmer.** „TE190039" vísar í tollskýrslu Tollstjóra, ekki Eimskip-reikning. Rammaðu þetta inn áður en leitað er.
+- **Eimskip Ísland ehf. (kt 421104-3520, Sundabakki 2, 104 Reykjavík)** sendir TVO pósta per sendingu frá Póllandi:
+  1. **Flutningsreikningur** frá `kolh@eimskip.com` eða svipaðri bókhalds-slóð, efni oft „Afrit af reikning". Reikningsnr. sniðið „SINV26xxxxxxx" (Sales invoice), útgefinn 1–2 vikum FYRIR tollafgreiðslu. Línur: `ETS & Fuel EU Maritime (FEUM) - LCL`, `Freight & Charges` (sjógjald + afgreiðsla), `Transport` (innanlandsakstur), `Customs doc - Present. of shipper's doc`. Samtals m. VSK. Þessi pappír fer á **bokhald@brunaholf.is/INBOX/Reikninga - 2026**.
+  2. **Tollafgreiðslupóstur** frá `ccs@eimskip.is`, efni „Sending tollafgreidd Lxxxxxxxx ESKOxxxxxxxxx...". Tvö viðhengi: `Tollskýrsla TExxxxxx.pdf` (tollverð, tollskrárnúmer, aðflutningsgjöld) og `Skuldfærsla TExxxxxx.pdf` (skuldfært með eindaga, inniheldur VSK og önnur gjöld). Þessi pappír fer á **Brunaholf@brunaholf.is/INBOX** (ekki Reikninga-möppuna).
+- **Þrjár tengdar tölur sem bruglast auðveldlega:**
+  - **Tollverð** (CIF): FOB + flutningur + vátrygging — á tollskýrslunni. Ekki reikningur.
+  - **Aðflutningsgjöld** (á skuldfærslunni, eindagi 30 d. frá útgáfu): tollur + VSK 24 % + úrvinnslugjald. Greitt beint til ríkisins í gegnum Eimskip.
+  - **Flutningsgjöld** (á SINV-reikningnum): það sem Eimskip fær sjálfur.
+- **Dæmi TE190039 / L26020564 / ESKO14076PLSZZW061Q** (Skógafoss SKO2627, Szczecin → Reykjavík, 13,10 CBM, 5.670 kg, Ogniochron fire extinguishers, EXW ANDRYCHÓW):
+  - SINV260027849 (19.07.2026, eindagi 26.07.2026): 654.310 ISK incl. VAT (ETS 5.825 + Freight 590.849 + Transport 51.560 + Customs doc 6.076).
+  - Tollskýrsla TE190039 (30.07.2026): tollverð 2.768.203 ISK, FOB 2.248.872 + flutningsgjald 491.923 + vátrygging 27.408.
+  - Skuldfærsla TE190039 (05.08.2026, eindagi 15.09.2026): 680.685 ISK (tollur 13.768 + VSK 666.917).
+- **Þegar Agnar spyr „hvar er reikningur Eimskips?":** sá reikningur er SINV (ekki TE). Leitaðu í `email_digest` eftir `sender_email ilike '%eimskip%'` og `folder='INBOX/Reikninga - 2026'`, eða í `postur_vidhengi` eftir `filename ilike '%Sales%invoice%'` og pöruðu við sendinguna (shipment nr. L… eða ESKO… úr Tollskýrslu-póstinum).
+
 ## Grunnreglur allra agenta (04.11.2026)
 1. Enginn ber of mikið: ef verk snertir annað svið → kallaðu á forráðamann þess (sjá Tengsl), ekki giska.
 2. Veiddu úr þínum töflum (gagnakortið í docs/AGENTASKRA.md) og skráðu reglur sem bíta í charlize_knowledge (topic = þitt heiti).
