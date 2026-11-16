@@ -804,7 +804,7 @@
      "repo": "brunaholf",
      "path": ".claude/agents/bokari.md",
      "uppfaert": "2026-11-16",
-     "linur": 764
+     "linur": 774
     }
    ],
    "afbrigdi": [],
@@ -1105,6 +1105,7 @@
     "Afmerkja",
     "Aðalmál",
     "Vinnusamantekt",
+    "Forgangsmál",
     "bílstjóri",
     "aksturslisti",
     "Akstursdagbók",
@@ -1141,7 +1142,7 @@
      "repo": "slokkvitaeki",
      "path": ".claude/agents/bord-flettur.md",
      "uppfaert": "2026-11-16",
-     "linur": 799
+     "linur": 833
     }
    ],
    "afbrigdi": [],
@@ -1977,7 +1978,7 @@
      "repo": "slokkvitaeki",
      "path": ".claude/agents/fyrirtaeki.md",
      "uppfaert": "2026-11-16",
-     "linur": 105
+     "linur": 115
     }
    ],
    "afbrigdi": [],
@@ -2075,7 +2076,7 @@
      "repo": "brunaholf",
      "path": ".claude/agents/gagnaleidslur.md",
      "uppfaert": "2026-11-16",
-     "linur": 494
+     "linur": 502
     }
    ],
    "afbrigdi": [],
@@ -2476,8 +2477,8 @@
     {
      "repo": "slokkvitaeki",
      "path": ".claude/agents/heimaleiga.md",
-     "uppfaert": "2026-11-16",
-     "linur": 210
+     "uppfaert": "2026-11-15",
+     "linur": 208
     },
     {
      "repo": "kjarni",
@@ -2487,7 +2488,7 @@
     }
    ],
    "afbrigdi": [],
-   "uppfaert": "2026-11-16",
+   "uppfaert": "2026-11-15",
    "sidur": [
     {
      "id": "rekstrarfelog",
@@ -3659,7 +3660,7 @@
      "repo": "slokkvitaeki",
      "path": ".claude/agents/kunnaskra.md",
      "uppfaert": "2026-11-16",
-     "linur": 364
+     "linur": 370
     }
    ],
    "afbrigdi": [
@@ -4704,7 +4705,7 @@
      "repo": "slokkvitaeki",
      "path": ".claude/agents/postur.md",
      "uppfaert": "2026-11-16",
-     "linur": 180
+     "linur": 193
     }
    ],
    "afbrigdi": [],
@@ -5287,7 +5288,7 @@
      "repo": "slokkvitaeki",
      "path": ".claude/agents/sala-reikningar.md",
      "uppfaert": "2026-11-16",
-     "linur": 686
+     "linur": 692
     }
    ],
    "afbrigdi": [],
@@ -5582,7 +5583,7 @@
      "repo": "slokkvitaeki",
      "path": ".claude/agents/samthykktir.md",
      "uppfaert": "2026-11-16",
-     "linur": 384
+     "linur": 413
     }
    ],
    "afbrigdi": [],
@@ -6297,12 +6298,12 @@
     {
      "repo": "slokkvitaeki",
      "path": ".claude/agents/spider-man.md",
-     "uppfaert": "2026-11-15",
-     "linur": 97
+     "uppfaert": "2026-11-16",
+     "linur": 112
     }
    ],
    "afbrigdi": [],
-   "uppfaert": "2026-11-15",
+   "uppfaert": "2026-11-16",
    "sidur": [
     {
      "id": "radgjafinn",
@@ -7445,12 +7446,12 @@
     {
      "repo": "slokkvitaeki",
      "path": ".claude/skills/bord-uppfaersla/SKILL.md",
-     "uppfaert": "2026-11-11",
-     "linur": 131
+     "uppfaert": "2026-11-16",
+     "linur": 143
     }
    ],
    "afbrigdi": [],
-   "uppfaert": "2026-11-11",
+   "uppfaert": "2026-11-16",
    "sidur": []
   },
   {

@@ -777,3 +777,13 @@ punktar. `ready` = allt grænt. Sameinuð/sleppt/rukkuð drög og `paid` í meta
 3. Villa eða gat sem þú finnur: LAGAÐU það sjálfur ef það er innan verksins sem þú ert í og lagfæringin er afturkræf (prófa, segja frá í lokasvari). Verkefnalistinn er listi Agnars — stofnaðu röð þar AÐEINS ef hann biður um það, eða mest EINA á lotu fyrir það sem er utan verksins og of stórt til að laga núna (skrá:lína og sönnun). Annað fer í lokasvarið og charlize_knowledge, ekki á listann. (Agnar 16.11.2026: „setja allt á verkefnalista í stað þess að laga það“ · „ég vil geta sett á verkefnalista en ekki að ég fái mörg hundruð atriði á móti“; mælt: 137 ný verk á 14 dögum, 21 kláruð.)
 4. Áður en lotu lýkur: hvað veit ég núna sem næsta lota veit ekki? → charlize_knowledge (1–5 færslur), kúnnafróðleikur → scope 'kunni' með kennitölu.
 5. Boðhlaup (Agnar 04.11.2026): keflið fellur ALDREI á jörðina. Fáirðu verk utan þíns sviðs vinnurðu það ekki þegjandi og sleppir því ekki — þú réttir það eiganda síðunnar/gagnanna (síðukort, gagnakort, Tengsl) með einni línu um hvað er beðið um og hvað þú veist þegar, og segir Agnari hver tók við. Finnist enginn eigandi tekur jarvis við og skráir gat.
+
+## Lærdómur 16.11.2026 — breytingasaga efnislista [C#2511]
+- Efnislistar og reikningsdrög (`invoice_drafts`, `efnislisti_documents`) geyma eldri útgáfu í `audit_vernd` við hverja
+  breytingu og eyðingu frá 16.11.2026 (`sql/2026-11-16_efnislistar_audit_vernd.sql`). Það sem var yfirskrifað fyrir
+  þann dag er ekki endurheimtanlegt.
+- Endurheimt: `select old_row, changed_at from audit_vernd where table_name = 'invoice_drafts' and row_id = <id> order by
+  changed_at desc`. Fyrir `efnislisti_documents` er `row_id` = `worksite|month|drive_file_id`.
+- Gikkurinn á `invoice_drafts` hunsar breytingar sem snerta aðeins `updated_at` / `updated_by`.
+- Næturafritunin (`netlify/functions/storage-backup-background.js`) telur nú skrár sem vantar í Storage sér og skrifar
+  slóðirnar í `automation_runs.detail` í stað þess að falla hljóðlaust. [C#2507]
