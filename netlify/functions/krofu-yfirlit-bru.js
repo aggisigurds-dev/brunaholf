@@ -287,6 +287,13 @@ exports.handler = async (event) => {
     // Öll faldar inv_keys (öll þrep, líka þrep-3 sem er reiknað í vafra) svo
     // framendinn haldi þeim falinni þvert á tæki/vafra — ekki bara í localStorage.
     hidden_keys: meta.filter((m) => m.hidden).map((m) => m.inv_key),
+    // 16.11.2026: merkingar á þrep-3 röðum („Tími eftir": timavera|…, timavera-vidbot|…, nlsh|…, nlsh-vidbot|…). Þrep 3 er
+    // reiknað í vafranum og las áður AÐEINS hidden_keys — „Sent í bókun", „Krafa send", „Staðfest" og minnispunktur
+    // vistuðust í krofur_yfirlit_meta en hurfu af röðinni við næstu hleðslu, svo senda mátti tvisvar og röðin taldist áfram.
+    meta_t3: meta.filter((m) => /^(timavera|nlsh)/.test(String(m.inv_key || '')) && (m.sent || m.done || m.confirmed || m.note || m.wf_state))
+      .map((m) => ({ inv_key: m.inv_key, note: m.note || null, confirmed: !!m.confirmed, sent: !!m.sent, done: !!m.done,
+        sent_at: m.sent_at || null, confirmed_at: m.confirmed_at || null, done_at: m.done_at || null,
+        confirmed_by: m.confirmed_by || null, sent_by: m.sent_by || null, done_by: m.done_by || null, wf: m.wf_state || null })),
     draftKeys,
     // Drög sem þjónninn tengdi sjálfvirkt við Payday-reikning (detta úr Ósent, lifa í töflunni) — gagnsæi fyrir yfirferð.
     sjalfvirk_tenging: [...sjalfvirkTenging].map(([k, r]) => ({ draft: k, tilvisun: r.tilvisun, status: r.status, amount: +r.upphaed_total || 0, haldid_eftir: r.haldid_eftir || 0 })),

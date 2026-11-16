@@ -136,9 +136,12 @@ greinir sjálfkrafa hvor túlkunin endurskapar `samtals`.
   það er HUNSAÐ í samanburði, innfelldu Tímaskýrslunni, Tímaskýrslu-glugganum og PDF síðu 2 (áður réð nóvember-eintak
   samreikningi okt+nóv: ein línubreyting = −425 þús. kr). (2) Yfirvinnu-hakið fylgir drögunum án vistaðs vals: á ef drögin
   bera yfirvinnu eða Verðskrá `yfirvinna_samningur`; áður alltaf af, svo línubreyting/„🔄 Endursækja" núllaði yfirvinnu
-  þegjandi (Fjallaböðin −200 þús.). Verðskrá „Yfirvinna leyfð" AF (`eftirvinna_leyfid=false`) slekkur ALLTAF — Tindasel er
-  þannig („ekki yfirvinna á Tindasel"). (3) „📥 Fylla/Samræma við tímabók" skiptir í yfirvinnu AÐEINS þegar hakið er á —
-  sama regla og drog-timar. Kröfu yfirlit: nýir tímar (vidbot) áætlast á taxta DRAGANNA; Efnislista-tengill á sendum
+  þegjandi (Fjallaböðin −200 þús.). **HAKIÐ RÆÐUR — engin Verðskrár-regla þvingar það** (Agnar 16.11.: „ekki reglu, frekar
+  bara hak þarna"; regla sem slökkti á yfirvinnu Tindasels var tekin út sama dag). (3) „Samræma við tímabók" setur tíma
+  reikningsins = Tímaskýrslan í ritlinum með hakinu og þröskuldinum sem þar standa (`bg.__tbkSamraema`); þjónsskiptingin
+  (fastur 8 klst þröskuldur) er aðeins bakfall þegar taflan er tóm. (4) Strimillinn „Tímabók og reikningur" ber ALLTAF saman
+  við línurnar sem taflan sýnir (`checkTimabokSync(…, lif)`), ekki við vistað eintak sem er óuppfært. (5) `js/utgafuvakt.js`:
+  gylltur borði þegar `/build.json` breytist — opinn flipi keyrði gamlan kóða allan daginn og lagfæringar „virkuðu ekki". Kröfu yfirlit: nýir tímar (vidbot) áætlast á taxta DRAGANNA; Efnislista-tengill á sendum
   reikningi finnst líka um `payday_invoice_id` (vinnuDrog); `merged_into` telst aldrei sér í þrepi 2.
   Tindasel-akstur: 2 × 110 km hvern vinnudag (Agnar 16.11.).
 - **Samreikningur + tímabók (16.11.2026):** `/api/timabok?month=` á samreiknings-mánuð (drög með `merged_from`) spannar SJÁLFT tímabil draganna (period_from/to, annars 1. dagur elsta mánaðar → síðasti dagur). Áður datt fyrri mánuðurinn út við „🔄 Endursækja" og í Tímaskýrslu Kröfu yfirlits (Tindasel okt+nóv: 112,79 í stað 152,84). Endursókn Efnislistans (index.html, `gr-tbk-refetch`) notar líka `grPeriodQS`. Verk utan Verðskrár (t.d. Tindasel) fá engin sjálfvirk drög, svo „🔗 Sameina" birtist ekki fyrr en drög mánaðanna eru vistuð.

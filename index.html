@@ -1433,6 +1433,8 @@ body[data-tab="reikningatenglar"] #luna-fab{display:none !important}
 <script src="/js/nlsh-sections.js?v=20261111b" defer></script>
 <script src="/js/nlsh-stada.js?v=20261006b" defer></script>
 <script src="/js/viewmode.js?v=2" defer></script>
+<!-- 16.11.2026: útgáfuvakt — gylltur borði þegar ný útgáfa er komin í loftið (opinn flipi keyrði gamlan kóða allan daginn) -->
+<script src="/js/utgafuvakt.js?v=20261116a" defer></script>
 <script src="/js/adgangur-hub.js?v=20261103a" defer></script>
 <script src="/js/kerfisheilsa-widget.js?v=20260805a" defer></script>
   <script src="/js/dags-snid.js?v=20260918b"></script>
@@ -12586,7 +12588,11 @@ async function renderGerdReikninga(t){
   // periodQS (03.09.2026): samreikningur ber saman við ALLT tímabilið; annars mánuðinn.
   // ATH fallið er UTAN openEditor — það má ekki lesa grPeriodQS beint (þá kastar það og
   // ATHUGA-viðvörunin þagnar), tímabilið kemur sem viðfang frá ritlinum.
-  async function checkTimabokSync(name, month, curDvh, curEvh, periodQS){
+  // 16.11.2026 (Agnar, Tindasel: „burtu með þetta" — strimillinn sagði „Tímabók 125,36 · Reikningur 165,36" á meðan
+  // Tímaskýrslan fyrir neðan sýndi 165,36): `lif` = línurnar sem Tímaskýrslan í ritlinum SÝNIR núna. Séu þær til er borið
+  // saman við ÞÆR — ekki við vistað eintak sem var enn óuppfært (samanburðurinn keyrði á undan vistuninni) né nýja sókn.
+  // Það sem stendur í Tímaskýrslunni og það sem strimillinn ber saman við er þá alltaf sama talan.
+  async function checkTimabokSync(name, month, curDvh, curEvh, periodQS, lif){
     const dvEl = document.getElementById('gr-dvh-sync');
     const evEl = document.getElementById('gr-evh-sync');
     if(!dvEl) return;
@@ -12603,7 +12609,12 @@ async function renderGerdReikninga(t){
       // 16.11.2026: eintak sem nær ekki yfir samreikningstímabilið gildir ekki (sjá tbkEditGilt) — þá lifandi Tímavera.
       const savedEdit = tbkEditGilt(savedEdit0, month, (String(periodQS || '').match(/from=(\d{4}-\d{2}-\d{2})/) || [])[1]) ? savedEdit0 : null;
       let tbDv, tbEv, source;
-      if (savedEdit && Array.isArray(savedEdit.rows)) {
+      if (lif && Array.isArray(lif.rows) && lif.rows.length) {
+        const t = tbkYfSplit(lif.rows, lif.yf || {on:false, thr:8});
+        tbDv = Math.round((Number(t.dv)||0)*100)/100;
+        tbEv = Math.round((Number(t.yf)||0)*100)/100;
+        source = 'Tímaskýrslan í ritlinum';
+      } else if (savedEdit && Array.isArray(savedEdit.rows)) {
         const t = tbkYfSplit(savedEdit.rows, savedEdit.yfirvinna || {on:false, thr:8});
         tbDv = Math.round((Number(t.dv)||0)*100)/100;
         tbEv = Math.round((Number(t.yf)||0)*100)/100;
@@ -13807,6 +13818,10 @@ async function renderGerdReikninga(t){
     // Fill dagvinna/eftirvinna from the timebook using the overtime rule.
     document.getElementById('gr-fill-hours').onclick = async () => {
       const btn = document.getElementById('gr-fill-hours');
+      // 16.11.2026: EIN uppspretta — Tímaskýrslan í ritlinum, með hakinu og þröskuldinum sem þar standa. Strimillinn ber
+      // saman við hana, svo „Samræma" setur nákvæmlega þær tölur (áður sótti takkinn sína eigin skiptingu af þjóninum með
+      // föstum 8 klst þröskuldi og setti yfirvinnu þótt hakið væri af eða þröskuldurinn annar).
+      if(typeof bg.__tbkSamraema === 'function' && bg.__tbkSamraema()) return;
       const old = btn.textContent; btn.textContent = '⏳…'; btn.disabled = true;
       try {
         const resp = await fetch(`/api/timabok?worksite=${encodeURIComponent(name)}&${grPeriodQS}`);
@@ -13833,7 +13848,7 @@ async function renderGerdReikninga(t){
     document.getElementById('gr-timabok').onclick = () => openTimabok(name, month);
     // Re-check sync status if the operator edits the hours by hand too.
     ['gr-dvh','gr-evh'].forEach(id => document.getElementById(id).addEventListener('change', () =>
-      checkTimabokSync(name, month, numv('gr-dvh'), numv('gr-evh'), grPeriodQS)));
+      checkTimabokSync(name, month, numv('gr-dvh'), numv('gr-evh'), grPeriodQS, (typeof grTbkLive === 'function') ? grTbkLive() : null)));
 
     // ── Innfelld, lifandi-tengd Tímaskýrsla (compact + ⤢ stækkun til hægri) ──────
     // Breyti ég tíma í töflunni → tbkYfSplit reiknar dagvinnu/yfirvinnu → Dagvinna/
@@ -13848,16 +13863,16 @@ async function renderGerdReikninga(t){
       let tbkRows = [];
       // 16.11.2026: án vistaðs vals fylgir yfirvinnu-hakið DRÖGUNUM (yfirvinna > 0) eða Verðskrá (yfirvinna_samningur). Áður
       // var það alltaf AF, svo ein línubreyting eða „🔄 Endursækja" setti yfirvinnu í 0 þegjandi (Fjallaböðin: −200 þús. kr).
-      // Verðskrá „Yfirvinna leyfð" AF (eftirvinna_leyfid=false) ræður ÖLLU: þá er hakið alltaf af, líka þótt vistað eintak
-      // segi annað (Agnar 16.11.2026: „ekki yfirvinna á Tindasel").
+      // HAKIÐ RÆÐUR (Agnar 16.11.2026: „ekki reglu, frekar bara hak þarna"): engin Verðskrár-regla þvingar það af eða á.
+      // Vistað val notandans gildir; án þess er hakið á ef drögin bera þegar yfirvinnu (eða samningsbundin í Verðskrá).
       let tbkYf = (tbkSaved && tbkSaved.yfirvinna)
-        ? { on: r.evOk !== false && !!tbkSaved.yfirvinna.on, thr:(Number(tbkSaved.yfirvinna.thr)>0?Number(tbkSaved.yfirvinna.thr):8) }
-        : { on: r.evOk !== false && ((evH > 0) || pgRow.yfirvinna_samningur === true), thr:8 };
+        ? { on: !!tbkSaved.yfirvinna.on, thr:(Number(tbkSaved.yfirvinna.thr)>0?Number(tbkSaved.yfirvinna.thr):8) }
+        : { on: (evH > 0) || pgRow.yfirvinna_samningur === true, thr:8 };
       const tbkNum = s => Number(String(s).replace(',','.').replace(/[^\d.]/g,''))||0;
       grTbkLive = () => ({ rows: tbkRows, yf: { on: tbkYf.on, thr: tbkYf.thr } });
       const tbkSort = () => tbkRows.sort((a,b)=> String(b.date).localeCompare(String(a.date)) || String(a.employee).localeCompare(String(b.employee),'is'));
       const tbkPersist = () => { state.ui=state.ui||{}; state.ui.timabok_edits=state.ui.timabok_edits||{}; state.ui.timabok_edits[tbkKey]={ rows:tbkRows.map(r=>({...r})), yfirvinna:{on:tbkYf.on,thr:tbkYf.thr}, saved_at:new Date().toISOString() }; save(); };
-      const tbkSync = persist => { const t=tbkYfSplit(tbkRows,tbkYf); const dv=document.getElementById('gr-dvh'), ev=document.getElementById('gr-evh'); if(dv) dv.value=String(Math.round(t.dv*100)/100).replace('.',','); if(ev) ev.value=String(Math.round(t.yf*100)/100).replace('.',','); if(typeof draw==='function') draw(); if(typeof checkTimabokSync==='function') try{ checkTimabokSync(name, month, numv('gr-dvh'), numv('gr-evh'), grPeriodQS); }catch(_e){} if(persist) tbkPersist(); };
+      const tbkSync = persist => { const t=tbkYfSplit(tbkRows,tbkYf); const dv=document.getElementById('gr-dvh'), ev=document.getElementById('gr-evh'); if(dv) dv.value=String(Math.round(t.dv*100)/100).replace('.',','); if(ev) ev.value=String(Math.round(t.yf*100)/100).replace('.',','); if(typeof draw==='function') draw(); if(persist) tbkPersist(); if(typeof checkTimabokSync==='function') try{ checkTimabokSync(name, month, numv('gr-dvh'), numv('gr-evh'), grPeriodQS, { rows: tbkRows, yf: tbkYf }); }catch(_e){} };
       function paintTbk(){
         const body=document.getElementById('gr-tbk-body'); if(!body) return;
         const t=tbkYfSplit(tbkRows,tbkYf), rs=tbkRowSplit(tbkRows,tbkYf);
@@ -13870,11 +13885,15 @@ async function renderGerdReikninga(t){
         const yfc=body.querySelector('#gr-tbk-yf'), thr=body.querySelector('#gr-tbk-thr');
         if(yfc) yfc.onchange=()=>{ tbkYf.on=yfc.checked; tbkSync(true); paintTbk(); };
         if(thr) thr.addEventListener('change', ()=>{ const v=tbkNum(thr.value); tbkYf.thr=v>0?v:8; tbkSync(true); paintTbk(); });
+        // Strimillinn í 02 ber ALLTAF saman við það sem þessi tafla sýnir (16.11.2026) — líka eftir upphaflegu hleðsluna.
+        if(tbkRows.length && typeof checkTimabokSync==='function') try{ checkTimabokSync(name, month, numv('gr-dvh'), numv('gr-evh'), grPeriodQS, { rows: tbkRows, yf: tbkYf }); }catch(_e){}
       }
       // Yfirvinnu-stillingin er sett HEDAN (kafli 02 speglar hana) - beint i tbkYf svo
       // endurteikning panelsins geti ekki etid breytinguna a leidinni.
       bg.__tbkSetYf = (on, thr) => { tbkYf.on = !!on; const v = tbkNum(thr); if(v > 0) tbkYf.thr = v; tbkSync(true); paintTbk(); };
       bg.__tbkGetYf = () => ({ on: !!tbkYf.on, thr: tbkYf.thr });
+      // „Samræma við tímabók" (kafli 02): tímar reikningsins = þessi tafla, með hakinu og þröskuldinum hér. false = engar línur.
+      bg.__tbkSamraema = () => { if(!tbkRows.length) return false; tbkSync(true); paintTbk(); return true; };
       if(tbkSaved && Array.isArray(tbkSaved.rows)){ tbkRows=tbkSaved.rows.map(r=>({...r})); tbkSort(); paintTbk(); }
       else if(name && /^\d{4}-\d{2}$/.test(String(month))){ fetch(`/api/timabok?worksite=${encodeURIComponent(name)}&${grPeriodQS}`).then(r=>r.json()).then(d=>{ tbkRows=(d.rows||[]).map(r=>({date:r.date||'',employee:r.employee||'',time_in:r.time_in||'',time_out:r.time_out||'',hours:Number(r.hours)||0})); tbkSort(); paintTbk(); }).catch(()=>{ const b=document.getElementById('gr-tbk-body'); if(b) b.innerHTML='<div class="gr-tbk-empty">Gat ekki sótt Tímaveru — bættu við með ＋.</div>'; }); }
       else { paintTbk(); }
@@ -19135,6 +19154,15 @@ async function renderKrofuyfirlit(t){
         kt:'', customer:'ÞG verktakar ehf.', worksite:'Landsspítalinn', work_month:m.month,
         amount:amt, gjalddagi:null, days_overdue:null, partial: m.month===CUR_MONTH });
     }
+    // 16.11.2026: raðir þreps 3 fá merkingar sínar af þjóninum (meta_t3) — „Sent í bókun", „Krafa send", „Staðfest" og
+    // minnispunktur hurfu áður við hverja endurhleðslu, því röðin er reiknuð upp á nýtt og las aðeins hidden_keys.
+    const t3m = new Map((((state.data||{}).meta_t3)||[]).map(m => [m.inv_key, m]));
+    for(const r of rows){
+      const m = t3m.get(r.inv_key); if(!m) continue;
+      for(const k of ['confirmed','sent','done','sent_at','confirmed_at','done_at','confirmed_by','sent_by','done_by']) if(m[k] != null) r[k] = m[k];
+      if(m.wf && typeof m.wf === 'object'){ r.wf = Object.assign({}, m.wf); r._wfSync = JSON.parse(JSON.stringify(m.wf)); }
+      if(m.note && !r.note) r.note = m.note;
+    }
     return groupTier3(rows);
   }
 
@@ -20410,7 +20438,10 @@ async function renderKrofuyfirlit(t){
 
     // ── Ósendar-vinnuflæði (lárétt skref-borð) ──────────────────────────────
     function wfPatchLocal(key, patch){
-      for(const d of (((state.data||{}).tier2||{}).debtors||[])) for(const iv of (d.invoices||[])) if(iv.inv_key===key) Object.assign(iv, patch);
+      // 16.11.2026: líka þrep 3 (state.tier3) — áður uppfærðist merkingin aðeins á þrepi 2, svo takkinn á Tími eftir-röð
+      // varð ekki grænn fyrr en við endurhleðslu (og þá aðeins ef þjónninn skilaði henni, sjá meta_t3).
+      for(const bag of [state.data && state.data.tier2, state.tier3])
+        for(const d of ((bag||{}).debtors||[])) for(const iv of (d.invoices||[])) if(iv.inv_key===key) Object.assign(iv, patch);
     }
     // Leitar í ÖLLUM þrepum — „Tími eftir" (þrep 3: tímavera|…, nlsh|…) er reiknað í vafranum og býr í
     // state.tier3. Áður aðeins þrep 2 → 📄 Efnisl./🕒 Tímask. á Landsspítalanum gerðu ekkert (07.10.2026).
@@ -20556,8 +20587,12 @@ async function renderKrofuyfirlit(t){
       if(act==='send'){
         if(iv.sent && !confirm('Þegar sent í bókun. Senda aftur?')) return;
         const ws=iv.worksite||'', wm=iv.work_month||'', cust=iv.customer||ws;
-        let to=emailTo();
-        if(cust){ try{ const ci=await fetch('/api/customer-info?name='+encodeURIComponent(cust)).then(r=>r.ok?r.json():null); if(ci&&ci.rows&&ci.rows[0]&&ci.rows[0].contact_email) to=ci.rows[0].contact_email; }catch(_){} }
+        // 16.11.2026: „Senda í bókun" fer á BÓKARANN (ky_settings.email_to). Áður yfirskrifaði netfang kúnnans viðtakandann
+        // (leif frá „senda á netfang fyrirtækis", 28.08) — Tindasel hefði farið á sigurdur@deluxeiceland.is með innri
+        // Efnislista/Tímaskýrslu „til skráningar í Payday", og röðin merkt „Sent í bókun" þótt bókarinn fengi ekkert.
+        // Netfang kúnnans er aðeins SÝNT í glugganum; viðtakandanum má breyta þar handvirkt.
+        let to=emailTo(), kunnaNetfang='';
+        if(cust){ try{ const ci=await fetch('/api/customer-info?name='+encodeURIComponent(cust)).then(r=>r.ok?r.json():null); if(ci&&ci.rows&&ci.rows[0]&&ci.rows[0].contact_email) kunnaNetfang=String(ci.rows[0].contact_email); }catch(_){} }
         // 19.10.2026 (Agnar: Kringlan 2026-10 sagði „Engin vistuð skjöl" þótt PDF-ið væri nývistað): EFDOCS er
         // sótt EINU SINNI við hleðslu síðunnar (og endurheimt úr skyndiminni), svo skjal sem var búið til eftir
         // það sást ekki fyrr en við endurhleðslu. Glugginn sækir nú ferskan lista fyrir þetta verk og mánuð;
@@ -20566,11 +20601,20 @@ async function renderKrofuyfirlit(t){
         if(ws && wm){ try{ const fr = await fetch('/api/efnislisti-docs?worksite='+encodeURIComponent(ws)+'&month='+encodeURIComponent(wm), { cache:'no-store' }); if(fr.ok){ const fj = await fr.json(); if(fj && Array.isArray(fj.rows)){ ferskt = fj.rows; EFDOCS[ws+'|'+wm] = fj.rows; } } }catch(_){ ferskt = null; } }
         let docs=(ferskt || ((ws&&wm)?(EFDOCS[ws+'|'+wm]||[]):[])).filter(d=>d.drive_file_id && d.doc_type!=='innra'); // 🔒 innri viðhengi fara ALDREI með
         // Gluggi í stað confirm (Agnar 04.09.2026): velja skjölin sem fara með.
+        // 16.11.2026: sama skjal vistað oft (sama tegund + sami titill) fór margfalt í póstinn (Tindasel 3×, Orkureitur 4×) —
+        // aðeins NÝJASTA eintakið (added_at) fer í listann; aðalskjal mánaðarins heldur sér alltaf.
+        { const sed = new Map();
+          for(const d of docs.slice().sort((a,b)=> String(b.added_at||'').localeCompare(String(a.added_at||'')))){
+            const k = d.doc_type + '|' + String(d.title||'').trim().toLowerCase();
+            const f = sed.get(k);
+            if(!f) sed.set(k, d); else if(d.is_primary && !f.is_primary) sed.set(k, d);
+          }
+          docs = [...sed.values()]; }
         docs = docs.slice().sort((a,b)=> (b.is_primary?1:0) - (a.is_primary?1:0));   // ⭐ aðalskjalið fremst
         const sjalfgefid = 'Sæl(l),\n\nMeðfylgjandi Efnislisti/Tímaskýrsla fyrir '+(cust||ws||'')+(wm?' ('+wm+')':'')+' til skráningar í Payday.'
           // 12.10.2026: kt + tilvísun af spjaldinu (✎ Greiðandi) svo bókarinn setji þau á reikninginn (LSH: 21727)
           + ((iv.kt || iv.tilvisun_reiknings) ? '\n\n' + (iv.kt ? 'Greiðandi: ' + (cust||'') + ', kt. ' + ktFmt(iv.kt) : '') + (iv.kt && iv.tilvisun_reiknings ? '\n' : '') + (iv.tilvisun_reiknings ? 'Tilvísun á reikninginn: ' + iv.tilvisun_reiknings : '') : '');
-        const val = await bhSendaBokunDialog({ ws, wm, cust, to, amount: iv.amount, docs, msg: sjalfgefid });
+        const val = await bhSendaBokunDialog({ ws, wm, cust, to, kunni: kunnaNetfang, amount: iv.amount, docs, msg: sjalfgefid });
         if(!val) return;
         to = val.to;
         docs = val.docs;
@@ -20645,6 +20689,7 @@ async function renderKrofuyfirlit(t){
         + '<div style="padding:12px 18px 0">'
         +   '<label style="display:block;font-family:var(--font-mono,ui-monospace,monospace);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:4px">Sendist á</label>'
         +   '<input id="bh-bokun-to" value="'+escapeAttr(o.to||'')+'" style="width:100%;box-sizing:border-box;height:38px;padding:0 11px;border:1px solid var(--edge);border-radius:7px;background:var(--input-bg,#f6f3ec);font:inherit;font-size:13.5px;color:var(--ink)">'
+        +   '<div style="font-size:11.5px;color:var(--muted);margin-top:5px">Innri póstur til bókarans.'+((o.kunni && String(o.kunni).trim().toLowerCase() !== String(o.to||'').trim().toLowerCase()) ? ' Netfang kúnnans ('+esc2(o.kunni)+') er ekki viðtakandi hér.' : '')+'</div>'
         + '</div>'
         + '<div style="padding:12px 18px 0">'
         +   '<label style="display:block;font-family:var(--font-mono,ui-monospace,monospace);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:4px">Skilaboð í póstinum</label>'
