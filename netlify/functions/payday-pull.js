@@ -299,6 +299,7 @@ function mapInvoice(raw) {
   const dueDate = isoDate(pickRaw(raw, 'dueDate', 'due_date', 'gjalddagi'));
   const finalDue = isoDate(pickRaw(raw, 'finalDueDate', 'final_due_date', 'eindagi', 'claimFinalDueDate'));
   const paidAt = isoDate(pickRaw(raw, 'paidDate', 'paidAt', 'paid_at', 'paymentDate', 'payment_date', 'greidsla', 'greidsla_date'));
+  const invoiceDate = isoDate(pickRaw(raw, 'invoiceDate', 'invoice_date', 'utgafudagur', 'issueDate', 'date'));
 
   const status = pickStr(raw, 'status', 'state', 'paymentStatus', 'staða');
 
@@ -319,6 +320,7 @@ function mapInvoice(raw) {
     gjalddagi: dueDate,
     eindagi: finalDue,
     greidsla_date: paidAt,
+    utgafudagur: invoiceDate,
     status: status ? String(status).trim() : null,
   };
 }
