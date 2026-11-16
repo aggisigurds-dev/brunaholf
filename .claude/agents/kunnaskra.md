@@ -271,7 +271,9 @@ svarað í 3 daga'".
   = þrep 2 í Kröfu yfirliti; allir með kt fá staðamerki; haustalan telur verkstaði úr korti + verðskrá; prófíll sem vistað er
   í er merktur `__urelt` og sóttur aftur. Gullslètta 18 → Krókur 77 og NESDEKK → Nesdekk settir 16.11. (gögn); Sidumuli 21 → **Systur og makar ehf.**, kt. 630414-0320
   (Agnar 16.11. „systurogmakar eða álíka"; staðfest á keldan.is — félagið er skráð á Síðumúla 21, 108 Rvk; kort #161, drög #348).
-  Netfang reikninga er óskráð — samskiptin um verkið voru við Loga Má Hermannsson á einkanetfangi, tengsl hans við félagið óstaðfest.
+  Reikningurinn fer á netfang Loga Más Hermannssonar (Agnar 16.11.: „Já, á Loga") — skráð á kortið, drögin og customer_info.
+  Sama dag: póstleit prófílsins á götu + húsnúmeri (`N.gotuMynstur` í `_vk-nytt.js`) leyfir aðeins 0–2 stafa endingu milli
+  götustofns og númers — áður hleypti stjarnan hverju sem er á milli (331 póstur passaði við „Sidumuli 21", nú 21).
 - **16.11.2026 — netfang verkkaupa per verkstað:** `customer_worksite_map.netfang` (Áland 6 → Landspítali);
   `/api/worksites` skilar því sem `mapped_customer_info[].ws_netfang` og Efnislistinn forfyllir það í ný drög.
 - **16.11.2026 — „00 Yfirlit" efst á Viðskiptavinum (Agnar: „samantekt efst, updates á verkum og samskiptum, ný verk
