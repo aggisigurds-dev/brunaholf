@@ -162,6 +162,14 @@ eða `get_advisors` (security) fyrir heildarlistann með remediation-hlekkjum.
     það er EKKI varið af „þau fá kröfuna í bankann samt". Lagfæringin er ein skipun án áhrifa á virkni (RLS á + SELECT-policy);
     hún er í `sql/2026-10-31_loka_anon_skrifum.sql`, ÓKEYRT, og bíður Agnars í máli #1536. Mæling: `curl -s <síða> | grep -c cowork_js_patches`
     og `select relrowsecurity from pg_class where oid='public.cowork_js_patches'::regclass`.
+    **16.11.2026:** mál #1536 var lokað af yfirferð (Agnar metur RLS-áhættuna litla) og þessi liður lokaðist með
+    því óafgreiddur — mælt sama dag: RLS enn af, 3 raðir, óbreyttar. Hann er annars eðlis en ákvörðunin í #1536 og
+    stendur nú sem sjálfstætt forgangsmál #1650 (`odin_reglur` regla 19: opinn aðgangur fer beint til Agnars með
+    skrefinu sem hann tekur og er EKKI sameinaður öðru máli), með dagsettri línu á verki b6a4bc81. Ekki keyra án hans.
+  - **Kúnnaminni og tengiliðir (16.11.2026):** símanúmer, netföng og kennitölur einstaklinga eiga heima í
+    `charlize_contacts` (RLS á), ekki í `charlize_knowledge` — reglan er í `charlize/references/kunnaminni.md`
+    (slokkvitaeki). `tools/minni.cjs --skra --scope kunni` neitar slíkum texta frá 16.11.; innflutningur með SQL fer
+    framhjá. Mælingin og það sem bíður ákvörðunar stendur á verki b6a4bc81, ekki hér (opinbert repó).
   - **Tillaga sem er eldri en ákvörðun er úrelt.** SQL-skráin var skrifuð 31.10.; Agnar ákvað 07.11. (#1536) að RLS sé hans
     ákvörðun einni. Lestu Þjónustuborðið (`thjonustubeidni`, tag `agent:oryggi` / `skrad-akvordun`) ÁÐUR en „tilbúin" skrá er keyrð.
   - **Afritstöflur fæðast opnar:** 110 → 165 á tíu dögum (31.10. → 10.11.), RLS-lausar töflur alls 232 → 288. Hver
@@ -171,10 +179,10 @@ eða `get_advisors` (security) fyrir heildarlistann með remediation-hlekkjum.
     hafna og sía `aggisigurds@gmail.com` (400 / 0 af 200 röðum); `/api/gmail-search` óvirkt (410); `/api/gmail-send` sendir
     aldrei úr persónulega hólfinu (403); `/api/agent-notes` hafnar POST frá öðrum uppruna (403); `/tmp/*` og `/tools/*` → 404;
     `stofna_stad` án kennitölu → 400.
-  - **Stendur opið 10.11. (mælt með GET eingöngu):** `email-send` og `payday-push` í slokkvitaeki svara án gilds lykils
-    (verkefnalisti fad496c9); `/api/gatt-slug?site=N` afhendir slug án auðkenningar; 12 af 180 föllum hér kalla á
-    `requireStaff`; `/api/skjal` og `drive-multitool` án auðkenningar; undirskriftarmyndin á `/img/`. Bæði repóin eru OPINBER
-    á GitHub (CLAUDE.md í slokkvitaeki segir enn „private") — skrifaðu aldrei gildi lykils í skrá, PR eða athugasemd.
+  - **Stendur opið 10.11. og 16.11. (mælt með GET eingöngu):** föll og slóðir sem svara án gilds lykils eða
+    auðkenningar. Listinn er á verkum fad496c9 og b6a4bc81 á Verkefnalistanum, EKKI hér: þetta repó er opinbert á
+    GitHub, og skrá sem telur upp óvarðar slóðir er vegvísir. Skrifaðu aldrei gildi lykils né slíkan lista í skrá,
+    PR eða athugasemd — vísaðu á verkið.
   - **Staðfesting sem birtist ekki:** Supabase `apply_migration` spyr notandann og rennur út á 230 s ef hann sér ekki
     spurninguna (sími). „Timed out" segir ekki hvort eitthvað keyrði — lestu stöðuna á eftir. Ekki fara framhjá með `execute_sql`.
 - **04.11.2026** — Lestrarhlutverkið `stjori_lesari` (`sql/2026-11-04_stjori_lesari.sql`, `docs/STJORI-ADGANGUR.md`): stjóri (anninn76@gmail.com) tengir SINN Claude með Postgres-tengistreng þessa hlutverks — SELECT á public, BYPASSRLS (annars væru RLS-töflur án policies tómar), 0 skrifréttindi (mælt), 30 s timeout, 5 tengingar. Hann er EKKI í Supabase-stofnuninni (Pro: lægsta hlutverk Developer = skrif). Lykilorðið setur Agnar, hvergi skráð. GitHub: Write-collaborator + `main` varin.
