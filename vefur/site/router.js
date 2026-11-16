@@ -165,9 +165,12 @@
    - gerd: 'video' er myndskeiðið, 'kyrr' er kyrrmynd með sömu slikju og myndskeiðið, 'mynd' er önnur mynd. Hausinn fær
      data-hetja-gerd, og stílblað hverrar útgáfu þéttir slikjuna undir textanum fyrir 'mynd' þar sem þess þarf.
      pos er object-position myndarinnar. ljos merkir ljósa mynd (data-hetja-ljos), sem fær enn þéttari slikju.
-   Myndskeiðið (stökin með data-hetja-video og data-hetja-takki): kyrrmyndin undir því sést þar til það spilar. Það er sótt eftir
-   að síðan er hlaðin, fer ekki sjálft í gang þar sem hreyfing er afþökkuð í tækinu (prefers-reduced-motion), gagnasparnaður er á
-   eða tengingin er hæg, stöðvast á meðan hausinn sést ekki og takkinn stöðvar það og ræsir. */
+   Myndskeiðið (stökin með data-hetja-video og data-hetja-takki): kyrrmyndin undir því sést þar til það spilar. Það fer sjálft í
+   gang um leið og hausinn sést, stöðvast á meðan hausinn sést ekki og takkinn stöðvar það og ræsir. Aðeins skýr gagnasparnaður
+   í tækinu (Data Saver) heldur því kyrru.
+   Agnar 16.11.2026: „hafðu líka að myndbandið kviknar sjálfkrafa". Áður beið það eftir að ÖLL síðan hlæðist (load) og fór ekki
+   af stað þar sem tækið bað um minni hreyfingu (prefers-reduced-motion) eða tengingin taldist hæg. Fjartengd tölva (remote
+   desktop) og „Animation effects" slökkt í Windows láta Chrome tilkynna minni hreyfingu, svo kyrrmyndin stóð og takkinn sýndi stopp. */
 (function () {
   'use strict';
   var d = document;
@@ -185,11 +188,9 @@
   var sjalfgefinn = finna(hero.getAttribute('data-hetja')) || BANNERAR[0];
   var nuna = finna(q.get('hetja')) || sjalfgefinn;
 
-  var kyrrt = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
   var teng = navigator.connection || {};
-  var spara = !!(teng.saveData || /(^|-)2g$|^3g$/.test(teng.effectiveType || ''));     /* gagnasparnaður eða hæg tenging */
-  var stoppad = kyrrt || spara;                 /* sá sem skoðar, eða stilling tækisins, vill ekki hreyfingu */
-  var sest = false, hladid = d.readyState === 'complete';
+  var stoppad = !!teng.saveData;                /* aðeins skýr gagnasparnaður heldur myndskeiðinu kyrru; takkinn ræður eftir það */
+  var sest = false, hladid = true;              /* skriftan er neðst í <body>: ekki beðið eftir að allar myndir síðunnar hlaðist */
   function merkja() {
     if (!takki || !videoOk) return;
     takki.setAttribute('data-stada', v.paused ? 'stopp' : 'spilar');
@@ -224,7 +225,6 @@
     var kildur = v.querySelectorAll('source');
     if (kildur.length) kildur[kildur.length - 1].addEventListener('error', function () { bilad = true; if (takki) takki.hidden = true; });
     if (takki) takki.addEventListener('click', function () { stoppad = !v.paused; hladid = true; stilla(); });
-    if (!hladid) window.addEventListener('load', function () { hladid = true; stilla(); });
     if ('IntersectionObserver' in window) {
       new IntersectionObserver(function (f) { sest = f[f.length - 1].isIntersecting; stilla(); }).observe(hero);
     } else sest = true;
