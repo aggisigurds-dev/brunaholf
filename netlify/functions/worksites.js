@@ -242,6 +242,8 @@ exports.handler = async (event) => {
           // 12.10.2026: kt + tilvísun verkstaðarins (✎ Greiðandi) — Efnislista-ritillinn forfyllir ný drög
           kt_greidanda: m.kt_greidanda || null, tilvisun: m.tilvisun || null,
           ...(customerInfoByName[m.customer_name] || {}),
+          // 16.11.2026: netfang verkkaupa per verkstað (customer_worksite_map.netfang) — fer í ný drög
+          ws_netfang: m.netfang || null,
         })),
         status: statusByProject[p.project] || {
           billing_status: 'unreviewed', notes: null, drive_folder_url: null,

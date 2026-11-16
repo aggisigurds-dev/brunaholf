@@ -994,3 +994,15 @@ Agnar: „halda áfram að matcha og yfirfara.” Keyrt `skraning-gatakort-para.
 Markmið lækkaði (6.471→6.302 á 6H, 6.849→6.588 á 5H) vegna þess að pöruð „fullt” göt hækka ekki markmið lengur — aðeins vantar-göt telja.
 
 **Lykilniðurstaða:** raf í hægra húsi beggja hæða er aðalið sem eftir er (≈950 stök). Pípulagnir hægra húss nær fullpöruð.
+
+
+## 16.11.2026 — AJOUR-VEFUR: rafmagnsskráningar úr „Raufar. (Metrer) LV“ í „Raflagnaþéttingar, göt og raufar“ (Agnar bað um)
+
+- Gert í Ajour-vefnum sjálfum (brunaholf.ajoursystem.net, NLSH 5-6. hæð), ekki í okkar grunni. Teikning: `6H 2S-1S Rafmagnsþéttingar.jpg`,
+  flokkur eftir flutning: „Raflagnaþéttingar, göt og raufar“ / Starfsmaður 1.
+- **Flutt: 11 skráningar** — 12104 (stök, fyrst) og 10 ókláraðar með Change group → „All“ (Ajour flytur þá aðeins þær sem eru breytanlegar; PUT 200).
+- **Eftir: 39 kláraðar (Done)** á sömu teikningu sitja enn í „Raufar. (Metrer) LV“ (mælt 16.11: flokkurinn 116 alls, 114 Done; markflokkur 311).
+  Ajour læsir flokki á kláruðum skráningum: hægrismellur gefur aðeins „Show registration log“, og bein sending á 12102 skilaði 200 en breytti engu.
+- Leyfileg leið sem viðmótið býður: taka Done af (staða afturkölluð), Change group, setja Done aftur. Stöðustimpillinn (nú 02-11-2026 08:27,
+  brunaholf@brunaholf.is) verður þá dagurinn sem það er gert. BÍÐUR ákvörðunar Agnars. Ekki fara fram hjá læsingunni með beinum köllum.
+- Gildra: teljarinn á flokkaflipanum er fyrir allar teikningar (116); 39 er talan á `6H 2S-1S Rafmagnsþéttingar.jpg` í teikningalistanum hægra megin.

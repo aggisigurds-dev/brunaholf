@@ -12654,7 +12654,8 @@ async function renderGerdReikninga(t){
     const custAddr = (d && d.heimilisfang) || pgRow.heimilisfang || ov.addr || '';
     // 09.09.2026 (ósk Agnars): netfang verkkaupa á sama stað og kt/heimilisfang,
     // svo reikningurinn eigi viðtakanda án þess að fletta upp annars staðar.
-    const custEmail = (d && d.netfang) || pgRow.netfang || ov.email || '';
+    // 16.11.2026: + netfang verkstaðarins úr customer_worksite_map (Áland 6 → einarvald@landspitali.is).
+    const custEmail = (d && d.netfang) || wci.ws_netfang || pgRow.netfang || ov.email || '';
     const dateText = (state.ui && state.ui.gr_date_text && state.ui.gr_date_text[name+'|'+month]) || '';
     // 06.10.2026 (Agnar): „Vegna“-lína í Verk-boxinu — fer á skjalið AÐEINS ef eitthvað er skrifað.
     const vegna = (state.ui && state.ui.gr_vegna && state.ui.gr_vegna[name+'|'+month]) || '';
