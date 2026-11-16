@@ -967,3 +967,8 @@ allt að ~90 kragagöt sem krossagreiningin sér ekki (lögn gegnum vegg sem ekk
 - Fyrirvari: 5H er ekki 100 % eins og 6H (kragapróf 78 %) → 5H-punktar merktir „Óbyrjað?“. Raf: fyrirmynd gefur ~908 göt alls á 4 húshluta
   á móti útboði 3.1 = 768.
 - LÆRDÓMUR (SKILL): þegar hús/hæðir eru eins er fullskráður hluti BESTA fyrirmyndin — betri en krossar á teikningu (raf-krossar náðu ~40 %).
+
+
+## 16.11.2026 — Stöðuskýrslan uppfærð (kjarni 6d38537)
+
+Agnar: „Já uppfæra“. SkyrslaClient: markmið hóps á deild/hluta = max(fyrri regla, klárað + opið + Σ fjoldi óskráðra áætlaðra gata gatakortsins á deild) — `eftirHop` (hópur af flokki gatsins, annars fagi: rafmagn→Rafmagn, loftraesting→Loft, golf→Gólf, fravatn→Plast, vatn/hiti/sprinkler/gas/annad→Stál). Áður var 6H-markmið = klárað, svo óbyrjaðir hlutar (raf 6H S4/S5, kragar 6H S1/S2) töldust búnir. Útboðsliður 2.2 „stök per ein.“ 2 → 1 (kragi = heil lokun). Forsendutexti uppfærður. Lifandi (sannreynt): **6H 83 %** (5.394 af 6.471 stökum), **5H 66 %** (4.509 af 6.849), gólf 5. hæðar 69 % (357 af 515); 2.2 kragi 304 af 600 = 51 % (var 25 %).
