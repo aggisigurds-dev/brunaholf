@@ -440,6 +440,9 @@ Lota 16.10.2026 (commit 8860d86 → 9f78dd9), allt í `index.html`, grep á nöf
 - **Viðskiptavinir (`renderVidskiptavinir`):** grindin `.vk-grid` teiknuð einu sinni; `teiknaLista()` (vinstri
   listi, leit `#vk-search`) og `velja(name)` → `loadDetail()` (hægri spjald 02–08) uppfæra hvort í sínu lagi.
   `openModal()` (verðskrá per verkstað) og `load()` óbreytt frá fyrri útgáfu. Sjálfgefið fyrsta félag valið >980 px.
+  **16.11.2026:** efst er `section#vk-yf` („00 Yfirlit": `teiknaYfirlit()`, gögn `VKNYTT` úr `loadNytt()` →
+  `/api/verkkaupar?nytt=1`; flísarnar Ósent/Ógreitt sía listann um `vk_sia`, Fela/Sýna er `vk_yf_falid` — báðir
+  vidmot-lyklar). Reglurnar og merking hvers dálks: `kunnaskra.md` (16.11.) og `netlify/functions/_vk-nytt.js`; ekki afrita hingað.
 - **Kröfu yfirlit spjöld (`invRow`):** `periodTag(inv, tier)` / `vinnuDrog()` við hlið `monthTag` — „Tímabil
   dd/mm–dd/mm" úr drögunum (REVIEWS[worksite|work_month].period_from/to), `.boss-perotag.misr` í gulli þegar
   vinnumánuður ≠ reikningsmánuður. Taflan (/api/krofur-yfirlit, renderKrofur) ber ekkert mánaðarmerki.

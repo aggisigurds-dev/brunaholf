@@ -123,3 +123,32 @@ test('smida: talning stemmir við línurnar', () => {
   assert.strictEqual(ut.talning.beidnir_opnar, 1); assert.strictEqual(ut.beidnir[0].greidandi, 'ÞG verktakar ehf.');
   assert.strictEqual(ut.beidnir[0].texti, 'Teikningar — 3. hæð');
 });
+
+test('vantarADrog: aðeins heiti tómra reita', () => {
+  assert.deepStrictEqual(N.vantarADrog({ customer_name: 'Rafís ehf.', kennitala: '690506-2030', heimilisfang: '' }), ['heimilisfang']);
+  assert.deepStrictEqual(N.vantarADrog({ customer_name: null, kennitala: null, heimilisfang: null }), ['greiðandi', 'kennitala', 'heimilisfang']);
+  assert.deepStrictEqual(N.vantarADrog({ customer_name: 'X', kennitala: '1', heimilisfang: 'Gata 1' }), []);
+});
+
+test('greidandaGat: netfang, Payday, taxti og misræmi heimilisfangs', () => {
+  // Allt til: netfang aðeins í Payday, taxti í verðskrá, sama heimilisfang þrátt fyrir beygingu og kommu.
+  const gott = N.greidandaGat({ kt: '680923-0510', info: { heimilisfang: 'Vesturvör 30B, 200 Kópavogi' },
+    payday: { netfang: 'x@y.is', heimilisfang: 'Vesturvör 30B', postnr: '200', baer: 'Kópavogi' },
+    worksites: [{ worksite_name: 'Tindasel The farm', dagvinna_rate: 10951 }], map: [],
+    drog: [{ worksite_name: 'Tindasel The farm', work_month: '2026-11', heimilisfang: 'Vesturvör 30B, 200 Kópavogur', vantar: [] }] });
+  assert.strictEqual(gott.i_lagi, true);
+  // Ekki í Payday, ekkert netfang, verkið ekki í verðskrá.
+  const nes = N.greidandaGat({ kt: '420296-2079', info: {}, payday: null, worksites: [], map: [{ worksite_name: 'NESDEKK', netfang: '' }],
+    drog: [{ worksite_name: 'NESDEKK', work_month: '2026-10', heimilisfang: 'Krókhálsi 9, 110 Reykjavík', vantar: [] }] });
+  assert.deepStrictEqual([nes.kennitala, nes.netfang, nes.payday, nes.heimilisfang, nes.i_lagi], [true, false, false, true, false]);
+  assert.deepStrictEqual(nes.taxta_vantar, ['NESDEKK']);
+  // Netfang á kortinu dugar; Ajour-verk þarf ekki tímataxta; misræmi heimilisfangs og tómir reitir á drögum sjást.
+  const kr = N.greidandaGat({ kt: '490517-1620', info: { invoice_email: '' }, payday: { netfang: '', heimilisfang: 'Borgartúni 30', postnr: '105', baer: 'Reykjavík' },
+    worksites: [{ worksite_name: 'Heklu reitur', source: 'ajour' }], map: [{ worksite_name: 'Gullslètta 18', netfang: 'a@b.is' }],
+    drog: [{ worksite_name: 'Gullslètta 18', work_month: '2026-10', heimilisfang: 'Suðurlandsbraut 4, 108 Reykjavík', vantar: [] },
+      { worksite_name: 'Heklu reitur', work_month: '2026-11', heimilisfang: '', vantar: ['heimilisfang'] }] });
+  assert.strictEqual(kr.netfang, true);
+  assert.deepStrictEqual(kr.taxta_vantar, ['Gullslètta 18']);
+  assert.deepStrictEqual(kr.heimilisfang_misraemi.map((x) => x.verk), ['Gullslètta 18']);
+  assert.deepStrictEqual(kr.drog_vantar, [{ verk: 'Heklu reitur', manudur: '2026-11', vantar: ['heimilisfang'] }]);
+});

@@ -165,4 +165,42 @@ function gotuMynstur(w) {
   return ['', '_', '__'].map((e) => `*${stofn}${e} ${nr}*`);
 }
 
-module.exports = { gotuMynstur, INNRA, ALMENN_LEN, netfangaskra, verkYfirlit, samskiptaYfirlit, krofuYfirlit, beidnaYfirlit, smida, dagaFra };
+/* 16.11.2026 — „Ertu með allar upplýsingar um þá sem eiga ósendar kröfur?" (Agnar). Hrein föll, engin netköll.
+   vantarADrog: reitir sem vantar á drögin SJÁLF (heiti reita, aldrei gildi).
+   greidandaGat: það sem vantar hjá einum greiðanda til að senda reikning — les svar /api/verkkaupar?name=. */
+function vantarADrog(d) {
+  const tomt = (v) => !String(v == null ? '' : v).trim();
+  return [tomt(d && d.customer_name) && 'greiðandi', tomt(d && d.kennitala) && 'kennitala', tomt(d && d.heimilisfang) && 'heimilisfang'].filter(Boolean);
+}
+// Gata + húsnúmer í samanburðarhæfu formi: „Vesturvör 30B, 200 Kópavogur" og „Vesturvör 30B 200 Kópavogi" → „vestu 30".
+function heimilisLykill(a) {
+  const m = String(a || '').trim().toLowerCase().match(/^(\S+)\s+(\d+)/);
+  return m ? m[1].slice(0, 5) + ' ' + m[2] : '';
+}
+function greidandaGat(p) {
+  p = p || {};
+  const info = p.info || {}; const pd = p.payday || null;
+  const drog = p.drog || []; const kort = p.map || []; const verdskra = p.worksites || [];
+  const verk = [...new Set(drog.map((x) => x.worksite_name).filter(Boolean))];
+  const medTaxta = (w) => verdskra.some((r) => r.worksite_name === w && (Number(r.dagvinna_rate) > 0 || Number(r.fixed_amount) > 0 || r.source === 'ajour'));
+  const kortNetfang = kort.some((m) => verk.includes(m.worksite_name) && String(m.netfang || '').trim());
+  const pdHeim = pd && pd.heimilisfang ? [pd.heimilisfang, pd.postnr, pd.baer].filter(Boolean).join(' ') : '';
+  const misraemi = [];
+  for (const x of drog) {
+    const a = heimilisLykill(x.heimilisfang); const b = heimilisLykill(pdHeim || info.heimilisfang);
+    if (a && b && a !== b) misraemi.push({ verk: x.worksite_name, manudur: x.work_month, drog: x.heimilisfang, skrad: pdHeim || info.heimilisfang });
+  }
+  const ut = {
+    kennitala: !!String(p.kt || info.kennitala || '').trim(),
+    netfang: !!(String(info.invoice_email || '').trim() || (pd && String(pd.netfang || '').trim()) || kortNetfang),
+    payday: !!pd,
+    heimilisfang: !!(String(info.heimilisfang || '').trim() || pdHeim || drog.some((x) => String(x.heimilisfang || '').trim())),
+    taxta_vantar: verk.filter((w) => !medTaxta(w)),
+    drog_vantar: drog.filter((x) => (x.vantar || []).length).map((x) => ({ verk: x.worksite_name, manudur: x.work_month, vantar: x.vantar })),
+    heimilisfang_misraemi: misraemi,
+  };
+  ut.i_lagi = ut.kennitala && ut.netfang && ut.payday && ut.heimilisfang && !ut.taxta_vantar.length && !ut.drog_vantar.length && !misraemi.length;
+  return ut;
+}
+
+module.exports = { vantarADrog, greidandaGat, heimilisLykill, gotuMynstur, INNRA, ALMENN_LEN, netfangaskra, verkYfirlit, samskiptaYfirlit, krofuYfirlit, beidnaYfirlit, smida, dagaFra };

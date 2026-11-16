@@ -271,9 +271,22 @@ svarað í 3 daga'".
   = þrep 2 í Kröfu yfirliti; allir með kt fá staðamerki; haustalan telur verkstaði úr korti + verðskrá; prófíll sem vistað er
   í er merktur `__urelt` og sóttur aftur. Gullslètta 18 → Krókur 77 og NESDEKK → Nesdekk settir 16.11. (gögn); Sidumuli 21 → **Systur og makar ehf.**, kt. 630414-0320
   (Agnar 16.11. „systurogmakar eða álíka"; staðfest á keldan.is — félagið er skráð á Síðumúla 21, 108 Rvk; kort #161, drög #348).
-  Reikningurinn fer á netfang Loga Más Hermannssonar (Agnar 16.11.: „Já, á Loga") — skráð á kortið, drögin og customer_info.
+  Reikningurinn fer á netfang tengiliðsins sem Agnar nefndi 16.11. — skráð á kortið, drögin og customer_info; nafn og
+  netfang standa í kúnnaminninu (kt 630414-0320), ekki hér (repóið er opinbert).
   Sama dag: póstleit prófílsins á götu + húsnúmeri (`N.gotuMynstur` í `_vk-nytt.js`) leyfir aðeins 0–2 stafa endingu milli
   götustofns og númers — áður hleypti stjarnan hverju sem er á milli (331 póstur passaði við „Sidumuli 21", nú 21).
+- **16.11.2026 — „Ertu með allar upplýsingar um þá sem eiga ósendar kröfur?" (Agnar):** svarið er ein skipun,
+  `node tools/osent-upplysingar.cjs` (les aðeins; reglan `N.greidandaGat` í `_vk-nytt.js`): per greiðanda með ósend drög
+  kennitala · netfang reiknings (customer_info.invoice_email, Payday eða `customer_worksite_map.netfang`) · skráning í
+  Payday · heimilisfang · taxti verks í verðskrá · tómir reitir á drögunum sjálfum (`drog[].vantar` úr
+  `/api/verkkaupar?name=`) · heimilisfang draga sem stangast á við Payday. Mælt 16.11.: 11 greiðendur, 7.801.887 kr;
+  kennitala hjá öllum. **Opið hjá Agnari (ekki giska):** taxti á Sidumuli 21, NESDEKK, Grensásvegur 10 og Gullslètta 18
+  (drögin reikna á sjálfgefnum 9.951); reikningsnetfang JÁVERK, Nesdekk og Istanbul Market; heimilisfang Króks 77 (drög
+  Suðurlandsbraut 4, Payday og prófíll Borgartún 30). Systur og makar, Nesdekk og Istanbul Market eru ekki í Payday.
+  **Fyllt 16.11. með leyfi Agnars** (aðeins tómir reitir, gildi úr Payday hjá greiðanda sem var þegar tengdur): kt +
+  heimilisfang á drög #311 (Hrafnista Nesvellir 4) og #336 (Hnjúkamói 9), greiðandi + kt + heimilisfang á #305 (KELDUR),
+  heimilisfang á #349 (Heklu reitur) og #350 (Skùlagata 26); kort #14 (Heklu reitur) fékk kt 680921-2020.
+  KELDUR á enga röð í kortinu — greiðandinn kemur úr verðskránni.
 - **16.11.2026 — netfang verkkaupa per verkstað:** `customer_worksite_map.netfang` (Áland 6 → Landspítali);
   `/api/worksites` skilar því sem `mapped_customer_info[].ws_netfang` og Efnislistinn forfyllir það í ný drög.
 - **16.11.2026 — „00 Yfirlit" efst á Viðskiptavinum (Agnar: „samantekt efst, updates á verkum og samskiptum, ný verk

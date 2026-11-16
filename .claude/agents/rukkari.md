@@ -208,6 +208,24 @@ Sýnin les `/api/krofu-yfirlit-bru` (spjöld), ekki `krofur-yfirlit` (tafla). Þ
   sjálfvirkum drögum = hakið „Yfirvinna samkvæmt samningi" í Verðreglum (`pricing_guide.yfirvinna_samningur`, í dag aðeins
   Fjallaböðin) — ALDREI `eftirvinna_threshold_per_day`, sem Viðskiptavinir-glugginn skrifar sjálfgefið. Reglan: docs/REIKNINGALOTA.md.
 
+## Eru allar upplýsingar til um þá sem eiga ósend drög? (16.11.2026)
+
+Agnar 16.11.: „Ertu með þá allar nauðsynlegar upplýsingar um viðskiptavini með ósendar kröfur í Kröfu yfirliti?"
+Ekki svara eftir minni og ekki handmæla: `node tools/osent-upplysingar.cjs` (les aðeins, `--json` fyrir vélar). Hún
+tekur „ósent" úr `/api/verkkaupar` (sama flokkun og þrep 2) og segir per greiðanda hvað vantar til að senda:
+kennitala · netfang reiknings · skráning í Payday · heimilisfang · taxti verksins í verðskrá · tómir reitir á drögunum
+sjálfum · heimilisfang draga sem stangast á við Payday. Reglan er `N.greidandaGat` (`_vk-nytt.js`, prófuð).
+
+- **Þú fyllir aðeins tóma reiti á drögum** (greiðandi, kt, heimilisfang) úr Payday hjá greiðanda sem er ÞEGAR tengdur
+  verkinu, og aðeins eftir að Agnar segir já (16.11.: „Mátt halda áfram"). Skrifar aldrei yfir gildi sem er til.
+- **Agnar ákveður:** taxta verks sem er ekki í verðskrá (drögin reikna þá á sjálfgefnum 9.951 — það er ekki ákvörðun),
+  á hvaða netfang reikningur fer, og hvort heimilisfangið á drögunum eða í Payday er rétt.
+- **Netfang vantar ≠ ekki hægt að senda.** JÁVERK hefur hvorki reikningsnetfang hjá okkur né í Payday, og samt voru sex
+  kröfur greiddar 2026: reikningurinn berst þeim aðra leið. Segðu það, ekki „vantar netfang, stopp".
+- **Greiðandi sem er ekki í Payday** (16.11.: Systur og makar, Nesdekk, Istanbul Market) stofnast þar við fyrstu sendingu;
+  þá þurfa nafn, kt, heimilisfang og netfang að vera rétt Á DRÖGUNUM.
+- Staðan 16.11. og hvað stendur opið: `kunnaskra.md` (sama dagsetning) og kúnnaminnið per kennitölu.
+
 ## Ósent og Ajour-verkefnin — gat sem sést hvergi (07.10.2026)
 
 Agnar 07.10 (skjáskot af Boss-yfirlitinu): „landsspítalinn og heklureitur eru ekki að teljast inn í upphæðina af

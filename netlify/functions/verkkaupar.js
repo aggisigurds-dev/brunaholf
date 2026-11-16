@@ -243,7 +243,9 @@ async function detail(name) {
   const sami = (d) => String(d.customer_name || '').trim().toLowerCase() === name.toLowerCase() || (ktN && normKt(d.kennitala) === ktN) || anGreidanda(d);
   const drog = drafts.filter((d) => { const mt = metaBy.get(K.draftKey(d)); return K.erOsent(d, tenging, mt) && K.iSummu(mt) && (sami(d) || wsNames.includes(d.worksite_name)); })
     .map((d) => ({ worksite_name: d.worksite_name, work_month: d.work_month, total_m_vsk: kr(d.total_m_vsk), hours: Number(d.hours_dagvinna) || 0,
-      notes: String(d.notes || '').trim().slice(0, 300) }));   // 16.11.2026: athugasemd draganna fer í „Um verkið"
+      notes: String(d.notes || '').trim().slice(0, 300),       // 16.11.2026: athugasemd draganna fer í „Um verkið"
+      // 16.11.2026: hvað vantar á drögin SJÁLF til að senda (tools/osent-upplysingar.cjs les þetta). Aðeins heiti reita, engin gildi.
+      heimilisfang: String(d.heimilisfang || '').trim(), vantar: N.vantarADrog(d) }));
 
   // Samskipti: póstar sem nefna verkstaðina eða greiðandann (email_digest = brunaholf-pósthólfið)
   const orParts = [];
