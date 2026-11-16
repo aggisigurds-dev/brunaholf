@@ -64,11 +64,17 @@ exports.handler = async (event) => {
     for (const b of BUCKETS) folderFor[b] = await ensureFolder(token, b, rootId);
 
     // 4) Copy each pending object: download from Supabase → upload to Drive → log.
+    // 16.11.2026: keyrslan sagði aðeins „6 villur" hverja nótt frá 11.11 og enginn vissi hvaða skrár. Þær voru sex
+    // viðhengisfærslur sem vísuðu á skrá sem er ekki lengur í geymslu (dauð slóð) — ekki bilun í afrituninni. Nú er
+    // „finnst ekki í geymslu" talið sér og slóðirnar skrifaðar í keyrsluskrána, og raunveruleg villa ber skilaboðin sín.
     let ok = 0, fail = 0;
+    const vantar = [], villur = [];
     for (const item of pending.slice(0, MAX_PER_RUN)) {
       try {
-        const bytes = await downloadObject(item.bucket, item.path);
-        if (!bytes) { fail++; continue; }
+        const d = await downloadObject(item.bucket, item.path);
+        if (d.vantar) { vantar.push(item.bucket + '/' + item.path); continue; }
+        if (!d.bytes) { fail++; villur.push(item.bucket + '/' + item.path + ' (sókn ' + d.status + ')'); continue; }
+        const bytes = d.bytes;
         const name = (item.path.split('/').pop() || 'skjal').replace(/^\d+_/, '');
         const driveId = await uploadToDrive(token, folderFor[item.bucket], name, bytes, item.path);
         await sb('storage_backup_log', {
@@ -77,12 +83,16 @@ exports.handler = async (event) => {
           body: JSON.stringify({ bucket: item.bucket, path: item.path, drive_file_id: driveId, size_bytes: bytes.length, backed_up_at: new Date().toISOString() }),
         });
         ok++;
-      } catch (e) { fail++; }
+      } catch (e) { fail++; villur.push(item.bucket + '/' + item.path + ' (' + String((e && e.message) || e).slice(0, 120) + ')'); }
     }
 
-    const remaining = pending.length - ok;
-    await logRun(fail ? 'error' : 'success', `Afritað ${ok} skjöl í Drive (${fail} villur, ${remaining} eftir)`, started);
-    return { statusCode: 200, body: JSON.stringify({ ok: true, backed_up: ok, failed: fail, remaining, total: wanted.length }) };
+    const remaining = pending.length - ok - vantar.length;
+    const stutt = l => l.slice(0, 8).join(' ; ') + (l.length > 8 ? ' ; +' + (l.length - 8) + ' til viðbótar' : '');
+    let detail = `Afritað ${ok} skjöl í Drive (${fail} villur, ${remaining} eftir)`;
+    if (vantar.length) detail += ` · ${vantar.length} skráð á fyrirtæki en finnast EKKI í geymslu (dauð slóð — laga færsluna, ekki afritunina): ${stutt(vantar)}`;
+    if (villur.length) detail += ` · villur: ${stutt(villur)}`;
+    await logRun((fail || vantar.length) ? 'error' : 'success', detail, started);
+    return { statusCode: 200, body: JSON.stringify({ ok: true, backed_up: ok, failed: fail, missing: vantar.length, remaining, total: wanted.length }) };
   } catch (e) {
     await logRun('error', String(e.message || e), started).catch(() => {});
     return { statusCode: 500, body: JSON.stringify({ error: String(e.message || e) }) };
@@ -140,8 +150,13 @@ async function loadBackedUpKeys() {
 async function downloadObject(bucket, path) {
   const url = `${SUPABASE_URL}/storage/v1/object/${bucket}/` + path.split('/').map(encodeURIComponent).join('/');
   const r = await fetch(url, { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } });
-  if (!r.ok) return null;
-  return Buffer.from(await r.arrayBuffer());
+  // Supabase Storage svarar 400 („Object not found") eða 404 þegar skráin er ekki til — það er dauð slóð, ekki bilun.
+  if (!r.ok) {
+    let txt = ''; try { txt = await r.text(); } catch (_) {}
+    const vantar = r.status === 404 || (r.status === 400 && /not.?found/i.test(txt));
+    return { bytes: null, vantar, status: r.status };
+  }
+  return { bytes: Buffer.from(await r.arrayBuffer()), vantar: false, status: r.status };
 }
 
 // ── Drive helpers (mirror efnislisti-pdf.js) ────────────────────────────────
