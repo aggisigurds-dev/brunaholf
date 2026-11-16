@@ -30,7 +30,7 @@
     return '<i class="st st-' + st + '" title="' + esc(t) + '"></i>';
   }
   var API_LOTUR = '/api/lotur', API_STADA = '/api/charlize-stada', API_NOTES = '/api/agent-notes';
-  var STJORAR = ['fyrirtaeki', 'framendi', 'bord-flettur', 'kjarni-vefur', 'rukkari', 'tony-stark'];
+  var STJORAR = ['fyrirtaeki', 'framendi', 'bord-flettur', 'kjarni-vefur', 'rukkari', 'tony-stark', 'odin'];   // odin 16.11.2026: umsjónarmaður samþykkta og Verkefnalistans
   var STJORI_VEFUR = { framendi: 'brunaholf', 'bord-flettur': 'slokkvitaeki', 'kjarni-vefur': 'kjarni' };
   var VERDIR = ['netvordur', 'rambo', 'kodafraedingur', 'utlitsserfraedingur', 'oryggi', 'kerfisheilsa', 'tengingar', 'hradi', 'gagnaleidslur',
     'samthykktir', 'joker', 'thema', 'kort', 'prentun', 'adstod', 'villuleit', 'variant-analysis'];
@@ -44,7 +44,9 @@
     // + allur hópurinn í agentaskránni (Agnar 15.11: „líka notast við aðra sem eru til … Joker o.fl., Jarvis“).
     // Verðir og jarvis teiknast ekki sem línur (eru ekki í ser), en birtast í „Kallar á“ í hliðarspjaldi Tonys.
     'tony-stark': ['black-widow', 'hawkeye', 'captain-america', 'spider-man', 'endurskodandi', 'logfraedingur',
-      'joker', 'utlitsserfraedingur', 'kerfisrynir', 'hradi', 'jarvis']
+      'joker', 'utlitsserfraedingur', 'kerfisrynir', 'hradi', 'jarvis'],
+    // Óðinn (Agnar 16.11.2026: „handles samþykktir, verkefnalista allaround … sends agent on a mission to fix"): þeir sem hann sendir í verk.
+    odin: ['samthykktir', 'postur', 'rukkari', 'sala-reikningar', 'bokari', 'kunnaskra', 'kodafraedingur', 'bord-flettur', 'logfraedingur']
   };
   var NYIR = ['fyrirtaeki', 'postur', 'thjonustugatt', 'logfraedingur', 'endurskodandi', 'innkaupabokari', 'birgdastjori', 'kodafraedingur',
     'utlitsserfraedingur', 'opp', 'verkstadur', 'kjarni-vefur', 'artcraft', 'skraning'];   // merkið segir „nýr 04.11“: aðeins agentar frá þeim degi
@@ -539,23 +541,95 @@
     }).catch(function (e) { box.innerHTML = '<div class="an-villa">' + villuTexti(e.message) + '</div>'; });
   }
 
+  /* ── ÓÐINN (16.11.2026): reglubókin og handbókin í hliðarspjaldinu ─────────────────────────────────────
+   * Agnar: „rulebook og manual af worksteps fyrir algengustu málin fyrir hann. Er í Jarvis, agentnet". Gögnin koma úr
+   * /api/odin (starfsmanna-session). Reglurnar í fjórum hópum; smellur á reglu opnar hvenær / hvað / vinnuskref / heimild.
+   * Takkar: staðfesta tillögu, veita eða taka heimildina „sjálfur" (aðeins þar sem þjónninn leyfir — aldrei póstur né
+   * peningar), gera óvirka. Þjónninn ræður; viðmótið sýnir aðeins það sem hann svarar. */
+  var API_ODIN = '/api/odin', odinOpid = {}, odinGogn = null, odinBid = false;
+  var OD_URSK = { samthykkja: 'samþykkir', hafna: 'lokar', loka_med_sonnun: 'lokar með sönnun', senda_agent: 'sendir í verk', undirbua_afgreidslu: 'undirbýr', til_agnars: 'ber undir þig' };
+  function odinRegla(r) {
+    var opid = !!odinOpid[r.id], skref = Array.isArray(r.skref) ? r.skref : [];
+    var h = '<div class="li od-r' + (opid ? ' od-opid' : '') + '" data-od-r="' + r.id + '" role="button" tabindex="0" aria-expanded="' + opid + '">' + esc(r.heiti) +
+      ' <i>' + esc(OD_URSK[r.urskurdur] || r.urskurdur) + (r.agent ? ' · ' + esc(r.agent) : '') + '</i></div>';
+    if (!opid) return h;
+    h += '<div class="od-d"><div class="od-l">Hvenær</div><p>' + esc(r.thegar) + '</p><div class="od-l">Hvað</div><p>' + esc(r.adgerd) + '</p>';
+    if (skref.length) h += '<div class="od-l">Vinnuskref</div><ol>' + skref.map(function (s) { return '<li>' + esc(s) + '</li>'; }).join('') + '</ol>';
+    h += '<div class="od-l">Heimild</div><p class="dim">' + esc(r.heimildarord) + (r.thak_kr != null ? ' · Þak ' + Number(r.thak_kr).toLocaleString('is-IS') + ' kr.' : '') + '</p>';
+    var t = '';
+    if (!r.virk) t += '<button type="button" class="btn-out" data-od="stadfesta" data-id="' + r.id + '">Staðfesta reglu</button>';
+    if (r.virk && r.heimild !== 'sjalfur' && r.ma_verda_sjalfur) t += '<button type="button" class="btn-out" data-od="sjalfur" data-id="' + r.id + '">Má afgreiða sjálfur</button>';
+    if (r.virk && r.heimild === 'sjalfur') t += '<button type="button" class="btn-out" data-od="leggja_til" data-id="' + r.id + '">Bera undir mig</button>';
+    if (r.virk) t += '<button type="button" class="btn-out" data-od="ovirkja" data-id="' + r.id + '">Gera óvirka</button>';
+    h += '<div class="od-t">' + t + '</div>';
+    if (r.virk && r.heimild !== 'sjalfur' && !r.ma_verda_sjalfur) h += '<p class="dim">Snertir póst, peninga eða þína ákvörðun: Óðinn undirbýr, þú ýtir.</p>';
+    return h + '</div>';
+  }
+  function odinHopur(heiti, l) {
+    return l.length ? '<div class="od-hop"><div class="hh"><span class="ttl">' + esc(heiti) + '</span><span>' + l.length + '</span></div>' + l.map(odinRegla).join('') + '</div>' : '';
+  }
+  function teiknaOdin() {
+    var box = sideEl && sideEl.querySelector('#an-odin'); if (!box) return;
+    var j = odinGogn;
+    if (!j) { box.innerHTML = '<div class="dim">Sæki reglubókina…</div>'; return; }
+    if (j.villa) { box.innerHTML = '<div class="an-villa">' + villuTexti(j.villa) + '</div>'; return; }
+    var L = j.reglur || [], t = j.tolur || {};
+    var till = L.filter(function (r) { return !r.virk; }), sj = L.filter(function (r) { return r.virk && r.heimild === 'sjalfur'; }),
+      und = L.filter(function (r) { return r.virk && r.heimild !== 'sjalfur' && r.urskurdur !== 'til_agnars'; }),
+      ag = L.filter(function (r) { return r.virk && r.heimild !== 'sjalfur' && r.urskurdur === 'til_agnars'; });
+    box.innerHTML = '<div class="sk">Reglubók og handbók · <b style="color:var(--acc-hi)">' + (t.virkar || 0) + '</b> reglur · ' + (t.gert_7d || 0) + ' afgreidd sjálfur síðustu 7 daga' +
+      (t.odaemt ? ' · ' + t.odaemt + ' ódæmd' : '') + '</div>' + odinHopur('Tillögur sem bíða þín', till) + odinHopur('Afgreiðir sjálfur', sj) +
+      odinHopur('Undirbýr, þú ýtir', und) + odinHopur('Ber undir þig', ag) +
+      '<p class="dim">Kenndu honum: skrifaðu athugasemd á Óðin í Agentaskránni, eða segðu „Óðinn: …“ í lotu.</p>';
+  }
+  function hladaOdin() {
+    if (odinBid) return; odinBid = true;
+    getJSON(API_ODIN).then(function (j) { odinGogn = j; }).catch(function (e) { odinGogn = { villa: e.message }; })
+      .then(function () { odinBid = false; if (valinn === 'odin') teiknaOdin(); });
+  }
+  function odinSmellur(ev) {
+    var b = ev.target.closest('[data-od]');
+    if (b) {
+      var id = Number(b.getAttribute('data-id')), a = b.getAttribute('data-od');
+      if (a === 'sjalfur' && !confirm('Óðinn afgreiðir þá svona mál sjálfur héðan í frá, án þess að bera þau undir þig. Hver úrskurður er skráður og afturkræfur.\n\nVeita heimildina?')) return;
+      if (a === 'ovirkja' && !confirm('Gera regluna óvirka? Óðinn hættir þá að nota hana.')) return;
+      var body = a === 'stadfesta' || a === 'ovirkja' ? { action: a, id: id } : { action: 'heimild', id: id, heimild: a };
+      b.disabled = true;
+      postJSON(API_ODIN, body).then(function (j) {
+        if (odinGogn && odinGogn.reglur && j.regla) odinGogn.reglur = odinGogn.reglur.map(function (r) { return r.id === j.regla.id ? j.regla : r; });
+        teiknaOdin(); hladaOdin();
+      }).catch(function (e) { b.disabled = false; alert('Tókst ekki: ' + e.message); });
+      return;
+    }
+    var r = ev.target.closest('[data-od-r]');
+    if (r) { var rid = r.getAttribute('data-od-r'); odinOpid[rid] = !odinOpid[rid]; teiknaOdin(); }
+  }
+  function odinLykill(ev) {
+    if ((ev.key === 'Enter' || ev.key === ' ') && ev.target && ev.target.getAttribute && ev.target.getAttribute('data-od-r')) {
+      ev.preventDefault(); var rid = ev.target.getAttribute('data-od-r'); odinOpid[rid] = !odinOpid[rid]; teiknaOdin();
+      var aftur = sideEl.querySelector('[data-od-r="' + rid + '"]'); if (aftur) aftur.focus();
+    }
+  }
+
   function velja(n) {
     valinn = valinn === n ? null : n;
     teiknaNet();
     var e = entry(n); if (!sideEl) return;
-    sideEl.onclick = null;
+    sideEl.onclick = null; sideEl.onkeydown = null;
     if (!e || valinn !== n) { sideEl.innerHTML = '<p class="dim">Smelltu á agent til að lýsa síðurnar hans og sjá hverja hann kallar á. Tvísmellur opnar Agentaskrána.</p>'; return; }
     var sid = eigandaSidur(e), und = (e.sidur || []).filter(function (s) { return s.hlutverk === 'undiragent'; });
     var live = ((D.lotur && D.lotur.agentar) || {})[n];
     var h = '<div><h3>' + esc(n) + '</h3><div class="u">' + esc(e.rodd || (e.type === 'skill' ? 'skill' : 'agent')) + (erNyr(n) ? ' · <span class="ylw">nýr 04.11</span>' : '') + '</div></div>';
     h += '<p>' + esc(cut(e.lysing, 260)) + '</p>';
     h += '<div class="sk">' + (live ? 'Kallaður í <b style="color:var(--acc-hi)">' + live.lotur + '</b> lotu(m) síðustu 7 daga · síðast ' + fmtDT(live.sidast) : 'Ekki kallaður í lotu síðustu 7 daga.') + '</div>';
+    if (n === 'odin') h += '<div id="an-odin"></div>';   // reglubókin og handbókin (16.11.2026) — efst, á undan „Kallar á"
     var kallar = KEDJA[n]; if (kallar) h += '<div><div class="ttl" style="margin-bottom:8px">Kallar á</div>' + kallar.map(function (x) { return '<div class="li">' + esc(x) + '</div>'; }).join('') + '</div>';
     var kalladur = STJORAR.filter(function (sn) { return (KEDJA[sn] || []).indexOf(n) !== -1; }); if (kalladur.length) h += '<div><div class="ttl" style="margin-bottom:8px">Kallaður af</div>' + kalladur.map(function (x) { return '<div class="li">' + esc(x) + '</div>'; }).join('') + '</div>';
     h += '<div><div class="hh"><span class="ttl">Síður</span><span>' + sid.length + ' EIGANDI · ' + und.length + ' UNDIR</span></div>' + sid.slice(0, 14).map(function (x) { return '<div class="li">' + esc(x.titill) + ' <i>' + esc(VEFIR[x.vefur] || x.vefur) + '</i></div>'; }).join('') + (sid.length > 14 ? '<div class="li dim">+ ' + (sid.length - 14) + ' til viðbótar</div>' : '') + '</div>';
     if (e.aldrei && e.aldrei.length) h += '<div><div class="ttl bad" style="margin-bottom:8px">Aldrei</div>' + e.aldrei.slice(0, 4).map(function (x) { return '<div class="li li-bad">' + esc(x) + '</div>'; }).join('') + '</div>';
     h += '<button type="button" class="btn-out" data-skra="' + esc(e.id) + '" style="align-self:flex-start;margin-top:auto">Opna í Agentaskránni</button>';
     sideEl.innerHTML = h;
+    if (n === 'odin') { sideEl.onclick = odinSmellur; sideEl.onkeydown = odinLykill; teiknaOdin(); hladaOdin(); }
     if (window.innerWidth <= 860 && sideEl.scrollIntoView) sideEl.scrollIntoView({ behavior: 'smooth', block: 'start' });   // á síma er spjaldið undir netinu
   }
 

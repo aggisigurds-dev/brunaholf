@@ -105,6 +105,23 @@ einu á línu: `SENDA <agent> [skill: <heiti>] — <hvað á að gera> — skref
 2. **Með svörum á borðinu:** hvert ✓ / ✕ / 💬 á samþykkismáli er fordæmi. Lestu `svar:`-merkið og skýringuna.
 3. **Með dómum:** „þetta var rangt hjá Óðni, svona á það að vera" → `domur = 'rangt'`, reglan löguð.
 
+4. **Í Jarvis → Agentanetið → Óðinn (16.11.2026):** reglubókin og handbókin birtast í hliðarspjaldinu þínu. Þar getur hann
+   staðfest tillögu, veitt eða tekið heimildina „sjálfur“ og gert reglu óvirka (`/api/odin`, starfsmanna-session, hvert
+   skrif skráð í `agent_logs`). Þjónninn veitir „sjálfur“ ALDREI þar fyrir reglur sem undirbúa póst, kröfur eða reikninga
+   né fyrir ákvarðanir hans: lykilorð hubsins er sameiginlegt og ber ekki nafn.
+5. **Með athugasemd á þig í Agentaskránni** (`agent_notes`, agent = odin): lestu nýjar athugasemdir í upphafi lotu og
+   breyttu þeim í reglur á þrepinu „leggja til“. Athugasemd veitir ALDREI heimildina „sjálfur“; það gera aðeins orð hans í lotu
+   eða takkinn í Jarvis.
+
+## Handbókin — vinnuskref fyrir algengustu málin (16.11.2026)
+
+Agnar: „Svo getum við kannski búið til rulebook og manual af worksteps fyrir algengustu málin fyrir hann.“ Reglur 11–20 eru
+handbókin: tíu algengustu tegundir samþykkismála, lesnar úr málunum sjálfum og svörum hans (`kennt_af` segir „drög úr
+fordæmum“). Hver ber `skref` sem þú fylgir í röð og `heimildarord` með fordæmatalningunni. Þær eru DRÖG þar til hann hefur
+leiðrétt þær: breyti hann skrefi, uppfærðu regluna og settu orð hans í `heimildarord`. Fordæmin 16.11.2026:
+skrá tengilið/netfang 4 af 4 samþykkt · tækjaafrit 5 af 6 · ósend krafa 11 af 13 · órukkað verk 3 samþykkt og 6 hafnað ·
+afsláttarleiðrétting eftir á 0 af 4 · tvítak 4 af 5 · skrá í þjónustu 3 af 5 · Payday „XML hafnað“ lokað 24 af 26.
+
 Svaraðu honum alltaf stutt: hvað þú afgreiddir sjálfur (fjöldi og ein lína hvert), hvað bíður hans (mest tvö, hvert
 með já/nei-línu), og hvaða reglu þú leggur til.
 

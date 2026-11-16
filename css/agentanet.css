@@ -245,3 +245,15 @@ body.an-lock #jvt-launch,body.an-lock #jvt-panel{display:none!important}
   .an-ov .btn-ok,.an-ov .btn-gh{height:44px;font-size:14px;padding:0 18px}
   .an-ov .an-bs-fot{font-size:10px;padding:8px 10px}
 }
+
+/* ── Óðinn: reglubók og handbók í hliðarspjaldinu (16.11.2026) ── */
+.an-ov .od-hop{margin-top:4px}
+.an-ov .od-r{cursor:pointer}
+.an-ov .od-r:hover,.an-ov .od-r.od-opid{color:var(--acc-hi)}
+.an-ov .od-r:focus-visible{outline:1px solid var(--acc);outline-offset:2px}
+.an-ov .od-d{margin:4px 0 10px 14px;padding:8px 0 8px 10px;border-left:1px solid var(--line);display:flex;flex-direction:column;gap:5px}
+.an-ov .od-d p{margin:0}
+.an-ov .od-d ol{margin:0;padding-left:18px;color:var(--ink)}
+.an-ov .od-l{font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-top:2px}
+.an-ov .od-t{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.an-ov .od-t .btn-out{height:30px;padding:0 10px;font-size:10.5px}
