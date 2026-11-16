@@ -1006,3 +1006,13 @@ Markmið lækkaði (6.471→6.302 á 6H, 6.849→6.588 á 5H) vegna þess að p�
 - Leyfileg leið sem viðmótið býður: taka Done af (staða afturkölluð), Change group, setja Done aftur. Stöðustimpillinn (nú 02-11-2026 08:27,
   brunaholf@brunaholf.is) verður þá dagurinn sem það er gert. BÍÐUR ákvörðunar Agnars. Ekki fara fram hjá læsingunni með beinum köllum.
 - Gildra: teljarinn á flokkaflipanum er fyrir allar teikningar (116); 39 er talan á `6H 2S-1S Rafmagnsþéttingar.jpg` í teikningalistanum hægra megin.
+- **PRÓF Á EINNI (12102), 16.11 kl. 16:43–16:46, Agnar: „Prófa eina fyrst“:** Done tekið af → Change group (Selected 1; Raflagnaþéttingar, göt og raufar /
+  Starfsmaður 1 / Brunaþéttingar / Fireproofing) → Done sett aftur. Flutningurinn tókst (PUT 200; Raufar LV 116→115, markflokkur 311→312).
+  Sagan fékk 4 línur (15 cancelled, 16 category group, 17 category, 18 completed); stöðustimpill 02-11-2026 08:27 → **16-11-2026 16:46**;
+  `created` 22-10-2026 og `executionFrom/To` 22-10-2026 óbreytt.
+- **GILDRA — Change group ÞURRKAR GÁTLISTAHÖKIN.** 12102 hafði hök í EI60 og „Kítti háþensla / Graphite Sealant“ (sögulínur 7–8, 02-11);
+  eftir flutning er `registrationCategoryChecks` = []. Óhreyfðar skráningar í Raufar LV bera hök (96 af fyrstu 100). Hökin tilheyra gátlista
+  gamla flokksins og fylgja ekki með. 38 kláraðar eru því ÓFLUTTAR þar til ákveðið er hvort hökin eru sett aftur á hverja (lesin úr sögu hennar).
+- Þær 11 sem fóru fyrr um daginn misstu ekkert sem mælt var: 12104 og 8026 höfðu aldrei hök né Done (sagan sýnir það). Þær fengu flokkinn
+  „Starfsmaður 1“ án gátlistans „Brunaþéttingar / Fireproofing“. 8026 var sett Í Raufar LV 20-10-2026 10:41 (sagan), ekki skráð þar upphaflega.
+- Mæling á hökum án þess að opna hverja skráningu: `…viewModel.controller.constructionHelper.registrations[i].registrationCategoryChecks` á listasíðunni.
