@@ -80,6 +80,22 @@ test('samskipti: almennt verkheiti tengir engan og sjálfvirk svör birtast ekki
   assert.strictEqual(r[0].greidandi, 'Karína ehf.'); assert.strictEqual(r[1].fjoldi, 2);
 });
 
+test('götumynstur: beygingar finnast, óskyldur texti með húsnúmerinu aftar ekki', () => {
+  // ilike → regex: * = hvað sem er, _ = einn stafur
+  const passar = (mynstur, texti) => mynstur.some((p) => new RegExp('^' + p.replace(/[.+?^${}|[\]\\]/g, '\\$&').replace(/\*/g, '[\\s\\S]*').replace(/_/g, '[\\s\\S]') + '$', 'i').test(texti));
+  const s = N.gotuMynstur('Sidumuli 21');
+  assert.strictEqual(s.length, 3);
+  assert.ok(passar(s, 'Síðumúli 21'));
+  assert.ok(passar(s, 'Re: Síðumúla 21 verslun 1. hæð'));
+  assert.ok(!passar(s, 'Sæll, mig vantar Co2 refill á 4 tæki, kem 21. nóvember'));
+  assert.ok(!passar(s, 'Staðfesting móttöku: sending nr 4 af 21'));
+  const g = N.gotuMynstur('Grensásvegur 10');
+  assert.ok(passar(g, 'Verk á Grensásvegi 10')); assert.ok(passar(g, 'Grensásvegur 10')); assert.ok(passar(g, 'við Grensásveg 10'));
+  assert.ok(!passar(g, 'Grensásvegur 12 og svo 10 stk'));
+  assert.strictEqual(N.gotuMynstur('Tindasel The farm'), null);
+  assert.strictEqual(N.gotuMynstur('NESDEKK'), null);
+});
+
 test('kröfur: greiðsla og send krafa síðustu 14 daga, nafn skráðs greiðanda eftir kennitölu', () => {
   const reikningar = [
     { tilvisun: '387', customer_name: 'Framkvæmdafélagið Laugavegur ehf.', kt_greidanda: '680921-2020', upphaed_total: 4798428, utgafudagur: '2026-10-31', gjalddagi: '2026-10-31', greidsla_date: '2026-11-16', flokkur: 'greitt' },

@@ -153,4 +153,16 @@ function smida(g) {
   };
 }
 
-module.exports = { INNRA, ALMENN_LEN, netfangaskra, verkYfirlit, samskiptaYfirlit, krofuYfirlit, beidnaYfirlit, smida, dagaFra };
+/** Gata + húsnúmer → ilike-mynstur (PostgREST: * = hvað sem er, _ = einn stafur) fyrir póstleit í prófíl greiðanda.
+ *  Stofn götunnar (án tveggja síðustu stafa) + ending upp á 0, 1 eða 2 stafi + bil + húsnúmer — beygingin skiptir þá ekki máli
+ *  („Grensásvegur/-vegi/-veg 10", „Síðumúli/-múla 21") en EKKERT annað má standa á milli. Sérhljóðar og d/ð/þ eru „_" því
+ *  ilike þekkir ekki broddstafi („Sidumuli" í Tímaveru ↔ „Síðumúli" í pósti). Skilar null ef heitið er ekki gata + númer. */
+function gotuMynstur(w) {
+  const m = String(w || '').trim().match(/^(\S{6,})\s+(\d+\s?\w?)$/);
+  if (!m) return null;
+  const stofn = m[1].slice(0, -2).replace(/[*,()%]/g, ' ').replace(/[aeiouyádðþéíóúýæöàäâèêëìîïòôùüû]/gi, '_');
+  const nr = m[2].replace(/[*,()%]/g, '');
+  return ['', '_', '__'].map((e) => `*${stofn}${e} ${nr}*`);
+}
+
+module.exports = { gotuMynstur, INNRA, ALMENN_LEN, netfangaskra, verkYfirlit, samskiptaYfirlit, krofuYfirlit, beidnaYfirlit, smida, dagaFra };

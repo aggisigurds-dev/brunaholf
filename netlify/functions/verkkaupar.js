@@ -242,8 +242,10 @@ async function detail(name) {
   // (3) Fyrsta orð nafnsins er ekki lengur leitarorð („Sigurður" greip alla Sigurða, „Auto" greip „Automatic reply") —
   // heila nafnið án félagsforms: í sendanda ef ≥ 4 stafir, í efnislínu aðeins ef ≥ 8.
   const sertaekt = (w) => { const s = String(w || '').trim(); return !/^brunaþéttingar?$/i.test(s) && (/\d/.test(s) || /\s/.test(s) || s.length >= 10); };
-  const wsMynstur = (w) => { const m = String(w).trim().match(/^(\S{6,})\s+(\d+\s?\w?)$/); return m ? brodd(m[1].slice(0, -2)).replace(/\*$/, '') + '* ' + m[2].replace(/[*,()%]/g, '') + '*' : brodd(w); };
-  for (const w of wsNames.filter(sertaekt).slice(0, 12)) { for (const f of ['subject', 'snippet', 'body_preview']) orParts.push(`${f}.ilike.${wsMynstur(w)}`); }
+  // 16.11.2026 (mælt á Systur og makar / „Sidumuli 21"): mynstrið var `*S___m_* 21*` — stjarnan milli stofns og húsnúmers
+  // hleypti HVERJU SEM ER á milli, svo „Co2 refill", Kringlan og Kassaborg fylltu 40-pósta þakið. Nú er endingin 0–2 stafir
+  // (N.gotuMynstur): „Síðumúli 21" og „Síðumúla 21" finnast, texti með „21" einhvers staðar aftar ekki.
+  for (const w of wsNames.filter(sertaekt).slice(0, 12)) { for (const p of (N.gotuMynstur(w) || [brodd(w)])) for (const f of ['subject', 'snippet', 'body_preview']) orParts.push(`${f}.ilike.${p}`); }
   const kjarni = name.replace(/[,.]?\s*\b(ehf|hf|slf|sf|ses|ohf)\b\.?\s*$/i, '').trim();
   if (kjarni.length >= 4) orParts.push(`sender_name.ilike.${like(kjarni)}`);
   if (kjarni.length >= 8) orParts.push(`subject.ilike.${like(kjarni)}`);
