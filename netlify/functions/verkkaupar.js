@@ -192,6 +192,21 @@ async function detail(name) {
     const c = por.get(K.invKey(v));
     if (c) { v.stada = 'ogilt'; v.kredit_tilvisun = c.tilvisun; v.kredit_dags = c.greidsla_date || c.gjalddagi || null; }
   }
+  // 16.11.2026 (Agnar: „ég verð að fá að sjá eldri efnislista"): þegar drögin verða að raunverulegum reikningi (staða
+  // 'invoiced') missir kröfuröðin hér tengslin við verkstað+mánuð — síðan hafði því engan Efnislista-takka á sendum
+  // reikningum, aðeins á ósendum drögum (05). Parað eftir sama greiðanda + upphæð innan 2 kr, eitt drög per reikning —
+  // sama vikmörk og teiknaSaga notar í Reikningagerð „06 Fyrri reikningar".
+  const invoicedDrafts = drafts.filter((d) => d.status === 'invoiced' && (sami(d) || wsNames.includes(d.worksite_name)) && (+d.total_m_vsk || 0) > 0);
+  const draftUsed = new Set();
+  for (const v of inv2) {
+    if (v.stada === 'drog' || v.stada === 'ogilt' || v.falid) continue;
+    const amt = kr(v.upphaed_total);
+    if (!(amt > 0)) continue;
+    const hit = invoicedDrafts.find((d) => !draftUsed.has(d) && Math.abs(kr(d.total_m_vsk) - amt) <= 2);
+    if (!hit) continue;
+    draftUsed.add(hit);
+    v.draft_match = { worksite_name: hit.worksite_name, work_month: hit.work_month };
+  }
   const iSum = (v) => !v.falid && kr(v.upphaed_total) > 0;
   const samtals = {
     krofur: inv2.filter((v) => v.stada !== 'drog' && v.stada !== 'ogilt').length,
