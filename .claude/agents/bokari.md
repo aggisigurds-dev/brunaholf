@@ -144,6 +144,11 @@ greinir sjálfkrafa hvor túlkunin endurskapar `samtals`.
   gylltur borði þegar `/build.json` breytist — opinn flipi keyrði gamlan kóða allan daginn og lagfæringar „virkuðu ekki". Kröfu yfirlit: nýir tímar (vidbot) áætlast á taxta DRAGANNA; Efnislista-tengill á sendum
   reikningi finnst líka um `payday_invoice_id` (vinnuDrog); `merged_into` telst aldrei sér í þrepi 2.
   Tindasel-akstur: 2 × 110 km hvern vinnudag (Agnar 16.11.).
+  **Síðdegis 16.11.:** breyting á INN/ÚT í Tímaskýrslu-töflunni reiknar TÍMAR sjálf (`tbkKlstMilli`, yfir miðnætti leyft) og
+  þar með útreikninginn — áður stóð gamla talan („ruslið uppfærist ekki"). 🔄 sækir fyrst beint úr Tímaveru
+  (`/api/timavera-pull?from&to` fyrir tímabil draganna; sjálfvirka sóknin nær aðeins 3 daga aftur). Vista sendir
+  `period_from/period_to` þegar Frá/Til víkja frá mánaðarmörkum, spyr (stöðvar aldrei) áður en ný drög skrifa yfir eldri
+  drög sama verkstaðar og mánaðar, og við opnun birtist athugasemd ef vistuð heild ≠ reiknuð (> 2 kr).
 - **Samreikningur + tímabók (16.11.2026):** `/api/timabok?month=` á samreiknings-mánuð (drög með `merged_from`) spannar SJÁLFT tímabil draganna (period_from/to, annars 1. dagur elsta mánaðar → síðasti dagur). Áður datt fyrri mánuðurinn út við „🔄 Endursækja" og í Tímaskýrslu Kröfu yfirlits (Tindasel okt+nóv: 112,79 í stað 152,84). Endursókn Efnislistans (index.html, `gr-tbk-refetch`) notar líka `grPeriodQS`. Verk utan Verðskrár (t.d. Tindasel) fá engin sjálfvirk drög, svo „🔗 Sameina" birtist ekki fyrr en drög mánaðanna eru vistuð.
 - Útlagður kostnaður/efni sem er endurrukkað fer á fullu listaverði; afsláttur birgja er framlegð okkar og kemur aldrei fram á reikningi kúnna [C#410].
 - Efniskostnaðar-glugginn (`rgOpenEfniEditor`) er opinn fyrir handvirka leiðréttingu síðan 03.09.2026: verkstaður reiknings og „Á verkstað“ á hverri línu (`redder_line_items.worksite_override`) — notaðu hann í stað þess að giska þegar Redder-lína lendir á röngu verki [C#386].

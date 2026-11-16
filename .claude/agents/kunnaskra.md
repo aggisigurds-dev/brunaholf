@@ -272,6 +272,16 @@ svarað í 3 daga'".
   í er merktur `__urelt` og sóttur aftur. Gullslètta 18 → Krókur 77 og NESDEKK → Nesdekk settir 16.11. (gögn); Sidumuli 21 bíður Agnars.
 - **16.11.2026 — netfang verkkaupa per verkstað:** `customer_worksite_map.netfang` (Áland 6 → Landspítali);
   `/api/worksites` skilar því sem `mapped_customer_info[].ws_netfang` og Efnislistinn forfyllir það í ný drög.
+- **16.11.2026 — „00 Yfirlit" efst á Viðskiptavinum (Agnar: „samantekt efst, updates á verkum og samskiptum, ný verk
+  eða beiðnir"):** fimm flísar (Ósent · Ógreitt + fram yfir eindaga · Greitt 14 daga · Verk í gangi · Ný verk og beiðnir)
+  eru samtölur ALLRA raða úr `/api/verkkaupar` (nýr reitur `gjaldfallid`) og stemma við Kröfu yfirlit. Þrír dálkar koma úr
+  `/api/verkkaupar?nytt=1`; reglurnar eru hrein föll í `netlify/functions/_vk-nytt.js` (próf `test/vk-nytt.test.js`):
+  **Verk** = Tímavera 14 d. per verkstað, „NÝTT" ef engin færsla er til fyrir 45 daga gluggann, innri verk (veikindi,
+  Slökkvitæki ehf, work at home) sleppt; **Samskipti** = póstur 14 d. sem tengist skráðum greiðanda um nákvæmt netfang,
+  einkalén sem EINN greiðandi á, eða heiti verkstaðar í efnislínu — almenn lén (gmail o.fl.) og lén sem fleiri nota tengja
+  engan, ótengdur póstur birtist ekki; **Kröfur og beiðnir** = Payday (greiðsludagur / útgáfudagur 14 d.) og
+  `field_entries` kind `beidni`/`verk` 30 d. Smellur á línu opnar greiðandann. Flísarnar Ósent/Ógreitt sía listann
+  (hæsta upphæð efst). Sían (`vk_sia`) og Fela/Sýna (`vk_yf_falid`) eru vidmot-lyklar — eins á öllum vélum.
 
 - `customer_info` fékk þrjá dálka (apply_migration + `sql/2026-10-16_customer_info_tengilidur.sql`): `contact_name`
   (tengiliður), `invoice_email` (reikningspóstur), `heimilisfang`. `netlify/functions/verkkaupar.js` INFO_FIELDS

@@ -3266,6 +3266,44 @@ function renderVidskiptavinir(t) {
       .vk-top .boss-h1{margin:0;font-size:30px}
       .vk-count{font-family:var(--font-mono,ui-monospace,monospace);font-size:12px;color:var(--muted);flex:1}
       .vk-grid{display:grid;grid-template-columns:minmax(260px,340px) minmax(0,1fr);gap:16px;align-items:start}
+      /* Yfirlit efst (16.11.2026): samtölur allra greiðenda + nýjustu hreyfingar */
+      .vk-yf{margin:0 0 16px;overflow:hidden;min-width:0}
+      .vk-yf-h{flex-wrap:wrap;gap:8px 12px}
+      .vk-yf-lina{flex:1;min-width:0;font-family:var(--font-mono,ui-monospace,monospace);font-size:12px;color:var(--muted)}
+      .vk-yf-btn{border:1px solid var(--edge,#c9c2b3);background:#fff;border-radius:4px;padding:5px 12px;font:inherit;font-size:12px;cursor:pointer;color:var(--ink-2,#4a463f);min-height:30px}
+      .vk-yf-btn:hover{border-color:var(--gold-600,#a8801f)}
+      .vk-yf-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;padding:14px 18px 14px}
+      .vk-yf-k{display:block;text-align:left;font:inherit;color:inherit;padding:10px 12px;min-width:0;margin:0}
+      button.vk-yf-k{cursor:pointer}
+      button.vk-yf-k:hover{box-shadow:0 0 0 1px var(--gold-600,#a8801f)}
+      button.vk-yf-k.on{box-shadow:0 0 0 2px var(--gold,#c9a54a)}
+      .vk-yf-k .k-label{font-family:var(--font-mono,ui-monospace,monospace);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+      .vk-yf-k .k-num{font-family:var(--font-display,Georgia,serif);font-size:22px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink);margin-top:2px;white-space:nowrap}
+      .vk-yf-k .k-meta{font-size:11.5px;color:var(--muted);margin-top:4px;line-height:1.3}
+      .vk-yf-k.osent .k-num{color:#b5522a}.vk-yf-k.ogreitt .k-num{color:#8a6a1c}.vk-yf-k.greitt .k-num{color:#2f7a4a}
+      .vk-yf-k .k-meta b{color:#b5522a;font-weight:600}
+      .vk-yf-cols{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border-top:1px solid var(--line,#e6e1d6)}
+      .vk-yf-col{min-width:0;padding:12px 14px 12px 18px;border-left:1px solid var(--line,#e6e1d6)}
+      .vk-yf-col:first-child{border-left:0}
+      .vk-yf-col h3{margin:0 0 4px;font-family:var(--font-display,Georgia,serif);font-size:15px;font-weight:700;color:var(--ink);display:flex;align-items:baseline;gap:8px}
+      .vk-yf-col h3 small{font-family:var(--font-mono,ui-monospace,monospace);font-size:10.5px;font-weight:500;color:var(--muted);margin-left:auto;white-space:nowrap}
+      .vk-yf-r{display:block;width:100%;box-sizing:border-box;text-align:left;border:0;border-bottom:1px solid var(--line,#e6e1d6);background:transparent;padding:7px 4px;font:inherit;color:var(--ink,#161513);cursor:pointer;min-width:0}
+      .vk-yf-r:hover{background:var(--bg-2,#ece7dc)}
+      .vk-yf-r span{display:block;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+      .vk-yf-r .a{display:flex;align-items:center;gap:6px;font-size:13.5px}
+      .vk-yf-r .a b{font-weight:700;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+      .vk-yf-r .a i{flex:none;font-style:normal;font-family:var(--font-mono,ui-monospace,monospace);font-size:10px;padding:1px 6px;border-radius:3px;font-variant-numeric:tabular-nums}
+      .vk-yf-r .a i.ny{background:#1a1813;color:#e2c46f}.vk-yf-r .a i.os{background:#f6dcd8;color:#8a3b12}.vk-yf-r .a i.fj{background:var(--bg-2,#ece7dc);color:var(--ink-2,#4a463f)}
+      .vk-yf-r .a i.gr{background:#dcefe2;color:#23613a}.vk-yf-r .a i.se{background:#fbf3d9;color:#8a6a1c}
+      .vk-yf-r .b{font-size:12.5px;color:var(--ink-2,#4a463f);margin-top:1px}
+      .vk-yf-r .b .warn{color:#b5522a;font-weight:600}
+      .vk-yf-r .c{font-family:var(--font-mono,ui-monospace,monospace);font-size:11px;color:var(--muted,#6f685c);margin-top:1px}
+      .vk-yf-col:not(.allt) .vk-yf-r.meira{display:none}
+      .vk-yf-meira{border:0;background:transparent;color:var(--gold-700,#8a6a1c);font:inherit;font-size:12px;cursor:pointer;padding:8px 4px 0;text-decoration:underline;min-height:30px}
+      .vk-yf-tomt{font-size:12.5px;color:var(--muted);padding:8px 4px}
+      .vk-sia-chip{display:flex;align-items:center;gap:8px;width:100%;box-sizing:border-box;border:1px solid var(--gold-600,#a8801f);background:#fbf3d9;color:#5c4510;border-radius:4px;padding:5px 10px;font:inherit;font-size:12px;cursor:pointer;text-align:left}
+      .vk-sia-chip[hidden]{display:none}.vk-sia-chip b{margin-left:auto;font-weight:700}
+      @media(max-width:980px){.vk-yf-cols{grid-template-columns:minmax(0,1fr)}.vk-yf-col{border-left:0;border-top:1px solid var(--line,#e6e1d6);padding:12px 14px}.vk-yf-col:first-child{border-top:0}.vk-yf-kpis{grid-template-columns:repeat(2,minmax(0,1fr));padding:12px 14px}.vk-yf-k .k-num{font-size:19px}.vk-yf-k:last-child{grid-column:1/-1}.vk-yf-lina{flex-basis:100%;order:3}}
       .vk-list-panel,.vk-d,#vk-detail{min-width:0;max-width:100%}
       .vk-search{min-width:0}
       .vk-list-panel{position:sticky;top:12px;max-height:calc(100vh - 40px);display:flex;flex-direction:column;overflow:hidden}
@@ -3415,8 +3453,94 @@ function renderVidskiptavinir(t) {
     try {
       const r = await fetch('/api/verkkaupar', { cache:'no-store' });
       const j = await r.json();
-      if (r.ok && j.rows) { VKSUMS = {}; for (const x of j.rows) VKSUMS[x.name] = x; if (allRows.length) teiknaLista(); }
+      if (r.ok && j.rows) { VKSUMS = {}; for (const x of j.rows) VKSUMS[x.name] = x; if (allRows.length) teiknaLista(); teiknaYfirlit(); }
     } catch (_) {}
+  }
+
+  // ---------- Yfirlit efst (Agnar 16.11.2026: „samantekt efst, updates á verkum og samskiptum, nýtt um ný verk eða beiðnir") ----------
+  // Flísarnar eru samtölur ALLRA greiðenda úr /api/verkkaupar (sömu tölur og Kröfu yfirlit); dálkarnir þrír koma úr
+  // /api/verkkaupar?nytt=1 (Tímavera 14 d., póstur 14 d. sem tengist skráðum greiðanda, Payday 14 d., beiðnir af verkstað 30 d.).
+  // Smellur á línu opnar greiðandann. Fela/Sýna og sían eru vidmot-lyklar (eins á öllum vélum).
+  let VKNYTT = null, vkNyttVilla = '';
+  async function loadNytt(){
+    try {
+      const r = await fetch('/api/verkkaupar?nytt=1', { cache:'no-store' });
+      const j = await r.json();
+      if (r.ok && j && j.talning) { VKNYTT = j; vkNyttVilla = ''; } else vkNyttVilla = (j && j.error) || ('HTTP ' + r.status);
+    } catch (e) { vkNyttVilla = String(e.message || e); }
+    teiknaYfirlit();
+  }
+  const vkKlst = n => String(Math.round((Number(n) || 0) * 10) / 10).replace('.', ',');
+  const vkIso = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  const vkNaer = s => { const d = String(s || '').slice(0, 10); if (!d) return ''; const n = new Date(); if (d === vkIso(n)) return 'í dag';
+    n.setDate(n.getDate() - 1); return d === vkIso(n) ? 'í gær' : d.slice(8, 10) + '.' + d.slice(5, 7) + '.'; };
+  function teiknaYfirlit(){
+    const el = wrap.querySelector('#vk-yf'); if (!el) return;
+    const S = Object.values(VKSUMS || {}).filter(Boolean);
+    const komid = S.length > 0;
+    const sum = k => S.reduce((a, x) => a + (Number(x[k]) || 0), 0);
+    const osent = sum('osent'), ogreitt = sum('ogreitt'), gjaldf = sum('gjaldfallid'), greittAr = sum('greitt_ar');
+    const nOs = S.filter(x => x.osent > 0).length, nOg = S.filter(x => x.ogreitt > 0).length, nAn = S.filter(x => x.an_greidanda).length;
+    const N = VKNYTT, T = N && N.talning;
+    const falid = !!vidmotLesa('vk_yf_falid', false);
+    const sia = vidmotLesa('vk_sia', '');
+    const tala = n => komid ? vkMoney(n) + ' kr' : '…';
+    const lina = falid
+      ? (komid ? 'Ósent ' + vkMoney(osent) + ' kr · ógreitt ' + vkMoney(ogreitt) + ' kr' : 'Sæki…') + (T ? ' · ' + T.verk_i_gangi + ' verk í gangi' + (T.ny_verk ? ' · ' + T.ny_verk + ' ný' : '') : '')
+      : (N ? 'Vinna, póstur og greiðslur síðustu 14 daga · ný verk síðustu 45 daga' : (vkNyttVilla ? 'Næ ekki í nýjustu hreyfingar: ' + escapeHtml(vkNyttVilla) : 'Sæki nýjustu hreyfingar…'));
+    let html = '<div class="boss-panel-head vk-yf-h"><span class="boss-plate">00</span><span class="boss-panel-title">Yfirlit</span><span class="vk-yf-lina">' + lina + '</span>'
+      + '<button type="button" class="vk-yf-btn" id="vk-yf-fela">' + (falid ? 'Sýna ▾' : 'Fela ▴') + '</button></div>';
+    if (!falid) {
+      const flis = (kl, label, num, meta, lykill) => '<' + (lykill ? 'button type="button" data-vk-sia="' + lykill + '" title="Smelltu til að sjá aðeins þessa greiðendur í listanum"' : 'div')
+        + ' class="boss-kpi vk-yf-k ' + kl + (lykill && sia === lykill ? ' on' : '') + '"><div class="k-label">' + label + '</div><div class="k-num">' + num + '</div><div class="k-meta">' + meta + '</div></' + (lykill ? 'button' : 'div') + '>';
+      html += '<div class="vk-yf-kpis">'
+        + flis('osent', 'Ósent · drög', tala(osent), komid ? nOs + (nOs === 1 ? ' greiðandi' : ' greiðendur') + (nAn ? ' · <b>' + nAn + ' án greiðanda</b>' : '') : '&nbsp;', 'osent')
+        + flis('ogreitt', 'Ógreitt · sendar kröfur', tala(ogreitt), komid ? nOg + (nOg === 1 ? ' greiðandi' : ' greiðendur') + ' · ' + (gjaldf > 0 ? '<b>' + vkMoney(gjaldf) + ' kr fram yfir eindaga</b>' : 'ekkert fram yfir eindaga') : '&nbsp;', 'ogreitt')
+        + flis('greitt', 'Greitt · 14 dagar', T ? vkMoney(T.greitt_14) + ' kr' : '…', (T ? T.greitt_14_n + (T.greitt_14_n === 1 ? ' greiðsla' : ' greiðslur') : '') + (komid ? (T ? ' · ' : '') + 'í ár ' + vkMoney(greittAr) + ' kr' : ''))
+        + flis('', 'Verk í gangi', T ? String(T.verk_i_gangi) : '…', T ? vkKlst(T.klst_14) + ' klst síðustu 14 daga' : '&nbsp;')
+        + flis('', 'Ný verk og beiðnir', T ? String(T.ny_verk + T.beidnir_opnar) : '…', T ? T.ny_verk + (T.ny_verk === 1 ? ' nýtt verk' : ' ný verk') + (T.verk_an_greidanda ? ' · <b>' + T.verk_an_greidanda + ' án greiðanda</b>' : '') + ' · ' + T.beidnir_opnar + (T.beidnir_opnar === 1 ? ' beiðni' : ' beiðnir') : '&nbsp;')
+        + '</div>';
+      if (N) {
+        const dalkur = (titill, undir, radir, tomt) => {
+          const SYNT = 4;
+          const r = radir.map((x, i) => i >= SYNT ? x.replace('class="vk-yf-r"', 'class="vk-yf-r meira"') : x).join('');
+          const fl = radir.length > SYNT ? '<button type="button" class="vk-yf-meira" data-vk-meira data-texti="Sýna alla (' + radir.length + ')">Sýna alla (' + radir.length + ')</button>' : '';
+          return '<div class="vk-yf-col"><h3>' + titill + '<small>' + undir + '</small></h3>' + (r || '<div class="vk-yf-tomt">' + tomt + '</div>') + fl + '</div>';
+        };
+        const verk = (N.verk || []).map(v => {
+          const hver = v.greidandi ? escapeHtml(v.greidandi) : '<b class="warn">greiðandi óskráður</b>';
+          const vinna = v.sidast ? vkKlst(v.klst_14) + ' klst · ' + v.menn + (v.menn === 1 ? ' maður' : ' menn') + ' · síðast ' + vkNaer(v.sidast)
+            : vkKlst(v.klst_45) + ' klst frá ' + vkNaer(v.fyrst) + ' · engin vinna síðustu 14 daga';
+          return '<button type="button" class="vk-yf-r" data-vk-opna="' + escapeAttr(v.greidandi || v.verkstadur) + '"><span class="a"><b>' + escapeHtml(v.verkstadur) + '</b>'
+            + (v.nytt ? '<i class="ny">NÝTT</i>' : '') + (v.osent ? '<i class="os">ósent ' + vkMoney(v.osent) + '</i>' : '') + '</span>'
+            + '<span class="b">' + hver + (!v.verdskra ? ' · taxti óskráður' : '') + '</span><span class="c">' + vinna + '</span></button>';
+        });
+        const postur = (N.samskipti || []).map(m => '<button type="button" class="vk-yf-r" data-vk-opna="' + escapeAttr(m.greidandi || m.verkstadur) + '" title="' + escapeAttr(m.brot || '') + '"><span class="a"><b>'
+          + (m.att === 'ut' ? '→ til ' + escapeHtml(m.netfang) : '← ' + escapeHtml(m.fra || m.netfang)) + '</b>' + (m.fjoldi > 1 ? '<i class="fj">' + m.fjoldi + ' póstar</i>' : '') + '</span>'
+          + '<span class="b">' + escapeHtml(m.efni) + '</span><span class="c">' + escapeHtml(m.greidandi || m.verkstadur) + ' · ' + vkNaer(m.dags) + (m.kl ? ' ' + m.kl : '') + '</span></button>');
+        const hreyf = [];
+        for (const b of (N.beidnir || [])) hreyf.push({ d: b.dags, h: '<button type="button" class="vk-yf-r" data-vk-opna="' + escapeAttr(b.greidandi || b.verkstadur) + '"><span class="a"><b>'
+          + (b.teg === 'verk' ? 'Nýtt verk skráð á staðnum' : 'Beiðni af verkstað') + '</b><i class="ny">' + (b.teg === 'verk' ? 'VERK' : 'BEIÐNI') + '</i></span><span class="b">' + escapeHtml(b.texti || '(enginn texti)') + '</span>'
+          + '<span class="c">' + escapeHtml([b.verkstadur, b.hofundur].filter(Boolean).join(' · ')) + ' · ' + vkNaer(b.dags) + '</span></button>' });
+        for (const k of (N.krofur || [])) hreyf.push({ d: k.dags, h: '<button type="button" class="vk-yf-r" data-vk-opna="' + escapeAttr(k.greidandi) + '"><span class="a"><b>' + escapeHtml(k.greidandi) + '</b>'
+          + (k.teg === 'greidd' ? '<i class="gr">GREITT</i>' : '<i class="se">KRAFA SEND</i>') + '</span><span class="b">' + vkMoney(k.upphaed) + ' kr' + (k.nr ? ' · reikningur ' + escapeHtml(String(k.nr)) : '') + '</span>'
+          + '<span class="c">' + vkNaer(k.dags) + '</span></button>' });
+        hreyf.sort((a, b) => String(b.d).localeCompare(String(a.d)));
+        html += '<div class="vk-yf-cols">'
+          + dalkur('Verk', 'Tímavera · 14 dagar', verk, 'Engin vinna skráð síðustu 14 daga.')
+          + dalkur('Samskipti', 'póstur · 14 dagar', postur, 'Enginn póstur frá eða til skráðra greiðenda síðustu 14 daga.')
+          + dalkur('Kröfur og beiðnir', 'Payday · verkstaður', hreyf.map(x => x.h), 'Engar kröfur, greiðslur eða beiðnir síðustu 14 daga.')
+          + '</div>';
+      }
+    }
+    el.innerHTML = html;
+    if (!el.__bundid) { el.__bundid = true; el.addEventListener('click', e => {
+      if (e.target.closest('#vk-yf-fela')) { vidmotSetja('vk_yf_falid', !vidmotLesa('vk_yf_falid', false)); teiknaYfirlit(); return; }
+      const sb = e.target.closest('[data-vk-sia]'); if (sb) { const v = sb.dataset.vkSia; vidmotSetja('vk_sia', vidmotLesa('vk_sia', '') === v ? '' : v); teiknaLista(); teiknaYfirlit(); return; }
+      const m = e.target.closest('[data-vk-meira]'); if (m) { const on = m.closest('.vk-yf-col').classList.toggle('allt'); m.textContent = on ? 'Sýna færri' : m.dataset.texti; return; }
+      const o = e.target.closest('[data-vk-opna]'); if (o && o.dataset.vkOpna) { leit = ''; const si = wrap.querySelector('#vk-search'); if (si) si.value = '';
+        velja(o.dataset.vkOpna, { scroll: true }); const dc = wrap.querySelector('#vk-detail'); if (dc && window.innerWidth > 980) dc.scrollIntoView({ block: 'start', behavior: 'smooth' }); }
+    }); }
   }
 
   function wsCard(w) {
@@ -3456,7 +3580,12 @@ function renderVidskiptavinir(t) {
     const grouped = hopar();
     const names = Object.keys(grouped).sort((a,b) => a.localeCompare(b,'is'));
     const q = leit.trim().toLowerCase(), qd = dig(leit);
-    const synd = names.filter(n => !q || n.toLowerCase().includes(q) || (qd && dig(kennitalaFyrir(n)).includes(qd)));
+    let synd = names.filter(n => !q || n.toLowerCase().includes(q) || (qd && dig(kennitalaFyrir(n)).includes(qd)));
+    // 16.11.2026: sía úr yfirlitinu efst (vidmot vk_sia — eins á öllum vélum): aðeins greiðendur með ósent / ógreitt, hæsta upphæð efst
+    const sia = vidmotLesa('vk_sia', '');
+    if (sia === 'osent' || sia === 'ogreitt') synd = synd.filter(n => ((VKSUMS[n] || {})[sia] || 0) > 0).sort((a, b) => (VKSUMS[b][sia] || 0) - (VKSUMS[a][sia] || 0));
+    const chip = wrap.querySelector('#vk-sia-chip');
+    if (chip) { const on = sia === 'osent' || sia === 'ogreitt'; chip.hidden = !on; if (on) chip.innerHTML = 'Sía: aðeins greiðendur með ' + (sia === 'osent' ? 'ósent' : 'ógreitt') + ' (' + synd.length + ') <b>✕ sýna alla</b>'; }
     const list = wrap.querySelector('.vk-list'); if(!list) return;
     const html = synd.map(name => {
       const ws = grouped[name]; const kt = kennitalaFyrir(name); const s = VKSUMS[name] || {};
@@ -3806,10 +3935,12 @@ function renderVidskiptavinir(t) {
     if (!wrap.querySelector('.vk-grid')) {
       wrap.innerHTML = `
         <div class="vk-top"><h1 class="boss-h1">Viðskiptavinir</h1><span class="vk-count"></span><button type="button" class="boss-btn ivory" id="vk-new">＋ Bæta við verkstað</button></div>
+        <section class="boss-panel vk-yf" id="vk-yf"></section>
         <div class="vk-grid">
           <aside class="boss-panel vk-list-panel">
             <div class="boss-panel-head"><span class="boss-plate">01</span><span class="boss-panel-title">Greiðendur</span><input type="search" class="boss-field vk-search" id="vk-search" placeholder="🔍 Leita — nafn eða kennitala" autocomplete="off">
-              <label class="vk-allir"><input type="checkbox" id="vk-allir"> Líka greiðendur sem eru aðeins í Payday <span class="n"></span></label></div>
+              <label class="vk-allir"><input type="checkbox" id="vk-allir"> Líka greiðendur sem eru aðeins í Payday <span class="n"></span></label>
+              <button type="button" class="vk-sia-chip" id="vk-sia-chip" hidden></button></div>
             <div class="vk-list"></div>
           </aside>
           <section id="vk-detail"><div class="boss-panel vk-d"><div class="vk-empty">Veldu greiðanda úr listanum til vinstri.</div></div></section>
@@ -3817,6 +3948,8 @@ function renderVidskiptavinir(t) {
       wrap.querySelector('#vk-new').addEventListener('click', () => openModal(null, null));
       wrap.querySelector('#vk-search').addEventListener('input', e => { leit = e.target.value; teiknaLista(); });
       wrap.querySelector('#vk-allir').addEventListener('change', e => { vidmotSetja('vk_payday_allir', !!e.target.checked); teiknaLista(); });
+      wrap.querySelector('#vk-sia-chip').addEventListener('click', () => { vidmotSetja('vk_sia', ''); teiknaLista(); teiknaYfirlit(); });
+      teiknaYfirlit();
       wrap.querySelector('.vk-list').addEventListener('click', e => { const b = e.target.closest('[data-vk-sel]'); if (b) velja(b.dataset.vkSel, { scroll: true }); });
     }
     teiknaLista();
@@ -3976,6 +4109,7 @@ function renderVidskiptavinir(t) {
       allRows = data.rows || [];
       renderList(allRows);
       loadSums();   // samtolur per greidanda (osent/ogreitt/greitt) i hausana
+      loadNytt();   // yfirlitið efst: verk, samskipti, kröfur og beiðnir (16.11.2026)
     } catch(e) {
       wrap.innerHTML = '<p style="color:var(--red-line);padding:20px">Villa: '+escapeHtml(String(e.message||e))+'</p>';
     }
