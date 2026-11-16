@@ -3638,13 +3638,14 @@ function renderVidskiptavinir(t) {
   const vkStutt = s => { const m = String(s || '').match(/^(\d{4})-(\d{2})-(\d{2})/); return m ? m[3] + '.' + m[2] + '.' + m[1].slice(2) : ''; };
   // Leit án broddstafa: „grensas" finnur „Grensásvegur", „skulagata" finnur „Skùlagata 26" (16.11.2026)
   const vkFold = s => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/ð/g, 'd').replace(/þ/g, 'th').replace(/æ/g, 'ae');
-  function rada(listi){
+  // leitAn: þegar leitað er sigtar „Með ógreitt" ekki burt — þeir með ógreitt raðast efst, aðrir fyrir neðan (áður fann leitin ekkert utan síunnar)
+  function rada(listi, leitAn){
     const r = rodLesa(), S = n => VKSUMS[n] || {}, nafn = (a, b) => a.localeCompare(b, 'is');
     const dagsNidur = k => (a, b) => String(S(b)[k] || '').localeCompare(String(S(a)[k] || '')) || nafn(a, b);   // tómt fer neðst
     if (r === 'virkni') return listi.slice().sort(dagsNidur('sidasta_virkni'));
     if (r === 'nyjustu') return listi.slice().sort(dagsNidur('fyrsta_virkni'));
     if (r === 'tekjur') return listi.slice().sort((a, b) => (S(b).tekjur_alls || 0) - (S(a).tekjur_alls || 0) || nafn(a, b));
-    if (r === 'ogreitt') return listi.filter(n => (S(n).ogreitt || 0) > 0)
+    if (r === 'ogreitt') return listi.filter(n => leitAn || (S(n).ogreitt || 0) > 0)
       .sort((a, b) => (S(b).gjaldfallid || 0) - (S(a).gjaldfallid || 0) || (S(b).ogreitt || 0) - (S(a).ogreitt || 0) || nafn(a, b));
     return listi;
   }
@@ -3961,10 +3962,10 @@ function renderVidskiptavinir(t) {
     const sia = vidmotLesa('vk_sia', '');
     const siaOn = sia === 'osent' || sia === 'ogreitt';
     if (siaOn) synd = synd.filter(n => ((VKSUMS[n] || {})[sia] || 0) > 0).sort((a, b) => (VKSUMS[b][sia] || 0) - (VKSUMS[a][sia] || 0));
-    else synd = rada(synd);   // 16.11.2026: röðunin (vk_rod) — sían úr yfirlitinu ræður þegar hún er á
+    else synd = rada(synd, !!q);   // 16.11.2026: röðunin (vk_rod) — sían úr yfirlitinu ræður þegar hún er á
     const rod = rodLesa();
     const rs = wrap.querySelector('#vk-rod'); if (rs && rs.value !== rod) rs.value = rod;
-    const rn = wrap.querySelector('#vk-rod-n'); if (rn) rn.textContent = (!siaOn && rod === 'ogreitt') ? synd.length + ' með ógreitt' : '';
+    const rn = wrap.querySelector('#vk-rod-n'); if (rn) rn.textContent = (!siaOn && rod === 'ogreitt') ? synd.filter(n => ((VKSUMS[n] || {}).ogreitt || 0) > 0).length + ' með ógreitt' : '';
     const chip = wrap.querySelector('#vk-sia-chip');
     if (chip) { const on = sia === 'osent' || sia === 'ogreitt'; chip.hidden = !on; if (on) chip.innerHTML = 'Sía: aðeins greiðendur með ' + (sia === 'osent' ? 'ósent' : 'ógreitt') + ' (' + synd.length + ') <b>✕ sýna alla</b>'; }
     const list = wrap.querySelector('.vk-list'); if(!list) return;
