@@ -11942,7 +11942,7 @@ async function renderGerdReikninga(t){
       .gb-check .n{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;font-weight:600;color:var(--ink,#161513)}.gb-check .n small{font-size:11px;font-weight:400;color:var(--muted,#6f685c)}
       .gb-check .a{margin-left:auto;font-family:var(--font-mono,ui-monospace,monospace);font-size:14px;font-weight:600;font-variant-numeric:tabular-nums;color:var(--ink,#161513);white-space:nowrap}
       .gb-price{margin-top:12px}.gr-modal-bg.boss .gr-f label.gb-unit{font-family:inherit;font-size:inherit;letter-spacing:0;text-transform:none;margin-top:4px}
-      .gr-modal-bg.boss .gr-f .gb-unit input,.gr-modal-bg.boss .gb-hrow .gb-unit input{border:0;background:transparent;box-shadow:none;width:56px;min-width:0;height:34px;padding:0 6px;font-family:var(--font-mono,ui-monospace,monospace);font-weight:600;font-variant-numeric:tabular-nums}
+      .gr-modal-bg.boss .gr-f .gb-unit input,.gr-modal-bg.boss .gb-hrow .gb-unit input{border:0;background:transparent;box-shadow:none;width:84px;min-width:0;height:34px;padding:0 6px;font-family:var(--font-mono,ui-monospace,monospace);font-weight:600;font-variant-numeric:tabular-nums}
       .gb-price .gb-unit input{flex:1}
       .gb-athuga.on{display:flex;align-items:center;flex-wrap:wrap;gap:8px;padding:8px 12px}.gb-athuga .t{margin:0 4px 0 0}
       .gb-athuga .w{padding:4px 8px;background:#fff;border:1px solid #d9b25a;border-radius:4px;box-shadow:inset 0 1px 0 #fff,0 1px 2px rgba(22,21,19,.12)}.gb-athuga .w::after{margin-left:2px}
@@ -11990,7 +11990,7 @@ async function renderGerdReikninga(t){
       .gb-unit{display:flex;align-items:center;height:36px;border:1px solid var(--edge,#c9c2b3);border-radius:4px;background:var(--input-bg,#f6f3ec);box-shadow:var(--well-shadow,inset 0 2px 3px rgba(22,21,19,.12));padding:0 10px 0 0;overflow:hidden;margin:0}
       .gr-modal-bg.boss .gb-unit input{border:0;background:transparent;box-shadow:none;width:64px;min-width:0;height:34px;padding:0 8px;font-family:var(--font-mono,ui-monospace,monospace);font-weight:600}
       .gb-unit span{font-size:10.5px;color:var(--muted,#6f685c);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-      @media(max-width:860px){.gb-hrow{grid-template-columns:78px 1fr 1fr 68px;gap:6px}.gb-hstrip{flex-wrap:wrap}.gb-hstrip #gr-fill-hours{margin-left:0;width:100%}.gb-unit input{width:52px}}
+      @media(max-width:860px){.gb-hrow{grid-template-columns:78px 1fr 1fr 68px;gap:6px}.gb-hstrip{flex-wrap:wrap}.gb-hstrip #gr-fill-hours{margin-left:0;width:100%}.gb-unit input{width:84px}}
       .gb-tv{display:inline-flex;align-items:center;gap:6px;margin-left:8px}
       .gb-tv-link{font-family:var(--font-mono,ui-monospace,monospace);font-size:10.5px;color:var(--gold-800,#8f6a1c);cursor:pointer;text-decoration:underline dotted;white-space:nowrap}
       .gb-lightbox{position:fixed;inset:0;z-index:100050;background:rgba(5,5,5,.92);display:flex;align-items:center;justify-content:center;padding:20px;flex-direction:column;gap:12px;cursor:zoom-out}
@@ -13914,7 +13914,12 @@ async function renderGerdReikninga(t){
         // Dagsetning sem DD/MM/ÁÁÁÁ texti (15.10.2026): <input type="date"> sýndi 09/23/2026 á en-US vöfrum.
         const rowsHtml = tbkRows.map((r,i)=>`<div class="gr-tbk-r${t.on?' on':''}"><input type="text" inputmode="numeric" maxlength="10" placeholder="dd/mm/áááá" value="${escapeAttr(r.date?dmy(r.date):'')}" data-tf="date" data-ti="${i}"><input type="text" value="${escapeAttr(r.employee)}" data-tf="employee" data-ti="${i}" placeholder="Nafn"><input type="text" value="${escapeAttr(r.time_in)}" data-tf="time_in" data-ti="${i}" placeholder="08:00"><input type="text" value="${escapeAttr(r.time_out)}" data-tf="time_out" data-ti="${i}" placeholder="16:00"><input type="text" inputmode="decimal" value="${escapeAttr(String(r.hours))}" data-tf="hours" data-ti="${i}" class="num">${t.on?`<span class="dv">${_phr(rs[i].dv)}</span><span class="yf">${rs[i].yf>0?_phr(rs[i].yf):''}</span>`:''}<button class="gr-tbk-del" data-td="${i}" title="Fjarlægja">✕</button></div>`).join('');
         body.innerHTML = `<div class="gr-tbk-tbl${t.on?' on':''}"><div class="gr-tbk-r head${t.on?' on':''}"><span>Dags.</span><span>Starfsm.</span><span>Inn</span><span>Út</span><span>Tímar</span>${t.on?'<span class="r">Dagv.</span><span class="r">Yfirv.</span>':''}<span></span></div>${rowsHtml||'<div class="gr-tbk-empty">Engar línur — bættu við með ＋.</div>'}</div><div class="gr-tbk-foot"><label><input type="checkbox" id="gr-tbk-yf" ${t.on?'checked':''}> Yfirvinna</label><input type="text" inputmode="decimal" id="gr-tbk-thr" value="${escapeAttr(tbkThrTxt(tbkYf.thr))}" ${t.on?'':'disabled'} title="klst/dag — umfram = yfirvinna"><span class="tot">Σ ${_phr(t.total)} klst${t.on?` → dagv <b>${_phr(t.dv)}</b> · yfirv <b>${_phr(t.yf)}</b>`:''}</span></div>`;
-        body.querySelectorAll('input[data-ti]').forEach(inp=> inp.addEventListener('change', ()=>{ const i=+inp.dataset.ti, f=inp.dataset.tf; tbkRows[i][f]= f==='hours'? tbkNum(inp.value) : f==='date' ? (ymd(inp.value) || tbkRows[i][f]) : inp.value; tbkSync(true); paintTbk(); }));
+        // 16.11.2026 (Agnar: „ég er að lagfæra tímana inn á efnislistanum, en það vill ekki uppfærast í útreikninginn"): breyting á
+        // INN eða ÚT uppfærði aðeins textann — TÍMAR stóðu óbreyttir, svo hvorki dagvinna, yfirvinna né upphæð hreyfðust.
+        // Nú reiknast TÍMAR = ÚT − INN (tbkKlstMilli) þegar bæði eru gild klukka; beinn innsláttur í TÍMAR ræður áfram sjálfur.
+        body.querySelectorAll('input[data-ti]').forEach(inp=> inp.addEventListener('change', ()=>{ const i=+inp.dataset.ti, f=inp.dataset.tf; tbkRows[i][f]= f==='hours'? tbkNum(inp.value) : f==='date' ? (ymd(inp.value) || tbkRows[i][f]) : inp.value;
+          if(f==='time_in' || f==='time_out'){ const h = tbkKlstMilli(tbkRows[i].time_in, tbkRows[i].time_out); if(h != null) tbkRows[i].hours = h; }
+          tbkSync(true); paintTbk(); }));
         body.querySelectorAll('[data-td]').forEach(b=> b.onclick=()=>{ tbkRows.splice(+b.dataset.td,1); tbkSync(true); paintTbk(); });
         const yfc=body.querySelector('#gr-tbk-yf'), thr=body.querySelector('#gr-tbk-thr');
         if(yfc) yfc.onchange=()=>{ tbkYf.on=yfc.checked; tbkSync(true); paintTbk(); };
@@ -13933,7 +13938,31 @@ async function renderGerdReikninga(t){
       else { paintTbk(); }
       // ＋ vistar strax (03.09.2026): áður tapaðist ný lína ef gluggi var lokaður/endurhlaðinn áður en reitur var fylltur.
       { const a=document.getElementById('gr-tbk-add'); if(a) a.onclick=()=>{ tbkRows.unshift({date:(/^\d{4}-\d{2}$/.test(String(month))?month:'')+'-01',employee:'',time_in:'',time_out:'',hours:0}); paintTbk(); tbkPersist(); }; }
-      { const rf=document.getElementById('gr-tbk-refetch'); if(rf) rf.onclick=()=>{ if(!name||!/^\d{4}-\d{2}$/.test(String(month))) return; if(!confirm('Endursækja tímafærslur og henda handvirkum breytingum þessa tímabils?')) return; fetch(`/api/timabok?worksite=${encodeURIComponent(name)}&${grPeriodQS}`).then(r=>r.json()).then(d=>{ tbkRows=(d.rows||[]).map(r=>({date:r.date||'',employee:r.employee||'',time_in:r.time_in||'',time_out:r.time_out||'',hours:Number(r.hours)||0})); tbkSort(); tbkSync(true); paintTbk(); }).catch(()=>{}); }; }
+      // 16.11.2026 (Agnar: „ruslið uppfærist ekki"): 🔄 las aðeins timavera_entries í grunninum, og sjálfvirka sóknin (á 2 tíma
+      // fresti) nær AÐEINS 3 daga aftur — leiðrétting í Tímaveru á eldri dögum (Tindasel 29.10–09.11) kom því aldrei inn, sama
+      // hve oft var ýtt. Nú sækir 🔄 tímabil draganna BEINT úr Tímaveru fyrst (/api/timavera-pull speglar heila daga í glugganum:
+      // breytt færsla færist, eydd hverfur) og les svo tímabókina. Náist ekki í Tímaveru er lesið úr grunninum og sagt frá því.
+      { const rf=document.getElementById('gr-tbk-refetch'); if(rf) rf.onclick=async ()=>{
+          if(!name||!/^\d{4}-\d{2}$/.test(String(month)) || rf.disabled) return;
+          if(!confirm('Sækja tímafærslur þessa tímabils beint úr Tímaveru og henda handvirkum breytingum í töflunni?')) return;
+          const sumEl = document.getElementById('gr-tbk-sum'), gamalt = rf.innerHTML;
+          rf.disabled = true; rf.style.opacity = '.5'; if(sumEl) sumEl.textContent = 'sæki úr Tímaveru…';
+          let athugasemd = '';
+          try{
+            const mr = grPeriod ? { fra: grPeriod.from, til: grPeriod.to } : monthRange(month);
+            const til1 = new Date(mr.til + 'T00:00:00.000Z'); til1.setUTCDate(til1.getUTCDate() + 1);
+            const nu = new Date(), til = til1 > nu ? nu : til1;
+            const pr = await fetch('/api/timavera-pull?from=' + encodeURIComponent(mr.fra + 'T00:00:00.000Z') + '&to=' + encodeURIComponent(til.toISOString()), { cache:'no-store' });
+            const pj = await pr.json().catch(()=>({}));
+            if(!pr.ok || pj.ok === false) throw new Error(pj.error || ('HTTP ' + pr.status));
+          }catch(e){ athugasemd = ' — náði ekki beint í Tímaveru (' + String((e && e.message) || e).slice(0, 60) + '), sýni það sem er í grunninum'; }
+          try{
+            const d = await fetch(`/api/timabok?worksite=${encodeURIComponent(name)}&${grPeriodQS}`, { cache:'no-store' }).then(r=>r.json());
+            tbkRows=(d.rows||[]).map(r=>({date:r.date||'',employee:r.employee||'',time_in:r.time_in||'',time_out:r.time_out||'',hours:Number(r.hours)||0})); tbkSort(); tbkSync(true); paintTbk();
+          }catch(_){ athugasemd = ' — gat ekki lesið tímabókina'; paintTbk(); }
+          rf.disabled = false; rf.style.opacity = ''; rf.innerHTML = gamalt;
+          const $st = document.getElementById('gr-save-st'); if($st) $st.textContent = athugasemd ? ('🔄' + athugasemd) : '🔄 Tímar sóttir úr Tímaveru ' + new Date().toLocaleTimeString('is-IS', { hour:'2-digit', minute:'2-digit' });
+        }; }
       { const ex=document.getElementById('gr-tbk-expand'); if(ex) ex.onclick=()=>{ const m=bg.querySelector('.gr-modal'); if(m) m.classList.toggle('gr-tbk-open'); }; }
     } catch(_tbkErr){ /* innfellda tímaskýrslan mistókst — ritillinn virkar samt */ }
   }
@@ -26378,7 +26407,10 @@ async function openTimabok(name, month){
       <div class="tbk-tot tbk-sub"><span>Yfirvinna (yfir ${tbkThrTxt(t.thr)} klst/dag)</span><b>${_phr(t.yf)} klst</b></div>`:''}
       <div class="tbk-tot"><span>Tímar alls</span><b>${_phr(t.total)} klst</b></div>
       ${emp?`<div class="tbk-emp">${empHead}${emp}</div>`:''}`;
-    body.querySelectorAll('input[data-i]').forEach(inp=> inp.addEventListener('change',()=>{ const i=+inp.dataset.i, f=inp.dataset.f; rows[i][f] = f==='hours'? (Number(String(inp.value).replace(',','.').replace(/[^\d.]/g,''))||0) : f==='date' ? (tbkYmd(inp.value) || rows[i].date) : inp.value; if(f==='hours'||f==='employee'||f==='date'||f==='time_in') paint(); }));
+    body.querySelectorAll('input[data-i]').forEach(inp=> inp.addEventListener('change',()=>{ const i=+inp.dataset.i, f=inp.dataset.f; rows[i][f] = f==='hours'? (Number(String(inp.value).replace(',','.').replace(/[^\d.]/g,''))||0) : f==='date' ? (tbkYmd(inp.value) || rows[i].date) : inp.value;
+      // 16.11.2026: INN/ÚT breytt → TÍMAR reiknast upp á nýtt (sama regla og í Efnislistanum, tbkKlstMilli)
+      if(f==='time_in'||f==='time_out'){ const h = tbkKlstMilli(rows[i].time_in, rows[i].time_out); if(h != null) rows[i].hours = h; }
+      if(f==='hours'||f==='employee'||f==='date'||f==='time_in'||f==='time_out') paint(); }));
     body.querySelectorAll('[data-del]').forEach(b=> b.onclick=()=>{ rows.splice(+b.dataset.del,1); paint(); });
     const yfChk = body.querySelector('#tbk-yf'), yfThr = body.querySelector('#tbk-yf-thr');
     if(yfChk) yfChk.onchange = ()=>{ yf.on = yfChk.checked; paint(); };
@@ -26437,6 +26469,14 @@ async function openTimabok(name, month){
 // ekki aftur fyrir upphaf mánaðarins þótt tímabil draganna geri það. Tindasel okt+nóv: eintak með nóvember einum (125 klst)
 // réð samanburði, innfelldu Tímaskýrslunni og PDF síðu 2 á drögum upp á 152,84 klst — ein línubreyting hefði lækkað
 // reikninginn um 425 þús. kr án viðvörunar. `fra` = period_from draganna (YYYY-MM-DD); venjulegur mánuður er alltaf gildur.
+// Klukkustundir milli INN og ÚT („07:58", „7.58", „758", „16:50") með tveimur aukastöfum; yfir miðnætti leggst sólarhringur við.
+// null ef annað hvort er ekki gild klukka — þá stendur TÍMAR-reiturinn eins og hann var.
+function tbkKlstMilli(inn, ut){
+  const kl = s => { const m = String(s == null ? '' : s).trim().match(/^(\d{1,2})[:.,]?(\d{2})$/); if(!m) return null; const h = +m[1], mi = +m[2]; return (h > 24 || mi > 59) ? null : h * 60 + mi; };
+  const a = kl(inn), b = kl(ut); if(a == null || b == null) return null;
+  let d = b - a; if(d < 0) d += 24 * 60;
+  return Math.round(d / 60 * 100) / 100;
+}
 function tbkEditGilt(saved, month, fra){
   if(!saved || !Array.isArray(saved.rows)) return false;
   const m1 = String(month||'') + '-01';
