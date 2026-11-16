@@ -1,8 +1,16 @@
 /* Behaviour test for the ATTACHMENTS_FAILED guard in brunaholf gmail-send.js.
    Stubs ./_google and global.fetch — no network, no live send. */
 const path = require('path');
-const FN = '/home/user/brunaholf/netlify/functions/gmail-send.js';
-const GOOGLE = path.resolve('/home/user/brunaholf/netlify/functions/_google.js');
+const FN = path.join(__dirname, '..', 'netlify', 'functions', 'gmail-send.js');
+const GOOGLE = path.join(__dirname, '..', 'netlify', 'functions', '_google.js');
+
+// 15.11.2026: gmail-send krefst innskráningar eða tóka. Þetta próf mælir viðhengjavörnina, ekki hliðið
+// (tools/test-gmail-send-hlid.cjs prófar það), svo hub-adgangar er stubbað: tókinn í haus telst gildur.
+const HUBP = path.join(__dirname, '..', 'netlify', 'functions', 'hub-adgangar.js');
+require.cache[HUBP] = { id: HUBP, filename: HUBP, loaded: true, exports: {
+  erPosturToki: async (ev) => ((ev && ev.headers) || {})['x-postur-toki'] === 'prof-toki',
+  handler: async () => ({ statusCode: 200, body: JSON.stringify({ authed: false, user: null }) }),
+} };
 
 // Stub _google before gmail-send requires it.
 require.cache[GOOGLE] = {
@@ -46,6 +54,7 @@ const { handler } = require(FN);
 
 const call = (attachments, extra = {}) => handler({
   httpMethod: 'POST',
+  headers: { 'x-postur-toki': 'prof-toki' },
   body: JSON.stringify({ account: 'a@b.is', to: ['x@y.is'], subject: 's', html: '<p>h</p>', attachments, ...extra }),
 });
 

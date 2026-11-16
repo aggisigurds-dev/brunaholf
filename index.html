@@ -31,6 +31,7 @@
 }catch(e){ document.documentElement.classList.remove('hub-gate-pending'); }})();
 </script>
 <script src="/js/theme.js?v=1"></script>
+<script src="/js/postur-bru.js?v=20261115"></script>
 <script>
 /* Afkasta-lagfæring 2026-08-13: sameina samhliða EINS GET-köll á /api/*.
    Mælt við ræsingu: /api/worksites?year=combined (11,1s!) og
@@ -20460,9 +20461,11 @@ async function renderKrofuyfirlit(t){
         const msgHtml = String(val.msg || sjalfgefid).split(/\n{2,}/).map(p => '<p>' + esc(p).replace(/\n/g, '<br>') + '</p>').join('');
         const html = msgHtml + docLinks + '<p>Kveðja,<br>Brunahólf</p>';
         try{
-          const r=await fetch('/api/gmail-send',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({ account:'eldklar@eldklar.is', from:'Brunahólf <eldklar@eldklar.is>', to:[to], subject, html, attachments })});
-          const j=await r.json().catch(()=>({}));
-          if(!r.ok || j.error) throw new Error((j&&(j.message||j.error))||('HTTP '+r.status));
+          // 15.11.2026: gmail-send krefst innskráningar — bhPosturSenda (js/postur-bru.js) sendir beint, eða gegnum
+          // Slökkvitæki-appið þegar flipinn er innfelldur þar (kakan fylgir ekki í iframe milli vefja).
+          const ps=await bhPosturSenda({ account:'eldklar@eldklar.is', from:'Brunahólf <eldklar@eldklar.is>', to:[to], subject, html, attachments });
+          const j=ps.json||{};
+          if(!ps.ok) throw new Error((j&&(j.message||j.error))||('HTTP '+ps.status));
           await fetch('/api/krofur-yfirlit',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({action:'save', inv_key:key, sent:true, by})}).catch(()=>{});
           wfPatchLocal(key, { sent:true, sent_at:new Date().toISOString(), sent_by:by });
           renderList();
