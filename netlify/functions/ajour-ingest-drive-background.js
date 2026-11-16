@@ -90,7 +90,7 @@ exports.handler = async (event) => {
       if (!batch.length) return;
       const seen = new Map();
       for (const r of batch) {
-        const k = `${r.serial_number}|${r.project_name}|${r.execution_date}`;
+        const k = `${r.serial_number}|${r.project_name}`;
         if (!seen.has(k)) seen.set(k, r);
       }
       const rows = [...seen.values()];
@@ -251,8 +251,10 @@ function detectHeader(idx, aliases) {
   return Object.keys(idx).find((k) => idx[k] === i) || null;
 }
 
+// Lykill = (raðnúmer, verkefni). Var með execution_date til 16.11.2026: tómur framkvæmdardagur (NULL)
+// gaf þá nýja röð við hverja keyrslu (655 aukaraðir á NLSH). Sjá sql/2026-11-16_ajour_registrations_einkvaemt_radnumer.sql.
 async function upsert(rows) {
-  const r = await fetch(`${SUPABASE_URL}/rest/v1/ajour_registrations?on_conflict=serial_number,project_name,execution_date`, {
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/ajour_registrations?on_conflict=serial_number,project_name`, {
     method: 'POST',
     headers: {
       'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`,

@@ -161,7 +161,7 @@ for several Supabase tables this app reads:
 - **`ajour-ingest.py`** — reads the latest `AjourRegistrationData*.csv`
   from Downloads, upserts to `ajour_registrations`. CSV is
   semicolon-delimited UTF-8-with-BOM. Dedupe key:
-  `(serial_number, project_name, execution_date)`. Maps:
+  `(serial_number, project_name)` (frá 16.11.2026; var með `execution_date`). Maps:
   `SerialNumber`, `RegistrationType`, `RegistrationStatus`,
   `ProjectName`, `CategoryGroup`, `Category`, `Category1`,
   `CheckListItem`, `CheckListItemCheckedDate`,
@@ -470,16 +470,19 @@ ANNAÐ kerfi en „Efniskostnaður / Kostnaðarreikningar (endurrukkun)" hér a�
   result endar á „Ajour sótt: N færslur uppfærðar · yfirlit vistað"; ótekin beiðni í 30 mín → úrelt. **Watcher keyrir á BÁÐUM
   vélum** (`LunaBridge-Watcher` á DESKTOP-M5FO3I6, `LunaBridge2-Watcher` á skrifstofuvélinni; `schtasks` 10.11) — sú sem tekur
   beiðnina þarf lifandi `ajour-state.json`. Daglega sóknin 06:45 (`LunaBridge2-Ajour`) er aðeins á skrifstofuvélinni.
-- **Hvað sókn uppfærir:** `ajour-ingest.py:128` upsertar á `(serial_number, project_name, execution_date)` með merge-duplicates og
+- **Hvað sókn uppfærir:** `ajour-ingest.py` upsertar á `(serial_number, project_name)` (frá 16.11.2026) með merge-duplicates og
   sendir `category_group` og `registration_status` → flokka- og stöðubreyting í Ajour skrifast yfir (staðfest: 12068 fór úr
   Raufar/Published í Gólf Ø 160-200/Done). `imported_at` er aðeins sett við innsetningu og segir ekkert um uppfærslur.
-- **VILLA (verkefnalisti `1bd6ccae`, ólagað):** þegar `execution_date` er NULL passar einkvæmi vísirinn ekki (NULL ≠ NULL) og röðin
-  er SETT INN aftur við hverja sókn. 10.11: 63 raðir án dags á 62 NLSH-skráningum (12271 tvisvar: 09.11 og 10.11) → um +62 raðir
-  á dag. `nlsh_stada*` og `nlsh-uppgjor` telja `count(distinct serial_number)` og skekkjast ekki; allt sem telur raðir gerir það,
-  og þegar skráning fær dag verður NULL-röðin eftir með gamla stöðu (telst í `ekki_done`). Sama rót: breytist framkvæmdadagur
-  í Ajour verður gamla röðin eftir. Rétt lagfæring er lykill á `(project_name, serial_number)` — vísir + báðir innlesarar
-  (`ajour-ingest.py` og `netlify/functions/ajour-ingest-drive-background.js`) í SAMA skrefi á báðum vélum; gamall kóði á móti
-  nýjum vísi fellir 500 raða lotu (409), nýr kóði á móti gömlum vísi fær 42P10. Í dag er aðeins eitt tvítekið par í töflunni.
+- **LAGAÐ 16.11.2026 (verkefnalisti `1bd6ccae`; `sql/2026-11-16_ajour_registrations_einkvaemt_radnumer.sql`):** þegar
+  `execution_date` var NULL passaði einkvæmi vísirinn ekki (NULL ≠ NULL) og röðin var SETT INN aftur við hverja sókn. Mælt 16.11:
+  83 NLSH-númer tvítekin 2–13×, 655 aukaraðir. `nlsh-uppgjor` telur einstök raðnúmer per flokk með Done, svo hrein tvítök
+  skekktu ekki, EN gömul eintök með eldri stöðu lifðu: 12 skráningar sem voru Done 10.11 og Published síðan töldust enn
+  (93.758 kr m/vsk oftalið í nóvember). Lagfæringin: eldri eintökum eytt (afrit `ajour_registrations_afrit_tvitok_20261116`,
+  655 raðir, RLS á), nýr lykill `ajour_registrations_radnumer_verkefni_key` á `(serial_number, project_name)` og báðir innlesarar
+  (`ajour-ingest.py`, `netlify/functions/ajour-ingest-drive-background.js`) upserta á hann. Gamli þriggja dálka lykillinn stendur
+  áfram sem `NULLS NOT DISTINCT`, svo óuppfærður kóði (luna-bridge á Heimatölvu) tvítekur ekki heldur; breytist framkvæmdadagur
+  í Ajour fellur þó 500 raða lota hjá ÓUPPFÆRÐUM kóða (409, `post` prentar ERR og heldur áfram) → `git pull` þar.
+  Sannreynt: full sókn á nýja lyklinum, 26.153 raðir fyrir og eftir, 0 tvítekin.
 - **Lesa aldrei `count(*)` úr `ajour_registrations` sem fjölda skráninga** — notaðu `count(distinct serial_number)` per verk.
 
 ## Grunnreglur allra agenta (04.11.2026)

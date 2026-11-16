@@ -1127,3 +1127,24 @@ Agnar: „mátt halda áfram að betrumbæta“. Mælt í grunni (lesaðgangur),
 
 LÆRDÓMUR (SKILL): áður en flokki er breytt á KLÁRAÐRI skráningu í Ajour: (1) afrita hök, (2) reikna hvaða uppgjörsmánuði og lið hún
 færist á (checked_date ræður), (3) athuga hvort hún var þegar rukkuð í frosnum mánuði.
+
+
+## 16.11.2026 (kvöld, síðar) — Tvítekningin í Ajour-innlestrinum LÖGUÐ (Agnar: „Já")
+
+- **Gert:** (1) afrit `ajour_registrations_afrit_tvitok_20261116` (655 raðir, 83 númer, allt NLSH án framkvæmdardags, RLS á);
+  (2) eldri eintökum eytt, hæsta id per raðnúmer stendur (sannreynt fyrst að hæsta id = nýjasta `imported_at` hjá öllum 83);
+  (3) nýr lykill `ajour_registrations_radnumer_verkefni_key` á `(serial_number, project_name)`; gamli þriggja dálka lykillinn
+  endurgerður sem `NULLS NOT DISTINCT` svo óuppfærður kóði tvítekur ekki heldur; (4) `luna-bridge/ajour-ingest.py` og
+  `netlify/functions/ajour-ingest-drive-background.js` upserta nú á `(serial_number, project_name)`.
+  Skráð í `brunaholf/sql/2026-11-16_ajour_registrations_einkvaemt_radnumer.sql` og hjá `gagnaleidslur`.
+- **Mælt fyrir/eftir:** 26.808 → 26.153 raðir; NLSH 11.881 → 11.226 = einstök númer; 0 tvítekin í öllum verkefnum.
+  Nóvember (Done, einstök númer per flokk): Loft Ø125-160 11→10, Loft Ø200-315 6→3, Plast Ø20-34 27→25, Plast Ø35-50 28→24,
+  Stál Ø15-35 24→22; aðrir flokkar óbreyttir. Það eru nákvæmlega skráningarnar 12 (93.758 kr m/vsk) sem voru oftaldar.
+- **Prófað:** (a) í færslu sem var afturkölluð: upsert á nýja lykilinn, á gamla lykilinn með tóman dag, og þegar skráning fær dag
+  síðar: 11.226 raðir í öllum þremur; (b) raunsókn: `ajour-ingest.py` keyrt á `AjourRegistrationData nlsh 2026-11-16.csv`
+  (154.154 línur / 11.504 upsert, engin villa), 26.153 raðir fyrir og eftir.
+- **Aukafundur:** virki innlesarinn er `luna-bridge/ajour-ingest.py` á skrifstofuvélinni (06:45 + „Sækja núna"); Netlify-fallið
+  keyrði síðast 05.10.2026. CSV-ið frá 17:23 í dag er eldra en flutningurinn (17:34–18:15), svo hinar 38 koma inn 17.11 kl. 06:45.
+- **ÓBREYTT og bíður Agnars:** 11822/11824 tvírukkun (október 2.11 → nóvember 3.1); gólfgötin 12272, 12396, 12397 og 12329 (Annað)
+  eru Done án haks og framkvæmdardags og lenda í engum mánuði; gatakortið (`skr_skraningar`) óuppfært.
+- Afritstöflunni má eyða þegar nóvember-uppgjör NLSH er frosið.
