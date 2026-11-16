@@ -3329,7 +3329,7 @@ function renderVidskiptavinir(t) {
       .vk-name{margin:0;font-family:var(--font-display,Georgia,serif);font-size:26px;font-weight:800;line-height:1.1;letter-spacing:-.01em;color:var(--ink)}
       .vk-sub{font-family:var(--font-mono,ui-monospace,monospace);font-size:12px;color:var(--muted);margin-top:4px;display:flex;gap:10px;flex-wrap:wrap}
       .vk-dact{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-      .vk-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;padding:14px 18px 4px}
+      .vk-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(128px,1fr));gap:10px;padding:14px 18px 4px}
       .vk-kpis .boss-kpi{padding:10px 12px}
       .vk-kpis .k-label{font-family:var(--font-mono,ui-monospace,monospace);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
       .vk-kpis .k-num{font-family:var(--font-display,Georgia,serif);font-size:22px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink);margin-top:2px}
@@ -3636,6 +3636,8 @@ function renderVidskiptavinir(t) {
   const RODUN = [['nafn', 'Nafn (A–Ö)'], ['virkni', 'Nýjasta virkni'], ['nyjustu', 'Nýjustu greiðendur'], ['tekjur', 'Tekjuhæstu'], ['ogreitt', 'Með ógreitt']];
   const rodLesa = () => { const r = vidmotLesa('vk_rod', 'nafn'); return RODUN.some(x => x[0] === r) ? r : 'nafn'; };
   const vkStutt = s => { const m = String(s || '').match(/^(\d{4})-(\d{2})-(\d{2})/); return m ? m[3] + '.' + m[2] + '.' + m[1].slice(2) : ''; };
+  // Leit án broddstafa: „grensas" finnur „Grensásvegur", „skulagata" finnur „Skùlagata 26" (16.11.2026)
+  const vkFold = s => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/ð/g, 'd').replace(/þ/g, 'th').replace(/æ/g, 'ae');
   function rada(listi){
     const r = rodLesa(), S = n => VKSUMS[n] || {}, nafn = (a, b) => a.localeCompare(b, 'is');
     const dagsNidur = k => (a, b) => String(S(b)[k] || '').localeCompare(String(S(a)[k] || '')) || nafn(a, b);   // tómt fer neðst
@@ -3698,6 +3700,11 @@ function renderVidskiptavinir(t) {
       .reduce((a, v) => a + (Number(v.upphaed_total) || 0), 0);
     L('Staða', og > 0 ? '<span class="warn">Ógreitt ' + vkMoney(og) + ' kr</span>' + (gjf > 0 ? ' · þar af ' + vkMoney(gjf) + ' kr fram yfir eindaga' : '')
       : (send.length ? 'Allt sem hefur verið sent er greitt' : ''));
+    // verk greiðandans í samningsviðræðum (SV-panelinn efst) — uppfærist þegar þau hlaðast (uppfaeraUmVerkid)
+    const nfn = String(name).trim().toLowerCase(), stHeiti = st => (SV_STODUR.find(o => o[0] === st) || [, st])[1];
+    const sam = ((SV && SV.samningar) || []).filter(s => String(s.greidandi || '').trim().toLowerCase() === nfn);
+    if (sam.length) L('Samningsviðræður', sam.map(s => escapeHtml(s.heiti) + ' — <b>' + escapeHtml(stHeiti(s.stada)) + '</b>' + (s.upphaed ? ' · ' + vkMoney(s.upphaed) + ' kr' : '')
+      + (s.naesta_skref ? ' · ➜ ' + escapeHtml(s.naesta_skref) : '')).join('<br>'));
     const ef = d.efni;
     if (ef && ef.an_vsk > 0) L('Efni í verkið', vkMoney(ef.an_vsk) + ' kr án vsk úr ' + ef.reikningar + (ef.reikningar === 1 ? ' Redder-reikningi' : ' Redder-reikningum')
       + (ef.helstu && ef.helstu.length ? '<br><span class="vk-muted">' + ef.helstu.map(h => escapeHtml(h.nafn) + ' (' + vkMoney(h.upp) + ')').join(' · ') + '</span>' : ''));
@@ -3712,17 +3719,37 @@ function renderVidskiptavinir(t) {
     const s1 = (d.samskipti || [])[0];
     if (s1) L('Síðustu samskipti', vkDate(s1.received_at) + ' · ' + escapeHtml(s1.sender_name || s1.sender_email || '') + ' — ' + escapeHtml(vkHreintEfni(s1.subject) || '(án efnis)'));
     const krofuLinur = lykilSetningar(i.general_notes);
-    return '<div class="vk-sec"><div class="vk-sec-h"><span class="boss-plate">03</span>Um verkið <small>samantekt úr verðskrá, kröfum, drögum, efni og pósti</small></div>'
+    return '<div class="vk-sec" id="vk-um-sec"><div class="vk-sec-h"><span class="boss-plate">03</span>Um verkið <small>samantekt úr verðskrá, kröfum, drögum, efni og pósti</small></div>'
       + (lin.length ? '<dl class="vk-um">' + lin.join('') + '</dl>' : '<div class="vk-muted">Ekkert skráð enn um þennan greiðanda — engin verðskrá, kröfur, drög né póstur.</div>')
-      + krofuLinur.map(s => '<div class="vk-um-krafa">' + escapeHtml(s) + '</div>').join('') + '</div>';
+      + krofuLinur.map(s => '<div class="vk-um-krafa">' + escapeHtml(s) + '</div>').join('')
+      + '<div style="margin-top:10px"><button type="button" class="vk-edit-btn" data-vk-nyttsv style="margin:0">＋ Skrá verk í samningsviðræður</button></div></div>';
+  }
+  // Samningsviðræðurnar hlaðast óháð prófílnum — þegar þær koma er „Um verkið" teiknað aftur fyrir valinn greiðanda
+  function uppfaeraUmVerkid(){
+    const sec = wrap.querySelector('#vk-um-sec'), d = valinn && VKDETAIL[valinn]; if (!sec || !d) return;
+    const tmp = document.createElement('div'); tmp.innerHTML = umVerkidHtml(valinn, d, d.info || {}, d.samtals || {});
+    const ny = tmp.firstElementChild; if (ny && sec.innerHTML !== ny.innerHTML) sec.replaceWith(ny);
   }
 
   // ---------- Samskipti — allur pósturinn (Agnar 16.11.2026: „ég myndi vilja sjá allann póstinn, ekki bara hluta") ----------
   // Útdrátturinn (snippet, 500 stafir) sést áfram í tveimur línum; „▾ Sýna allan póstinn" opnar meginmálið (body_preview) með
   // viðtakendum og viðhengjum. Innsogið geymir meginmál upp að 4.000 stöfum og ekkert úr HTML-póstum (34% póstanna 16.11.2026) —
   // pósturinn segir það sjálfur í stað þess að þykjast vera heill.
-  function samskiptiHtml(d){
+  function samskiptiHtml(d, kt, name){
     const M = d.samskipti || [], SYNT = 8;
+    // Pörunin hér er varkár (verkstaður, nafn, þekkt netföng) — „🔎" opnar Póstleit fyrir greiðandann (djúptenging
+    // __bhOpna.postleit_kt / postleit_q). Póstsaga á kt. þekkir AÐEINS félög í fyrirtaeki (staðir Slökkvitækis) — fyrir aðra
+    // skilaði hún 0 póstum (Deluxe Lodges 16.11.2026 þótt 6 póstar sæjust hér). Þá er leitað á léni netfangsins (finnur póst
+    // í báðar áttir: sendanda og viðtakanda), eða á netfanginu sjálfu ef lénið er almennt, eða á nafni án félagsforms.
+    const ktD = String(kt || '').replace(/\D/g, ''), i = d.info || {};
+    const ALMENN = /^(gmail|googlemail|hotmail|outlook|live|msn|yahoo|icloud|me|simnet|internet|visir|mi|talnet|vortex|isl|centrum|torg)\./i;
+    const netf = [i.contact_email, i.invoice_email, d.payday && d.payday.netfang].filter(Boolean).flatMap(s => String(s).split(/[,;\s]+/))
+      .map(s => s.trim().toLowerCase()).find(s => /^[^@\s]+@[^@\s]+\.[a-z]{2,}$/.test(s) && !/@(brunaholf|eldklar|slokkvitaeki)\./.test(s));
+    const len = netf ? netf.split('@')[1] : '';
+    const leitarord = netf ? (ALMENN.test(len) ? netf : len) : String(name || '').replace(/[,.]?\s*\b(ehf|hf|slf|sf|ses|ohf)\b\.?\s*$/i, '').trim();
+    const iSkra = ktD.length === 10 && (d.stadir || []).length > 0;
+    const leitBtn = '<button type="button" class="vk-edit-btn" data-vk-postleit data-kt="' + (iSkra ? escapeAttr(kt) : '') + '" data-nafn="' + escapeAttr(leitarord) + '" style="margin:8px 0 0">'
+      + (iSkra ? '🔎 Allur póstur á kt. ' + escapeHtml(kt) + ' — Póstsaga' : '🔎 Leita í öllum pósti að „' + escapeHtml(leitarord) + '"') + '</button>';
     const rad = M.map((m, ix) => {
       const full = String(m.body_preview || '');
       const vid = Array.isArray(m.attachment_names) ? m.attachment_names.filter(Boolean) : [];
@@ -3742,8 +3769,8 @@ function renderVidskiptavinir(t) {
     const fj = M.length >= 40 ? '40 nýjustu póstar' : M.length + (M.length === 1 ? ' póstur' : ' póstar');
     return '<div class="vk-sec"><div class="vk-sec-h"><span class="boss-plate">08</span>Samskipti <small>' + (M.length ? fj + ' · ' : '') + 'úr pósthólfum Brunahólfs og Eldklárs</small></div>'
       + (M.length ? '<div class="vk-mails">' + rad + '</div>'
-        + (M.length > SYNT ? '<button type="button" class="vk-edit-btn" data-vk-allirpostar data-texti="Sýna alla ' + M.length + '">Sýna alla ' + M.length + '</button>' : '')
-        : '<div class="vk-muted">Engir póstar fundust sem nefna verkstaðina eða greiðandann.</div>') + '</div>';
+        + (M.length > SYNT ? '<button type="button" class="vk-edit-btn" data-vk-allirpostar data-texti="Sýna alla ' + M.length + '" style="margin:8px 8px 0 0">Sýna alla ' + M.length + '</button>' : '')
+        : '<div class="vk-muted">Engir póstar fundust sem nefna verkstaðina eða greiðandann.</div>') + leitBtn + '</div>';
   }
 
   // ---------- Verk í samningsviðræðum + punktar (Agnar 16.11.2026: „statusupdate með verk í samningsviðræðum, og að ég
@@ -3762,6 +3789,7 @@ function renderVidskiptavinir(t) {
       SV = j; svVilla = '';
     } catch (e) { svVilla = String(e.message || e); }
     teiknaSamninga();
+    uppfaeraUmVerkid();
   }
   async function svPost(body){
     const r = await fetch('/api/verkkaupar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(Object.assign({ hofundur: svMe() }, body)) });
@@ -3918,8 +3946,17 @@ function renderVidskiptavinir(t) {
   function teiknaLista(){
     const grouped = hopar();
     const names = Object.keys(grouped).sort((a,b) => a.localeCompare(b,'is'));
-    const q = leit.trim().toLowerCase(), qd = dig(leit);
-    let synd = names.filter(n => !q || n.toLowerCase().includes(q) || (qd && dig(kennitalaFyrir(n)).includes(qd)));
+    // 16.11.2026: leitin finnur líka eftir verkstað (verðskrá + kort, `verkstadir` úr /api/verkkaupar) og hunsar broddstafi.
+    // Kt-leit aðeins þegar slegnar eru inn tölur — áður fann „Grensásvegur 10" hvern greiðanda með „10" í kennitölunni.
+    const q = vkFold(leit.trim()), qd = /^[\d\s-]+$/.test(leit.trim()) ? dig(leit) : '';
+    const verkFyrir = n => [...new Set([...(grouped[n] || []).map(w => w.worksite_name), ...((VKSUMS[n] || {}).verkstadir || [])].filter(Boolean))];
+    const hittVerk = {};
+    let synd = names.filter(n => {
+      if (!q) return true;
+      if (vkFold(n).includes(q) || (qd && dig(kennitalaFyrir(n)).includes(qd))) return true;
+      const w = verkFyrir(n).find(x => vkFold(x).includes(q)); if (w) { hittVerk[n] = w; return true; }
+      return false;
+    });
     // 16.11.2026: sía úr yfirlitinu efst (vidmot vk_sia — eins á öllum vélum): aðeins greiðendur með ósent / ógreitt, hæsta upphæð efst
     const sia = vidmotLesa('vk_sia', '');
     const siaOn = sia === 'osent' || sia === 'ogreitt';
@@ -3936,7 +3973,7 @@ function renderVidskiptavinir(t) {
       const rk = siaOn ? '' : rodMerki(name);
       return `<button type="button" class="vk-row${name === valinn ? ' sel' : ''}" data-vk-sel="${escapeAttr(name)}">
         <span class="n">${escapeHtml(name)}</span>
-        <span class="m">${s.an_greidanda ? '<b style="color:var(--warn,#b5522a)">án greiðanda</b> · ' : ''}${kt ? 'kt. ' + escapeHtml(kt) + ' · ' : ''}${s.skrad === false ? s.krofur_n + ' kröfur · aðeins í Payday' : Math.max(ws.length, s.worksites || 0) + ' verkst.'}${rk ? ' · <span class="rk">' + escapeHtml(rk) + '</span>' : ''}</span>
+        <span class="m">${s.an_greidanda ? '<b style="color:var(--warn,#b5522a)">án greiðanda</b> · ' : ''}${kt ? 'kt. ' + escapeHtml(kt) + ' · ' : ''}${s.skrad === false ? s.krofur_n + ' kröfur · aðeins í Payday' : Math.max(ws.length, s.worksites || 0) + ' verkst.'}${hittVerk[name] ? ' · 📍 ' + escapeHtml(hittVerk[name]) : ''}${rk ? ' · <span class="rk">' + escapeHtml(rk) + '</span>' : ''}</span>
         ${(s.osent || s.ogreitt || s.stadir) ? `<span class="s">${s.stadir ? '<span class="stadir">' + s.stadir + (s.stadir === 1 ? ' staður' : ' staðir') + (s.greining ? ' · greining' : '') + '</span>' : ''}${s.osent ? '<span class="osent">ósent ' + vkMoney(s.osent) + '</span>' : ''}${s.ogreitt ? '<span class="ogreitt">ógreitt ' + vkMoney(s.ogreitt) + '</span>' : ''}</span>` : ''}
       </button>`;
     }).join('') || '<div class="vk-empty">Ekkert félag passar.</div>';
@@ -4077,7 +4114,7 @@ function renderVidskiptavinir(t) {
       + '<div class="vk-sec"><div class="vk-sec-h"><span class="boss-plate">05</span>Samningurinn <small>taxtar og reglur per verkstað</small></div><div class="vk-ws-grid">' + ((hopar()[name]||[]).map(wsCard).join('') + anKort + nyttKort) + '</div></div>'
       + (d.drog && d.drog.length ? ('<div class="vk-sec"><div class="vk-sec-h"><span class="boss-plate">06</span>Ósendar kröfur <small>' + d.drog.length + ' drög · ' + vkMoney(S.osent) + ' kr</small></div>'
         + '<table class="vk-tbl"><thead><tr><th>Verkstaður</th><th>Mánuður</th><th class="n">Klst</th><th class="n">Upphæð</th><th></th></tr></thead><tbody>'
-        + d.drog.map(x => '<tr><td>' + escapeHtml(x.worksite_name) + '</td><td>' + vkMonth(x.work_month) + '</td><td class="n">' + (x.hours ? x.hours : '—') + '</td><td class="n">' + vkMoney(x.total_m_vsk) + '</td>'
+        + d.drog.map(x => '<tr><td>' + escapeHtml(x.worksite_name) + '</td><td>' + vkMonth(x.work_month) + '</td><td class="n">' + (x.hours ? vkKlst(x.hours) : '—') + '</td><td class="n">' + vkMoney(x.total_m_vsk) + '</td>'
           + '<td><button class="vk-edit-btn" data-vk-open="' + escapeAttr(x.worksite_name) + '" data-vk-month="' + escapeAttr(x.work_month) + '" style="margin:0">📄 Efnislisti</button></td></tr>').join('')
         + '</tbody></table></div>') : '')
       + '<div class="vk-sec"><div class="vk-sec-h"><span class="boss-plate">07</span>Kröfur sem við höfum sent <small>' + (S.krofur||0) + ' alls</small></div>'
@@ -4090,14 +4127,21 @@ function renderVidskiptavinir(t) {
             + '<td>' + (v.draft_match ? '<button class="vk-edit-btn" data-vk-open="' + escapeAttr(v.draft_match.worksite_name) + '" data-vk-month="' + escapeAttr(v.draft_match.work_month) + '" style="margin:0" title="Efnislistinn sem þessi reikningur var gerður úr">📄 Efnislisti</button>' : '') + '</td></tr>'; }).join('')
           + '</tbody></table>' + (krofur.length > 12 ? '<button type="button" class="vk-edit-btn" data-vk-allar>Sýna allar ' + krofur.length + '</button>' : '')
           : '<div class="vk-muted">Engar kröfur skráðar á þennan greiðanda.</div>') + '</div>'
-      + samskiptiHtml(d)
+      + samskiptiHtml(d, kt, name)
       + '<div class="vk-sec"><div class="vk-sec-h"><span class="boss-plate">09</span>Minnispunktar <small>hvað var samið um, hver samþykkir reikninga, sérstök skilyrði</small></div>'
         + '<textarea class="vk-notes" data-vk-notes placeholder="Skrifaðu hér…">' + escapeHtml(i.general_notes || '') + '</textarea>'
         + '<div style="margin-top:8px;display:flex;align-items:center;gap:8px"><button type="button" class="boss-btn ivory" data-vk-savenotes>💾 Vista minnispunkta</button><span class="vk-st" data-vk-notes-st2></span></div></div>';
     // 16.11.2026: póstur opnast í heild / „Sýna alla" — einn hlustari á hvern kassa (varinn gegn tvítengingu)
     if (!box.__vkPostur) { box.__vkPostur = true; box.addEventListener('click', e => {
       const o = e.target.closest('[data-vk-post]'); if (o) { const m = o.closest('.vk-mail'); const on = m.classList.toggle('opinn'); o.textContent = on ? '▴ Fela póstinn' : '▾ Sýna allan póstinn'; return; }
-      const a = e.target.closest('[data-vk-allirpostar]'); if (a) { const l = box.querySelector('.vk-mails'); const on = !!l && l.classList.toggle('allir'); a.textContent = on ? 'Sýna færri' : a.dataset.texti; }
+      const a = e.target.closest('[data-vk-allirpostar]'); if (a) { const l = box.querySelector('.vk-mails'); const on = !!l && l.classList.toggle('allir'); a.textContent = on ? 'Sýna færri' : a.dataset.texti; return; }
+      const pl = e.target.closest('[data-vk-postleit]'); if (pl) { const o = (window.__bhOpna = window.__bhOpna || {});
+        if (pl.dataset.kt) o.postleit_kt = pl.dataset.kt; else o.postleit_q = pl.dataset.nafn;
+        try { window.state.ui.activeTab = 'postleit'; save({ nav: true }); render(); } catch (_) { location.hash = '#postleit'; } return; }
+      const ns = e.target.closest('[data-vk-nyttsv]'); if (ns) { svBreyta = { greidandi: valinn || '' };
+        if (vidmotLesa('vk_sv_falid', false)) vidmotSetja('vk_sv_falid', false);
+        teiknaSamninga(); const sv = wrap.querySelector('#vk-sv'); if (sv) sv.scrollIntoView({ block: 'start', behavior: 'smooth' });
+        const f = wrap.querySelector('[data-sv-form] [name=heiti]'); if (f) setTimeout(() => { try { f.focus({ preventScroll: true }); } catch (_) {} }, 400); }
     }); }
     wireDetail(name, box);
     buaFlipa(name, d, col);
@@ -4286,7 +4330,7 @@ function renderVidskiptavinir(t) {
         <section class="boss-panel vk-sv" id="vk-sv"></section>
         <div class="vk-grid">
           <aside class="boss-panel vk-list-panel">
-            <div class="boss-panel-head"><span class="boss-plate">01</span><span class="boss-panel-title">Greiðendur</span><input type="search" class="boss-field vk-search" id="vk-search" placeholder="🔍 Leita — nafn eða kennitala" autocomplete="off">
+            <div class="boss-panel-head"><span class="boss-plate">01</span><span class="boss-panel-title">Greiðendur</span><input type="search" class="boss-field vk-search" id="vk-search" placeholder="🔍 Leita — nafn, kennitala eða verkstaður" autocomplete="off">
               <div class="vk-rod-row"><label for="vk-rod">Raða</label><select class="vk-rod" id="vk-rod">${RODUN.map(o => '<option value="' + o[0] + '">' + o[1] + '</option>').join('')}</select><span class="vk-rod-n" id="vk-rod-n"></span></div>
               <label class="vk-allir"><input type="checkbox" id="vk-allir"> Líka greiðendur sem eru aðeins í Payday <span class="n"></span></label>
               <button type="button" class="vk-sia-chip" id="vk-sia-chip" hidden></button></div>
@@ -18615,7 +18659,14 @@ async function renderPostleit(t){
   $('#ps-go').addEventListener('click', ()=>ktLeit());
   $('#ps-kt').addEventListener('keydown', e => { if(e.key==='Enter') ktLeit(); });
   $('#ps-otengd').addEventListener('click', otengdListi);
-  setTimeout(()=>{ try{ $('#pl-q').focus(); }catch(_){} }, 60);
+  // 16.11.2026: djúptenging úr Viðskiptavinum (Samskipti → „Allur póstur greiðandans"): __bhOpna.postleit_kt keyrir Póstsögu
+  // eftir kennitölu, __bhOpna.postleit_q keyrir venjulega leit. Síðubreyta (ekki vafralykill), eytt um leið og hún er lesin.
+  let _djupt = false;
+  try { const o = window.__bhOpna || {};
+    if (o.postleit_kt) { const k = o.postleit_kt; delete o.postleit_kt; _djupt = true; ktLeit(k); setTimeout(()=>{ try{ $('#ps-kt').scrollIntoView({ block:'center' }); }catch(_){} }, 150); }
+    else if (o.postleit_q) { $('#pl-q').value = o.postleit_q; delete o.postleit_q; _djupt = true; run(false); }
+  } catch(_){}
+  setTimeout(()=>{ try{ if(!_djupt) $('#pl-q').focus(); }catch(_){} }, 60);
 }
 
 /* Mætingar-nóturnar: eitt eintak í minni, sótt úr app_kv (`maeting_notur`).

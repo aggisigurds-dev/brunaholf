@@ -1089,3 +1089,41 @@ Sæti í 14 liða gátlistanum: 0 EI60 · 1 EI 90 · 2 50 mm Þéttull · 3 Akr�
   (b) vafragluggi falinn (Agnar í síma) → Ajour-gluggar frjósa í hreyfingu og koma upp í bjöguðu útliti (`modal-selector-overflow`), þá Cancel og opna aftur;
   (c) bilslá hakar ekki og bil lendir í athugasemdareit; (d) sannreyna hvern smell með `elementFromPoint` áður en smellt er, og lesa
   `registrationCategoryChecks` úr listagögnunum eftir vistun.
+
+
+## 16.11.2026 (kvöld) — Áhrif flokkaflutningsins á uppgjör hubsins + tvítekning í Ajour-innlestri (aðeins mælt, ekkert skrifað)
+
+Agnar: „mátt halda áfram að betrumbæta“. Mælt í grunni (lesaðgangur), engu breytt.
+
+**A. Hvað flutningurinn gerir við NLSH-uppgjörið (`nlsh-uppgjor.js`, les `skr_hub_skraningar` = `ajour_registrations`):**
+- Uppgjörið raðar á mánuð eftir `checked_date` (dagsetning GÁTLISTAHAKS; framkvæmdardagur aðeins ef hak vantar), telur einstök raðnúmer
+  með stöðu Done per flokk. Change group þurrkar hökin → endurhakað 16.11 → `checked_date` = 16.11.2026 → skráningin færist í NÓVEMBER.
+  (12102 sýnir það þegar: Raflagnaþéttingar, checked 2026-11-16. Hinar 38 uppfærast við næsta innlestur, kl. 06:45.)
+- Í október (FROSINN 10.11, R-388) voru þær „Raufar. (Metrer) LV“ = liður 2.11 (metrar úr subject, `raufMetrar`). Aðeins tvær gáfu metra:
+  **11822 (0,94 m) og 11824 (0,98 m)**; ásamt 11679 (1,80 m, önnur teikning) eru það nákvæmlega 3,72 m sem október 2.11 ber. Hinar 37 gáfu
+  0 m („620mm“, „0-32“ lesast ekki sem ummál) og voru því ALDREI rukkaðar.
+- Í nóvember koma allar 39 inn á lið 3.1 (9.766 kr/heild, 2 stök = 1 heild): 39 stök = 19,5 heildir = **190.437 kr m/vsk**. Þar af eru
+  37 nýrukkun (180.671 kr) og **2 tvírukkun** (11822, 11824: 1,92 m voru þegar í október-2.11 = 0,96 heild × 11.532 = 11.071 kr; í 3.1 = 9.766 kr).
+  BÍÐUR Agnars: draga þær tvær frá í nóvember-lokatölu 3.1 eða leiðrétta október.
+- Aukaverkun: `checked_by_user` þessara 39 er nú brunaholf@brunaholf.is 16.11 í stað starfsmanns í október (starfsmannatölur hubsins).
+
+**B. GALLI: daglegi Ajour-innlesturinn tvítekur skráningar án framkvæmdardags (eigandi: gagnaleidslur).**
+- `ajour-ingest-drive-background.js` (og `luna-bridge/ajour-ingest.py`) upserta á `(serial_number, project_name, execution_date)`. Þegar
+  `execution_date` er NULL eru NULL-gildi ólík í einkvæmum vísi → ný röð við HVERJA keyrslu. Skráningar frá 09.11 (#12271–12332, 12368–12397)
+  hafa engan framkvæmdardag.
+- Mælt 16.11: 11.881 raðir, 11.226 einstök númer, **83 númer tvítekin (2–13 eintök), 655 aukaraðir**; öll 83 með tóman framkvæmdardag, ekkert
+  tvítekið með dagsetningu. Aðeins NLSH. 9 ný númer (12389–12397) tvítakast á morgun.
+- Uppgjörið telur einstök númer per flokk, svo hrein tvítök blása það ekki út. EN gömul eintök lifa: **12 skráningar sem voru Done 10.11 06:45
+  og hafa verið Published síðan (10.11 21:54 →) teljast enn í nóvember**: Plast Ø35-50 12285–12288 (4), Loft Ø200-315 12289, 12290, 12304 (3),
+  Plast Ø20-34 12280, 12281 (2), Stál Ø15-35 12291, 12292 (2), Loft Ø125-160 12298 (1) = **93.758 kr m/vsk oftalið** eins og staðan er.
+- Á móti: **3 gólfgöt eru Done en hafa hvorki hak- né framkvæmdardag og lenda í engum mánuði**: #12272, 12396, 12397 (Gólf Ø160-200, liður 1.2,
+  56.224 kr hvert = 168.672 kr m/vsk); auk #12329 (Annað). Lagast ef hakað er í gátlistann í Ajour.
+- Lagfæring krefst (1) að aukaröðunum 655 sé eytt úr `ajour_registrations` (nýjasta eintak haldið) og (2) vísi breytt í NULLS NOT DISTINCT eða
+  lykli í (serial_number, project_name). Hvorugt gert: skrif í `ajour_registrations` eru bönnuð án orðs Agnars.
+
+**C. Gatakortið er 5 daga gamalt:** `skr_skraningar` (verk 4) síðast stofnað 10.11, uppfært 14.11; hæsta númer 12384 á móti 12397 í Ajour;
+  37 Ajour-skráningar vantar og flokkur 45 fluttu skráninganna er enn „Raufar. (Metrer) LV“ (telst Loft í skýrslunni). Uppfærist ekki sjálft:
+  þarf `luna-bridge/ajour-export-allt.js` → `skraning-gatakort-innflutningur.cjs` (þurrkeyrsla, svo --write) → `para.cjs`. Ógert.
+
+LÆRDÓMUR (SKILL): áður en flokki er breytt á KLÁRAÐRI skráningu í Ajour: (1) afrita hök, (2) reikna hvaða uppgjörsmánuði og lið hún
+færist á (checked_date ræður), (3) athuga hvort hún var þegar rukkuð í frosnum mánuði.

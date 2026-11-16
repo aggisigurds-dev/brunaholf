@@ -286,6 +286,31 @@ svarað í 3 daga'".
   engan, ótengdur póstur birtist ekki; **Kröfur og beiðnir** = Payday (greiðsludagur / útgáfudagur 14 d.) og
   `field_entries` kind `beidni`/`verk` 30 d. Smellur á línu opnar greiðandann. Flísarnar Ósent/Ógreitt sía listann
   (hæsta upphæð efst). Sían (`vk_sia`) og Fela/Sýna (`vk_yf_falid`) eru vidmot-lyklar — eins á öllum vélum.
+- **16.11.2026 — yfirferð Viðskiptavina (Agnar: „taka þessa síðu rækilega í gegn"):**
+  - **Röðun Greiðenda** (`vk_rod`, vidmot): Nafn · Nýjasta virkni · Nýjustu greiðendur · Tekjuhæstu · Með ógreitt (síar,
+    fram yfir eindaga efst). Listinn úr `/api/verkkaupar` ber nú `tekjur_alls` (greitt+ógreitt sent, ekki kredit),
+    `sidasta_virkni`/`fyrsta_virkni` (útgáfudagur reiknings eða mánuður ósendra draga). Dauði reiturinn
+    `sidustu_samskipti` (aldrei fylltur) er farinn. Sían úr Yfirlitinu (`vk_sia`) ræður þegar hún er á.
+  - **„03 Um verkið"** efst á prófílnum (kaflarnir á eftir færðust í 04–09): verkstaðir, samningur/taxti, tímabil,
+    umfang, staða, efni úr Redder (`detail().efni` — reikningar paraðir á verkstaðinn + línur handfærðar á hann með
+    `worksite_override`), kostnaður á stað (`kostnadur.fyrirtaeki_id` — `tilvisun` er frjáls texti og er EKKI parað),
+    athugasemd draga, efni pósts. KRAFA/⚠/TAXTI-setningar úr `general_notes` birtast sem gullrammaðar línur. Ekkert ályktað.
+  - **Samskipti — allur pósturinn:** `detail().samskipti` ber `body_preview`, `to_addresses`, `attachment_names`, `account`;
+    „▾ Sýna allan póstinn" opnar meginmálið. Innsogið geymir meginmál aðeins upp að 4.000 stöfum og EKKERT úr HTML-póstum
+    (1.943 af 5.638 brunaholf-póstum 16.11.2026) — pósturinn segir það sjálfur. Persónulega hólfið (aggisigurds@gmail.com)
+    er síað út í `detail()` og `nytt()` eins og í postleit.js (var ekki í email_digest 16.11, varnarsía).
+  - **„SV · Verk í samningsviðræðum"** milli Yfirlits og Greiðenda: töflurnar `vk_samningar` (heiti, greiðandi, staða
+    fyrirspurn/tilbod_sent/i_vidraedum/samthykkt/hafnad/hunsad, áætluð upphæð, næsta skref, uppruni) og `vk_punktar`
+    (tengdir verki eða almennir) — RLS á, engar reglur, aðeins verkkaupar.js skrifar (`sql/2026-11-16_vk_samningar.sql`).
+    `GET ?samningar=1` + POST `action: samningur | samningur_eyda | punktur | punktur_eyda` (P.requireStaff). Eyðing = `deleted_at`.
+    Tillögur úr pósti: „tilboð"-þræðir 45 d. sem VIÐ sendum/svöruðum, ekki skráðir; „✕ Hunsa" vistar stöðuna `hunsad`.
+    Verk greiðandans birtast líka sem lína „Samningsviðræður" í „Um verkið" (`uppfaeraUmVerkid` eftir hleðslu) og
+    „＋ Skrá verk í samningsviðræður" á prófílnum opnar formið með greiðandann forfylltan.
+  - **Leit í Greiðendum** finnur líka eftir verkstað (listinn ber `verkstadir`) og hunsar broddstafi (`vkFold`: „grensas" →
+    Grensásvegur 10). Kt-leit aðeins þegar slegnar eru inn tölur — áður fann „Grensásvegur 10" alla með „10" í kt.
+  - **„🔎" í Samskiptum → Póstleit** (djúptenging `window.__bhOpna.postleit_kt` / `.postleit_q`, lesin aftast í
+    `renderPostleit`): Póstsaga á kt. AÐEINS ef greiðandinn á stað í `fyrirtaeki` — hún þekkir ekki aðra og gaf 0 pósta fyrir
+    Deluxe Lodges; annars almenn leit á léni netfangsins (pósturinn í báðar áttir), netfanginu ef lénið er almennt, eða nafninu.
 
 - `customer_info` fékk þrjá dálka (apply_migration + `sql/2026-10-16_customer_info_tengilidur.sql`): `contact_name`
   (tengiliður), `invoice_email` (reikningspóstur), `heimilisfang`. `netlify/functions/verkkaupar.js` INFO_FIELDS

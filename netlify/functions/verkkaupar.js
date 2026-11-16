@@ -97,7 +97,8 @@ async function list() {
   // hvorki Landspítali (Áland 6) né Istanbul Market (Grensásvegur 10) í listanum nema með Payday-rofanum, eða alls ekki.
   for (const m of map) if (m.customer_name) { const a = get(m.customer_name); if (!a.kt && m.kt_greidanda) a.kt = m.kt_greidanda; addWs(m.customer_name, m.worksite_name); if (m.confidence === 'manual') a.skrad = true; }
   for (const i of info) if (i.customer_name) { const a = get(i.customer_name); if (i.kennitala) a.kt = i.kennitala; a.skrad = true; }
-  for (const n of Object.keys(wsSet)) acc[n].worksites = Math.max(acc[n].worksites, wsSet[n].size);
+  // 16.11.2026: nöfn verkstaðanna fylgja svo leitin í listanum finni greiðanda eftir verkstað („Grensásvegur" → Istanbul Market)
+  for (const n of Object.keys(wsSet)) { acc[n].worksites = Math.max(acc[n].worksites, wsSet[n].size); acc[n].verkstadir = [...wsSet[n]].slice(0, 40); }
 
   // 03.11.2026: reikningur á kt skráðs greiðanda telst honum þótt nafnið á reikningnum sé annað (Payday „Tilraunastöð Háskóla Íslands í
   // meinafræði" ↔ verðskrá „… að Keldum") — annars stóð prófíllinn kröfulaus. Aðeins þegar kt á einn skráðan greiðanda.
