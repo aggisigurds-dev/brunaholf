@@ -3586,12 +3586,13 @@ function renderVidskiptavinir(t) {
           + '<td><button class="vk-edit-btn" data-vk-open="' + escapeAttr(x.worksite_name) + '" data-vk-month="' + escapeAttr(x.work_month) + '" style="margin:0">📄 Efnislisti</button></td></tr>').join('')
         + '</tbody></table></div>') : '')
       + '<div class="vk-sec"><div class="vk-sec-h"><span class="boss-plate">06</span>Kröfur sem við höfum sent <small>' + (S.krofur||0) + ' alls</small></div>'
-        + (krofur.length ? '<table class="vk-tbl" data-vk-krofur><thead><tr><th>Gjalddagi</th><th>Reikningur</th><th class="n">Upphæð</th><th>Staða</th><th class="vk-gr-d">Greitt</th></tr></thead><tbody>'
+        + (krofur.length ? '<table class="vk-tbl" data-vk-krofur><thead><tr><th>Gjalddagi</th><th>Reikningur</th><th class="n">Upphæð</th><th>Staða</th><th class="vk-gr-d">Greitt</th><th></th></tr></thead><tbody>'
           + krofur.map((v, ix) => { const gr = v.stada === 'ogilt' ? '' : vkDate(v.greidsla_date);
             return '<tr class="' + (v.stada === 'ogilt' ? 'ogilt' : '') + (ix >= 12 ? ' vk-fleiri' : '') + '"><td class="n" style="text-align:left">' + vkDate(v.gjalddagi) + '</td><td>' + tilvTd(v) + '</td>'
             + '<td class="n upp">' + vkMoney(v.upphaed_total) + '</td>'
             + '<td><span class="vk-pill ' + (v.stada||'ogreitt') + '">' + stadaTxt(v) + '</span>' + (v.falid ? '<span class="ws">falið í Kröfu yfirliti</span>' : '') + (gr ? '<span class="ws vk-gr-m">' + gr + '</span>' : '') + '</td>'
-            + '<td class="n vk-gr-d" style="text-align:left">' + gr + '</td></tr>'; }).join('')
+            + '<td class="n vk-gr-d" style="text-align:left">' + gr + '</td>'
+            + '<td>' + (v.draft_match ? '<button class="vk-edit-btn" data-vk-open="' + escapeAttr(v.draft_match.worksite_name) + '" data-vk-month="' + escapeAttr(v.draft_match.work_month) + '" style="margin:0" title="Efnislistinn sem þessi reikningur var gerður úr">📄 Efnislisti</button>' : '') + '</td></tr>'; }).join('')
           + '</tbody></table>' + (krofur.length > 12 ? '<button type="button" class="vk-edit-btn" data-vk-allar>Sýna allar ' + krofur.length + '</button>' : '')
           : '<div class="vk-muted">Engar kröfur skráðar á þennan greiðanda.</div>') + '</div>'
       + '<div class="vk-sec"><div class="vk-sec-h"><span class="boss-plate">07</span>Samskipti <small>úr brunaholf-pósthólfinu</small></div>'
