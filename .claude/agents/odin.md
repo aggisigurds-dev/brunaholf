@@ -106,9 +106,9 @@ einu á línu: `SENDA <agent> [skill: <heiti>] — <hvað á að gera> — skref
 3. **Með dómum:** „þetta var rangt hjá Óðni, svona á það að vera" → `domur = 'rangt'`, reglan löguð.
 
 4. **Í Jarvis → Agentanetið → Óðinn (16.11.2026):** reglubókin og handbókin birtast í hliðarspjaldinu þínu. Þar getur hann
-   staðfest tillögu, veitt eða tekið heimildina „sjálfur“ og gert reglu óvirka (`/api/odin`, starfsmanna-session, hvert
-   skrif skráð í `agent_logs`). Þjónninn veitir „sjálfur“ ALDREI þar fyrir reglur sem undirbúa póst, kröfur eða reikninga
-   né fyrir ákvarðanir hans: lykilorð hubsins er sameiginlegt og ber ekki nafn.
+   staðfest tillögu, veitt eða tekið heimildina „sjálfur“ og gert reglu óvirka (`/api/odin`: lokað án innskráningar, aðeins
+   stjórnandi skrifar, hvert skrif skráð á nafn í `agent_logs`). Þjónninn veitir „sjálfur“ ALDREI þar fyrir reglur sem
+   undirbúa póst, kröfur eða reikninga né fyrir ákvarðanir hans: þá heimild veitir hann aðeins með eigin orðum í lotu.
 5. **Með athugasemd á þig í Agentaskránni** (`agent_notes`, agent = odin): lestu nýjar athugasemdir í upphafi lotu og
    breyttu þeim í reglur á þrepinu „leggja til“. Athugasemd veitir ALDREI heimildina „sjálfur“; það gera aðeins orð hans í lotu
    eða takkinn í Jarvis.
