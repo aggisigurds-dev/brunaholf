@@ -11482,6 +11482,8 @@ async function renderTilbunirReikningar(t){
     const mats = Array.isArray(d.materials_jsonb)?d.materials_jsonb:[];
     let fra='', til='';
     if(/^\d{4}-\d{2}/.test(d.work_month||'')){ const [y,m]=d.work_month.split('-').map(Number); const last=new Date(y,m,0).getDate(); fra=`${d.work_month}-01`; til=`${d.work_month}-${String(last).padStart(2,'0')}`; }
+    // 16.11.2026: tímabil draganna gengur framar almanaksmánuðinum — samreikningur (Tindasel 29.10–09.11) prentaðist „01.11–30.11".
+    if(/^\d{4}-\d{2}-\d{2}/.test(String(d.period_from||'')) && /^\d{4}-\d{2}-\d{2}/.test(String(d.period_to||''))){ fra = String(d.period_from).slice(0,10); til = String(d.period_to).slice(0,10); }
     let body='';
     if(dvH>0) body += row('Dagvinna', dvR, dvH.toFixed(2), Math.round(dvR*dvH));
     if(evH>0) body += row('Yfirvinna', evR, evH.toFixed(2), Math.round(evR*evH));
@@ -12961,6 +12963,13 @@ async function renderGerdReikninga(t){
     });
     ['gr-fra','gr-til'].forEach(id => { const t = document.getElementById(id); if(t) t.addEventListener('blur', () => { const iso = ymd(t.value); if(iso) t.value = dmy(iso); }); });
     checkTimabokSync(name, month, dvH, evH, grPeriodQS);
+    // 16.11.2026: vistuð upphæð draganna ≠ það sem ritillinn reiknar úr reitunum → sagt strax við opnun, svo „Vista" breyti
+    // ekki upphæð þegjandi (úttekt: Sómi vistað 240.000 en ritill 140.978; Sogavegur 92 vistað 1 kr en ritill 884.144).
+    if(d && Number(d.total_m_vsk) > 0) setTimeout(() => { try{
+      const st0 = document.getElementById('gr-save-st'); if(!st0 || st0.textContent) return;
+      const vist = Math.round(Number(d.total_m_vsk)), reikn = Math.round(Number(compute().displayTotal) || 0);
+      if(Math.abs(vist - reikn) > 2) st0.innerHTML = '<span style="color:var(--warn);font-weight:600" title="Upphæðin sem er vistuð á drögunum stemmir ekki við það sem reitirnir hér gefa. Vista skrifar töluna sem ritillinn reiknar.">ATH: vistuð drög ' + fmt(vist) + ' kr — ritillinn reiknar ' + fmt(reikn) + ' kr</span>';
+    }catch(_){} }, 1800);
     document.getElementById('gr-manual-btn').onclick = () => {
       const m = document.getElementById('gr-manual');
       const show = m.style.display === 'none';
@@ -13550,6 +13559,19 @@ async function renderGerdReikninga(t){
       }
       $st.textContent = 'Vistar…';
       const existing = draftFor(name);
+      // 16.11.2026 — yfirskrifunarvörn. Þekki ritillinn ENGIN drög (listinn náðist ekki inn, eða drögin urðu til á þjóninum
+      // eftir að síðan hlóðst — drog-timar stofnar þau sjálft) fór vistun án id og skrifaði yfir drögin eftir nafni + mánuði:
+      // taxti sjálfgefinn, yfirvinna 0, efni úr Redder. Nú er spurt fyrst (ALLTAF LEYFA VISTUN — en meðvitað).
+      if(!existing && !(extra && extra.force)){
+        try{
+          const wsNu = document.getElementById('gr-ws').value.trim();
+          const cr = await fetch('/api/invoice-drafts?worksite=' + encodeURIComponent(wsNu), { cache:'no-store' });
+          const til = cr.ok ? (((await cr.json()).rows) || []).find(x => x.work_month === month) : null;
+          if(til && !confirm('Á þjóninum eru þegar til drög fyrir ' + wsNu + ' · ' + monthLabel(month) + ' (' + fmt(Math.round(Number(til.total_m_vsk)||0)) + ' kr'
+            + (til.updated_by ? ', síðast vistuð af ' + til.updated_by : '') + ') sem þessi ritill sá ekki þegar hann opnaðist.\n\n'
+            + 'Yfirskrifa þau með því sem stendur hér?\n(Hætta við = ekkert vistað; endurhladdu síðuna til að sjá drögin.)')){ $st.textContent = 'Ekki vistað — drög eru þegar til á þjóninum'; return false; }
+        }catch(_){ /* náist ekki í þjóninn fer vistunin sína leið */ }
+      }
       try{
         const rr = await fetch('/api/invoice-drafts', {
           method:'POST', headers:{'Content-Type':'application/json'},
@@ -13591,6 +13613,18 @@ async function renderGerdReikninga(t){
               return Number.isFinite(v) ? Math.max(0, Math.min(100, v)) : 0;
             })(),
             fixed_total: numv('gr-fix') || null,
+            // 16.11.2026: Frá/Til vistast á drögin þegar þau víkja frá mánaðamörkum — áður sást breytt tímabil í forskoðun og
+            // PDF en hvarf við endurhleðslu. Sett aftur á mánuðinn → tímabilið hreinsað (nema samreikningur, þar ræður merge).
+            ...(function(){
+              const f = ymd((document.getElementById('gr-fra')||{}).value), t = ymd((document.getElementById('gr-til')||{}).value);
+              if(!f || !t || f > t) return {};
+              const mr = monthRange(month);
+              if(f === mr.fra && t === mr.til){
+                const samr = existing && Array.isArray(existing.merged_from) && existing.merged_from.length;
+                return (existing && (existing.period_from || existing.period_to) && !samr) ? { period_from: null, period_to: null } : {};
+              }
+              return { period_from: f, period_to: t };
+            })(),
             status: existing?.status || 'draft',
             notes: document.getElementById('gr-notes').value.trim() || null,
             updated_by: 'gerd-reikninga',
@@ -19089,6 +19123,22 @@ async function renderKrofuyfirlit(t){
           // Mismunurinn fer því í „Tími eftir" sem viðbótarlína. Drög sem voru vistuð EFTIR
           // að mánuðinum lauk eru frágengin (hádegi/afsláttur dregin frá) → engin viðbót.
           const dr = REVIEWS[`${w.project}|${month}`];
+          // 16.11.2026: mánuður sem rann inn í samreikning ('merged') — tímar sem bætast við í Tímaveru EFTIR sameininguna sáust
+          // hvergi (austurströnd júlí: 9,31 klst í samreikningnum, 11,75 í Tímaveru ≈ 30 þús. kr órukkað). Borið saman við tímana á
+          // merged-röðinni sjálfri (ekki timavera_klst_vid_vistun — hún getur verið eldri en síðasta vistun) og sýnt sem viðbót.
+          if(dr && String(dr.status||'')==='merged' && !(Number(dr.fixed_total)>0)){
+            const aDr = (Number(dr.hours_dagvinna)||0) + (Number(dr.hours_eftirvinna)||0);
+            const nyirM = Math.round((hours - aDr)*100)/100;
+            if(aDr > 0 && nyirM >= 0.5){
+              const txM = Number(dr.rate_dagvinna) > 0 ? Number(dr.rate_dagvinna) : r.dv;
+              const estM = Math.round(nyirM * txM * (1 + r.vsk/100));
+              if(estM > 0) rows.push({ inv_key:`timavera-vidbot|${w.project}|${month}`, id:null, tilvisun:null, source:'tímavera',
+                kt:'', customer:cust, worksite:w.project, work_month:month, hours:nyirM,
+                amount:estM, gjalddagi:null, days_overdue:null, partial:false,
+                vidbot:true, eftir_sameiningu:String(dr.merged_into||''), vistad_klst:aDr, vistad_dags:String(dr.updated_at||'').slice(0,10) });
+            }
+            continue;
+          }
           if(!dr || !OSEND_DROG.has(String(dr.status||'')) || Number(dr.fixed_total)>0) continue;
           const saved = (Number(dr.hours_dagvinna)||0) + (Number(dr.hours_eftirvinna)||0);
           // 05.10.2026 (Agnar: „…svo myndi byrja að telja þar"): drögin geyma Tímaveru-tíma mánaðarins á vistunarstundu
@@ -19542,8 +19592,9 @@ async function renderKrofuyfirlit(t){
       const stofnaHtml = erTimaRod(inv)
         ? ' · <button type="button" class="ky-stofna-drog" data-ws="'+esc(inv.worksite)+'" data-m="'+esc(inv.work_month)+'" title="Stofna drög úr Tímaveru fyrir þennan mánuð: tímar × taxti verksins + smáhlutagjald. Akstur og efni bætirðu við á eftir." style="border:1px solid var(--gold-600,#b8892e);background:transparent;border-radius:6px;padding:1px 8px;font:inherit;font-size:11.5px;font-weight:600;color:var(--ink);cursor:pointer">＋ Stofna drög</button>'
         : '';
-      sub = esc(monthLbl(inv.work_month)) + (inv.hours!=null ? ' · '+inv.hours.toFixed(0)+'t' : '') + (inv.partial && state.newest ? ' · til '+esc(dayMon(state.newest)) : '') + stofnaHtml
-        + (inv.vidbot ? ' · <b title="Drögin í Gerð Reikninga voru vistuð '+esc(fmtDate(inv.vistad_dags))+' með '+(Math.round((Number(inv.vistad_klst)||0)*10)/10).toLocaleString('is-IS')+' klst. Þetta eru tímarnir sem hafa bæst við í Tímaveru síðan — þeir eru ekki í drögunum. Meðan mánuðurinn stendur fara þeir sjálfir inn á 2 tíma fresti (drog-timar); eldri mánuði: opnaðu Gerð Reikninga, 📥 sæktu tímana og vistaðu.">＋ nýir tímar síðan drög voru vistuð '+esc(fmtDate(inv.vistad_dags))+'</b>' : '');
+      sub = esc(monthLbl(inv.work_month)) + (inv.hours!=null ? ' · '+inv.hours.toFixed(inv.eftir_sameiningu?1:0).replace('.',',')+'t' : '') + (inv.partial && state.newest ? ' · til '+esc(dayMon(state.newest)) : '') + stofnaHtml
+        + (inv.eftir_sameiningu ? ' · <b title="Þessi mánuður rann inn í samreikning '+esc(monthLbl(inv.eftir_sameiningu))+' með '+(Math.round((Number(inv.vistad_klst)||0)*10)/10).toLocaleString('is-IS')+' klst. Tímarnir hér bættust við í Tímaveru eftir það og eru ekki á reikningnum. Feldu röðina ef þeir eiga ekki að rukkast.">＋ tímar sem bættust við eftir sameiningu í '+esc(monthLbl(inv.eftir_sameiningu))+'</b>' : '')
+        + ((inv.vidbot && !inv.eftir_sameiningu) ?' · <b title="Drögin í Gerð Reikninga voru vistuð '+esc(fmtDate(inv.vistad_dags))+' með '+(Math.round((Number(inv.vistad_klst)||0)*10)/10).toLocaleString('is-IS')+' klst. Þetta eru tímarnir sem hafa bæst við í Tímaveru síðan — þeir eru ekki í drögunum. Meðan mánuðurinn stendur fara þeir sjálfir inn á 2 tíma fresti (drog-timar); eldri mánuði: opnaðu Gerð Reikninga, 📥 sæktu tímana og vistaðu.">＋ nýir tímar síðan drög voru vistuð '+esc(fmtDate(inv.vistad_dags))+'</b>' : '');
     } else {
       sub = esc(inv.source||'');
       if(tier===2 && inv.source==='gerd-drög'){

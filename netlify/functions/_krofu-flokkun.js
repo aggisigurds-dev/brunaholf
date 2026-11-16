@@ -121,8 +121,16 @@ function sjalfvirkTenging({ drafts, invoices, resolvePayer }) {
  * „📨 Krafa send"). Greiddur reikningur sameinar EKKI — samskonar upphæð á nýjum drögum gæti verið næsti mánuður í föstum reikningi. Hver
  * ógreiddur reikningur tekur í mesta lagi ein drög (elstu drög fyrst). Ekkert er skrifað eða eytt: drögin lifa í töflunni, detta aðeins úr
  * Ósent; verði reikningurinn greiddur/kreditfærður/falinn birtast þau aftur — þá er kominn tími til að horfa á þau.
- * Skilar Map: lykill drag-raðarinnar (invKey) → ógreidda Payday-röðin sem hún afritar. */
-function tvitekinPaydayDrog({ invoices, metaBy }) {
+ * Skilar Map: lykill drag-raðarinnar (invKey) → ógreidda Payday-röðin sem hún afritar.
+ *
+ * 16.11.2026 — tvær reglur til viðbótar (úttekt: Mannverk 10.634.769 kr stóð ÞRISVAR sem Payday-drög, falið handvirkt):
+ *  (2) SAMA Payday-dragið sótt um tvær innsogsleiðir: sama kt, upphæð innan 1 kr og SAMI gjalddagi → elsta röðin stendur, hinar
+ *      teljast ekki. Gjalddaginn verður að vera eins — fastur mánaðarreikningur ber sömu upphæð en annan gjalddaga og sameinast EKKI.
+ *  (3) Payday-drag sem afritar ÓSEND gerð-drög okkar (bókarinn stofnar reikninginn í Payday eftir „Senda í bókun" en sendir hann ekki
+ *      strax): sama kt og upphæð innan 1 kr → gerð-drögin standa (þau bera Efnislistann), Payday-dragið telst ekki. Eitt á móti einu.
+ *      Þarf `drafts` (+ `resolvePayer`, `tenging`); án þeirra gildir reglan ekki. Gildið í Map-inu er þá gervi-röð
+ *      { source:'gerd-drog', tilvisun:'<verk>|<mánuður>' } — kallendur nota aðeins .has() og tilvísunina. */
+function tvitekinPaydayDrog({ invoices, metaBy, drafts, resolvePayer, tenging }) {
   const out = new Map();
   const mtOf = (r) => (metaBy && metaBy.get(invKey(r))) || {};
   const upph = (r) => +r.upphaed_total || +r.hofudstoll || 0;
@@ -138,6 +146,34 @@ function tvitekinPaydayDrog({ invoices, metaBy }) {
     if (!hit) continue;
     tekid.add(String(hit.id));
     out.set(invKey(d), hit);
+  }
+  // (2) sama dragið um tvær innsogsleiðir — sama kt, upphæð ±1 kr, sami gjalddagi; elsta röðin (lægsta id) stendur.
+  const sed = [];
+  for (const d of drog) {
+    if (out.has(invKey(d)) || !d.gjalddagi) continue;
+    const kt = digits(d.kt_greidanda), amt = upph(d);
+    const fyrri = sed.find((r) => digits(r.kt_greidanda) === kt && String(r.gjalddagi) === String(d.gjalddagi) && Math.abs(upph(r) - amt) <= 1);
+    if (fyrri) out.set(invKey(d), fyrri); else sed.push(d);
+  }
+  // (3) Payday-drag sem afritar ósend gerð-drög okkar — eitt á móti einu, elstu gerð-drög fyrst.
+  if (Array.isArray(drafts) && drafts.length) {
+    const okkar = drafts
+      .filter((x) => { const mt = (metaBy && metaBy.get(draftKey(x))) || {}; return erOsent(x, tenging, mt) && iSummu(mt); })
+      .sort((a, b) => String(a.work_month || '').localeCompare(String(b.work_month || '')));
+    const tekinD = new Set();
+    for (const d of drog) {
+      if (out.has(invKey(d))) continue;
+      const kt = digits(d.kt_greidanda), amt = upph(d);
+      const hit = okkar.find((x) => {
+        if (tekinD.has(x)) return false;
+        const payer = resolvePayer ? (resolvePayer(x.worksite_name) || resolvePayer(x.customer_name)) : null;
+        const xkt = digits(x.kennitala) || (payer && digits(payer.kt)) || '';
+        return xkt && xkt === kt && Math.abs((+x.total_m_vsk || 0) - amt) <= 1;
+      });
+      if (!hit) continue;
+      tekinD.add(hit);
+      out.set(invKey(d), { id: null, source: 'gerd-drog', tilvisun: `${hit.worksite_name}|${hit.work_month}`, upphaed_total: +hit.total_m_vsk || 0, okkar_drog: draftKey(hit) });
+    }
   }
   return out;
 }

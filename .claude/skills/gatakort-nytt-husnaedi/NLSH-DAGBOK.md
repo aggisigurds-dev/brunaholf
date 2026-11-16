@@ -1016,3 +1016,10 @@ Markmið lækkaði (6.471→6.302 á 6H, 6.849→6.588 á 5H) vegna þess að p�
 - Þær 11 sem fóru fyrr um daginn misstu ekkert sem mælt var: 12104 og 8026 höfðu aldrei hök né Done (sagan sýnir það). Þær fengu flokkinn
   „Starfsmaður 1“ án gátlistans „Brunaþéttingar / Fireproofing“. 8026 var sett Í Raufar LV 20-10-2026 10:41 (sagan), ekki skráð þar upphaflega.
 - Mæling á hökum án þess að opna hverja skráningu: `…viewModel.controller.constructionHelper.registrations[i].registrationCategoryChecks` á listasíðunni.
+- **12102 LÖGUÐ 16.11 kl. 17:16–17:18 (Agnar: „Já, laga 12102“):** Done af → hægrismella → Edit registration → hakað í gátlistanum → Save → Done á.
+  Sannreynt í gögnum listans: flokkur „Raflagnaþéttingar, göt og raufar“ / Starfsmaður 1 / Brunaþéttingar / Fireproofing, 14 gátlistaliðir,
+  hakað í nr. 0 (EI60), 4 (Kítti háþensla) og 7 (Borðar / PWP Wraps), senderStatus 1, stimpill 16-11-2026 17:18.
+- **REGLA AGNARS 16.11: á öllum rafmagnsgötum eru hökin ÞRJÚ — EI60, háþenslukítti og háþensluborði.** (12102 bar upphaflega aðeins tvö, án borða.)
+- UPPSKRIFT fyrir kláraða skráningu sem þarf í annan flokk: (1) Done af, (2) Change group með flokki + Starfsmanni + gátlista, (3) Edit registration
+  og haka í liðina, (4) Done á. Hökin verður að setja EFTIR flutning, Change group þurrkar þau. Hakreitirnir í Edit-glugganum eru í sömu röð og
+  gátlistinn (0 EI60 … 4 Kítti háþensla … 7 Borðar). 38 kláraðar á `6H 2S-1S Rafmagnsþéttingar.jpg` bíða enn í Raufar LV.

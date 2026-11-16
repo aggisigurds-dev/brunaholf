@@ -81,3 +81,47 @@ test('handvirkt greitt á drögunum sjálfum: þau eru þegar „greitt" og dett
   const inv = [rod(1, '10', 'SENT', 750000), rod(2, 'PD-x', 'DRAFT', 750000)];
   assert.equal(K.tvitekinPaydayDrog({ invoices: inv, metaBy: metaBy([{ inv_key: 'payday|PD-x', paid: true }]) }).size, 0);
 });
+
+// ── 16.11.2026: reglur (2) og (3) ─────────────────────────────────────────────────────────────────────────────
+test('(2) sama Payday-dragið sótt tvisvar (sama kt, upphæð og gjalddagi): elsta stendur, hitt telst ekki', () => {
+  const M = '411112-0200';
+  const inv = [
+    rod(1343, 'Laugarás Lagoon', 'DRAFT', 10634769, { kt_greidanda: M, gjalddagi: '2025-09-15' }),
+    rod(34940, 'PD-dfde8e75', 'DRAFT', 10634769, { kt_greidanda: M, gjalddagi: '2025-09-15' }),
+  ];
+  const t = K.tvitekinPaydayDrog({ invoices: inv, metaBy: metaBy() });
+  assert.equal(t.size, 1);
+  assert.equal(t.get('payday|PD-dfde8e75').tilvisun, 'Laugarás Lagoon');
+  assert.ok(!t.has('payday|Laugarás Lagoon'));
+});
+
+test('(2) sama upphæð en ANNAR gjalddagi (fastur mánaðarreikningur) sameinast EKKI; drag án gjalddaga ekki heldur', () => {
+  const inv = [rod(1, 'PD-a', 'DRAFT', 250000, { gjalddagi: '2026-10-05' }), rod(2, 'PD-b', 'DRAFT', 250000, { gjalddagi: '2026-11-05' }), rod(3, 'PD-c', 'DRAFT', 250000, { gjalddagi: null })];
+  assert.equal(K.tvitekinPaydayDrog({ invoices: inv, metaBy: metaBy() }).size, 0);
+});
+
+test('(3) Payday-drag sem afritar ósend gerð-drög okkar: gerð-drögin standa, Payday-dragið telst ekki — eitt á móti einu', () => {
+  const drafts = [
+    { worksite_name: 'Tindasel The farm', work_month: '2026-11', status: 'draft', kennitala: KT, total_m_vsk: 3280759, payday_invoice_id: null, merged_into: null },
+    { worksite_name: 'Tindasel The farm', work_month: '2026-10', status: 'merged', kennitala: KT, total_m_vsk: 3280759, payday_invoice_id: null, merged_into: '2026-11' },
+  ];
+  const inv = [rod(1, 'PD-x', 'DRAFT', 3280759.4, { gjalddagi: '2026-12-01' }), rod(2, 'PD-y', 'DRAFT', 3280759, { gjalddagi: '2026-12-15' })];
+  const t = K.tvitekinPaydayDrog({ invoices: inv, metaBy: metaBy(), drafts, resolvePayer: () => null, tenging: new Map() });
+  assert.equal(t.size, 1, 'aðeins EITT Payday-drag á móti einum gerð-drögum (sameinaði mánuðurinn telst ekki)');
+  assert.equal(t.get('payday|PD-x').tilvisun, 'Tindasel The farm|2026-11');
+  assert.ok(!t.has('payday|PD-y'));
+});
+
+test('(3) kt úr greiðandakortinu þegar drögin bera enga; send/falin gerð-drög og önnur upphæð sameina ekki; án drafts óbreytt', () => {
+  const inv = [rod(1, 'PD-x', 'DRAFT', 500000)];
+  const an = { worksite_name: 'Verk A', work_month: '2026-10', status: 'draft', kennitala: null, total_m_vsk: 500000, payday_invoice_id: null };
+  assert.equal(K.tvitekinPaydayDrog({ invoices: inv, metaBy: metaBy(), drafts: [an], resolvePayer: (n) => (n === 'Verk A' ? { kt: KT } : null), tenging: new Map() }).size, 1);
+  assert.equal(K.tvitekinPaydayDrog({ invoices: inv, metaBy: metaBy(), drafts: [an], resolvePayer: () => null, tenging: new Map() }).size, 0, 'engin kt → engin sameining');
+  const sent = Object.assign({}, an, { kennitala: KT, status: 'invoiced' });
+  assert.equal(K.tvitekinPaydayDrog({ invoices: inv, metaBy: metaBy(), drafts: [sent], resolvePayer: () => null, tenging: new Map() }).size, 0);
+  const falid = Object.assign({}, an, { kennitala: KT });
+  assert.equal(K.tvitekinPaydayDrog({ invoices: inv, metaBy: metaBy([{ inv_key: K.draftKey(falid), hidden: true }]), drafts: [falid], resolvePayer: () => null, tenging: new Map() }).size, 0);
+  const onnur = Object.assign({}, an, { kennitala: KT, total_m_vsk: 500002 });
+  assert.equal(K.tvitekinPaydayDrog({ invoices: inv, metaBy: metaBy(), drafts: [onnur], resolvePayer: () => null, tenging: new Map() }).size, 0);
+  assert.equal(K.tvitekinPaydayDrog({ invoices: inv, metaBy: metaBy() }).size, 0);
+});

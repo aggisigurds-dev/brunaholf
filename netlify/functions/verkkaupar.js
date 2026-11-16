@@ -328,7 +328,8 @@ function flokkunarGrunnur({ pg, inv, drafts, map, meta }) {
   const metaBy = new Map((meta || []).map((m) => [m.inv_key, m]));
   const resolvePayer = K.greidendur({ cwmap: map, pguide: pg, invoices: inv });
   const tenging = K.sjalfvirkTenging({ drafts, invoices: inv, resolvePayer });
-  const tvitekin = K.tvitekinPaydayDrog({ invoices: inv, metaBy });   // Payday-drög sem afrita ógreiddan reikning — telja ekki sem ósend (01.11.2026)
+  // Payday-drög sem afrita ógreiddan reikning (01.11.2026), sama drag tvísótt eða ósend gerð-drög okkar (16.11.2026) — telja ekki sem ósend.
+  const tvitekin = K.tvitekinPaydayDrog({ invoices: inv, metaBy, drafts, resolvePayer, tenging });
   return { metaBy, tenging, tvitekin };
 }
 

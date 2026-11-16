@@ -125,7 +125,7 @@ exports.handler = async (event) => {
 
   // ---- tvítekin Payday-drög (01.11.2026): drög á sömu kt og upphæð og ÓGREIDDUR Payday-reikningur teljast ekki aftur sem ósend ----
   // Reglan: K.tvitekinPaydayDrog (_krofu-flokkun.js). Drögin lifa áfram í töflunni; reikningsröðin fær `sameinad_drog` svo sjáist hvað var sameinað.
-  const tvitekin = K.tvitekinPaydayDrog({ invoices, metaBy });   // inv_key drags → ógreidda Payday-röðin
+  const tvitekin = K.tvitekinPaydayDrog({ invoices, metaBy, drafts, resolvePayer, tenging: sjalfvirkTenging });   // inv_key drags → röðin sem það afritar
   const sameinadVid = new Map();                                 // inv_key reiknings → [tilvísanir sameinaðra draga]
   for (const [dk, real] of tvitekin) {
     const rk = K.invKey(real), d = invoices.find((x) => K.invKey(x) === dk);
