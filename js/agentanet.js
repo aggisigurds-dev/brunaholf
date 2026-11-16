@@ -572,7 +572,14 @@
     var box = sideEl && sideEl.querySelector('#an-odin'); if (!box) return;
     var j = odinGogn;
     if (!j) { box.innerHTML = '<div class="dim">Sæki reglubókina…</div>'; return; }
-    if (j.villa) { box.innerHTML = '<div class="an-villa">' + villuTexti(j.villa) + '</div>'; return; }
+    if (j.villa) {
+      // Reglubókin er lokuð án innskráningar (16.11.2026). Innfelld í Slökkvitækis-appið fylgir innskráningarkakan ekki
+      // (SameSite=Lax), svo þar er vísað á Jarvis í eigin glugga í stað þess að sýna aðeins villu.
+      box.innerHTML = /401|Innskráning/.test(j.villa)
+        ? '<div class="an-villa">Reglubókin er lokuð án innskráningar.</div><p class="dim"><a href="/jarvis.html" target="_blank" rel="noopener">Opna Jarvis í eigin glugga</a> og skrá þig inn; þá birtist hún hér.</p>'
+        : '<div class="an-villa">' + villuTexti(j.villa) + '</div>';
+      return;
+    }
     var L = j.reglur || [], t = j.tolur || {};
     var till = L.filter(function (r) { return !r.virk; }), sj = L.filter(function (r) { return r.virk && r.heimild === 'sjalfur'; }),
       und = L.filter(function (r) { return r.virk && r.heimild !== 'sjalfur' && r.urskurdur !== 'til_agnars'; }),

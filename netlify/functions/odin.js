@@ -11,14 +11,62 @@
 //   POST /api/odin { action:'domur', id, domur, athugasemd } → dómur á úrskurð: 'rett' | 'rangt'
 //
 // ÖRYGGI
-//   • Lestur og skrif krefjast starfsmanna-session (P.requireStaff) — reglubókin er rekstrarstefna, ekki opið efni.
-//   • Skrif aðeins frá sama vef (Origin), sama regla og charlize-stada / agent-notes. Hvert skrif er skráð í agent_logs.
+//   • LOKAÐ ÁN INNSKRÁNINGAR. Lestur krefst innskráðs notanda (hub_user-kakan, sama staðfesting og postmoppur.js /
+//     vefur-efni.js); öll skrif krefjast STJÓRNANDA. Vanti innskráningarkerfið sjálft er svarað 503, aldrei hleypt í gegn.
+//     (Fyrsta útgáfan 16.11.2026 kl. 20:03 notaði P.requireStaff, sem hleypir ÖLLU í gegn þegar HUB_STAFF_PASSWORD er
+//     ekki sett — og það er ekki sett í loftinu. Fallið svaraði 200 án innskráningar í nokkrar mínútur; lokað sama kvöld.)
+//   • Skrif aðeins frá sama vef (Origin). Hvert skrif er skráð í agent_logs með nafni notandans.
 //   • Heimildin 'sjalfur' fæst EKKI héðan fyrir reglur sem undirbúa póst, kröfur eða reikninga (urskurdur
-//     'undirbua_afgreidslu'): starfsmanna-lykilorðið er sameiginlegt og ber ekki nafn, svo sú heimild er aðeins
-//     veitt með orðum Agnars í lotu. Reglur af tegundinni 'til_agnars' geta heldur ekki orðið 'sjalfur' — þær ERU
-//     ákvarðanir hans. Tveir rangir dómar á reglu færa hana sjálfkrafa aftur í 'leggja_til'.
+//     'undirbua_afgreidslu') né fyrir reglur af tegundinni 'til_agnars' — þær ERU ákvarðanir hans. Sú heimild er
+//     aðeins veitt með orðum Agnars í lotu. Tveir rangir dómar á reglu færa hana sjálfkrafa aftur í 'leggja_til'.
 
+const crypto = require('crypto');
 const P = require('./_portal');
+
+/* ── Innskráning: sama staðfesting og postmoppur.js / vefur-efni.js (hub_user-kakan, undirrituð með session_secret úr
+ * hub_adgangar_stilling). Fellur LOKAÐ: engin kaka, ógild undirskrift, útrunnið, óvirkur notandi → 401; kerfið ekki sett
+ * upp → 503; gagnagrunnur svarar ekki → 502. */
+const COOKIE = 'hub_user';
+const STJORNENDUR = ['Admin'];
+function kokur(event) {
+  const hra = (event.headers && (event.headers.cookie || event.headers.Cookie)) || '';
+  const ut = {};
+  String(hra).split(';').forEach((b) => {
+    const i = b.indexOf('=');
+    if (i < 1) return;
+    try { ut[b.slice(0, i).trim()] = decodeURIComponent(b.slice(i + 1).trim()); } catch (e) { ut[b.slice(0, i).trim()] = ''; }
+  });
+  return ut;
+}
+async function notandi(event) {
+  const tok = kokur(event)[COOKIE];
+  if (typeof tok !== 'string' || tok.length < 20 || tok.length > 2000) return { villa: 401 };
+  const i = tok.indexOf('.');
+  if (i < 1) return { villa: 401 };
+  const r = await P.sbGet('hub_adgangar_stilling?id=eq.1&pw_hash=not.is.null&select=session_secret,pw_changed_at');
+  if (!r.ok) return { villa: 502 };
+  const st = (await r.json())[0];
+  if (!st || !st.session_secret) return { villa: 503 };
+  const gogn = tok.slice(0, i);
+  const rett = crypto.createHmac('sha256', st.session_secret).update(gogn).digest();
+  const gefid = Buffer.from(tok.slice(i + 1), 'base64url');
+  if (gefid.length !== rett.length || !crypto.timingSafeEqual(gefid, rett)) return { villa: 401 };
+  let p;
+  try { p = JSON.parse(Buffer.from(gogn, 'base64url').toString('utf8')); } catch (e) { return { villa: 401 }; }
+  if (!p || typeof p.exp !== 'number' || p.exp < Math.floor(Date.now() / 1000)) return { villa: 401 };
+  if (String(p.v || '') !== String(st.pw_changed_at || '')) return { villa: 401 };
+  const uid = p.uid;
+  if (typeof uid !== 'number' || !Number.isInteger(uid) || uid < 1) return { villa: 401 };
+  const u = await P.sbGet(`hub_adgangar?id=eq.${uid}&select=id,nafn,notandanafn,rola,virkur`);
+  if (!u.ok) return { villa: 502 };
+  const n = (await u.json())[0];
+  if (!n || !n.virkur) return { villa: 401 };
+  return { nafn: (String(n.nafn || '').trim().split(/\s+/)[0] || String(n.notandanafn || '') || 'Ónefndur').slice(0, 40), stjornandi: STJORNENDUR.includes(n.rola) };
+}
+const hafnad = (v) => (v === 503 ? P.json(503, { error: 'Innskráning starfsmanna er ekki sett upp' })
+  : v === 502 ? P.json(502, { error: 'Innskráning náðist ekki' })
+    : v === 403 ? P.json(403, { error: 'Aðeins stjórnandi getur breytt reglubók Óðins' })
+      : P.json(401, { error: 'Innskráning' }));
 
 const ORIGIN_OK = /^https:\/\/([a-z0-9-]+--)?brunaholf\.netlify\.app$/;
 const LOCAL_OK = /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/;
@@ -31,9 +79,14 @@ const MA_VERDA_SJALFUR = ['loka_med_sonnun', 'hafna', 'samthykkja', 'senda_agent
 exports.handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') return { statusCode: 204, headers: CORS, body: '' };
   if (!P.dbReady()) return P.json(500, { error: 'Supabase env missing' });
-  const g = P.requireStaff(event); if (g) return g;
+  let hver;
+  try { hver = await notandi(event); } catch (e) { return hafnad(502); }
+  if (hver.villa) return hafnad(hver.villa);
   try {
-    if (event.httpMethod === 'POST') return await skrifa(event);
+    if (event.httpMethod === 'POST') {
+      if (!hver.stjornandi) return hafnad(403);
+      return await skrifa(event, hver);
+    }
     if (event.httpMethod !== 'GET') return P.json(405, { error: 'Method not allowed' });
     return await lesa();
   } catch (e) {
@@ -72,13 +125,13 @@ async function lesa() {
 
 function maVerdaSjalfur(r) { return !!r && MA_VERDA_SJALFUR.indexOf(r.urskurdur) !== -1; }
 
-async function skrifa(event) {
+async function skrifa(event, hver) {
   const origin = String((event.headers && (event.headers.origin || event.headers.Origin)) || '');
-  if (origin && !ORIGIN_OK.test(origin) && !LOCAL_OK.test(origin)) return P.json(403, { error: 'Skrif aðeins leyfð frá brunaholf.netlify.app' });
+  if (!ORIGIN_OK.test(origin) && !LOCAL_OK.test(origin)) return P.json(403, { error: 'Skrif aðeins leyfð frá brunaholf.netlify.app' });
   let b; try { b = JSON.parse(event.body || '{}'); } catch { return P.json(400, { error: 'Invalid JSON' }); }
   const id = Number(b.id);
   if (!Number.isInteger(id) || id <= 0) return P.json(400, { error: 'id vantar' });
-  const by = String(b.by_who || 'jarvis.html').slice(0, 60);
+  const by = String((hver && hver.nafn) || 'óþekktur').slice(0, 40) + ' · jarvis';
   const skra = (action, output, status) => P.log({ agent: 'odin', action, target: String(id), status: status || 'ok', output, by_who: by }).catch(() => {});
 
   if (b.action === 'domur') {
