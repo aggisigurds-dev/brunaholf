@@ -110,7 +110,7 @@ Samþykkt af Agnari 04.11.2026 (Agentakerfið 2.0). Kaflinn er í hverri agent-s
 
 1. Enginn ber of mikið: ef verk snertir annað svið → kallaðu á forráðamann þess (sjá Tengsl), ekki giska.
 2. Veiddu úr þínum töflum (gagnakortið í docs/AGENTASKRA.md) og skráðu reglur sem bíta í charlize_knowledge (topic = þitt heiti).
-3. Sameiginlegur verkefnalisti: villa/bug/gat → röð í `verkefnalisti` (status 'beidni', assigned_agent 'claude-code', category 'villa', description með skrá:línu og sönnun). Aldrei laga framhjá listanum.
+3. Villa eða gat sem þú finnur: LAGAÐU það sjálfur ef það er innan verksins sem þú ert í og lagfæringin er afturkræf (prófa, segja frá í lokasvari). Verkefnalistinn er listi Agnars — stofnaðu röð þar AÐEINS ef hann biður um það, eða mest EINA á lotu fyrir það sem er utan verksins og of stórt til að laga núna (skrá:lína og sönnun). Annað fer í lokasvarið og charlize_knowledge, ekki á listann. (Agnar 16.11.2026: „setja allt á verkefnalista í stað þess að laga það“ · „ég vil geta sett á verkefnalista en ekki að ég fái mörg hundruð atriði á móti“; mælt: 137 ný verk á 14 dögum, 21 kláruð.)
 4. Áður en lotu lýkur: hvað veit ég núna sem næsta lota veit ekki? → charlize_knowledge (1–5 færslur), kúnnafróðleikur → scope 'kunni' með kennitölu.
 
 ---
@@ -222,7 +222,7 @@ Bæði slökkvitæki og brunahólf lesa sama Supabase `osfdzskyvisifcwyjkuk`.
 <!-- SIDUKORT:BEGIN -->
 ## Síðukort — hver á hverja síðu (búið til af `node tools/build-agents-registry.cjs`)
 
-Byggt 2026-11-15 úr `brunaholf/.claude/sidukort.json`, `slokkvitaeki/.claude/sidukort.json`, `kjarni/.claude/sidukort.json`. Staða: ✅ eigandi til · ⚠️ eigandi ekki í registry eða skilgreind-skrá finnst ekki · ❌ enginn eigandi. Breyttu síðukortinu, ekki hér.
+Byggt 2026-11-16 úr `brunaholf/.claude/sidukort.json`, `slokkvitaeki/.claude/sidukort.json`, `kjarni/.claude/sidukort.json`. Staða: ✅ eigandi til · ⚠️ eigandi ekki í registry eða skilgreind-skrá finnst ekki · ❌ enginn eigandi. Breyttu síðukortinu, ekki hér.
 
 | Vefur | Síða | Leið | Skilgreind | Eigandi | Undiragentar | Staða |
 |---|---|---|---|---|---|---|
@@ -430,6 +430,7 @@ Byggt 2026-11-15 úr `brunaholf/.claude/sidukort.json`, `slokkvitaeki/.claude/si
 | slokkvitaeki | 3dwork (app) | `/app/threedwork/` | `js/patches/261-app-profiles.js` | `opp` | `kj:3dwork` | ✅ |
 | slokkvitaeki | Vinnusamantekt (efst á Þjónustuborði) | `#bord (eining efst)` | `js/patches/489-vinnusamantekt.js` | `bord-flettur` | `samthykktir` | ✅ |
 | slokkvitaeki | Ráðgjafinn — Tony Stark (undir Vinnusamantekt á Þjónustuborði) | `#bord (gluggi undir Vinnusamantekt, aðeins Agnar)` | `js/patches/506-radgjafinn.js` · `netlify/functions/_radgjafinn.cjs` | `tony-stark` | `bokari` · `rukkari` · `sala-reikningar` · `spider-man` · `black-widow` · `hawkeye` · `kerfisheilsa` | ✅ |
+| slokkvitaeki | Afgreiðsla — forunnin verk, eitt í einu | `/afgreidsla.html` | `afgreidsla.html` · `netlify/functions/afgreidsla.cjs` | `tony-stark` | `postur` · `sala-reikningar` · `rukkari` · `kerfisheilsa` | ✅ |
 | slokkvitaeki | Þjónustusamningar | `#samningar` | `js/patches/50-service-contracts.js` | `sala-reikningar` | `logfraedingur` · `kunnaskra` | ✅ |
 | slokkvitaeki | Söluyfirlit | `#soluyfirlit` | `js/patches/54-sales-analytics.js` | `sala-reikningar` | — | ✅ |
 | slokkvitaeki | Kreditfæra reikning | `#bokhald (Kreditfæra)` | `js/patches/92-credit-by-num.js` · `js/patches/26-credit-invoice.js` | `sala-reikningar` | `natalie` | ✅ |
@@ -519,8 +520,6 @@ Byggt 2026-11-15 úr `brunaholf/.claude/sidukort.json`, `slokkvitaeki/.claude/si
 | kjarni | Verkbók | `/kjarni/artcraft/vinnslur` | `apps/slokkvitaeki/app/kjarni/artcraft/vinnslur/page.tsx` | `artcraft` | — | ✅ |
 | kjarni | Kjarni — Stjórnstöð | `/kjarni` | `apps/slokkvitaeki/app/kjarni/page.tsx` | `kjarni-vefur` | `joker` · `thema` | ✅ |
 | kjarni | Skráning — flokkar, gátlisti og starfsmenn | `/kjarni/skraning/flokkar` | `apps/slokkvitaeki/app/kjarni/skraning/flokkar/page.tsx` | `skraning` | `gagnaleidslur` · `bokari` | ✅ |
-| kjarni | Skráning — stöðuskýrsla | `/kjarni/skraning/skyrsla` | `apps/slokkvitaeki/app/kjarni/skraning/skyrsla/page.tsx` | `bh:gatakort` | `skraning` | ✅ |
-| kjarni | Skráning — gatakort | `/kjarni/skraning/kort` | `apps/slokkvitaeki/app/kjarni/skraning/kort/page.tsx` | `bh:gatakort` | `skraning` | ✅ |
 | kjarni | Skráning — greining | `/kjarni/skraning/greining` | `apps/slokkvitaeki/app/kjarni/skraning/greining/page.tsx` | `skraning` | `gagnaleidslur` | ✅ |
 | kjarni | Skráning — Kjarni | `/kjarni/skraning` | `apps/slokkvitaeki/app/kjarni/skraning/page.tsx` | `skraning` | `gagnaleidslur` · `bokari` | ✅ |
 | kjarni | Skráning — prenta teikningu | `/kjarni/skraning/prenta` | `apps/slokkvitaeki/app/kjarni/skraning/prenta/page.tsx` | `skraning` | `gagnaleidslur` | ✅ |
@@ -548,17 +547,17 @@ Byggt 2026-11-15 úr `brunaholf/.claude/sidukort.json`, `slokkvitaeki/.claude/si
 | kjarni | About (sniðmát) | `/about` | `apps/web/src/app/(external-pages)/about/page.tsx` | `kjarni-vefur` | — | ✅ |
 | kjarni | City trips from Keflavík | `/borgarferdir` | `apps/web/src/app/(external-pages)/borgarferdir/page.tsx` | `kjarni-vefur` | — | ✅ |
 | kjarni | Nextbase-sniðmát | `/` | `apps/web/src/app/(external-pages)/page.tsx` | `kjarni-vefur` | — | ✅ |
-| kjarni | 3dwork — STL bench | `/3dwork` | `apps/web/src/app/3dwork/page.tsx` | `3dwork` | `skill:3dJoker` | ✅ |
-| kjarni | 3dwork geometry | `/api/3dwork/github/geometry/[id]` | `apps/web/src/app/api/3dwork/github/geometry/[id]/route.ts` | `3dwork` | `skill:3dJoker` | ✅ |
-| kjarni | 3dwork eitt verkefni | `/api/3dwork/github/projects/[id]` | `apps/web/src/app/api/3dwork/github/projects/[id]/route.ts` | `3dwork` | `skill:3dJoker` | ✅ |
-| kjarni | 3dwork verkefni | `/api/3dwork/github/projects` | `apps/web/src/app/api/3dwork/github/projects/route.ts` | `3dwork` | `skill:3dJoker` | ✅ |
-| kjarni | 3dwork GitHub-sync | `/api/3dwork/github` | `apps/web/src/app/api/3dwork/github/route.ts` | `3dwork` | `skill:3dJoker` | ✅ |
+| kjarni | 3dwork — STL bench | `/3dwork` | `apps/web/src/app/3dwork/page.tsx` | `skill:3dJoker` | — | ✅ |
+| kjarni | 3dwork geometry | `/api/3dwork/github/geometry/[id]` | `apps/web/src/app/api/3dwork/github/geometry/[id]/route.ts` | `skill:3dJoker` | — | ✅ |
+| kjarni | 3dwork eitt verkefni | `/api/3dwork/github/projects/[id]` | `apps/web/src/app/api/3dwork/github/projects/[id]/route.ts` | `skill:3dJoker` | — | ✅ |
+| kjarni | 3dwork verkefni | `/api/3dwork/github/projects` | `apps/web/src/app/api/3dwork/github/projects/route.ts` | `skill:3dJoker` | — | ✅ |
+| kjarni | 3dwork GitHub-sync | `/api/3dwork/github` | `apps/web/src/app/api/3dwork/github/route.ts` | `skill:3dJoker` | — | ✅ |
 | kjarni | Marks hlekkjaforskoðun | `/api/marks/preview` | `apps/web/src/app/api/marks/preview/route.ts` | `kjarni-vefur` | — | ✅ |
 | kjarni | Marks — site | `/marks/[boardId]` | `apps/web/src/app/marks/[boardId]/page.tsx` | `kjarni-vefur` | — | ✅ |
 | kjarni | Marks — kjarni bookmarks | `/marks` | `apps/web/src/app/marks/page.tsx` | `kjarni-vefur` | — | ✅ |
 | kjarni | Ljósastýring Langamýri 22 (Hue Remote API) | `/ljos` | `apps/slokkvitaeki/app/ljos/page.tsx` · `apps/slokkvitaeki/app/api/ljos/route.ts` | `kjarni-vefur` | `oryggi` | ✅ |
 
-**Samantekt:** brunaholf 103/103 með eiganda (100%), 0 ⚠️, 0 ❌ · slokkvitaeki 120/123 með eiganda (98%), 0 ⚠️, 3 ❌ · kjarni 105/105 með eiganda (100%), 0 ⚠️, 0 ❌
+**Samantekt:** brunaholf 103/103 með eiganda (100%), 0 ⚠️, 0 ❌ · slokkvitaeki 121/124 með eiganda (98%), 0 ⚠️, 3 ❌ · kjarni 103/103 með eiganda (100%), 0 ⚠️, 0 ❌
 
 ### Síður án eiganda
 

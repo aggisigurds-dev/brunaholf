@@ -20,13 +20,16 @@ relevant section here if it's core — in the same commit.
 
 ---
 
-## ✅ FAST UMBOÐ (16.11.2026)
+## ✅ FAST UMBOÐ og VERKEFNALISTAÞAK (16.11.2026)
 
-Agnar samþykkti 16.11.2026 („Ja hljómar vel") að lotur geri þetta ÁN þess að spyrja: (1) haldi áfram milli
-skrefa í verki sem hann bað um, (2) sameini (merge) eigin grein þegar öll próf standast, (3) birti lagfæringu á
-bilun sem hann tilkynnti, eftir prófun enda á milli. ALLTAF spyrja fyrst um: póst eða SMS út úr húsi, kröfur,
-reikninga og annað sem snertir peninga, eyðingu gagna, verðbreytingar og breytingar á borði annarra starfsmanna.
-Ástæðan (mælt): um 22 % skeyta hans voru aðeins „já / merge / halda áfram / birta".
+Agnar samþykkti 16.11.2026 að lotur geri þetta ÁN þess að spyrja: (1) haldi áfram milli skrefa í verki sem hann
+bað um, (2) sameini (merge) eigin grein þegar öll próf standast, (3) birti það sem hann bað um — nýja virkni
+jafnt sem lagfæringu — þegar það er prófað enda á milli, (4) lagi villu sem þær finna í því sem þær eru að vinna
+við. Ekki enda umferð á spurningu sem svarið er augljóst „já" við: lotan stendur þá kyrr þar til hann kemur aftur.
+ALLTAF spyrja fyrst um: póst eða SMS út úr húsi, kröfur, reikninga og annað sem snertir peninga, eyðingu gagna,
+verðbreytingar og breytingar á borði annarra starfsmanna.
+**Verkefnalistinn er listi Agnars:** lotur stofna ekki verk þar nema hann biðji um það, mest EITT á lotu fyrir
+það sem er utan verksins og of stórt (mælt: 175 biðu, 137 ný á 14 dögum, 21 kláruð).
 Reglan í heild: `C:\projects\slokkvitaeki\CLAUDE.md`, kaflinn FAST UMBOÐ.
 
 ## ⛔ SAMÞYKKISÞAK (11.11.2026)
