@@ -18,6 +18,8 @@
  *   GET  /api/gmail-send?status=1        → hvaða pósthólf geta sent
  *   POST /api/gmail-send
  *     { account, to:[…], subject, html, cc?:[…], replyTo?, inReplyTo?, attachments?:[…] }
+ *   POST /api/gmail-send { prufa:true }  → 200 { ok, prufa, via } — prófar hliðið, sendir EKKERT
+ *   BÆÐI krefjast innskráningar eða tíma-tóka frá 15.11.2026 (sjá hlid að neðan); annars 401.
  *
  *   inReplyTo (10.09.2026) — Message-ID upprunalega póstsins (email_digest.message_id).
  *     Setur In-Reply-To + References og sendir með threadId sendandi pósthólfsins, svo
@@ -33,11 +35,43 @@
  * UPP Á NÝTT einu sinni — gömul token bera ekki nýja skópið.
  */
 const { freshAccessTokenFor, freshAccessToken, listConnectedAccounts, json, cors } = require('./_google');
+const HUB = require('./hub-adgangar');
 
 const GMAIL_SEND = 'https://gmail.googleapis.com/gmail/v1/users/me/messages/send';
 
+// ── HLIÐIÐ (15.11.2026, Agnar: „Já, smíða" — „aðeins innskráðir geti sent") ─────────────────────────────────────
+// Áður svaraði fallið ÖLLUM: hver sem er gat sent póst sem eldklar@/bokhald@ og látið senda sér skrár úr Drive-inu
+// (driveId sótt með aðal-tokeninu). Nú kemst aðeins inn:
+//   1. þjónn með gildan tíma-tóka (x-postur-toki, myntaður og staðfestur í hub-adgangar.js með session_secret úr
+//      sameiginlega gagnagrunninum) — daily-health, hub-adgangar, slokkvitaeki/afgreidsla.cjs og
+//      slokkvitaeki/postur-senda.cjs (Slökkvitæki-appið sendir ALLAN sinn póst þar um, sjá 254-receipt-sender.js);
+//   2. innskráður á Brunahólfi (cookie hub_user). Spurt er fall innskráningarinnar sjálft (sami kóði og síðan
+//      notar), ekki afrit af dulrituninni. Innfelld Brunahólfs-síða í Slökkvitæki-appinu fær ekki kökuna
+//      (SameSite=Lax milli vefja) og biður appið að senda í staðinn (postMessage, sjá bhPosturSenda í index.html).
+// Engin innskráning → 401; innskráningarfallið svarar ekki → 503 (lokað, aldrei opið).
+// { prufa: true } í POST: hliðið svarar 200 { ok, prufa, via } og SENDIR EKKERT — enda-á-milli próf án pósts.
+async function hlid(event) {
+  if (await HUB.erPosturToki(event).catch(() => false)) return { via: 'toki' };
+  let s = null;
+  try {
+    const h = (event && event.headers) || {};
+    const r = await HUB.handler({ httpMethod: 'GET', queryStringParameters: {}, headers: { host: h.host || h.Host || 'brunaholf.netlify.app', cookie: h.cookie || h.Cookie || '' } });
+    if (r && r.statusCode === 200) s = JSON.parse(r.body);
+  } catch (_) { s = null; }
+  if (!s || typeof s.authed !== 'boolean') return { svar: json(503, { error: 'AUTH_UNAVAILABLE', message: 'Náði ekki að staðfesta innskráningu — reyndu aftur eftir smá stund. Pósturinn var EKKI sendur.' }) };
+  if (s.authed && s.user) return { via: 'innskraning' };
+  // Opinn Slökkvitæki-flipi með gamla 254 (fyrir 15.11.2026) kallar hingað beint — segjum honum að endurhlaða.
+  const fraAppi = /^https:\/\/slokkvitaeki\.netlify\.app$/.test(String((event.headers || {}).origin || ''));
+  return { svar: json(401, { error: 'LOGIN_REQUIRED', need_login: true, login: '/adgangar.html', message: fraAppi
+    ? 'Póstleið appsins breyttist — endurhladdu síðunni (F5) og sendu aftur. Pósturinn var EKKI sendur.'
+    : 'Innskráning vantar — skráðu þig inn til að senda póst. Pósturinn var EKKI sendur.' }) };
+}
+
 exports.handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') return { statusCode: 204, headers: cors(), body: '' };
+
+  const g = await hlid(event);
+  if (g.svar) return g.svar;
 
   if (event.httpMethod === 'GET') {
     const accounts = await listConnectedAccounts().catch(() => []);
@@ -55,13 +89,14 @@ exports.handler = async (event) => {
   let body;
   try { body = JSON.parse(event.body || '{}'); }
   catch (_) { return json(400, { error: 'Invalid JSON body' }); }
+  if (body && body.prufa === true) return json(200, { ok: true, prufa: true, via: g.via, sent: false });
 
   const account = String(body.account || '').trim();
   const to = [].concat(body.to || []).map(s => String(s || '').trim()).filter(Boolean);
   const subject = String(body.subject || '').trim();
   if (!account) return json(400, { error: 'Missing account', message: 'Hvaða pósthólf á að senda frá?' });
   // 31.10.2026 (úttekt): aldrei sent úr persónulega pósthólfinu (svarstöð: „aggisigurds@gmail.com er aldrei notað").
-  // Fallið svarar án innskráningar, svo hver sem er gat sent sem Agnar. Viðtakandi má áfram vera það netfang (daily-health).
+  // Þá svaraði fallið án innskráningar (lokað 15.11.2026, sjá hlid). Viðtakandi má áfram vera það netfang (daily-health).
   if (account.toLowerCase() === 'aggisigurds@gmail.com') return json(403, { error: 'Personal account', message: 'Það er aldrei sent úr persónulega pósthólfinu.' });
   if (!to.length || !subject) return json(400, { error: 'Missing to/subject' });
 
