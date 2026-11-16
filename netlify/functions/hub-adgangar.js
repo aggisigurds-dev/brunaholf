@@ -51,6 +51,30 @@ const LAS_MIN = 15;
 const SENDA_BIL_MIN = 5;
 // Póstur fer alltaf um Brunahólf (gmail-send býr þar) — líka þegar Slökkvitæki-eintak fallsins sendir.
 const MAIL_ORIGIN = 'https://brunaholf.netlify.app';
+// PÓST-TÓKINN (16.11.2026): gmail-send (brunaholf) hleypir aðeins inn innskráðum eða þjóni með þennan tóka:
+//   x-postur-toki: <mínúta>.<HMAC-SHA256(session_secret, 'postur-senda|'+mínúta)>, gildir 10 mín.
+// Lykillinn er session_secret úr hub_adgangar_stilling — SAMEIGINLEGUR báðum vefjum (sama röð og innskráningin les).
+// EKKI SUPABASE_SERVICE_ROLE_KEY: hann er ólíkur á vefjunum — tóka Slökkvitækis var hafnað í loftinu 16.11.2026 og
+// lokunin afturkölluð. Mynta: posturToki() · staðfesta: erPosturToki(event) · GET ?postur_prufa=1 segir hvort tóki í
+// haus er gildur á þessum vef (heilsupróf milli vefja, sendir ekkert). Nýir kallendur nota HUB.posturToki().
+const POSTUR_HAUS = 'x-postur-toki';
+const POSTUR_GILDIR_MIN = 10;
+const posturSig = (secret, m) => crypto.createHmac('sha256', String(secret)).update('postur-senda|' + m).digest('hex');
+async function posturToki(stillingGefin) {
+  const st = stillingGefin || await getStilling().catch(() => null);
+  if (!st || !st.session_secret) return '';
+  const m = Math.floor(Date.now() / 60000);
+  return m + '.' + posturSig(st.session_secret, m);
+}
+async function erPosturToki(event) {
+  const h = (event && event.headers) || {};
+  const [mStr, sig] = String(h[POSTUR_HAUS] || '').split('.');
+  const m = Number(mStr), nu = Math.floor(Date.now() / 60000);
+  if (!Number.isInteger(m) || m < nu - POSTUR_GILDIR_MIN || m > nu + 1 || !/^[0-9a-f]{64}$/.test(sig || '')) return false;
+  const st = await getStilling().catch(() => null);
+  if (!st || !st.session_secret) return false;
+  return crypto.timingSafeEqual(Buffer.from(sig, 'hex'), Buffer.from(posturSig(st.session_secret, m), 'hex'));
+}
 const URL_HUB = 'https://brunaholf.netlify.app/';
 const URL_SLOKK = 'https://slokkvitaeki.netlify.app/';
 const hostOf = (event) => String((event.headers && (event.headers.host || event.headers.Host)) || '').toLowerCase();
@@ -172,7 +196,7 @@ async function sendCredentials(event, user, stilling) {
     + '<p style="color:#6b655a;font-size:13px">Ekki áframsenda þennan póst. Lykilorðið er sameiginlegt fyrir starfsfólk.</p></div>';
   try {
     const r = await fetch(MAIL_ORIGIN + '/api/gmail-send', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      method: 'POST', headers: { 'Content-Type': 'application/json', [POSTUR_HAUS]: await posturToki(stilling) },
       body: JSON.stringify({ account: MAIL_ACCOUNT, from: MAIL_FROM, to: [user.postfang], subject: 'Aðgangur að Brunahólfi', html }),
     });
     if (!r.ok) { const t = await r.text().catch(() => ''); return { ok: false, error: 'Póstsending mistókst (' + r.status + ').', detail: t.slice(0, 200) }; }
@@ -189,6 +213,7 @@ exports.handler = async (event) => {
 
   // GET — staða (opið) eða listi (Admin)
   if (event.httpMethod === 'GET') {
+    if (qs.postur_prufa === '1') return P.json(200, { postur_toki: await erPosturToki(event) });
     const st0 = await getStilling();
     const s = await sessionUser(event, st0);
     if (qs.listi === '1') {
@@ -370,3 +395,7 @@ exports.handler = async (event) => {
 };
 
 exports._test = { normNn, normKt, normSimi, encPw, decPw, SIDUR, okSida, HUB_ARFUR, hubKatalog };
+
+exports.posturToki = posturToki;
+exports.erPosturToki = erPosturToki;
+exports.POSTUR_HAUS = POSTUR_HAUS;
