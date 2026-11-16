@@ -21,7 +21,8 @@ const dagur = (s) => String(s || '').slice(0, 10);
 const netfongUr = (s) => (String(s || '').match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi) || []).map(lc);
 const len = (e) => lc(e).split('@')[1] || '';
 const dagaFra = (idag, n) => { const d = new Date(idag + 'T12:00:00Z'); d.setUTCDate(d.getUTCDate() - n); return d.toISOString().slice(0, 10); };
-const efniKjarni = (s) => lc(s).replace(/^((re|fw|fwd|sv|vs)\s*:\s*)+/i, '').trim();
+const efniKjarni = (s) => lc(s).replace(/^((re|fw|fwd|fs|sv|vs|svar|áframsent)\s*:\s*)+/i, '').trim();
+const SJALFVIRKT = /^(automatic reply|auto(-|\s)?reply|out of office|sjálfvirkt svar|accepted|declined|tentative|samþykkt|hafnað)\s*:/i;
 
 /** Netfang/lén → greiðandi. pör: [{ netfang, nafn }] (netfang má vera listi aðskilinn með kommu/semíkommu/bili). */
 function netfangaskra(por) {
@@ -70,7 +71,10 @@ function verkYfirlit({ timar, eldriVerk, wsOwner, verdskra, osentVerk, idag }) {
 
 function samskiptaYfirlit({ postur, skra, verkstadir, wsOwner, idag }) {
   const fra = dagaFra(idag, 14);
-  const vsNofn = [...new Set((verkstadir || []).map((v) => String(v || '').trim()).filter((v) => v.length >= 6 && !INNRA.test(v)))]
+  // Aðeins SÉRTÆK verkstaðarheiti (sama regla og samskiptaleitin í prófílnum, verkkaupar.js): tölustafur, tvö orð eða ≥ 10 stafir.
+  // Mælt 16.11.2026: verkstaður sem heitir „Brunaþéttingar" tengdi BYKO-póst með það orð í efnislínu við Hótel Lóu.
+  const sertaekt = (s) => !/^brunaþéttingar?$/i.test(s) && (/\d/.test(s) || /\s/.test(s) || s.length >= 10);
+  const vsNofn = [...new Set((verkstadir || []).map((v) => String(v || '').trim()).filter((v) => v.length >= 6 && !INNRA.test(v) && sertaekt(v)))]
     .sort((a, b) => b.length - a.length);
   const eig = new Map(Object.entries(wsOwner || {}).map(([k, v]) => [lc(k), v]));
   const out = []; const sed = new Map();
@@ -79,6 +83,7 @@ function samskiptaYfirlit({ postur, skra, verkstadir, wsOwner, idag }) {
     const ut = /sent/i.test(m.folder || '');
     const motadilar = ut ? netfongUr(m.to_addresses) : [lc(m.sender_email)];
     if (!ut && EIGIN_LEN.test(len(m.sender_email))) continue;            // okkar eigin póstur í innhólfi
+    if (SJALFVIRKT.test(String(m.subject || '').trim())) continue;        // sjálfvirk svör og fundarboðssvör eru ekki samskipti
     let greidandi = null, netfang = null;
     for (const e of motadilar) { const g = skra.finna(e); if (g) { greidandi = g; netfang = e; break; } }
     let verkstadur = null;

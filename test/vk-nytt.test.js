@@ -64,6 +64,22 @@ test('samskipti: aðeins póstur sem tengist skráðum greiðanda eða verkstað
   assert.strictEqual(r[2].verkstadur, 'Tindasel The farm'); assert.strictEqual(r[2].greidandi, 'Deluxe Lodges ehf.');
 });
 
+test('samskipti: almennt verkheiti tengir engan og sjálfvirk svör birtast ekki', () => {
+  const skra = N.netfangaskra([{ netfang: 'einarvald@landspitali.is', nafn: 'Landspítali' }]);
+  const eig = { 'Brunaþéttingar': 'Hótel Lóa ehf.', 'Bugðufljót 9': 'Karína ehf.' };
+  const postur = [
+    { id: 1, folder: 'INBOX', sender_email: 'gunnar@byko.is', subject: 'RE: Brunaþéttingar', received_at: '2026-11-09T13:37:00+00:00' },
+    { id: 2, folder: 'INBOX', sender_email: 'einarvald@landspitali.is', subject: 'Automatic reply: E og G í Fossvoni', received_at: '2026-11-10T08:57:00+00:00' },
+    { id: 3, folder: 'SENT', sender_email: 'brunaholf@brunaholf.is', to_addresses: 'einarvald@landspitali.is', subject: 'Accepted: E og G í Fossvoni', received_at: '2026-11-10T08:57:00+00:00' },
+    { id: 4, folder: 'SENT', sender_email: 'brunaholf@brunaholf.is', to_addresses: 'einhver@simnet.is', subject: 'Bugðufljót 9', received_at: '2026-11-09T10:01:00+00:00' },
+    { id: 5, folder: 'INBOX', sender_email: 'einarvald@landspitali.is', subject: 'Fs: E og G í Fossvoni', received_at: '2026-11-08T08:00:00+00:00' },
+    { id: 6, folder: 'INBOX', sender_email: 'einarvald@landspitali.is', subject: 'E og G í Fossvoni', received_at: '2026-11-06T08:10:00+00:00' },
+  ];
+  const r = N.samskiptaYfirlit({ postur, skra, verkstadir: Object.keys(eig), wsOwner: eig, idag: IDAG });
+  assert.deepStrictEqual(r.map((x) => x.id), [4, 5]);
+  assert.strictEqual(r[0].greidandi, 'Karína ehf.'); assert.strictEqual(r[1].fjoldi, 2);
+});
+
 test('kröfur: greiðsla og send krafa síðustu 14 daga, nafn skráðs greiðanda eftir kennitölu', () => {
   const reikningar = [
     { tilvisun: '387', customer_name: 'Framkvæmdafélagið Laugavegur ehf.', kt_greidanda: '680921-2020', upphaed_total: 4798428, utgafudagur: '2026-10-31', gjalddagi: '2026-10-31', greidsla_date: '2026-11-16', flokkur: 'greitt' },
