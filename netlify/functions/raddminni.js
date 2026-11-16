@@ -29,6 +29,7 @@ const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const ANTHROPIC = process.env.ANTHROPIC_API_KEY;
 const BUCKET = 'raddminni';
+const encPath = (p) => p.split('/').map(encodeURIComponent).join('/');
 
 exports.handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') return resp(204, '', cors());
@@ -65,7 +66,7 @@ async function vista(b) {
     const d = new Date();
     audio_path = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}/` +
       `${d.toISOString().replace(/[:.]/g, '-')}.webm`;
-    const up = await fetch(`${SUPABASE_URL}/storage/v1/object/${BUCKET}/${encodeURI(audio_path)}`, {
+    const up = await fetch(`${SUPABASE_URL}/storage/v1/object/${BUCKET}/${encPath(audio_path)}`, {
       method: 'POST',
       headers: {
         apikey: SUPABASE_KEY, authorization: `Bearer ${SUPABASE_KEY}`,
@@ -301,7 +302,7 @@ async function lista(p) {
   const med = await Promise.all((rows || []).map(async r => {
     if (!r.audio_path) return r;
     try {
-      const s = await fetch(`${SUPABASE_URL}/storage/v1/object/sign/${BUCKET}/${encodeURI(r.audio_path)}`, {
+      const s = await fetch(`${SUPABASE_URL}/storage/v1/object/sign/${BUCKET}/${encPath(r.audio_path)}`, {
         method: 'POST',
         headers: { apikey: SUPABASE_KEY, authorization: `Bearer ${SUPABASE_KEY}`, 'content-type': 'application/json' },
         body: JSON.stringify({ expiresIn: 3600 }),

@@ -27,6 +27,7 @@ const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const BUCKET = 'eydublod';
 const TABLE = 'eydublod_skjol';
+const encPath = (p) => p.split('/').map(encodeURIComponent).join('/');
 
 exports.handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') return resp(204, '', cors());
@@ -108,7 +109,7 @@ async function save(body) {
   // Hver útgáfa fær sinn eigin hlut — ekkert skrifast yfir.
   const storage_path = `${form_id}/${slug}-${skjal_id.slice(0, 8)}-v${utgafa}.pdf`;
 
-  const up = await fetch(`${SUPABASE_URL}/storage/v1/object/${BUCKET}/${encodeURI(storage_path)}`, {
+  const up = await fetch(`${SUPABASE_URL}/storage/v1/object/${BUCKET}/${encPath(storage_path)}`, {
     method: 'POST',
     headers: {
       apikey: SUPABASE_KEY,
@@ -122,7 +123,7 @@ async function save(body) {
   if (!up.ok) return json(up.status, { error: `Storage upload ${up.status}: ${(await up.text()).slice(0, 300)}` });
 
   const public_url =
-    `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/${encodeURI(storage_path)}?v=${Date.now()}`;
+    `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/${encPath(storage_path)}?v=${Date.now()}`;
 
   const row = {
     skjal_id, utgafa, form_id,
@@ -196,7 +197,7 @@ async function patchGogn(id, gogn) {
     body: JSON.stringify({ gogn }),
   });
 }
-const publicUrlOf = (p) => `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/${encodeURI(p)}`;
+const publicUrlOf = (p) => `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/${encPath(p)}`;
 
 async function attachUrl(body) {
   const row = await rowById(String(body.id || '').trim());
@@ -204,7 +205,7 @@ async function attachUrl(body) {
   const safeName = String(body.fileName || 'vidhengi')
     .normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^A-Za-z0-9._-]+/g, '_').slice(-80) || 'vidhengi';
   const path = `${row.form_id}/vidhengi/${String(row.skjal_id).slice(0, 8)}-v${row.utgafa}-${Date.now()}-${safeName}`;
-  const r = await fetch(`${SUPABASE_URL}/storage/v1/object/upload/sign/${BUCKET}/${encodeURI(path)}`, {
+  const r = await fetch(`${SUPABASE_URL}/storage/v1/object/upload/sign/${BUCKET}/${encPath(path)}`, {
     method: 'POST',
     headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' },
     body: '{}',
@@ -255,7 +256,7 @@ async function detach(body) {
     if (sr.id === row.id) list = nu;
   }
   if (path.startsWith(`${row.form_id}/vidhengi/`)) {
-    await fetch(`${SUPABASE_URL}/storage/v1/object/${BUCKET}/${encodeURI(path)}`, {
+    await fetch(`${SUPABASE_URL}/storage/v1/object/${BUCKET}/${encPath(path)}`, {
       method: 'DELETE', headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` },
     }).catch(() => {});
   }
@@ -278,14 +279,14 @@ async function del(body) {
   const notad = new Set();
   adrar.filter((r) => r.id !== row.id).forEach((r) => ((r.gogn && r.gogn._vidhengi) || []).forEach((v) => { if (v && v.path) notad.add(v.path); }));
   for (const v of ((row.gogn && row.gogn._vidhengi) || [])) {
-    if (v && v.path && !notad.has(v.path)) await fetch(`${SUPABASE_URL}/storage/v1/object/${BUCKET}/${encodeURI(v.path)}`, {
+    if (v && v.path && !notad.has(v.path)) await fetch(`${SUPABASE_URL}/storage/v1/object/${BUCKET}/${encPath(v.path)}`, {
       method: 'DELETE', headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` },
     }).catch(() => {});
   }
 
   if (row.storage_path) {
     // Skráin má vera farin nú þegar — það á ekki að stoppa eyðingu raðarinnar.
-    await fetch(`${SUPABASE_URL}/storage/v1/object/${BUCKET}/${encodeURI(row.storage_path)}`, {
+    await fetch(`${SUPABASE_URL}/storage/v1/object/${BUCKET}/${encPath(row.storage_path)}`, {
       method: 'DELETE',
       headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` },
     }).catch(() => {});

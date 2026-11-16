@@ -22,6 +22,7 @@
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const BUCKET = 'efnislisti-pdf';
+const encPath = (p) => p.split('/').map(encodeURIComponent).join('/');
 
 exports.handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') return resp(204, '', cors());
@@ -63,7 +64,7 @@ exports.handler = async (event) => {
     : `${slug}/${work_month}/${doc_type}-${Math.random().toString(36).slice(2, 10)}.${ext}`;
 
   // 1) Upload to Supabase Storage (service role → no auth flow for the user).
-  const up = await fetch(`${SUPABASE_URL}/storage/v1/object/${BUCKET}/${encodeURI(storage_path)}`, {
+  const up = await fetch(`${SUPABASE_URL}/storage/v1/object/${BUCKET}/${encPath(storage_path)}`, {
     method: 'POST',
     headers: {
       'apikey': SUPABASE_KEY,
@@ -78,7 +79,7 @@ exports.handler = async (event) => {
 
   // Cache-buster (?v=) svo yfirskrifað PDF birtist strax þrátt fyrir CDN-cache.
   const ver = Date.now();
-  const public_url = `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/${encodeURI(storage_path)}?v=${ver}`;
+  const public_url = `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/${encPath(storage_path)}?v=${ver}`;
   // Niðurhal með RÉTTU skráarnafni: vafrinn nefnir annars eftir slóðinni
   // (efnislisti_pdf-xxxx.pdf). Supabase Storage styður ?download=<nafn>.
   const download_url = `${public_url}&download=${encodeURIComponent(fileName)}`;
