@@ -5,6 +5,7 @@
 //   GET  /api/verkkaupar                 → { rows:[{ name, kt, worksites, osent, ogreitt, greitt_ar,
 //                                                    sidasta_krafa, sidustu_samskipti }] }
 //   GET  /api/verkkaupar?name=<nafn>     → { info, worksites, krofur, drog, samskipti, samtals }
+//   GET  /api/verkkaupar?nytt=1          → { verk, samskipti, krofur, beidnir, talning } — „Yfirlit" efst á síðunni (_vk-nytt.js)
 //   POST /api/verkkaupar  { customer_name, ...customer_info reitir }  → upsert (m.a. general_notes)
 //
 // Heimildir: pricing_guide (samningurinn — taxtar, þröskuldur, gjöld), customer_info (kennitala,
@@ -15,6 +16,7 @@
 const KV = require('./_ktvorn');
 // Ógreitt/ósent: SÖMU reglur og Kröfu yfirlit (krofu-yfirlit-bru.js) — búa í _krofu-flokkun.js.
 const K = require('./_krofu-flokkun');
+const N = require('./_vk-nytt');
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -31,6 +33,7 @@ exports.handler = async (event) => {
     if (event.httpMethod === 'POST') return await save(event);
     if (event.httpMethod !== 'GET') return json(405, { error: 'Method not allowed' });
     const q = event.queryStringParameters || {};
+    if (q.nytt) return await nytt();
     return q.name ? await detail(String(q.name).trim()) : await list();
   } catch (e) {
     return json(500, { error: e.message || String(e) });
@@ -63,7 +66,7 @@ async function list() {
   const [pg, info, inv, drafts, map, meta] = await Promise.all([
     sb('pricing_guide?select=worksite_name,customer_name,kennitala'),
     sb('customer_info?select=customer_name,kennitala,contact_email,last_payment_at'),
-    sbAll('invoices?select=id,source,customer_name,kt_greidanda,upphaed_total,hofudstoll,status,gjalddagi,greidsla_date,worksite_match,tilvisun'),
+    sbAll('invoices?select=id,source,customer_name,kt_greidanda,upphaed_total,hofudstoll,status,gjalddagi,eindagi,greidsla_date,worksite_match,tilvisun'),
     sbAll('invoice_drafts?select=worksite_name,customer_name,kennitala,total_m_vsk,status,merged_into,work_month,payday_invoice_id'),
     sbAll('customer_worksite_map?select=customer_name,worksite_name,kt_greidanda,confidence,tilvisun,retention_pct'),
     sbAll('krofur_yfirlit_meta?select=inv_key,hidden,paid,done'),
@@ -76,7 +79,7 @@ async function list() {
 
   const acc = {};
   // krofur_n: sendar kröfur (án tvífara) — viðmótið getur sýnt greiðendur sem eru aðeins í Payday (03.11.2026)
-  const get = (name) => (acc[name] = acc[name] || { name, kt: null, worksites: 0, osent: 0, ogreitt: 0, greitt_ar: 0, sidasta_krafa: null, sidustu_samskipti: null, skrad: false, stadir: 0, greining: false, krofur_n: 0 });
+  const get = (name) => (acc[name] = acc[name] || { name, kt: null, worksites: 0, osent: 0, ogreitt: 0, gjaldfallid: 0, greitt_ar: 0, sidasta_krafa: null, sidustu_samskipti: null, skrad: false, stadir: 0, greining: false, krofur_n: 0 });
   // skrad = greiðandinn er skráður viljandi (verðskrá eða customer_info) — ekki bara nefndur á reikningi; viðmótið sýnir aðeins þá
   const wsSet = {}; const addWs = (n, w) => { if (n && w) (wsSet[n] = wsSet[n] || new Set()).add(w); };
   for (const p of pg) if (p.customer_name) { const a = get(p.customer_name); a.worksites++; a.skrad = true; if (!a.kt && p.kennitala) a.kt = p.kennitala; addWs(p.customer_name, p.worksite_name); }
@@ -92,6 +95,7 @@ async function list() {
   for (const a of Object.values(acc)) { const k = normKt(a.kt); if (a.skrad && k) ktSkrad.set(k, ktSkrad.has(k) ? null : a.name); }
   const tvi = K.tvifarar(inv);   // bankaspeglar Payday-reikninga („310.0") og handskráðar Tekjur-raðir — sjá _krofu-flokkun.js
   const ar = new Date().getFullYear();
+  const idag = new Date().toISOString().slice(0, 10);
   for (const v of dedupe(inv.filter((x) => !tvi.has(K.invKey(x))))) {
     if (!v.customer_name) continue;
     const alt = !(acc[v.customer_name] && acc[v.customer_name].skrad) && ktSkrad.get(normKt(v.kt_greidanda));
@@ -101,7 +105,7 @@ async function list() {
     const s = stada(v, mt);
     const upp = kr(v.upphaed_total);
     if (s === 'greitt' && String(v.greidsla_date || v.gjalddagi || '').slice(0, 4) === String(ar)) a.greitt_ar += upp;
-    if (s === 'ogreitt' && upp > 0 && K.iSummu(mt)) a.ogreitt += upp;
+    if (s === 'ogreitt' && upp > 0 && K.iSummu(mt)) { a.ogreitt += upp; const ein = String(v.eindagi || v.gjalddagi || '').slice(0, 10); if (ein && ein < idag) a.gjaldfallid += upp; }   // komið fram yfir eindaga (16.11.2026, samantektin efst)
     if (s === 'drog' && upp > 0 && K.iSummu(mt) && !tvitekin.has(K.invKey(v))) a.osent += upp;   // Payday-drög = ósent (þrep 2 í Kröfu yfirliti) — nema afrit af ógreiddum reikningi
     if (s !== 'drog' && v.gjalddagi && (!a.sidasta_krafa || v.gjalddagi > a.sidasta_krafa)) a.sidasta_krafa = v.gjalddagi;
     if (s !== 'drog' && s !== 'kredit') a.krofur_n++;
@@ -135,6 +139,53 @@ async function list() {
   } catch (_) { /* merkin eru aukaatriði */ }
   const rows = Object.values(acc).sort((a, b) => (b.osent + b.ogreitt) - (a.osent + a.ogreitt) || a.name.localeCompare(b.name, 'is'));
   return json(200, { rows, generated_at: new Date().toISOString() });
+}
+
+// „Yfirlit" efst á Viðskiptavinum (16.11.2026): verk í gangi og ný verk úr Tímaveru, póstur sem tengist skráðum greiðendum,
+// kröfur sendar / greiðslur mótteknar í Payday og beiðnir af verkstað. Reglurnar búa í _vk-nytt.js (prófaðar þar); hér er aðeins sótt.
+async function nytt() {
+  const idag = new Date().toISOString().slice(0, 10);
+  const fra45 = N.dagaFra(idag, 45), fra14 = N.dagaFra(idag, 14), fra30 = N.dagaFra(idag, 30);
+  const [pg, info, map, drafts, meta, timar, postur, payday, pv, faerslur, invAll] = await Promise.all([
+    sb('pricing_guide?select=worksite_name,customer_name,kennitala'),
+    sb('customer_info?select=customer_name,kennitala,contact_email,invoice_email'),
+    sbAll('customer_worksite_map?select=customer_name,worksite_name,kt_greidanda,confidence,netfang'),
+    sbAll('invoice_drafts?select=worksite_name,customer_name,kennitala,total_m_vsk,status,merged_into,work_month,payday_invoice_id'),
+    sbAll('krofur_yfirlit_meta?select=inv_key,hidden,paid,done'),
+    sbAll('timavera_entries?select=date,hours,employee,project&date=gte.' + fra45 + '&order=date.desc'),
+    sbAll('email_digest?select=id,account,folder,sender_name,sender_email,to_addresses,subject,snippet,received_at&received_at=gte.' + fra14 + 'T00:00:00Z&order=received_at.desc').catch(() => []),
+    sb('invoices?select=id,source,tilvisun,customer_name,kt_greidanda,upphaed_total,status,utgafudagur,gjalddagi,greidsla_date&source=eq.payday&or=(utgafudagur.gte.' + fra14 + ',greidsla_date.gte.' + fra14 + ',gjalddagi.gte.' + fra14 + ')&limit=500').catch(() => []),
+    sb('payday_vidskiptavinir?select=ssn,netfang&netfang=not.is.null&limit=2000').catch(() => []),
+    sb('field_entries?select=id,kind,worksite_name,author,employee,item_label,note,status,category,created_at&kind=in.(beidni,verk)&created_at=gte.' + fra30 + 'T00:00:00Z&order=created_at.desc&limit=60').catch(() => []),
+    sbAll('invoices?select=id,source,customer_name,kt_greidanda,upphaed_total,hofudstoll,status,gjalddagi,greidsla_date,worksite_match,tilvisun'),
+  ]);
+  const wsOwner = {};
+  for (const m of map) if (m.worksite_name && m.customer_name) wsOwner[m.worksite_name] = m.customer_name;
+  for (const p of pg) if (p.worksite_name && p.customer_name) wsOwner[p.worksite_name] = p.customer_name;
+  // kt → skráður greiðandi (aðeins þegar kt á einn) — Payday-nafn og skráð nafn eru ekki alltaf eins
+  const ktNafn = new Map();
+  const setKt = (kt, nafn) => { const k = normKt(kt); if (!k || !nafn) return; ktNafn.set(k, ktNafn.has(k) && ktNafn.get(k) !== nafn ? null : nafn); };
+  for (const i of info) setKt(i.kennitala, i.customer_name);
+  for (const p of pg) setKt(p.kennitala, p.customer_name);
+  for (const m of map) setKt(m.kt_greidanda, m.customer_name);
+  const nafnFyrirKt = (kt) => ktNafn.get(normKt(kt)) || null;
+  // netföng: customer_info, netfang á verkstað í kortinu og Payday-viðskiptavinur á sömu kennitölu
+  const netfong = [];
+  for (const i of info) netfong.push({ netfang: [i.contact_email, i.invoice_email].filter(Boolean).join(' '), nafn: i.customer_name });
+  for (const m of map) if (m.netfang) netfong.push({ netfang: m.netfang, nafn: m.customer_name });
+  for (const p of pv) { const n = nafnFyrirKt(p.ssn); if (n) netfong.push({ netfang: p.netfang, nafn: n }); }
+  // ósend drög per verkstað — sömu reglur og listinn
+  const { metaBy, tenging } = flokkunarGrunnur({ pg, inv: invAll, drafts, map, meta });
+  const osentVerk = {};
+  for (const d of drafts) { const mt = metaBy.get(K.draftKey(d)); if (K.erOsent(d, tenging, mt) && K.iSummu(mt) && d.worksite_name) osentVerk[d.worksite_name] = (osentVerk[d.worksite_name] || 0) + kr(d.total_m_vsk); }
+  // nýtt verk = engin Tímaveru-færsla FYRIR 45 daga gluggann (ein smáfyrirspurn per verk í glugganum)
+  const verkIGlugga = [...new Set(timar.map((t) => String(t.project || '').trim()).filter((p) => p && !N.INNRA.test(p)))];
+  const eldri = await Promise.all(verkIGlugga.map((p) => sb('timavera_entries?select=id&project=eq.' + encodeURIComponent(p) + '&date=lt.' + fra45 + '&limit=1').then((r) => (r.length ? p : null)).catch(() => p)));
+  const reikningar = payday.map((v) => Object.assign({}, v, { flokkur: stada(v, metaBy.get(K.invKey(v))) })).filter((v) => v.flokkur === 'greitt' || v.flokkur === 'ogreitt');
+  const ut = N.smida({ idag, timar, eldriVerk: eldri.filter(Boolean), wsOwner, verdskra: pg.map((p) => p.worksite_name).filter(Boolean), osentVerk,
+    netfong, postur, reikningar, nafnFyrirKt, faerslur });
+  ut.generated_at = new Date().toISOString();
+  return json(200, ut);
 }
 
 async function detail(name) {

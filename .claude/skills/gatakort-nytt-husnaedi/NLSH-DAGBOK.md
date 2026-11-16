@@ -1023,3 +1023,51 @@ Markmið lækkaði (6.471→6.302 á 6H, 6.849→6.588 á 5H) vegna þess að p�
 - UPPSKRIFT fyrir kláraða skráningu sem þarf í annan flokk: (1) Done af, (2) Change group með flokki + Starfsmanni + gátlista, (3) Edit registration
   og haka í liðina, (4) Done á. Hökin verður að setja EFTIR flutning, Change group þurrkar þau. Hakreitirnir í Edit-glugganum eru í sömu röð og
   gátlistinn (0 EI60 … 4 Kítti háþensla … 7 Borðar). 38 kláraðar á `6H 2S-1S Rafmagnsþéttingar.jpg` bíða enn í Raufar LV.
+- **38 ÓFLUTTAR ENN (16.11 kl. 17:30): hökin eru EKKI eins á þeim** — 0-32 göt bera EI60+kítti (eða akríl), raufar 400–630 mm bera EI60+þéttull+akríl+borða (saga 11948 staðfestir), 2 eru á Starfsmanni 40 með 4 liða gátlista. Engin ber EI60+kítti+borða. Bíður svars Agnars: sömu hök og áður, eða þrjú á allar. Afrit hér fyrir neðan — nota það til að setja hökin aftur eftir flutning.
+
+### Afrit: hök á 38 kláruðum skráningum ÁÐUR en flutt (lesið úr Ajour 16.11.2026 ~17:25)
+
+Flokkur þá: Raufar. (Metrer) LV · teikning `6H 2S-1S Rafmagnsþéttingar.jpg` · allar Done (senderStatus 1).
+Dálkar: raðnr | starfsmaður | subject | fjöldi gátlistaliða | HAKAÐIR liðir (sæti í gátlista, talið frá 0) | stöðustimpill fyrir
+Sæti í 14 liða gátlistanum: 0 EI60 · 1 EI 90 · 2 50 mm Þéttull · 3 Akríl · 4 Kítti háþensla · 5 Silicon · 6 Kragi · 7 Borðar · 8 Annað 1 · 9 Annað 2 · 10 EI 120 · 11 EI 180 · 12 EI 360 · 13 EI 240
+(0 og 4 staðfest af sögu 12102; 2, 3, 7 eftir röð gátlistans.) Engar athugasemdir (note) voru á neinum lið.
+
+12100 | S1 | 0-32 | 14 | 0,4 | 2026-11-02T08:26
+12099 | S1 | 0-32 | 14 | 0,4 | 2026-11-02T08:26
+12098 | S1 | 0-32 | 14 | 0,4 | 2026-11-02T08:26
+12097 | S1 | 0-32 | 14 | 0,4 | 2026-11-02T08:26
+12096 | S1 | (tómt) | 14 | 0,3,4 | 2026-11-02T08:26
+12095 | S1 | 0-32 | 14 | 0,4 | 2026-11-02T08:26
+12094 | S1 | 0-32 | 14 | 0,4 | 2026-11-02T08:25
+11961 | S1 | (tómt) | 14 | 0,4 | 2026-10-21T15:46
+11960 | S1 | 0-32 | 14 | 0,4 | 2026-10-21T15:46
+11959 | S1 | 0-32 | 14 | 0,4 | 2026-10-21T15:45
+11958 | S1 | 0-32 | 14 | 0 | 2026-10-21T15:45
+11957 | S1 | 0-32 | 14 | 0,4 | 2026-10-21T15:45
+11956 | S1 | (tómt) | 14 | (ekkert) | 2026-10-21T15:45
+11955 | S1 | 0-32 | 14 | 0,3 | 2026-10-21T15:45
+11954 | S1 | 0-32 | 14 | 0,3,4 | 2026-10-21T15:45
+11953 | S1 | 0-32 | 14 | 0,3,4 | 2026-10-21T15:44
+11952 | S1 | 0-32mm | 14 | 0,3 | 2026-10-21T15:44
+11951 | S1 | 0-32mm | 14 | 0,3 | 2026-10-21T15:44
+11948 | S1 | 420mm | 14 | 0,2,3,7 | 2026-10-20T15:57
+11947 | S1 | 420mm | 14 | 0,2,3,7 | 2026-10-21T15:44
+11946 | S1 | 420 | 14 | 0,2,3,7 | 2026-10-20T15:57
+11945 | S1 | 420mm | 14 | 0,2,3,7 | 2026-10-20T15:57
+11827 | S1 | 620mm / ???? | 14 | 0,2,3,7 | 2026-10-20T15:56
+11826 | S1 | 620mm | 14 | 0,2,3,7 | 2026-10-19T15:57
+11824 | S40 | 420x70-420mm | 4 | 0,1,2,3 (öll fjögur) | 2026-10-16T16:36
+11823 | S1 | 620mm | 14 | 0,2,3,7 | 2026-10-16T16:04
+11822 | S40 | 400x70-420mm | 4 | 0,1,2,3 (öll fjögur) | 2026-10-16T16:35
+11821 | S1 | 620mm | 14 | 0,2,3,7 | 2026-10-16T16:04
+11820 | S1 | 570mm | 14 | 0,2,3,7 | 2026-10-16T08:31
+11819 | S1 | 550mm | 14 | 0,2,3,7 | 2026-10-16T08:30
+11818 | S1 | 570mm | 14 | 0,2,3,7 | 2026-10-16T08:30
+11817 | S1 | 550mm | 14 | 0,2,3,7 | 2026-10-16T08:30
+11802 | S1 | 630mm / go over it / not good job | 14 | 0,2,3,4 | 2026-11-05T08:53
+11801 | S1 | 530mm | 14 | 0,2,3,4 | 2026-11-05T08:53
+11800 | S1 | 530mm | 14 | 0,2,3,4 | 2026-11-05T08:53
+11799 | S1 | 630 mm / go over agin | 14 | 0,2,3,4 | 2026-11-05T08:53
+11764 | S1 | 500mm | 14 | 0,2,3,7 | 2026-11-05T08:53
+11763 | S1 | 400mm / fix | 14 | 0,2,3,7 | 2026-11-05T08:53
+
