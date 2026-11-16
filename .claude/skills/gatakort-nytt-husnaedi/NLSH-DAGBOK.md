@@ -971,4 +971,26 @@ allt að ~90 kragagöt sem krossagreiningin sér ekki (lögn gegnum vegg sem ekk
 
 ## 16.11.2026 — Stöðuskýrslan uppfærð (kjarni 6d38537)
 
-Agnar: „Já uppfæra“. SkyrslaClient: markmið hóps á deild/hluta = max(fyrri regla, klárað + opið + Σ fjoldi óskráðra áætlaðra gata gatakortsins á deild) — `eftirHop` (hópur af flokki gatsins, annars fagi: rafmagn→Rafmagn, loftraesting→Loft, golf→Gólf, fravatn→Plast, vatn/hiti/sprinkler/gas/annad→Stál). Áður var 6H-markmið = klárað, svo óbyrjaðir hlutar (raf 6H S4/S5, kragar 6H S1/S2) töldust búnir. Útboðsliður 2.2 „stök per ein.“ 2 → 1 (kragi = heil lokun). Forsendutexti uppfærður. Lifandi (sannreynt): **6H 83 %** (5.394 af 6.471 stökum), **5H 66 %** (4.509 af 6.849), gólf 5. hæðar 69 % (357 af 515); 2.2 kragi 304 af 600 = 51 % (var 25 %).
+Agnar: „Já uppfæra”. SkyrslaClient: markmið hóps á deild/hluta = max(fyrri regla, klárað + opið + Σ fjoldi óskráðra áætlaðra gata gatakortsins á deild) — `eftirHop` (hópur af flokki gatsins, annars fagi: rafmagn→Rafmagn, loftraesting→Loft, golf→Gólf, fravatn→Plast, vatn/hiti/sprinkler/gas/annad→Stál). Áður var 6H-markmið = klárað, svo óbyrjaðir hlutar (raf 6H S4/S5, kragar 6H S1/S2) töldust búnir. Útboðsliður 2.2 „stök per ein.” 2 → 1 (kragi = heil lokun). Forsendutexti uppfærður. Lifandi (sannreynt): **6H 83 %** (5.394 af 6.471 stökum), **5H 66 %** (4.509 af 6.849), gólf 5. hæðar 69 % (357 af 515); 2.2 kragi 304 af 600 = 51 % (var 25 %).
+
+
+## 16.11.2026 — Pörun endurkeyrð (eftir fyrirmyndaraðferð og nýja lög)
+
+Agnar: „halda áfram að matcha og yfirfara.” Keyrt `skraning-gatakort-para.cjs --haed 6H --write` og `--haed 5H --write` (radíus 60 px).
+
+**6H** (1.297 áætluð göt, 5.510 skráningar á vörpuðum blöðum):
+- 1. umferð (sami flokkur): 1.567 pöruð · 2. umferð (sami hópur): 438 → **2.005 af 3.012 stökum (67 %)**
+- Fullt 778, hluti 73, vantar 446. Stærsta vandamálið: S4/S5 rafmagn (314 göt, 625 stök) — engar raf-skráningar á hægra húsinu.
+  Hiti/sprinkler nær fullpöruð (99 %/94 %), loft 85 %, fravatn/vatn ~81 %.
+
+**5H** (1.202 áætluð göt, 4.238 skráningar):
+- 1. umferð: 379 · 2. umferð: 397 → **776 af 2.240 stökum (35 %)**
+- Fullt 475, hluti 50, vantar 712, óparuð 81 (71 tillögur + 10 gataplan/golf).
+  Rafmagn 5H aðeins 2 % pöruð (14 af 913 stökum) — fáar skráningar á raf-blöðum 5H.
+
+**81 óparuð á 5H:** 71 eru `tillaga:kross-5h` (loftr., sleppt úr pörun) og 10 `teikning:M814-gataplan` (golf, enginn hópur).
+
+**Stöðuskýrsla eftir pörun (sannreynt):** 6H **86 %** (5.394 af 6.302), 5H **68 %** (4.509 af 6.588), Gólf 69 %, 2.2 kragi 51 %.
+Markmið lækkaði (6.471→6.302 á 6H, 6.849→6.588 á 5H) vegna þess að pöruð „fullt” göt hækka ekki markmið lengur — aðeins vantar-göt telja.
+
+**Lykilniðurstaða:** raf í hægra húsi beggja hæða er aðalið sem eftir er (≈950 stök). Pípulagnir hægra húss nær fullpöruð.
