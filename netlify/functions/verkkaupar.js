@@ -174,6 +174,15 @@ async function detail(name) {
   for (const w of wsNames.slice(0, 12)) { for (const f of ['subject', 'snippet', 'body_preview']) orParts.push(`${f}.ilike.${brodd(w)}`); }
   const first = name.split(/\s+/)[0];
   if (first && first.length > 3) { orParts.push(`sender_name.ilike.${like(first)}`); orParts.push(`subject.ilike.${like(first)}`); }
+  // 16.11.2026 (Agnar: „tengingu við tölvupóstana" — Tindasel/Deluxe Lodges: raunveruleg samskipti við
+  // sigurdur@deluxeiceland.is fundust ekki, því hvorki nafn né verkstaður birtast orðrétt í þræðinum, bara
+  // netfangið. Þekkt netfang greiðandans (tengiliður eða reikningspóstur) er sterkari vísbending en texti-leit —
+  // bætt við hér, ekki í staðinn fyrir hana. Dalbraut-16-dæmið (virkar vel) sýnir að verkstaða-nafnaleitin er
+  // annars í lagi — þetta er viðbót fyrir þegar netfangið er þekkt en textinn ekki.
+  for (const addr of [info.contact_email, info.invoice_email].filter(Boolean)) {
+    orParts.push(`sender_email.ilike.${like(addr)}`);
+    orParts.push(`to_addresses.ilike.${like(addr)}`);
+  }
   let samskipti = [];
   if (orParts.length) {
     samskipti = await sb(`email_digest?select=id,sender_name,sender_email,subject,snippet,received_at,folder&or=(${orParts.join(',')})&order=received_at.desc&limit=40`).catch(() => []);
@@ -234,7 +243,13 @@ async function detail(name) {
     } catch (_) { stadir = []; }
   }
   const verkstadir_heimili = map.filter((m) => m.worksite_name).map((m) => ({ worksite_name: m.worksite_name, heimilisfang: m.heimilisfang || null }));
-  return json(200, { info, kt, worksites: pg, map, krofur: inv2, drog, samskipti, samtals, stadir, verkstadir_heimili, payday, generated_at: new Date().toISOString() });
+  // 16.11.2026 (Agnar: „eyða tvítökum, drafts, þegar payday er orðið tengt"): Payday-drögin sem eru staðfest
+  // tvítekning af ógreiddum reikningi (tvitekin, sjá línu 191) sátu áfram í listanum með „falið í Kröfu yfirliti" —
+  // Agnar vill þau alveg burt úr „06 Kröfur sem við höfum sent", ekki bara merkt. Summurnar breytast ekki (þær
+  // slepptu þeim nú þegar), aðeins það sem birtist. v.falid heldur áfram að geta þýtt annað (handvirkt falið í
+  // Kröfu yfirliti) — þær raðir eiga að sjást áfram, svo skilyrðið hér er sértækt við tvitekin-drögin.
+  const krofurOut = inv2.filter((v) => !(v.stada === 'drog' && tvitekin.has(K.invKey(v))));
+  return json(200, { info, kt, worksites: pg, map, krofur: krofurOut, drog, samskipti, samtals, stadir, verkstadir_heimili, payday, generated_at: new Date().toISOString() });
 }
 
 async function save(event) {
