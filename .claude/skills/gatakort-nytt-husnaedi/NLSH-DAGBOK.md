@@ -1195,3 +1195,12 @@ færist á (checked_date ræður), (3) athuga hvort hún var þegar rukkuð í f
   (12392–12395 opnar, 12396–12397 kláraðar, stofnaðar 16.11 kl. 13:54–13:58) liggja í beinni röð við x ≈ 1.890 á yfirlitinu, y 1.102–1.877,
   11–21 m frá næsta stút og 3,5–18 m frá næsta Ø220-gati gataplans. Þær eiga ekkert áætlað gat á kortinu. Hvað þær eru: ÓMÆLT, spyrja Agnar.
 - LÆRDÓMUR (SKILL): áður en radíus er víkkaður: lyfleysupróf (hliðra götunum og telja sömu hittni). Sé hittnin sú sama er ekkert merki.
+
+- **16.11.2026 (kvöld) — Agnar: „Já nýja verkið":** gólfskráningarnar 12392–12397 á `4H. S1-S2.jpg` eru NÝTT viðbótarverk á 4. hæð, ekki meðal stútanna 35.
+  Settar á kortið sem sex áætluð gólfgöt (`skr_aaetlud` id 2778–2783, fag golf, flokkur Gólf Ø 160-200, yfirlitsblað 4H, uppruni
+  `vidbot:4h-nytt-20261116:<raðnr>`), hvert parað 1:1 við sína skráningu (`parad.stada = fullt`, `flokkun` klarad × 2 / opid × 4,
+  `parad.vidbot = nytt-20261116`, ENGINN `stutur`-lykill). Hnit = `skr_haedarhnit` skráningarinnar. Skráningum ekki breytt.
+  Áhrif á tölur (mælt í grunni): stútaspjaldið óbreytt (35 raðir með `stutur`), „eftir" á gólfi 4H óbreytt (26 = 16 stútar + 10 gataplan);
+  skráningarnar sjálfar teljast í gólfi 5. hæðar (S2: 104 kláraðar, 11 opnar). Kort og skýrsla EKKI skoðuð í vafra eftir innsetningu.
+  Til baka: `update skr_aaetlud set eytt = true where uppruni like 'vidbot:4h-nytt-20261116:%'`.
+  Hvers konar verk þetta er (stofn, stærð, hvort fleiri göt eru væntanleg): ÓMÆLT.
