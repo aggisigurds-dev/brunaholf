@@ -1071,3 +1071,21 @@ Sæti í 14 liða gátlistanum: 0 EI60 · 1 EI 90 · 2 50 mm Þéttull · 3 Akr�
 11764 | S1 | 500mm | 14 | 0,2,3,7 | 2026-11-05T08:53
 11763 | S1 | 400mm / fix | 14 | 0,2,3,7 | 2026-11-05T08:53
 
+
+- **LOKIÐ 16.11.2026 kl. 17:34–18:15 — 38 kláraðar fluttar, hök endurheimt (Agnar: „Já, flytja 38“, svo „Sömu hök og áður“).**
+  Raufar. (Metrer) LV 116 → **77**, Raflagnaþéttingar, göt og raufar 311 → **350** (12102 + 38). Gamli flokkurinn á enga skráningu eftir á
+  `6H 2S-1S Rafmagnsþéttingar.jpg`; þær 77 sem eftir eru í honum eru á öðrum teikningum og voru ekki hluti af verkinu.
+- Röðin: (1) Done af 38 með listann síaðan á Done (`regStatus=SenderApproved`): efsta röð hverfur við hvern smell; (2) 11824 og 11822 fluttar
+  stakar á **Starfsmann 40**, hinar 36 í einu með Change group → All (36) á Starfsmann 1; (3) á hverri: Edit registration, upprunalegu hökin
+  eftir afritinu hér að ofan, Save, Done.
+- **Sannreynt eftir endurhleðslu: 39 af 39 réttar** (hök, Done, starfsmaður, flokkur, teikning; engin athugasemd á gátlistalið). 12102 fékk borðann
+  tekinn af aftur og ber nú 0,4 eins og upphaflega. Framkvæmdardagar óbreyttir (12.–22.10.2026).
+- **Starfsmaður 40:** í gamla flokknum var gátlistinn skráður sem 4 liðir, allir hakaðir. Sagan á 11824 og 11822 sýnir hverjir: EI60, 50 mm Þéttull,
+  Akríl, Kítti háþensla → sæti 0,2,3,4 í 14 liða listanum. (Sama morgun 16.10 höfðu þær Kítti + Borða; flokki var breytt kl. 16:35 og þessir fjórir valdir.)
+- **Það sem BREYTTIST umfram flokkinn:** stöðustimpill allra 39 er nú 16.11.2026 (var 16.10–05.11), og hver saga fékk línur um afturköllun,
+  flokk, gátlista og Done. Hvort mánaðaruppgjörið les stöðustimpilinn er ÓMÆLT.
+- **Okkar grunnur er ósnertur:** `ajour_registrations` / skr_* bera enn gamla flokkinn þar til næsti Ajour-innlestur keyrir (ekki keyrður hér).
+- LÆRDÓMUR (SKILL): (a) lesa og vista hök HVERRAR skráningar áður en flokki er breytt, þau eru ekki eins þótt Agnar lýsi þeim almennt;
+  (b) vafragluggi falinn (Agnar í síma) → Ajour-gluggar frjósa í hreyfingu og koma upp í bjöguðu útliti (`modal-selector-overflow`), þá Cancel og opna aftur;
+  (c) bilslá hakar ekki og bil lendir í athugasemdareit; (d) sannreyna hvern smell með `elementFromPoint` áður en smellt er, og lesa
+  `registrationCategoryChecks` úr listagögnunum eftir vistun.
