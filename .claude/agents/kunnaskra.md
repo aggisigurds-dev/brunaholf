@@ -269,7 +269,9 @@ svarað í 3 daga'".
   Listinn: `confidence='manual'` í kortinu og allir með ógreitt/ósent > 0 eru `skrad` (Rafís, Landspítali, Istanbul Market
   sáust ekki). Drög án greiðanda birtast undir heiti verkstaðarins merkt `an_greidanda` (listi + prófíll segir hvað vantar) svo ósent hér
   = þrep 2 í Kröfu yfirliti; allir með kt fá staðamerki; haustalan telur verkstaði úr korti + verðskrá; prófíll sem vistað er
-  í er merktur `__urelt` og sóttur aftur. Gullslètta 18 → Krókur 77 og NESDEKK → Nesdekk settir 16.11. (gögn); Sidumuli 21 bíður Agnars.
+  í er merktur `__urelt` og sóttur aftur. Gullslètta 18 → Krókur 77 og NESDEKK → Nesdekk settir 16.11. (gögn); Sidumuli 21 → **Systur og makar ehf.**, kt. 630414-0320
+  (Agnar 16.11. „systurogmakar eða álíka"; staðfest á keldan.is — félagið er skráð á Síðumúla 21, 108 Rvk; kort #161, drög #348).
+  Netfang reikninga er óskráð — samskiptin um verkið voru við Loga Má Hermannsson á einkanetfangi, tengsl hans við félagið óstaðfest.
 - **16.11.2026 — netfang verkkaupa per verkstað:** `customer_worksite_map.netfang` (Áland 6 → Landspítali);
   `/api/worksites` skilar því sem `mapped_customer_info[].ws_netfang` og Efnislistinn forfyllir það í ný drög.
 - **16.11.2026 — „00 Yfirlit" efst á Viðskiptavinum (Agnar: „samantekt efst, updates á verkum og samskiptum, ný verk
