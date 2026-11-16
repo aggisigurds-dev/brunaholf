@@ -483,6 +483,14 @@ ANNAÐ kerfi en „Efniskostnaður / Kostnaðarreikningar (endurrukkun)" hér a�
   áfram sem `NULLS NOT DISTINCT`, svo óuppfærður kóði (luna-bridge á Heimatölvu) tvítekur ekki heldur; breytist framkvæmdadagur
   í Ajour fellur þó 500 raða lota hjá ÓUPPFÆRÐUM kóða (409, `post` prentar ERR og heldur áfram) → `git pull` þar.
   Sannreynt: full sókn á nýja lyklinum, 26.153 raðir fyrir og eftir, 0 tvítekin.
+- **Ein röð per skráningu yfir ALLA skrána (16.11.2026):** CSV-ið ber eina línu per gátlistalið (14 á skráningu). Báðir innlesarar
+  safna nú í eitt kort á `(serial_number, project_name)`: fyrsta línan (EI60) ræður `checklist_item/checked_date/checked_by_user`,
+  eins og áður. Áður var þetta gert per 500 lína lotu, svo ~286 skráningar á lotumörkum fengu gildi síðari línu og hakdagurinn
+  flökti milli sókna. **Undantekning:** sé fyrsti liður óhakaður OG `execution_date` tómur er hakið tekið af fyrsta HAKAÐA lið;
+  annars lenti skráningin í engum uppgjörsmánuði (12272, 12396, 12397, 12329 voru hakaðar í EI 90/Þéttull/Akríl en ekki EI60).
+  **Ekki víkka regluna** í „fyrsti hakaði liður alltaf": þurrkeyrsla færði þá 170 kláraðar NLSH-skráningar milli mánaða, þar af
+  22 úr frosnum október í nóvember (tvírukkun). Próf án skrifa: hub-fallið keyrt með gervi-fetch og borið saman við
+  `ajour-ingest.lesa()` = 11.218 raðir, enginn mismunur. `ajour-ingest.py` skilar nú villukóða ef lota fellur í upsert.
 - **Lesa aldrei `count(*)` úr `ajour_registrations` sem fjölda skráninga** — notaðu `count(distinct serial_number)` per verk.
 
 ## Grunnreglur allra agenta (04.11.2026)

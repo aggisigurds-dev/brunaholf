@@ -84,20 +84,20 @@ exports.handler = async (event) => {
     status.stage = 'innlestur';
     await writeStatus(status);
     header = null; idx = {};
-    let batch = [];
-
-    const flush = async () => {
-      if (!batch.length) return;
-      const seen = new Map();
-      for (const r of batch) {
-        const k = `${r.serial_number}|${r.project_name}`;
-        if (!seen.has(k)) seen.set(k, r);
+    // Ein röð per skráningu (raðnúmer + verkefni) yfir ALLA skrána — CSV-ið ber eina línu per gátlistalið.
+    // Fyrsta línan (EI60) ræður, eins og áður. Til 16.11.2026 var þetta gert per 500 lína lotu, svo skráning á
+    // lotumörkum fékk gildi síðari línu (oftast óhakaðs liðar) og hakdagurinn flökti milli sókna.
+    // Undantekning: sé fyrsti liður óhakaður OG framkvæmdardag vanti er hakið tekið af fyrsta HAKAÐA lið — annars ber
+    // skráningin enga dagsetningu og lendir í engum uppgjörsmánuði. Þrengt viljandi: almenn regla „fyrsti hakaði liður"
+    // færði 170 kláraðar NLSH-skráningar milli mánaða í þurrkeyrslu (22 úr frosnum október). Spegill luna-bridge/ajour-ingest.py.
+    const regs = new Map();
+    const sameina = (row) => {
+      const k = `${row.serial_number}|${row.project_name}`;
+      const x = regs.get(k);
+      if (!x) regs.set(k, row);
+      else if (x.checked_date == null && x.execution_date == null && row.checked_date) {
+        x.checklist_item = row.checklist_item; x.checked_date = row.checked_date; x.checked_by_user = row.checked_by_user;
       }
-      const rows = [...seen.values()];
-      await upsert(rows);
-      status.upserted += rows.length;
-      batch = [];
-      await writeStatus(status);
     };
 
     await lesaLinur(fileId, token, async (line) => {
@@ -121,7 +121,7 @@ exports.handler = async (event) => {
       const execution_date = parseDate(get('ExecutionDateFrom'), dayFirst.ExecutionDateFrom);
       if (since && (!execution_date || execution_date < since)) return;
       status.parsed++;
-      batch.push({
+      sameina({
         serial_number: get('SerialNumber').trim() || null,
         registration_type: get('RegistrationType').trim() || null,
         registration_status: get('RegistrationStatus').trim() || null,
@@ -140,9 +140,14 @@ exports.handler = async (event) => {
         drawing_name: getAlias(DRAWING_ALIASES).trim() || null,
         subject: getAlias(SUBJECT_ALIASES).trim() || null,
       });
-      if (batch.length >= BATCH) await flush();
     });
-    await flush();
+    const allar = [...regs.values()];
+    for (let i = 0; i < allar.length; i += BATCH) {
+      const rows = allar.slice(i, i + BATCH);
+      await upsert(rows);
+      status.upserted += rows.length;
+      await writeStatus(status);
+    }
 
     status.state = 'done';
     status.finished_at = new Date().toISOString();

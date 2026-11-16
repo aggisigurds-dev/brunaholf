@@ -1148,3 +1148,26 @@ færist á (checked_date ræður), (3) athuga hvort hún var þegar rukkuð í f
 - **ÓBREYTT og bíður Agnars:** 11822/11824 tvírukkun (október 2.11 → nóvember 3.1); gólfgötin 12272, 12396, 12397 og 12329 (Annað)
   eru Done án haks og framkvæmdardags og lenda í engum mánuði; gatakortið (`skr_skraningar`) óuppfært.
 - Afritstöflunni má eyða þegar nóvember-uppgjör NLSH er frosið.
+
+
+## 16.11.2026 (kvöld, enn síðar) — „Óhökuðu" gólfgötin VORU hökuð; innlesturinn missti hakið (Agnar: „Ýta. Og haka í gátlista…")
+
+- **LEIÐRÉTTING á fyrri fullyrðingu minni:** 12272, 12396, 12397 (Gólf Ø 160-200) og 12329 (Annað) eru hakaðar í Ajour
+  (EI 90, 50 mm Þéttull, Akríl; 12329 líka Kítti háþensla), lesið úr listagögnum Ajour. Aðeins EI60 (fyrsti liður) er óhakaður.
+  Ég hakaði því EKKERT í Ajour. Rótin var okkar megin: CSV-ið ber eina línu per gátlistalið og innlesturinn geymdi fyrstu línuna
+  (EI60, án dagsetningar); án framkvæmdardags bar skráningin þá enga dagsetningu og lenti í engum mánuði.
+- **Annar galli fundinn í leiðinni:** samþjöppunin var gerð per 500 lína lotu. Skráning á lotumörkum (~286 í sókn) fékk gildi
+  síðari línu, og þar sem mörkin færast þegar skráin stækkar flökti `checked_date` þeirra milli sókna.
+- **Lagað (`luna-bridge/ajour-ingest.py` + `netlify/functions/ajour-ingest-drive-background.js`):** ein röð per skráningu yfir alla
+  skrána; fyrsta línan ræður eins og áður; sé hún óhökuð OG framkvæmdardag vanti er tekið fyrsta hakaða lið.
+- **Þurrkeyrslur á undan (ekkert skrifað):** (a) almenn regla „fyrsti hakaði liður": 1.166 hakdagar breytast, 170 kláraðar skipta um
+  mánuð, þar af 22 úr frosnum október í nóvember → HAFNAÐ (tvírukkun). (b) þrönga reglan: 254 hakdagar breytast (lotumarka-flöktið),
+  12 kláraðar skipta um mánuð innan eldri mánaða (2025-09 … 2026-10), engin inn í eða út úr nóvember nema þessar fjórar.
+- **Raunsókn keyrð:** 154.154 línur / 11.218 skráningar, engin villa. Eftir: 26.153 raðir, 0 tvítekin, 0 kláraðar án dagsetningar.
+  Nóvember: Gólf Ø 160-200 33→36, Annað 1→2, aðrir flokkar óbreyttir. (3 × 56.224 = 168.672 kr m/vsk bætast við á lið 1.2.)
+- **Próf hub-fallsins án skrifa:** fallið keyrt í node með gervi-fetch (Drive = skrá dagsins, öll skrif gripin): 23 upsert-köll á
+  `on_conflict=serial_number,project_name`, 11.218 raðir, enginn mismunur við `ajour-ingest.lesa()` í 12 dálkum.
+- **luna-bridge ýtt:** vélin var 14 (svo 15) commitum á eftir origin; togað með rebase, einn árekstur í `bridge.js` (SENT_CANDIDATES,
+  báðar hliðar haldnar), `npm install` (@anthropic-ai/sdk), 11/11 próf í `test/moppur.test.js`, ýtt.
+- LÆRDÓMUR (SKILL): `checked_date IS NULL` í `ajour_registrations` þýðir EKKI „óhakað í Ajour"; það þýðir aðeins að EI60 sé óhakað.
+  Lesa hökin úr Ajour (listagögn) eða CSV-inu áður en fullyrt er að hak vanti.
