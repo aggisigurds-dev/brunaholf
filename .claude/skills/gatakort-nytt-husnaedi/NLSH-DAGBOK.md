@@ -890,3 +890,40 @@ niðurföll út, ekki hæðaskil → SLEPPT (16). Ø220 öll við horn lagnastok
 - `raf/gat13_vidbot.cjs`: 11 Ø220 bætt við (M814-01/04/08/13/16, M815-01/04/07/08/13/16). Alls 20 Ø220 sem áætluð göt (fag golf, fjoldi 1).
   Apex Eftir: 4H 21 → 26, 5H 407 → 413.
 - Opið: hvort pípulagningamenn þétti þessi göt sjálfir (stundum fylgir eldvarnarkragi niðurfallinu) — ÓMÆLT; Agnar veit það.
+
+
+## 16.11.2026 — Kragarör (útboðsliður 2.2): 242 frárennsliskrossar án kraga settir inn
+
+Agnar: „er útboðið ekki að sýna fleiri plast kragagöt á baðherbergjunum“ + mynd af útboðsblaði: **2.2 Ø35-50 plaströr m. eldv. kraga: 600 göt =
+1.200 lokanir** (2 lokanir per gat; sama regla á öllum lið 2).
+- Fyrri samanburður (15.11) taldi frárennsliskross „skráðan“ ef HVAÐA plastskráning sem er var nærri → Ø20-34 (vatnslögnin við hliðina) faldi vöntun.
+- `raf/kragi.cjs`/`kragi2.cjs`: 6H S4/S5 — 53/57 krossa hafa BÆÐI Ø35-50 og Ø20-34; 6H S1/S2 — 61/50 aðeins Ø20-34, 1/0 með Ø35-50 (sama spegluð
+  hönnun). Mynd `raf/kragi-samanburdur.png`: kragi við vask sjúkrastofu í S4, enginn á sama stað í S1.
+- Frárennsliskrossar 536 (5H 259, 6H 277) ≈ útboð 600 göt. Án Ø35-50 innan 60 px: 293 (5H 136, 6H 157); 51 áttu þegar fravatn-gat →
+  **242 ný** (`kragi_setja.cjs`, fag fravatn, flokkur Plast Ø35-50, fjoldi 2, uppruni `teikning:M11x-kragi`): 5H S1 29, S2 49, S4 22, S5 9 ·
+  6H S1 61, S2 40, S4 14, S5 18. Apex Eftir: 5H 413 → 522, 6H 238 → 371.
+- OPIÐ: í S4/S5 er ≈ 1 Ø35-50 skráning per kross (6H S4 64 skr / 72 krossar) en útboð telur 2 lokanir per gat → hinn endinn gæti vantað
+  á „búnu“ kragagötunum líka. Spyrja Agnar hvort kragi telst ein lokun eða tvær í raun.
+
+
+## 16.11.2026 — Kragi = ein heil lokun; vaskar eða klósett?
+
+- Agnar: „2 stakar … 1 heil fyrir einn kraga“ → ein kragaskráning klárar gatið. 279 fravatn-punktar (uppruni `teikning:M11%`) fjoldi 2 → 1.
+  (Stöðuskýrslan deilir lið 2.2 enn með 2 stök per ein.; það má stilla í „Stök per ein.“ ef Agnar vill — ÓBREYTT.)
+- Úrtak 16 kragapunkta (`raf/kragi-taeki.png`, græn lögn ofan á brunayfirliti): 8 við VASKA (handlaugar í baðherbergjum/snyrtingum, vaskur í
+  sjúkrastofu/lyfjaherbergi), 3 við klósettgrind á vegg, 5 greinalagnir milli baðherbergja/frá stamma.
+- TILGÁTA (ómæld): klósettin eru Ø90–110 → útboðsliður 2.3 „Ø75-100 plaströr“ 100 göt, aðeins 20 stök skráð (10 lokanir). Gæti verið forveggurinn
+  við klósettkassana sem Agnar nefndi 15.11 — óbyrjað. Ekki sett inn.
+
+
+## 16.11.2026 — Tæki lesin af teikningum (tækjanúmer) → vaskar vs klósett
+
+Agnar: „ættir þá að geta spottað vaskana út frá OCR/myndgreiningu“. Betra: VEKTOR-texti. Skýring á M109-01 „Skýringar við þrifatæki“ (skoðað í
+vafra, ekki sótt): -NX00_T vatnssalerni · -NY10_T handlaug · -NY20_T ræstivaskur · -NY30_T skolvaskur · -NY40_T vaskeiningar · -UB10_T sturta ·
+-UV10_T vatnskranar · -KN10_T niðurföll · -MR10_T skiljubox. `raf/taeki.py` les þau af M115/M116 og varpar á yfirlit:
+5H 509 tæki (handlaug 247, salerni 109, sturta 99, niðurfall 30, skolvaskur 16, ræsti 4) · 6H 501 (handlaug 250, salerni 112, sturta 98, niðurfall 21, skol 16, ræsti 4).
+Frárennsliskross → næsta tæki ≤ 75 px (`taeki_kross.py`): kragi SKRÁÐUR 243 = handlaug 164, sturta 49, salerni 11; kragi VANTAR 293 = handlaug 124,
+salerni 90, sturta 61, niðurfall 9. → Ø35-50 kragi er við HANDLAUGAR og STURTUR; við salerni nánast aldrei.
+Salernakrossar alls 101 ≈ útboðsliður 2.3 Ø75-100 plaströr 100 göt (21 skráð, engin með hæðarhnit). → 82 fravatn-punktar við salerni fá flokk
+Plast Ø75-100 (`salerni_flokkur.cjs`). Eftir standa ~197 kragapunktar (Ø35-50) við handlaugar/sturtur.
+Lærdómur: tækjanúmer + skýringablað fagsins (M109) er besta leiðin til að vita HVAÐA tæki lögn þjónar.

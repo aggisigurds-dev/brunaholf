@@ -119,6 +119,7 @@ Sæktu í þessari röð. Þetta segir hvað hvert skjal gefur gatakortinu, ekki
 | Mikil | **Loftræsing hlutablöð** (M215/M216) | fylltir stokkar; ásamerki |
 | Mikil | **Úðakerfi hlutablöð** (M315/M316) | lagnir svartar, DN-merkingar; ásamerki (sum blöð án → fylgni) |
 | Mikil | **Lyfjaloft hlutablöð** (M715/M716) | grænar koparlagnir inn í hverja stofu; ásamerki |
+| Mikil | **Almennar skýringar fags** (M109) | TÆKJANÚMER: -NX00_T salerni, -NY10_T handlaug, -UB10_T sturta, -KN10_T niðurfall … → lesa tæki af vektortexta M115/M116 og vita hvaða tæki hver lögn þjónar (salerni = Ø75-100, handlaug/sturta = Ø35-50 kragi) |
 | Miðlungs | **Veggjayfirlit** (A400-20, A400-21) | hvaða veggtegund hefur EI-kröfu (t.d. lagnaveggur IV-2.24 án EI, IV-2.7 EI60) |
 | Lítil | Lágspenna, smáspenna, brunaviðvörun (R3/R5/R6) | aðallega TÆKI, fáar leiðir → lög til stuðnings, engin sjálfvirk göt |
 | Engin á kort | Kerfismyndir (M049, M349, M449, M549, M649, M749), einlínumyndir (R37x0) | engar staðsetningar |
