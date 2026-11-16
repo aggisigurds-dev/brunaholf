@@ -951,3 +951,19 @@ allt að ~90 kragagöt sem krossagreiningin sér ekki (lögn gegnum vegg sem ekk
 ## 16.11.2026 — PDF: brunalokanir, staðsetning og gerð
 
 `Documents\NLSH\NLSH-brunalokanir-stadsetning-og-gerd.pdf` (10 síður, A4): almennar kröfur (M109-01, R1080-01), HVAR (A285/A286 rauðir veggir og hurðamerki, veggtegundir A400-20, gataplön M814–M816, EI120 lóðrétt raf, tækjanúmer og herbergi), HVERNIG (deili M109-02, M329-01, M209-01 með myndum), efni lagna → útboðsliðir, opin atriði. Smíðað úr `scratchpad/pdf/brunalokanir.html` með Playwright (`prenta.cjs`); myndir eru sneiðar skoðaðar í vafra. Textinn sjálfur: `NLSH-BRUNATHETTINGAR.md`.
+
+
+## 16.11.2026 — FYRIRMYNDARAÐFERÐ: búni húshlutinn varpaður á hina (Agnar: „mátt halda áfram“)
+
+- Húsin tvö eru AFRIT (ekki spegluð): dökk súlubelti yfirlits 46→3685, 593→4235, 1321→4962, 1605→5246 ⇒ **dx = 3.640 px, dy = 0**; 5H og 6H sami
+  rammi (fylgni 6H→5H = 0,0). Prófað: Ø35-50 klasar 6H S4/S5 → 5H S4/S5: 80/103 með kragaskráningu á sama stað (78 %).
+- `raf/spegill.cjs` + `spegill_setja.cjs`: kragar — 74 ný (6H S1 9, S2 21; 5H S1 9, S2 23, S4 5, S5 7), uppruni `spegill:6H-S4S5`.
+- `raf/spegill_allt.cjs` + `spegill_setja_allt.cjs`: fyrirmynd 6H vinstra hús fyrir rafmagn (227 gatastaðir), 6H hægra hús fyrir loft (215), stál (338),
+  Plast Ø20-34 (179), raufar (6). **726 ný** (raf 422, loft 98, stál 137, plast 64, raufar 5; fjoldi = skráningar í fyrirmyndarklasa 1–4,
+  flokkur = algengasti flokkur klasans, uppruni `spegill:6H-vinstra|haegra`). **126 raf-krossapunktar (teikning:R11x0-kross) eytt=true**: engin
+  fyrirmyndarskráning innan 60 px á samsvarandi stað í fullskráða húsinu.
+- Apex Eftir: 5H 522 → 566 → **964**, 6H 371 → 401 → **603**. Alls óskráð áætluð göt 1.593 (2.872 stök): raf 790, loft 164, vatn/stál/plast 233,
+  frárennsli (kragar + Ø75-100) 357, gólf 36, úði 9, annað 4.
+- Fyrirvari: 5H er ekki 100 % eins og 6H (kragapróf 78 %) → 5H-punktar merktir „Óbyrjað?“. Raf: fyrirmynd gefur ~908 göt alls á 4 húshluta
+  á móti útboði 3.1 = 768.
+- LÆRDÓMUR (SKILL): þegar hús/hæðir eru eins er fullskráður hluti BESTA fyrirmyndin — betri en krossar á teikningu (raf-krossar náðu ~40 %).

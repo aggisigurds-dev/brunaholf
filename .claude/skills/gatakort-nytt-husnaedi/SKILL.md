@@ -129,6 +129,10 @@ Sæktu í þessari röð. Þetta segir hvað hvert skjal gefur gatakortinu, ekki
 veggjayfirlit (A400-20), og skrifaðu `<VERK>-BRUNATHETTINGAR.md` hér í möppunni: hvernig hver lagnategund er þétt gegnum hvaða byggingarhluta,
 EI-kröfur, efni lagna (ræður útboðslið) og tækjanúmer. Fyrirmynd: `NLSH-BRUNATHETTINGAR.md` (16.11.2026).
 
+**Fyrirmyndaraðferð (sterkust):** séu hús eða hæðir eins (mældu hliðrun af dökkum súlubeltum yfirlits eða FFT-fylgni veggja), er
+fullskráður hluti besta heimildin um hvar göt eru: varpaðu skráningum hans á hina hlutana; þar sem hvorki skráning né áætlað gat er innan
+~1,35 m vantar gat. Á NLSH náðu krossar á raflagnateikningu aðeins ~40 % raf-gata sem fyrirmyndin sýndi (`NLSH-DAGBOK.md` 16.11.2026).
+
 **Búðu aldrei til áætluð göt úr YFIRLITSMYND fags (M195/M395/M795) þegar hlutablöð eru til:** á NLSH féllu 36 af 40 úðapunktum
 úr M395 þegar hlutablöð M315 komu (15.11.2026). Yfirlitsmyndir duga sem lög til að skoða, ekki til krossa.
 
