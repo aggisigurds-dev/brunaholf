@@ -20,6 +20,15 @@ relevant section here if it's core — in the same commit.
 
 ---
 
+## ✅ FAST UMBOÐ (16.11.2026)
+
+Agnar samþykkti 16.11.2026 („Ja hljómar vel") að lotur geri þetta ÁN þess að spyrja: (1) haldi áfram milli
+skrefa í verki sem hann bað um, (2) sameini (merge) eigin grein þegar öll próf standast, (3) birti lagfæringu á
+bilun sem hann tilkynnti, eftir prófun enda á milli. ALLTAF spyrja fyrst um: póst eða SMS út úr húsi, kröfur,
+reikninga og annað sem snertir peninga, eyðingu gagna, verðbreytingar og breytingar á borði annarra starfsmanna.
+Ástæðan (mælt): um 22 % skeyta hans voru aðeins „já / merge / halda áfram / birta".
+Reglan í heild: `C:\projects\slokkvitaeki\CLAUDE.md`, kaflinn FAST UMBOÐ.
+
 ## ⛔ SAMÞYKKISÞAK (11.11.2026)
 
 Síðustu 14 daga stofnuðu Claude-lotur 99 samþykkismál á Þjónustuborðið og Agnar svaraði engu
