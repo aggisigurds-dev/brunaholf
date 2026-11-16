@@ -267,7 +267,9 @@ svarað í 3 daga'".
   félagsforms (ekki fyrsta orðið), og netföng úr customer_info + Payday + `customer_worksite_map.netfang` +
   `fyrirtaeki.netfang`, klofin á , ; bil. `or=`-gildið er URL-kóðað („&" í verkstaðarheiti gaf áður 400 sem .catch gleypti).
   Listinn: `confidence='manual'` í kortinu og allir með ógreitt/ósent > 0 eru `skrad` (Rafís, Landspítali, Istanbul Market
-  sáust ekki). ÓLAGAÐ: drög án greiðanda sjást hvergi (Sidumuli 21, NESDEKK, Gullslètta 18 — Agnar ákveður greiðanda).
+  sáust ekki). Drög án greiðanda birtast undir heiti verkstaðarins merkt `an_greidanda` (listi + prófíll segir hvað vantar) svo ósent hér
+  = þrep 2 í Kröfu yfirliti; allir með kt fá staðamerki; haustalan telur verkstaði úr korti + verðskrá; prófíll sem vistað er
+  í er merktur `__urelt` og sóttur aftur. Gullslètta 18 → Krókur 77 og NESDEKK → Nesdekk settir 16.11. (gögn); Sidumuli 21 bíður Agnars.
 - **16.11.2026 — netfang verkkaupa per verkstað:** `customer_worksite_map.netfang` (Áland 6 → Landspítali);
   `/api/worksites` skilar því sem `mapped_customer_info[].ws_netfang` og Efnislistinn forfyllir það í ný drög.
 

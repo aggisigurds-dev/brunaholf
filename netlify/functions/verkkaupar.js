@@ -109,15 +109,22 @@ async function list() {
   for (const d of drafts) {
     const mt = metaBy.get(K.draftKey(d));
     if (!K.erOsent(d, tenging, mt) || !K.iSummu(mt)) continue;
-    const name = d.customer_name || wsOwner[d.worksite_name];
+    // 16.11.2026: drög án greiðanda (hvorki á drögunum né í korti/verðskrá) sáust HVERGI í Viðskiptavinum — Sidumuli 21
+    // (1.470.729 kr), NESDEKK og Gullslètta 18 stóðu aðeins í Kröfu yfirliti, svo ósent var 1,9 m.kr. lægra hér. Þau birtast nú
+    // undir heiti verkstaðarins, merkt `an_greidanda`, eins og Kröfu yfirlit sýnir þau.
+    const eigandi = d.customer_name || wsOwner[d.worksite_name];
+    const name = eigandi || d.worksite_name;
     if (!name) continue;
-    get(name).osent += kr(d.total_m_vsk);
+    const a = get(name);
+    a.osent += kr(d.total_m_vsk);
+    if (!eigandi) a.an_greidanda = true;
   }
   // 16.11.2026: greiðandi með ógreitt eða ósent er ALLTAF í listanum (Rafís: 2.589.597 kr ógreitt sást aðeins með rofanum).
   for (const a of Object.values(acc)) if (a.osent + a.ogreitt > 0) a.skrad = true;
   // Staðir í Slökkvitæki (fyrirtaeki á sömu kennitölu) og hvort Búnaðargreining er vistuð — fyrir merkin í listanum (aukaatriði)
   try {
-    const kts = [...new Set(Object.values(acc).filter((a) => a.skrad).map((a) => normKt(a.kt)).filter(Boolean))];
+    // 16.11.2026: allir með kennitölu fá staðamerki, ekki aðeins `skrad` (22 greiðendur stóðu merkislausir þótt prófíllinn sýndi staðina)
+    const kts = [...new Set(Object.values(acc).map((a) => normKt(a.kt)).filter(Boolean))];
     if (kts.length) {
       const fy = await sb('fyrirtaeki?select=id,kennitala&deleted_at=is.null&kennitala=in.(' + kts.join(',') + ')&limit=1000');
       const ids = fy.map((f) => f.id);
@@ -166,7 +173,9 @@ async function detail(name) {
     inv.sort((a, b) => String(b.gjalddagi || '').localeCompare(String(a.gjalddagi || '')));
   }
   const wsNames = [...new Set([...pg.map((p) => p.worksite_name), ...map.map((m) => m.worksite_name)].filter(Boolean))];
-  const sami = (d) => String(d.customer_name || '').trim().toLowerCase() === name.toLowerCase() || (ktN && normKt(d.kennitala) === ktN);
+  // 16.11.2026: prófíll „án greiðanda" heitir eftir verkstaðnum — drög hans án greiðanda eiga heima hér (sjá list()).
+  const anGreidanda = (d) => !d.customer_name && String(d.worksite_name || '').trim().toLowerCase() === name.toLowerCase();
+  const sami = (d) => String(d.customer_name || '').trim().toLowerCase() === name.toLowerCase() || (ktN && normKt(d.kennitala) === ktN) || anGreidanda(d);
   const drog = drafts.filter((d) => { const mt = metaBy.get(K.draftKey(d)); return K.erOsent(d, tenging, mt) && K.iSummu(mt) && (sami(d) || wsNames.includes(d.worksite_name)); })
     .map((d) => ({ worksite_name: d.worksite_name, work_month: d.work_month, total_m_vsk: kr(d.total_m_vsk), hours: Number(d.hours_dagvinna) || 0 }));
 
@@ -283,7 +292,9 @@ async function detail(name) {
     sidasti_taxti[d.worksite_name] = { dv: Number(d.rate_dagvinna), ev: Number(d.rate_eftirvinna) || null, work_month: d.work_month,
       yfirvinna: (Number(d.hours_eftirvinna) || 0) > 0, kennitala: d.kennitala || null, heimilisfang: d.heimilisfang || null };
   }
-  return json(200, { info, kt, worksites: pg, map, krofur: krofurOut, drog, samskipti, samtals, stadir, verkstadir_heimili, payday, sidasti_taxti, generated_at: new Date().toISOString() });
+  // an_greidanda: prófíllinn er verkstaður sem á ósend drög en engan skráðan greiðanda — viðmótið segir hvað vantar.
+  const an_greidanda = !infoRows.length && !pg.length && !map.length && drafts.some((d) => anGreidanda(d) && !K.EKKI_OSENT.has(String(d.status || '')));
+  return json(200, { info, kt, worksites: pg, map, krofur: krofurOut, drog, samskipti, samtals, stadir, verkstadir_heimili, payday, sidasti_taxti, an_greidanda, generated_at: new Date().toISOString() });
 }
 
 async function save(event) {

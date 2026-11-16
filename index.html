@@ -3462,12 +3462,14 @@ function renderVidskiptavinir(t) {
       const ws = grouped[name]; const kt = kennitalaFyrir(name); const s = VKSUMS[name] || {};
       return `<button type="button" class="vk-row${name === valinn ? ' sel' : ''}" data-vk-sel="${escapeAttr(name)}">
         <span class="n">${escapeHtml(name)}</span>
-        <span class="m">${kt ? 'kt. ' + escapeHtml(kt) + ' · ' : ''}${s.skrad === false ? s.krofur_n + ' kröfur · aðeins í Payday' : Math.max(ws.length, s.worksites || 0) + ' verkst.'}</span>
+        <span class="m">${s.an_greidanda ? '<b style="color:var(--warn,#b5522a)">án greiðanda</b> · ' : ''}${kt ? 'kt. ' + escapeHtml(kt) + ' · ' : ''}${s.skrad === false ? s.krofur_n + ' kröfur · aðeins í Payday' : Math.max(ws.length, s.worksites || 0) + ' verkst.'}</span>
         ${(s.osent || s.ogreitt || s.stadir) ? `<span class="s">${s.stadir ? '<span class="stadir">' + s.stadir + (s.stadir === 1 ? ' staður' : ' staðir') + (s.greining ? ' · greining' : '') + '</span>' : ''}${s.osent ? '<span class="osent">ósent ' + vkMoney(s.osent) + '</span>' : ''}${s.ogreitt ? '<span class="ogreitt">ógreitt ' + vkMoney(s.ogreitt) + '</span>' : ''}</span>` : ''}
       </button>`;
     }).join('') || '<div class="vk-empty">Ekkert félag passar.</div>';
     if (list.innerHTML !== html) list.innerHTML = html;
-    const c = wrap.querySelector('.vk-count'); if (c) c.textContent = names.length + ' greiðendur · ' + allRows.length + ' verkstaðir';
+    // 16.11.2026: verkstaðir taldir úr summunum (kort + verðskrá), ekki aðeins raðir í Verðskrá (sýndi 12 þótt kortið bæri tugi)
+    const fjVerk = names.reduce((a, n) => a + Math.max((grouped[n] || []).length, (VKSUMS[n] || {}).worksites || 0), 0);
+    const c = wrap.querySelector('.vk-count'); if (c) c.textContent = names.length + ' greiðendur · ' + Math.max(fjVerk, allRows.length) + ' verkstaðir';
     const ra = wrap.querySelector('#vk-allir'); if (ra) {
       ra.checked = !!vidmotLesa('vk_payday_allir', false);
       const n = Object.values(VKSUMS).filter(x => x && !x.skrad && x.krofur_n > 0).length;
@@ -3512,6 +3514,9 @@ function renderVidskiptavinir(t) {
 
   async function loadDetail(name, box, col){
     let d = VKDETAIL[name];
+    // 16.11.2026: prófíll sem var vistað í (taxti, netfang, kennitala) er merktur úreltur og sóttur aftur — áður sýndi hann
+    // gömlu drögin/summurnar/samskiptin úr skyndiminni þar til síðan var endurhlaðin.
+    if (d && d.__urelt) d = null;
     if (!d) {
       try {
         const r = await fetch('/api/verkkaupar?name=' + encodeURIComponent(name), { cache:'no-store' });
@@ -3581,6 +3586,8 @@ function renderVidskiptavinir(t) {
     const nyttKort = '<div class="vk-ws-item vk-ws-an"><div class="vk-muted" style="font-size:12px">' + (((hopar()[name] || []).length || anVerdskrar.length) ? 'Annar verkstaður hjá þessum greiðanda?' : 'Enginn verkstaður skráður enn.') + '</div>'
       + '<button class="vk-edit-btn" data-vk-skrataxta="">＋ Skrá verkstað og taxta</button></div>';
     box.innerHTML = ''
+      // 16.11.2026: verkstaður með ósend drög en engan greiðanda — segja hvað vantar í stað þess að sýna tóman prófíl
+      + (d.an_greidanda ? '<div class="vk-sec" style="border-left:3px solid var(--warn,#b5522a)"><b>Enginn greiðandi skráður á þetta verk.</b> <span class="vk-muted">Drögin hér fyrir neðan fara ekki á reikning fyrr en greiðandi er valinn: opnaðu Kröfu yfirlit, finndu verkið og ýttu á „✎ Skrá kt." í haus spjaldsins.</span></div>' : '')
       + '<div class="vk-sec"><div class="vk-sec-h"><span class="boss-plate">03</span>Tengiliður og skilmálar <small>vistast strax þegar reit er lokað</small><span class="vk-st" data-vk-notes-st></span></div><div class="vk-facts">'
         + fact('contact_name','Tengiliður','Nafn þess sem tekur við reikningum')
         + fact('contact_email','Netfang','netfang@fyrirtaeki.is')
@@ -3751,8 +3758,11 @@ function renderVidskiptavinir(t) {
       try {
         const r = await fetch('/api/verkkaupar', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(Object.assign({ customer_name: name }, patch)) });
         const j = await r.json(); if (!r.ok || j.error) throw new Error(j.error || ('HTTP ' + r.status));
-        if (VKDETAIL[name]) VKDETAIL[name].info = j.info || Object.assign({}, VKDETAIL[name].info, patch);
+        if (VKDETAIL[name]) { VKDETAIL[name].info = j.info || Object.assign({}, VKDETAIL[name].info, patch);
+          // netfang/kennitala breyta samskiptum, stöðum og hvort greiðandinn sést í listanum → sótt aftur við næstu opnun
+          if (['contact_email','invoice_email','kennitala'].some(k => k in (patch || {}))) VKDETAIL[name].__urelt = true; }
         if (st) { st.textContent = '✓ vistað'; st.style.color = '#2f7a4a'; }
+        try { loadSums(); } catch (_) {}
         teiknaLista();
         return true;
       } catch (e) { if (st) { st.textContent = '✗ ' + (e.message||e); st.style.color = '#b5522a'; } return false; }
@@ -3940,6 +3950,8 @@ function renderVidskiptavinir(t) {
             body: JSON.stringify({ worksite_name: sib.worksite_name, kennitala: kt, heimilisfang: addr }),
           })));
         }
+        // prófíll greiðandans er úreltur eftir nýjan/breyttan taxta — sóttur aftur þegar listinn endurhlaðst (16.11.2026)
+        for (const n of [cName, d.customer_name]) if (n && VKDETAIL[n]) VKDETAIL[n].__urelt = true;
         ov.remove(); load();
       } catch(e) {
         btn.textContent = '⚠ Villa: '+(e.message||e); btn.disabled = false;
