@@ -148,6 +148,12 @@ eða `get_advisors` (security) fyrir heildarlistann með remediation-hlekkjum.
 
 ## Lærdómur
 
+- **16.11.2026 — `P.requireStaff` er ÓVIRKT í loftinu** (HUB_STAFF_PASSWORD ekki sett; charlize 2475, 2530). Tvö föll voru birt „varin“ með því og stóðu opin
+  í mínútur/klst: `/api/odin` (lokað 20:10) og nýja virknin á `/api/verkkaupar` (samningsviðræður, `body_preview` pósta; lokað með `notandi(event)`).
+  Regla: ný föll nota hub_user-staðfestinguna (`notandi(event)` í odin.js / postmoppur.js / verkkaupar.js) og fella LOKAÐ (401/503/502); eftir
+  birtingu staðfestir þú með curl að svarið sé 401 án köku. Próf: `test/odin.test.js`, `test/verkkaupar-laest.test.js` (keyra með HUB_STAFF_PASSWORD óskilgreindu).
+  **Enn opið í `verkkaupar.js` (eldra):** listinn, `?name=`, `?nytt=1` og POST customer_info — kt, taxtar, kröfur, útdrættir pósta. Ákvörðun Agnars (iframe í
+  Slökkvitækis-appinu sendir ekki hub_user-kökuna, lokun myndi tæma verkkaupar.html þar). Lokaðu EKKI sjálfur.
 - **10.11.2026** — Eftirfylgni allsherjar úttektar 31.10. (allt endurmælt 10.11., skill `allsherjar-uttekt` í slokkvitaeki):
   - **`cowork_js_patches` er KÓÐAINNSPÝTING, ekki gagnaleki — og stendur opin.** Lifandi forsíður beggja vefja og
     `adgangar.html`/`verkefnalisti.html` sækja `code` úr töflunni og keyra með `new Function()` (hleðslan er Netlify-innskot,

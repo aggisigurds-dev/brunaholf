@@ -353,7 +353,13 @@ sem tengist tölvupósti beint. Stefnan (byggt stig af stigi):
   Applications → Personal access tokens). Opið verk þar til gert.
 - Leyndarmál eiga heima í Netlify env vars — ALDREI í CLAUDE.md/repo.
 - 19 töflur með RLS af (anon-lykill les/skrifar) — þekkt, bíður sér verkefnis með
-  stefnum per töflu.
+  stefnum per töflu. **ÚRELT — sjá `.claude/agents/oryggi.md` (258 töflur án RLS, mælt 07.11.2026).**
+- **`P.requireStaff` er óvirkt í loftinu** (HUB_STAFF_PASSWORD ekki sett → hleypir öllu í gegn). Ný föll verja sig með hub_user-staðfestingunni
+  (`notandi(event)`) og falla lokað; dæmi: `odin.js`, `postmoppur.js`, `verkkaupar.js` (samningsviðræður og meginmál pósta, 16.11.2026).
+  Listinn og prófíllinn í `/api/verkkaupar` (kt, taxtar, kröfur) eru ENN opin — ákvörðun Agnars.
+- **Prófílgögn greiðenda (16.11.2026):** reikningsnetfang kemur úr `payday_vidskiptavinir.netfang` (Payday sendir á það); taxti úr síðasta SENDA
+  reikningi (aldrei giskað); tafla `vk_samningar` + `vk_punktar` = verk í samningsviðræðum og punktar (RLS á, engar reglur, aðeins `verkkaupar.js`).
+  Vantar enn: taxti Salblikk og STV, netfang Eimskip.
 
 ---
 

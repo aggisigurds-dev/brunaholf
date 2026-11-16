@@ -16,7 +16,36 @@
 // customer_worksite_map (verkstaðir sem eru tengdir handvirkt).
 
 const KV = require('./_ktvorn');
-const P = require('./_portal');   // starfsmanna-hliðið (requireStaff) fyrir samningsviðræðurnar
+const P = require('./_portal');
+const crypto = require('crypto');
+/* ── Innskráning (hub_user-kakan) — LOKAÐ ef hún vantar. Sama staðfesting og odin.js / postmoppur.js / vefur-efni.js.
+ * 16.11.2026: P.requireStaff er ÓVIRKT í loftinu (HUB_STAFF_PASSWORD ekki sett, hleypir öllu í gegn — charlize 2475), svo
+ * samningsviðræðurnar og allur pósturinn (body_preview) voru opin hverjum sem kunni slóðina. Hér fellur kerfið LOKAÐ:
+ * engin kaka / ógild undirskrift / útrunnið / óvirkur notandi → 401; innskráning ekki sett upp → 503; grunnur svarar ekki → 502. */
+async function notandi(event) {
+  let tok = '';
+  try { tok = String(P.parseCookies(event).hub_user || ''); } catch (e) { return { villa: 401 }; }
+  const i = tok.indexOf('.');
+  if (tok.length < 20 || tok.length > 2000 || i < 1) return { villa: 401 };
+  const r = await P.sbGet('hub_adgangar_stilling?id=eq.1&pw_hash=not.is.null&select=session_secret,pw_changed_at');
+  if (!r.ok) return { villa: 502 };
+  const st = (await r.json())[0];
+  if (!st || !st.session_secret) return { villa: 503 };
+  const gogn = tok.slice(0, i);
+  const rett = crypto.createHmac('sha256', st.session_secret).update(gogn).digest();
+  const gefid = Buffer.from(tok.slice(i + 1), 'base64url');
+  if (gefid.length !== rett.length || !crypto.timingSafeEqual(gefid, rett)) return { villa: 401 };
+  let p;
+  try { p = JSON.parse(Buffer.from(gogn, 'base64url').toString('utf8')); } catch (e) { return { villa: 401 }; }
+  if (!p || typeof p.exp !== 'number' || p.exp < Math.floor(Date.now() / 1000)) return { villa: 401 };
+  if (String(p.v || '') !== String(st.pw_changed_at || '')) return { villa: 401 };
+  if (typeof p.uid !== 'number' || !Number.isInteger(p.uid) || p.uid < 1) return { villa: 401 };
+  const u = await P.sbGet(`hub_adgangar?id=eq.${p.uid}&select=id,virkur`);
+  if (!u.ok) return { villa: 502 };
+  const n = (await u.json())[0];
+  return n && n.virkur ? { ok: true } : { villa: 401 };
+}
+const lokad = (v) => json(v === 503 ? 503 : v === 502 ? 502 : 401, { error: v === 503 ? 'Innskráning starfsmanna er ekki sett upp' : v === 502 ? 'Innskráning náðist ekki' : 'Innskráning vantar', need_login: true });
 // Ógreitt/ósent: SÖMU reglur og Kröfu yfirlit (krofu-yfirlit-bru.js) — búa í _krofu-flokkun.js.
 const K = require('./_krofu-flokkun');
 const N = require('./_vk-nytt');
@@ -40,8 +69,13 @@ exports.handler = async (event) => {
     if (event.httpMethod !== 'GET') return json(405, { error: 'Method not allowed' });
     const q = event.queryStringParameters || {};
     if (q.nytt) return await nytt();
-    if (q.samningar) { const g = P.requireStaff(event); if (g) return g; return await samningar(); }
-    return q.name ? await detail(String(q.name).trim()) : await list();
+    if (q.samningar) { const h = await notandi(event); if (!h.ok) return lokad(h.villa); return await samningar(); }
+    if (q.name) {
+      // Meginmál pósta (body_preview), viðtakendur og viðhengi aðeins fyrir innskráðan notanda; annars útdrátturinn einn.
+      const h = await notandi(event).catch(() => ({ villa: 502 }));
+      return await detail(String(q.name).trim(), !!h.ok);
+    }
+    return await list();
   } catch (e) {
     return json(500, { error: e.message || String(e) });
   }
@@ -202,7 +236,7 @@ async function nytt() {
   return json(200, ut);
 }
 
-async function detail(name) {
+async function detail(name, medPost) {
   const enc = encodeURIComponent(name);
   const [infoRows, pg, map, inv, drafts, allPg, allMap, allInv, meta] = await Promise.all([
     sb(`customer_info?customer_name=eq.${enc}&select=*`),
@@ -289,7 +323,8 @@ async function detail(name) {
     // og .catch gleypti villuna — síðan sagði „Engir póstar fundust" hjá Martim og Stálsmiðjunni.
     // 16.11.2026 (Agnar: „ég myndi vilja sjá allann póstinn, ekki bara hluta"): meginmálið (body_preview, allt að 4.000 stafir
     // í innsoginu), viðtakendur, viðhengi og pósthólf fylgja — prófíllinn opnar póstinn í heild. Persónulega hólfið síað út.
-    samskipti = await sb(`email_digest?select=id,account,sender_name,sender_email,to_addresses,subject,snippet,body_preview,has_attachment,attachment_names,received_at,folder&or=${encodeURIComponent('(' + orParts.join(',') + ')')}${ekkiPersonulegt}&order=received_at.desc&limit=40`).catch(() => []);
+    const postDalkar = medPost ? 'to_addresses,subject,snippet,body_preview,has_attachment,attachment_names' : 'subject,snippet,has_attachment';
+    samskipti = await sb(`email_digest?select=id,account,sender_name,sender_email,${postDalkar},received_at,folder&or=${encodeURIComponent('(' + orParts.join(',') + ')')}${ekkiPersonulegt}&order=received_at.desc&limit=40`).catch(() => []);
   }
 
   // 03.11.2026 (Agnar: „Taka tvítök"): bankaspeglar Payday-reikninga og handskráðar Tekjur-raðir detta út; kredit-par (ógiltur
@@ -397,13 +432,13 @@ async function detail(name) {
   // an_greidanda: prófíllinn er verkstaður sem á ósend drög en engan skráðan greiðanda — viðmótið segir hvað vantar.
   const an_greidanda = !infoRows.length && !pg.length && !map.length && drafts.some((d) => anGreidanda(d) && !K.EKKI_OSENT.has(String(d.status || '')));
   return json(200, { info, kt, worksites: pg, map, krofur: krofurOut, drog, samskipti, samtals, stadir, verkstadir_heimili, payday, sidasti_taxti, an_greidanda,
-    efni, kostnadur, generated_at: new Date().toISOString() });
+    efni, kostnadur, postur_lokad: !medPost, generated_at: new Date().toISOString() });
 }
 
 async function save(event) {
   let b;
   try { b = JSON.parse(event.body || '{}'); } catch { return json(400, { error: 'Invalid JSON' }); }
-  if (SAMNINGA_AKTIONIR.has(b.action)) { const g = P.requireStaff(event); if (g) return g; return await samningsAdgerd(b); }
+  if (SAMNINGA_AKTIONIR.has(b.action)) { const h = await notandi(event).catch(() => ({ villa: 502 })); if (!h.ok) return lokad(h.villa); return await samningsAdgerd(b); }
   const name = String(b.customer_name || '').trim();
   if (!name) return json(400, { error: 'customer_name vantar' });
   if (b.action === 'stofna_stad') return await stofnaStad(b, name);

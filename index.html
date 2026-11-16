@@ -3755,7 +3755,8 @@ function renderVidskiptavinir(t) {
       const full = String(m.body_preview || '');
       const vid = Array.isArray(m.attachment_names) ? m.attachment_names.filter(Boolean) : [];
       const meta = [m.to_addresses ? 'Til: ' + m.to_addresses : '', vid.length ? '📎 ' + vid.join(', ') : ''].filter(Boolean);
-      const ath = !full ? 'Aðeins útdrátturinn er geymdur — meginmál þessa pósts (HTML) var ekki lesið inn í pósthólfs-innsoginu.'
+      const ath = d.postur_lokad ? 'Allur pósturinn sést aðeins innskráðum notanda — skráðu þig inn í Brunahólfs-hubbinn.'
+        : !full ? 'Aðeins útdrátturinn er geymdur — meginmál þessa pósts (HTML) var ekki lesið inn í pósthólfs-innsoginu.'
         : (full.length >= 4000 ? 'Pósturinn er styttur við 4.000 stafi í innsoginu — restin er í pósthólfinu sjálfu.' : '');
       const texti = full || m.snippet || '';
       const hf = holfNafn(m.account);

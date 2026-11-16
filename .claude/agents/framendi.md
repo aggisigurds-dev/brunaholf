@@ -440,6 +440,14 @@ Lota 16.10.2026 (commit 8860d86 → 9f78dd9), allt í `index.html`, grep á nöf
 - **Viðskiptavinir (`renderVidskiptavinir`):** grindin `.vk-grid` teiknuð einu sinni; `teiknaLista()` (vinstri
   listi, leit `#vk-search`) og `velja(name)` → `loadDetail()` (hægri spjald 02–08) uppfæra hvort í sínu lagi.
   `openModal()` (verðskrá per verkstað) og `load()` óbreytt frá fyrri útgáfu. Sjálfgefið fyrsta félag valið >980 px.
+  **Uppsetning eftir 16.11.2026 (grep nöfnin):** 00 Yfirlit (`#vk-yf`) → SV-panill (`#vk-sv`, `teiknaSamninga`, `svForm`, `svPunktar`,
+  `loadSamningar` → `/api/verkkaupar?samningar=1`) → 01 Greiðendur (röðun `#vk-rod` = `rada()`/`rodMerki()`, leit `#vk-search` með
+  `vkFold`) → prófíllinn: 03 `umVerkidHtml` (`#vk-um-sec`, uppfærist með `uppfaeraUmVerkid`), 04 Tengiliður, 05 Samningurinn, 06 Ósendar,
+  07 Kröfur sent, 08 `samskiptiHtml` (allur pósturinn, `d.postur_lokad`), 09 Minnispunktar. Allir smellir á prófílnum fara um EINN
+  delegated listener á `box` (`box.__vkPostur`: data-vk-post/-allirpostar/-postleit/-nyttsv). Val (röðun, SV-opið) → `vidmotLesa/
+  vidmotSetja` (vk_rod, vk_sv_falid, vk_sv_lokid_opid, vk_sv_till_opid) — aldrei localStorage. Texti í vinnslu varðveitist yfir
+  endurteikningu með `data-sv-keep`. Djúptenging í Póstleit: `window.__bhOpna.postleit_kt|postleit_q`, lesin aftast í `renderPostleit`.
+  Gildra: sía sem `.filter()`-ar röðunina verður að víkja þegar leitað er (`rada(listi, leitAn)`), annars finnur leitin ekkert utan síunnar.
   **16.11.2026:** efst er `section#vk-yf` („00 Yfirlit": `teiknaYfirlit()`, gögn `VKNYTT` úr `loadNytt()` →
   `/api/verkkaupar?nytt=1`; flísarnar Ósent/Ógreitt sía listann um `vk_sia`, Fela/Sýna er `vk_yf_falid` — báðir
   vidmot-lyklar). Reglurnar og merking hvers dálks: `kunnaskra.md` (16.11.) og `netlify/functions/_vk-nytt.js`; ekki afrita hingað.

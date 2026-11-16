@@ -120,3 +120,19 @@ endurræsingu þjónsins er gamalt; tvær lotur deila ekki port 8788 — ef hann
 Netlify-föll sem breytast í lotunni (verkkaupar.js) keyra EKKI staðbundið — framleiðslu-útgáfan svarar þar til deploy.
 Eftir [deploy]: `build.json` getur komið úr CDN-skyndiminni; mæla með `?t=<tímastimpill>` og Cache-Control: no-cache.
 
+
+## 6 · Innskráningarvarin föll og lifandi staðfesting (16.11.2026)
+
+- **Þú getur ekki sannað „virkar fyrir innskráðan" á lifandi síðu úr höfuðlausum vafra** — hann hefur enga hub_user-köku og þú slærð ALDREI inn lykilorð.
+  Skiptu í tvennt: (1) `curl` sannar að lokað fall svarar **401 án köku** (`/api/verkkaupar?samningar=1`, `/api/odin`) og að opinn lestur skilar ekki
+  viðkvæmum reitum (`postur_lokad:true`); (2) `node --test test/<fall>-laest.test.js` líkir eftir innskráningu með undirritaðri köku (sjá `test/odin.test.js`,
+  `test/verkkaupar-laest.test.js` — ENGIN leyndarmál lesin) og keyrir með `HUB_STAFF_PASSWORD` óskilgreindu eins og í loftinu. Biddu Agnar að staðfesta
+  innskráður í sínum vafra að síðan opnist.
+- Viðmótspróf á lifandi síðu án innskráningar sýnir því „Næ ekki í samningsviðræðurnar: Innskráning vantar" og pósta án meginmáls — það er RÉTT
+  hegðun, ekki villa. Til að prófa fulla virkni notarðu staðbundna síðu (`tools/local-proxy-serve.cjs`) með route-gervigögnum (sjá scratchpad `vk_prof.cjs`).
+- **Playwright úr `luna-bridge/node_modules`** (`require('C:/Users/Slokkvitaeki/luna-bridge/node_modules/playwright')`) þegar Playwright-MCP vafrinn er í
+  notkun annars spjalls. `ctx.unrouteAll({behavior:'ignoreErrors'})` á undan `browser.close()` svo lota endi ekki á `TargetClosedError`.
+- Raðir/leit: veldu röðun með `page.selectOption('#vk-rod', …)` — hún skrifar `hub_state` (vidmot `vk_rod`) á lifandi síðu; route-reglan grípur það
+  (`LIVE POST /api/app-state` í skrif-listanum er því EÐLILEGT, ekki leki). Leitarreitur Viðskiptavina er `#vk-search`, ekki `#vk-q`.
+- Skrifaðu próf á **hverja síu sem `.filter()`-ar lista** með leit virka: leit utan síunnar fann ekkert (lifandi próf 16.11.2026 sýndi það, staðbundið próf ekki,
+  því það byrjaði á röðuninni „Nafn").

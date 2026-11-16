@@ -324,6 +324,19 @@ svarað í 3 daga'".
   - **„🔎" í Samskiptum → Póstleit** (djúptenging `window.__bhOpna.postleit_kt` / `.postleit_q`, lesin aftast í
     `renderPostleit`): Póstsaga á kt. AÐEINS ef greiðandinn á stað í `fyrirtaeki` — hún þekkir ekki aðra og gaf 0 pósta fyrir
     Deluxe Lodges; annars almenn leit á léni netfangsins (pósturinn í báðar áttir), netfanginu ef lénið er almennt, eða nafninu.
+  - **Birt og staðfest á lifandi síðu** (ea4d3a2, 112e126; viðmótspróf með öll skrif gripin). Lagað við staðfestinguna: leit í
+    Greiðendum fann ekkert utan síunnar þegar röðunin „Með ógreitt“ var á — `rada(listi, leitAn)` sigtar nú aðeins án leitar.
+  - **INNSKRÁNING (lærdómur, charlize 2530):** `P.requireStaff` er ÓVIRKT í loftinu (HUB_STAFF_PASSWORD ekki sett) — fyrsta
+    útgáfa samningsviðræðnanna og meginmáls pósta var opin hverjum sem kunni slóðina. `verkkaupar.js` notar nú `notandi(event)`
+    (hub_user-kakan, eins og odin.js/postmoppur.js) og fellur LOKAÐ: `?samningar=1` og skrif `samningur|samningur_eyda|punktur|
+    punktur_eyda` → 401/503/502 án innskráningar; `detail(name, medPost)` sækir `to_addresses`/`body_preview`/`attachment_names`
+    AÐEINS fyrir innskráðan (annars `postur_lokad:true` og prófíllinn segir það). Próf: `test/verkkaupar-laest.test.js`.
+    **Enn óvarið (eldra, ákvörðun Agnars/oryggi):** listinn, `?name=` (kt, taxtar, kröfur, útdrættir), `?nytt=1` og vistun customer_info.
+    Ný föll: aldrei `P.requireStaff` eitt og sér.
+  - **Prófílgögn 16.11.2026:** 12 prófílar stofnaðir; kt fyllt í pricing_guide fyrir 8 greiðendur; taxti úr síðasta SENDA reikningi á
+    KELDUR, Kringluna, Stórhöfða 29, Súðavog 7; GG verk 9.951 (Agnar staðfesti); reikningsnetfang 10 félaga úr
+    `payday_vidskiptavinir.netfang` (sama netfang og Payday sendir á). **Enn vantar:** taxta Salblikk og STV (enginn sendur reikningur),
+    netfang Eimskip. Laugavegur/Heklureitur er gata-samningur — enginn klst-taxti er ekki villa. Engin verk í samningsviðræðum skráð.
 
 - `customer_info` fékk þrjá dálka (apply_migration + `sql/2026-10-16_customer_info_tengilidur.sql`): `contact_name`
   (tengiliður), `invoice_email` (reikningspóstur), `heimilisfang`. `netlify/functions/verkkaupar.js` INFO_FIELDS
