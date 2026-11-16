@@ -1,5 +1,5 @@
 {
- "generated": "2026-11-15",
+ "generated": "2026-11-16",
  "_athugasemd": "GENERATED af tools/build-agents-registry.cjs úr <repo>/.claude/sidukort.json — breyttu síðukortunum, ekki hér.",
  "vefir": [
   {
@@ -18,8 +18,8 @@
    "repo": "slokkvitaeki",
    "utgafa": 1,
    "vefagent": "bord-flettur",
-   "alls": 123,
-   "med_eiganda": 120,
+   "alls": 124,
+   "med_eiganda": 121,
    "vidvorun": 0,
    "an_eiganda": 3,
    "hlutfall": 98
@@ -29,8 +29,8 @@
    "repo": "kjarni",
    "utgafa": 1,
    "vefagent": "kjarni-vefur",
-   "alls": 105,
-   "med_eiganda": 105,
+   "alls": 103,
+   "med_eiganda": 103,
    "vidvorun": 0,
    "an_eiganda": 0,
    "hlutfall": 100
@@ -5118,6 +5118,37 @@
   {
    "vefur": "slokkvitaeki",
    "repo": "slokkvitaeki",
+   "id": "afgreidsla",
+   "titill": "Afgreiðsla — forunnin verk, eitt í einu",
+   "tegund": "sida",
+   "leid": "/afgreidsla.html",
+   "skilgreind": [
+    "afgreidsla.html",
+    "netlify/functions/afgreidsla.cjs"
+   ],
+   "yfir": null,
+   "eigandi": "tony-stark",
+   "undiragentar": [
+    "postur",
+    "sala-reikningar",
+    "rukkari",
+    "kerfisheilsa"
+   ],
+   "kveikjuord": [
+    "Afgreiðsla",
+    "forunnið",
+    "staðfesta eða senda",
+    "tilbúin verk"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": [],
+   "eigandi_nafn": "tony-stark",
+   "eigandi_utan": false
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
    "id": "samningar",
    "titill": "Þjónustusamningar",
    "tegund": "view",
@@ -7158,65 +7189,6 @@
   {
    "vefur": "kjarni",
    "repo": "kjarni",
-   "id": "slokkvitaeki:/kjarni/skraning/skyrsla",
-   "titill": "Skráning — stöðuskýrsla",
-   "tegund": "sida",
-   "leid": "/kjarni/skraning/skyrsla",
-   "skilgreind": [
-    "apps/slokkvitaeki/app/kjarni/skraning/skyrsla/page.tsx"
-   ],
-   "yfir": null,
-   "eigandi": "bh:gatakort",
-   "undiragentar": [
-    "skraning"
-   ],
-   "kveikjuord": [
-    "Stöðuskýrsla",
-    "skýrsla til Landspítalans",
-    "útboðsmagn",
-    "staða per deild",
-    "útboðssamanburður"
-   ],
-   "merki": null,
-   "stada": "✅",
-   "astaeda": [],
-   "eigandi_nafn": "gatakort",
-   "eigandi_utan": true
-  },
-  {
-   "vefur": "kjarni",
-   "repo": "kjarni",
-   "id": "slokkvitaeki:/kjarni/skraning/kort",
-   "titill": "Skráning — gatakort",
-   "tegund": "sida",
-   "leid": "/kjarni/skraning/kort",
-   "skilgreind": [
-    "apps/slokkvitaeki/app/kjarni/skraning/kort/page.tsx"
-   ],
-   "yfir": null,
-   "eigandi": "bh:gatakort",
-   "undiragentar": [
-    "skraning"
-   ],
-   "kveikjuord": [
-    "Gatakort",
-    "áætluð göt",
-    "lög á teikningu",
-    "brunayfirlit",
-    "kortleggja húsnæði",
-    "púsla saman teikningum",
-    "hinn endann vantar",
-    "nýja Ajour"
-   ],
-   "merki": null,
-   "stada": "✅",
-   "astaeda": [],
-   "eigandi_nafn": "gatakort",
-   "eigandi_utan": true
-  },
-  {
-   "vefur": "kjarni",
-   "repo": "kjarni",
    "id": "slokkvitaeki:/kjarni/skraning/greining",
    "titill": "Skráning — greining",
    "tegund": "sida",
@@ -7832,10 +7804,8 @@
     "apps/web/src/app/3dwork/page.tsx"
    ],
    "yfir": null,
-   "eigandi": "3dwork",
-   "undiragentar": [
-    "skill:3dJoker"
-   ],
+   "eigandi": "skill:3dJoker",
+   "undiragentar": [],
    "kveikjuord": [
     "3dwork",
     "STL",
@@ -7844,8 +7814,8 @@
    "merki": null,
    "stada": "✅",
    "astaeda": [],
-   "eigandi_nafn": "3dwork",
-   "eigandi_utan": false
+   "eigandi_nafn": "3dJoker",
+   "eigandi_utan": true
   },
   {
    "vefur": "kjarni",
@@ -7858,16 +7828,14 @@
     "apps/web/src/app/api/3dwork/github/geometry/[id]/route.ts"
    ],
    "yfir": null,
-   "eigandi": "3dwork",
-   "undiragentar": [
-    "skill:3dJoker"
-   ],
+   "eigandi": "skill:3dJoker",
+   "undiragentar": [],
    "kveikjuord": [],
    "merki": null,
    "stada": "✅",
    "astaeda": [],
-   "eigandi_nafn": "3dwork",
-   "eigandi_utan": false
+   "eigandi_nafn": "3dJoker",
+   "eigandi_utan": true
   },
   {
    "vefur": "kjarni",
@@ -7880,16 +7848,14 @@
     "apps/web/src/app/api/3dwork/github/projects/[id]/route.ts"
    ],
    "yfir": null,
-   "eigandi": "3dwork",
-   "undiragentar": [
-    "skill:3dJoker"
-   ],
+   "eigandi": "skill:3dJoker",
+   "undiragentar": [],
    "kveikjuord": [],
    "merki": null,
    "stada": "✅",
    "astaeda": [],
-   "eigandi_nafn": "3dwork",
-   "eigandi_utan": false
+   "eigandi_nafn": "3dJoker",
+   "eigandi_utan": true
   },
   {
    "vefur": "kjarni",
@@ -7902,16 +7868,14 @@
     "apps/web/src/app/api/3dwork/github/projects/route.ts"
    ],
    "yfir": null,
-   "eigandi": "3dwork",
-   "undiragentar": [
-    "skill:3dJoker"
-   ],
+   "eigandi": "skill:3dJoker",
+   "undiragentar": [],
    "kveikjuord": [],
    "merki": null,
    "stada": "✅",
    "astaeda": [],
-   "eigandi_nafn": "3dwork",
-   "eigandi_utan": false
+   "eigandi_nafn": "3dJoker",
+   "eigandi_utan": true
   },
   {
    "vefur": "kjarni",
@@ -7924,16 +7888,14 @@
     "apps/web/src/app/api/3dwork/github/route.ts"
    ],
    "yfir": null,
-   "eigandi": "3dwork",
-   "undiragentar": [
-    "skill:3dJoker"
-   ],
+   "eigandi": "skill:3dJoker",
+   "undiragentar": [],
    "kveikjuord": [],
    "merki": null,
    "stada": "✅",
    "astaeda": [],
-   "eigandi_nafn": "3dwork",
-   "eigandi_utan": false
+   "eigandi_nafn": "3dJoker",
+   "eigandi_utan": true
   },
   {
    "vefur": "kjarni",

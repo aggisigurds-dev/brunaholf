@@ -1,8 +1,8 @@
 {
- "generated": "2026-11-15",
- "agents": 49,
+ "generated": "2026-11-16",
+ "agents": 50,
  "skills": 59,
- "a_odrum_velum": 3,
+ "a_odrum_velum": 4,
  "list": [
   {
    "id": "agent:3dwork",
@@ -89,7 +89,8 @@
      "titill": "3dwork GitHub-sync",
      "hlutverk": "eigandi"
     }
-   ]
+   ],
+   "onnur_vel": true
   },
   {
    "id": "agent:adstod",
@@ -138,12 +139,12 @@
     {
      "repo": "slokkvitaeki",
      "path": ".claude/agents/adstod.md",
-     "uppfaert": "2026-11-04",
+     "uppfaert": "2026-11-16",
      "linur": 99
     }
    ],
    "afbrigdi": [],
-   "uppfaert": "2026-11-04",
+   "uppfaert": "2026-11-16",
    "sidur": [
     {
      "id": "adstod",
@@ -619,12 +620,12 @@
     {
      "repo": "slokkvitaeki",
      "path": ".claude/agents/birgdastjori.md",
-     "uppfaert": "2026-11-04",
-     "linur": 99
+     "uppfaert": "2026-11-16",
+     "linur": 106
     }
    ],
    "afbrigdi": [],
-   "uppfaert": "2026-11-04",
+   "uppfaert": "2026-11-16",
    "sidur": [
     {
      "id": "vorubirgdir",
@@ -723,12 +724,12 @@
     {
      "repo": "slokkvitaeki",
      "path": ".claude/agents/black-widow.md",
-     "uppfaert": "2026-11-15",
-     "linur": 92
+     "uppfaert": "2026-11-16",
+     "linur": 93
     }
    ],
    "afbrigdi": [],
-   "uppfaert": "2026-11-15",
+   "uppfaert": "2026-11-16",
    "sidur": [
     {
      "id": "verdsamanburdur",
@@ -802,12 +803,12 @@
     {
      "repo": "brunaholf",
      "path": ".claude/agents/bokari.md",
-     "uppfaert": "2026-11-10",
-     "linur": 745
+     "uppfaert": "2026-11-16",
+     "linur": 764
     }
    ],
    "afbrigdi": [],
-   "uppfaert": "2026-11-10",
+   "uppfaert": "2026-11-16",
    "sidur": [
     {
      "id": "yfirlit",
@@ -1139,12 +1140,12 @@
     {
      "repo": "slokkvitaeki",
      "path": ".claude/agents/bord-flettur.md",
-     "uppfaert": "2026-11-15",
-     "linur": 716
+     "uppfaert": "2026-11-16",
+     "linur": 799
     }
    ],
    "afbrigdi": [],
-   "uppfaert": "2026-11-15",
+   "uppfaert": "2026-11-16",
    "sidur": [
     {
      "id": "field",
@@ -1471,18 +1472,25 @@
     "Edit"
    ],
    "heimili": [
-    "slokkvitaeki"
+    "slokkvitaeki",
+    "kjarni"
    ],
    "skrar": [
     {
      "repo": "slokkvitaeki",
+     "path": ".claude/agents/center-hotel.md",
+     "uppfaert": "2026-11-16",
+     "linur": 150
+    },
+    {
+     "repo": "kjarni",
      "path": ".claude/agents/center-hotel.md",
      "uppfaert": "2026-11-05",
      "linur": 150
     }
    ],
    "afbrigdi": [],
-   "uppfaert": "2026-11-05",
+   "uppfaert": "2026-11-16",
    "sidur": [
     {
      "id": "rekstrarfelog",
@@ -1550,12 +1558,12 @@
     {
      "repo": "slokkvitaeki",
      "path": ".claude/agents/elon-musk.md",
-     "uppfaert": "2026-11-10",
+     "uppfaert": "2026-11-16",
      "linur": 419
     }
    ],
    "afbrigdi": [],
-   "uppfaert": "2026-11-10",
+   "uppfaert": "2026-11-16",
    "sidur": [
     {
      "id": "workshop",
@@ -1701,12 +1709,12 @@
     {
      "repo": "brunaholf",
      "path": ".claude/agents/endurskodandi.md",
-     "uppfaert": "2026-11-15",
+     "uppfaert": "2026-11-16",
      "linur": 127
     }
    ],
    "afbrigdi": [],
-   "uppfaert": "2026-11-15",
+   "uppfaert": "2026-11-16",
    "sidur": [
     {
      "id": "dkplus-products",
@@ -1774,12 +1782,12 @@
     {
      "repo": "brunaholf",
      "path": ".claude/agents/framendi.md",
-     "uppfaert": "2026-11-10",
+     "uppfaert": "2026-11-16",
      "linur": 505
     }
    ],
    "afbrigdi": [],
-   "uppfaert": "2026-11-10",
+   "uppfaert": "2026-11-16",
    "sidur": [
     {
      "id": "verkkaupar",
@@ -1968,12 +1976,12 @@
     {
      "repo": "slokkvitaeki",
      "path": ".claude/agents/fyrirtaeki.md",
-     "uppfaert": "2026-11-11",
+     "uppfaert": "2026-11-16",
      "linur": 105
     }
    ],
    "afbrigdi": [],
-   "uppfaert": "2026-11-11",
+   "uppfaert": "2026-11-16",
    "sidur": [
     {
      "id": "companies",
@@ -2066,12 +2074,12 @@
     {
      "repo": "brunaholf",
      "path": ".claude/agents/gagnaleidslur.md",
-     "uppfaert": "2026-11-15",
-     "linur": 491
+     "uppfaert": "2026-11-16",
+     "linur": 494
     }
    ],
    "afbrigdi": [],
-   "uppfaert": "2026-11-15",
+   "uppfaert": "2026-11-16",
    "sidur": [
     {
      "id": "dagurinn",
@@ -2314,20 +2322,7 @@
    ],
    "afbrigdi": [],
    "uppfaert": "2026-11-14",
-   "sidur": [
-    {
-     "id": "slokkvitaeki:/kjarni/skraning/skyrsla",
-     "vefur": "kjarni",
-     "titill": "Skráning — stöðuskýrsla",
-     "hlutverk": "eigandi"
-    },
-    {
-     "id": "slokkvitaeki:/kjarni/skraning/kort",
-     "vefur": "kjarni",
-     "titill": "Skráning — gatakort",
-     "hlutverk": "eigandi"
-    }
-   ]
+   "sidur": []
   },
   {
    "id": "agent:hawkeye",
@@ -2474,18 +2469,25 @@
     "Edit"
    ],
    "heimili": [
-    "slokkvitaeki"
+    "slokkvitaeki",
+    "kjarni"
    ],
    "skrar": [
     {
      "repo": "slokkvitaeki",
      "path": ".claude/agents/heimaleiga.md",
-     "uppfaert": "2026-11-10",
-     "linur": 198
+     "uppfaert": "2026-11-16",
+     "linur": 210
+    },
+    {
+     "repo": "kjarni",
+     "path": ".claude/agents/heimaleiga.md",
+     "uppfaert": "2026-11-05",
+     "linur": 187
     }
    ],
    "afbrigdi": [],
-   "uppfaert": "2026-11-10",
+   "uppfaert": "2026-11-16",
    "sidur": [
     {
      "id": "rekstrarfelog",
@@ -2549,12 +2551,12 @@
     {
      "repo": "brunaholf",
      "path": ".claude/agents/hradi.md",
-     "uppfaert": "2026-11-04",
+     "uppfaert": "2026-11-16",
      "linur": 126
     }
    ],
    "afbrigdi": [],
-   "uppfaert": "2026-11-04",
+   "uppfaert": "2026-11-16",
    "sidur": [
     {
      "id": "kerfisheilsa",
@@ -2621,12 +2623,12 @@
     {
      "repo": "slokkvitaeki",
      "path": ".claude/agents/innkaupabokari.md",
-     "uppfaert": "2026-11-04",
+     "uppfaert": "2026-11-16",
      "linur": 85
     }
    ],
    "afbrigdi": [],
-   "uppfaert": "2026-11-04",
+   "uppfaert": "2026-11-16",
    "sidur": [
     {
      "id": "kostnadur",
@@ -2705,12 +2707,12 @@
     {
      "repo": "brunaholf",
      "path": ".claude/agents/jarvis.md",
-     "uppfaert": "2026-11-11",
+     "uppfaert": "2026-11-16",
      "linur": 305
     }
    ],
    "afbrigdi": [],
-   "uppfaert": "2026-11-11",
+   "uppfaert": "2026-11-16",
    "sidur": [
     {
      "id": "dagurinn",
@@ -2901,13 +2903,13 @@
     {
      "repo": "brunaholf",
      "path": ".claude/agents/joker.md",
-     "uppfaert": "2026-11-04",
+     "uppfaert": "2026-11-16",
      "linur": 237
     },
     {
      "repo": "slokkvitaeki",
      "path": ".claude/agents/joker.md",
-     "uppfaert": "2026-11-04",
+     "uppfaert": "2026-11-16",
      "linur": 630
     }
    ],
@@ -2933,7 +2935,7 @@
      ]
     }
    ],
-   "uppfaert": "2026-11-04",
+   "uppfaert": "2026-11-16",
    "sidur": [
     {
      "id": "vefryni",
@@ -3039,12 +3041,12 @@
     {
      "repo": "brunaholf",
      "path": ".claude/agents/kerfisheilsa.md",
-     "uppfaert": "2026-11-04",
+     "uppfaert": "2026-11-16",
      "linur": 125
     }
    ],
    "afbrigdi": [],
-   "uppfaert": "2026-11-04",
+   "uppfaert": "2026-11-16",
    "sidur": [
     {
      "id": "sjalfvirkni",
@@ -3086,6 +3088,12 @@
      "id": "radgjafinn",
      "vefur": "slokkvitaeki",
      "titill": "Ráðgjafinn — Tony Stark (undir Vinnusamantekt á Þjónustuborði)",
+     "hlutverk": "undiragent"
+    },
+    {
+     "id": "afgreidsla",
+     "vefur": "slokkvitaeki",
+     "titill": "Afgreiðsla — forunnin verk, eitt í einu",
      "hlutverk": "undiragent"
     }
    ]
@@ -3140,12 +3148,12 @@
     {
      "repo": "slokkvitaeki",
      "path": ".claude/agents/kerfisrynir.md",
-     "uppfaert": "2026-11-10",
+     "uppfaert": "2026-11-16",
      "linur": 104
     }
    ],
    "afbrigdi": [],
-   "uppfaert": "2026-11-10",
+   "uppfaert": "2026-11-16",
    "sidur": []
   },
   {
@@ -3441,13 +3449,13 @@
     {
      "repo": "brunaholf",
      "path": ".claude/agents/kodafraedingur.md",
-     "uppfaert": "2026-11-10",
+     "uppfaert": "2026-11-16",
      "linur": 127
     },
     {
      "repo": "slokkvitaeki",
      "path": ".claude/agents/kodafraedingur.md",
-     "uppfaert": "2026-11-10",
+     "uppfaert": "2026-11-16",
      "linur": 121
     }
    ],
@@ -3478,7 +3486,7 @@
      ]
     }
    ],
-   "uppfaert": "2026-11-10",
+   "uppfaert": "2026-11-16",
    "sidur": [
     {
      "id": "uppferslubord",
@@ -3542,12 +3550,12 @@
     {
      "repo": "slokkvitaeki",
      "path": ".claude/agents/kort.md",
-     "uppfaert": "2026-11-04",
+     "uppfaert": "2026-11-16",
      "linur": 122
     }
    ],
    "afbrigdi": [],
-   "uppfaert": "2026-11-04",
+   "uppfaert": "2026-11-16",
    "sidur": [
     {
      "id": "leidsogn",
@@ -3644,13 +3652,13 @@
     {
      "repo": "brunaholf",
      "path": ".claude/agents/kunnaskra.md",
-     "uppfaert": "2026-11-04",
-     "linur": 306
+     "uppfaert": "2026-11-16",
+     "linur": 364
     },
     {
      "repo": "slokkvitaeki",
      "path": ".claude/agents/kunnaskra.md",
-     "uppfaert": "2026-11-10",
+     "uppfaert": "2026-11-16",
      "linur": 364
     }
    ],
@@ -3681,7 +3689,7 @@
      ]
     }
    ],
-   "uppfaert": "2026-11-10",
+   "uppfaert": "2026-11-16",
    "sidur": [
     {
      "id": "verkkaupar",
@@ -3912,19 +3920,19 @@
     {
      "repo": "brunaholf",
      "path": ".claude/agents/logfraedingur.md",
-     "uppfaert": "2026-11-15",
+     "uppfaert": "2026-11-16",
      "linur": 96,
      "afrit": true
     },
     {
      "repo": "slokkvitaeki",
      "path": ".claude/agents/logfraedingur.md",
-     "uppfaert": "2026-11-15",
+     "uppfaert": "2026-11-16",
      "linur": 95
     }
    ],
    "afbrigdi": [],
-   "uppfaert": "2026-11-15",
+   "uppfaert": "2026-11-16",
    "sidur": [
     {
      "id": "tilbodhub",
@@ -4002,14 +4010,14 @@
     {
      "repo": "brunaholf",
      "path": ".claude/agents/natalie.md",
-     "uppfaert": "2026-11-04",
+     "uppfaert": "2026-11-16",
      "linur": 304,
      "afrit": true
     },
     {
      "repo": "slokkvitaeki",
      "path": ".claude/agents/natalie.md",
-     "uppfaert": "2026-11-04",
+     "uppfaert": "2026-11-16",
      "linur": 314
     }
    ],
@@ -4037,7 +4045,7 @@
      ]
     }
    ],
-   "uppfaert": "2026-11-04",
+   "uppfaert": "2026-11-16",
    "sidur": [
     {
      "id": "brunakerfi",
@@ -4136,12 +4144,12 @@
     {
      "repo": "slokkvitaeki",
      "path": ".claude/agents/netvordur.md",
-     "uppfaert": "2026-11-11",
+     "uppfaert": "2026-11-16",
      "linur": 121
     }
    ],
    "afbrigdi": [],
-   "uppfaert": "2026-11-11",
+   "uppfaert": "2026-11-16",
    "sidur": [
     {
      "id": "jarvis-villuleit",
@@ -4168,6 +4176,78 @@
      "hlutverk": "undiragent"
     }
    ]
+  },
+  {
+   "id": "agent:odin",
+   "type": "agent",
+   "name": "odin",
+   "emoji": "👁️",
+   "rodd": "Óðinn (Anthony Hopkins)",
+   "flokkur": "rodd",
+   "svid": null,
+   "lysing": "Óðinn 👁️ — UMSJÓNARMAÐUR SAMÞYKKTA OG VERKEFNALISTANS, ráðinn af Agnari 16.11.2026. Stendur á milli lota, varða og Agnars — tekur við öllu sem vill verða samþykkismál eða verk, flettir upp í reglubókinni sem Agnar kennir honum (odin_reglur), afgreiðir það sem hann hefur heimild til, sendir agent eða skill í verkið og ber aðeins raunverulegar ákvarðanir undir Agnar. Lærir af hverju svari; veitir sér ALDREI heimild sjálfur. Persóna: 👁️ Óðinn (Anthony Hopkins) með hrafnana Hugin og Munin.",
+   "serhaefing": [
+    "UMSJÓNARMAÐUR SAMÞYKKTA OG VERKEFNALISTANS, ráðinn 16.11.2026 — stendur á milli lota, varða og Agnars",
+    "Reglubókin (odin_reglur): Agnar kennir honum regla fyrir reglu hvernig mál eru afgreidd; heimild „sjálfur\" veitir aðeins Agnar",
+    "Afgreiðir augljósar samþykktir samkvæmt reglu, undirbýr hinar í Tilbúin verk og ber aðeins raunverulegar ákvarðanir undir Agnar",
+    "Sendir réttan agent eða skill í verkið með fyrirfram ákveðnum skrefum; tilkynningar varða og lota fara til hans fyrst",
+    "Úrskurðaskráin (odin_urskurdir): hver úrskurður með rökum og sönnun; dómur Agnars (rétt / rangt) er kennslan"
+   ],
+   "kveikjuord": [
+    "Óðinn",
+    "Odin",
+    "spyrja Óðin",
+    "kenna Óðni",
+    "reglubók Óðins",
+    "má Óðinn",
+    "Óðinn afgreiðir",
+    "samþykkja fyrir mig",
+    "augljósar samþykktir",
+    "fara yfir samþykktirnar",
+    "fara yfir verkefnalistann",
+    "hver á að laga þetta",
+    "senda agent í verkið",
+    "vörður tilkynnir",
+    "lota tilkynnir bilun"
+   ],
+   "aldrei": [
+    "Veita sjálfum sér heimild",
+    "Senda póst, kröfu eða reikning án reglu með heimild frá Agnari",
+    "Loka máli án mælingar sama dag",
+    "Fylla borð Agnars eða Verkefnalistann"
+   ],
+   "tools": [
+    "Bash",
+    "Read",
+    "Grep",
+    "Glob",
+    "Edit",
+    "Write",
+    "Skill",
+    "mcp__supabase__execute_sql"
+   ],
+   "heimili": [
+    "brunaholf",
+    "slokkvitaeki"
+   ],
+   "skrar": [
+    {
+     "repo": "brunaholf",
+     "path": ".claude/agents/odin.md",
+     "uppfaert": "2026-11-16",
+     "linur": 138,
+     "afrit": true
+    },
+    {
+     "repo": "slokkvitaeki",
+     "path": ".claude/agents/odin.md",
+     "uppfaert": "2026-11-16",
+     "linur": 137
+    }
+   ],
+   "afbrigdi": [],
+   "uppfaert": "2026-11-16",
+   "sidur": []
   },
   {
    "id": "agent:opp",
@@ -4219,12 +4299,12 @@
     {
      "repo": "slokkvitaeki",
      "path": ".claude/agents/opp.md",
-     "uppfaert": "2026-11-04",
+     "uppfaert": "2026-11-16",
      "linur": 87
     }
    ],
    "afbrigdi": [],
-   "uppfaert": "2026-11-04",
+   "uppfaert": "2026-11-16",
    "sidur": [
     {
      "id": "opp",
@@ -4495,12 +4575,12 @@
     {
      "repo": "brunaholf",
      "path": ".claude/agents/oryggi.md",
-     "uppfaert": "2026-11-14",
+     "uppfaert": "2026-11-16",
      "linur": 240
     }
    ],
    "afbrigdi": [],
-   "uppfaert": "2026-11-14",
+   "uppfaert": "2026-11-16",
    "sidur": [
     {
      "id": "stillingar",
@@ -4623,12 +4703,12 @@
     {
      "repo": "slokkvitaeki",
      "path": ".claude/agents/postur.md",
-     "uppfaert": "2026-11-10",
+     "uppfaert": "2026-11-16",
      "linur": 180
     }
    ],
    "afbrigdi": [],
-   "uppfaert": "2026-11-10",
+   "uppfaert": "2026-11-16",
    "sidur": [
     {
      "id": "dagurinn",
@@ -4703,6 +4783,12 @@
      "hlutverk": "undiragent"
     },
     {
+     "id": "afgreidsla",
+     "vefur": "slokkvitaeki",
+     "titill": "Afgreiðsla — forunnin verk, eitt í einu",
+     "hlutverk": "undiragent"
+    },
+    {
      "id": "postsvorun",
      "vefur": "slokkvitaeki",
      "titill": "Póstsvörun",
@@ -4763,12 +4849,12 @@
     {
      "repo": "slokkvitaeki",
      "path": ".claude/agents/prentun.md",
-     "uppfaert": "2026-11-04",
+     "uppfaert": "2026-11-16",
      "linur": 128
     }
    ],
    "afbrigdi": [],
-   "uppfaert": "2026-11-04",
+   "uppfaert": "2026-11-16",
    "sidur": [
     {
      "id": "counter",
@@ -4848,12 +4934,12 @@
     {
      "repo": "brunaholf",
      "path": ".claude/agents/rambo.md",
-     "uppfaert": "2026-11-04",
+     "uppfaert": "2026-11-16",
      "linur": 63
     }
    ],
    "afbrigdi": [],
-   "uppfaert": "2026-11-04",
+   "uppfaert": "2026-11-16",
    "sidur": [
     {
      "id": "jarvis-oryggisnet",
@@ -4919,13 +5005,13 @@
     {
      "repo": "brunaholf",
      "path": ".claude/agents/rukkari.md",
-     "uppfaert": "2026-11-15",
-     "linur": 336
+     "uppfaert": "2026-11-16",
+     "linur": 345
     },
     {
      "repo": "slokkvitaeki",
      "path": ".claude/agents/rukkari.md",
-     "uppfaert": "2026-11-08",
+     "uppfaert": "2026-11-16",
      "linur": 159
     }
    ],
@@ -4948,7 +5034,7 @@
      ]
     }
    ],
-   "uppfaert": "2026-11-15",
+   "uppfaert": "2026-11-16",
    "sidur": [
     {
      "id": "yfirlit",
@@ -5125,6 +5211,12 @@
      "hlutverk": "undiragent"
     },
     {
+     "id": "afgreidsla",
+     "vefur": "slokkvitaeki",
+     "titill": "Afgreiðsla — forunnin verk, eitt í einu",
+     "hlutverk": "undiragent"
+    },
+    {
      "id": "uppgjorslisti",
      "vefur": "slokkvitaeki",
      "titill": "Uppgjörslisti",
@@ -5194,12 +5286,12 @@
     {
      "repo": "slokkvitaeki",
      "path": ".claude/agents/sala-reikningar.md",
-     "uppfaert": "2026-11-11",
+     "uppfaert": "2026-11-16",
      "linur": 686
     }
    ],
    "afbrigdi": [],
-   "uppfaert": "2026-11-11",
+   "uppfaert": "2026-11-16",
    "sidur": [
     {
      "id": "krofuyfirlit",
@@ -5388,6 +5480,12 @@
      "hlutverk": "undiragent"
     },
     {
+     "id": "afgreidsla",
+     "vefur": "slokkvitaeki",
+     "titill": "Afgreiðsla — forunnin verk, eitt í einu",
+     "hlutverk": "undiragent"
+    },
+    {
      "id": "samningar",
      "vefur": "slokkvitaeki",
      "titill": "Þjónustusamningar",
@@ -5483,12 +5581,12 @@
     {
      "repo": "slokkvitaeki",
      "path": ".claude/agents/samthykktir.md",
-     "uppfaert": "2026-11-11",
-     "linur": 374
+     "uppfaert": "2026-11-16",
+     "linur": 384
     }
    ],
    "afbrigdi": [],
-   "uppfaert": "2026-11-11",
+   "uppfaert": "2026-11-16",
    "sidur": [
     {
      "id": "sameining",
@@ -5617,12 +5715,12 @@
     {
      "repo": "slokkvitaeki",
      "path": ".claude/agents/sara-coworker.md",
-     "uppfaert": "2026-11-10",
+     "uppfaert": "2026-11-16",
      "linur": 297
     }
    ],
    "afbrigdi": [],
-   "uppfaert": "2026-11-10",
+   "uppfaert": "2026-11-16",
    "sidur": [
     {
      "id": "skodanir",
@@ -5746,12 +5844,12 @@
     {
      "repo": "brunaholf",
      "path": ".claude/agents/sara-organizer.md",
-     "uppfaert": "2026-11-04",
+     "uppfaert": "2026-11-16",
      "linur": 281
     }
    ],
    "afbrigdi": [],
-   "uppfaert": "2026-11-04",
+   "uppfaert": "2026-11-16",
    "sidur": [
     {
      "id": "leidsogn",
@@ -5902,12 +6000,12 @@
     {
      "repo": "brunaholf",
      "path": ".claude/agents/skjol.md",
-     "uppfaert": "2026-11-04",
+     "uppfaert": "2026-11-16",
      "linur": 865
     }
    ],
    "afbrigdi": [],
-   "uppfaert": "2026-11-04",
+   "uppfaert": "2026-11-16",
    "sidur": [
     {
      "id": "skyrslustod",
@@ -6077,30 +6175,18 @@
     {
      "repo": "kjarni",
      "path": ".claude/agents/skraning.md",
-     "uppfaert": "2026-11-14",
-     "linur": 81
+     "uppfaert": "2026-11-04",
+     "linur": 68
     }
    ],
    "afbrigdi": [],
-   "uppfaert": "2026-11-14",
+   "uppfaert": "2026-11-04",
    "sidur": [
     {
      "id": "slokkvitaeki:/kjarni/skraning/flokkar",
      "vefur": "kjarni",
      "titill": "Skráning — flokkar, gátlisti og starfsmenn",
      "hlutverk": "eigandi"
-    },
-    {
-     "id": "slokkvitaeki:/kjarni/skraning/skyrsla",
-     "vefur": "kjarni",
-     "titill": "Skráning — stöðuskýrsla",
-     "hlutverk": "undiragent"
-    },
-    {
-     "id": "slokkvitaeki:/kjarni/skraning/kort",
-     "vefur": "kjarni",
-     "titill": "Skráning — gatakort",
-     "hlutverk": "undiragent"
     },
     {
      "id": "slokkvitaeki:/kjarni/skraning/greining",
@@ -6274,12 +6360,12 @@
     {
      "repo": "brunaholf",
      "path": ".claude/agents/tengingar.md",
-     "uppfaert": "2026-11-04",
+     "uppfaert": "2026-11-16",
      "linur": 140
     }
    ],
    "afbrigdi": [],
-   "uppfaert": "2026-11-04",
+   "uppfaert": "2026-11-16",
    "sidur": [
     {
      "id": "samthaetting",
@@ -6385,12 +6471,12 @@
     {
      "repo": "slokkvitaeki",
      "path": ".claude/agents/thema.md",
-     "uppfaert": "2026-11-04",
+     "uppfaert": "2026-11-16",
      "linur": 169
     }
    ],
    "afbrigdi": [],
-   "uppfaert": "2026-11-04",
+   "uppfaert": "2026-11-16",
    "sidur": [
     {
      "id": "settings",
@@ -6457,12 +6543,12 @@
     {
      "repo": "slokkvitaeki",
      "path": ".claude/agents/thjonustugatt.md",
-     "uppfaert": "2026-11-10",
+     "uppfaert": "2026-11-16",
      "linur": 99
     }
    ],
    "afbrigdi": [],
-   "uppfaert": "2026-11-10",
+   "uppfaert": "2026-11-16",
    "sidur": [
     {
      "id": "br-thjonustugatt",
@@ -6603,17 +6689,23 @@
     {
      "repo": "slokkvitaeki",
      "path": ".claude/agents/tony-stark.md",
-     "uppfaert": "2026-11-15",
-     "linur": 264
+     "uppfaert": "2026-11-16",
+     "linur": 300
     }
    ],
    "afbrigdi": [],
-   "uppfaert": "2026-11-15",
+   "uppfaert": "2026-11-16",
    "sidur": [
     {
      "id": "radgjafinn",
      "vefur": "slokkvitaeki",
      "titill": "Ráðgjafinn — Tony Stark (undir Vinnusamantekt á Þjónustuborði)",
+     "hlutverk": "eigandi"
+    },
+    {
+     "id": "afgreidsla",
+     "vefur": "slokkvitaeki",
+     "titill": "Afgreiðsla — forunnin verk, eitt í einu",
      "hlutverk": "eigandi"
     }
    ]
@@ -6664,12 +6756,12 @@
     {
      "repo": "slokkvitaeki",
      "path": ".claude/agents/utlitsserfraedingur.md",
-     "uppfaert": "2026-11-04",
+     "uppfaert": "2026-11-16",
      "linur": 86
     }
    ],
    "afbrigdi": [],
-   "uppfaert": "2026-11-04",
+   "uppfaert": "2026-11-16",
    "sidur": []
   },
   {
@@ -6720,12 +6812,12 @@
     {
      "repo": "brunaholf",
      "path": ".claude/agents/verkstadur.md",
-     "uppfaert": "2026-11-10",
+     "uppfaert": "2026-11-16",
      "linur": 128
     }
    ],
    "afbrigdi": [],
-   "uppfaert": "2026-11-10",
+   "uppfaert": "2026-11-16",
    "sidur": [
     {
      "id": "timavera",
@@ -6880,31 +6972,31 @@
      "id": "web:/3dwork",
      "vefur": "kjarni",
      "titill": "3dwork — STL bench",
-     "hlutverk": "undiragent"
+     "hlutverk": "eigandi"
     },
     {
      "id": "web:/api/3dwork/github/geometry/[id] (api)",
      "vefur": "kjarni",
      "titill": "3dwork geometry",
-     "hlutverk": "undiragent"
+     "hlutverk": "eigandi"
     },
     {
      "id": "web:/api/3dwork/github/projects/[id] (api)",
      "vefur": "kjarni",
      "titill": "3dwork eitt verkefni",
-     "hlutverk": "undiragent"
+     "hlutverk": "eigandi"
     },
     {
      "id": "web:/api/3dwork/github/projects (api)",
      "vefur": "kjarni",
      "titill": "3dwork verkefni",
-     "hlutverk": "undiragent"
+     "hlutverk": "eigandi"
     },
     {
      "id": "web:/api/3dwork/github (api)",
      "vefur": "kjarni",
      "titill": "3dwork GitHub-sync",
-     "hlutverk": "undiragent"
+     "hlutverk": "eigandi"
     }
    ]
   },
@@ -7991,12 +8083,12 @@
     {
      "repo": "brunaholf",
      "path": ".claude/skills/gatakort-nytt-husnaedi/SKILL.md",
-     "uppfaert": "2026-11-14",
-     "linur": 269
+     "uppfaert": "2026-11-16",
+     "linur": 303
     }
    ],
    "afbrigdi": [],
-   "uppfaert": "2026-11-14",
+   "uppfaert": "2026-11-16",
    "sidur": []
   },
   {
@@ -14303,6 +14395,37 @@
   {
    "vefur": "slokkvitaeki",
    "repo": "slokkvitaeki",
+   "id": "afgreidsla",
+   "titill": "Afgreiðsla — forunnin verk, eitt í einu",
+   "tegund": "sida",
+   "leid": "/afgreidsla.html",
+   "skilgreind": [
+    "afgreidsla.html",
+    "netlify/functions/afgreidsla.cjs"
+   ],
+   "yfir": null,
+   "eigandi": "tony-stark",
+   "undiragentar": [
+    "postur",
+    "sala-reikningar",
+    "rukkari",
+    "kerfisheilsa"
+   ],
+   "kveikjuord": [
+    "Afgreiðsla",
+    "forunnið",
+    "staðfesta eða senda",
+    "tilbúin verk"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": [],
+   "eigandi_nafn": "tony-stark",
+   "eigandi_utan": false
+  },
+  {
+   "vefur": "slokkvitaeki",
+   "repo": "slokkvitaeki",
    "id": "samningar",
    "titill": "Þjónustusamningar",
    "tegund": "view",
@@ -16343,65 +16466,6 @@
   {
    "vefur": "kjarni",
    "repo": "kjarni",
-   "id": "slokkvitaeki:/kjarni/skraning/skyrsla",
-   "titill": "Skráning — stöðuskýrsla",
-   "tegund": "sida",
-   "leid": "/kjarni/skraning/skyrsla",
-   "skilgreind": [
-    "apps/slokkvitaeki/app/kjarni/skraning/skyrsla/page.tsx"
-   ],
-   "yfir": null,
-   "eigandi": "bh:gatakort",
-   "undiragentar": [
-    "skraning"
-   ],
-   "kveikjuord": [
-    "Stöðuskýrsla",
-    "skýrsla til Landspítalans",
-    "útboðsmagn",
-    "staða per deild",
-    "útboðssamanburður"
-   ],
-   "merki": null,
-   "stada": "✅",
-   "astaeda": [],
-   "eigandi_nafn": "gatakort",
-   "eigandi_utan": true
-  },
-  {
-   "vefur": "kjarni",
-   "repo": "kjarni",
-   "id": "slokkvitaeki:/kjarni/skraning/kort",
-   "titill": "Skráning — gatakort",
-   "tegund": "sida",
-   "leid": "/kjarni/skraning/kort",
-   "skilgreind": [
-    "apps/slokkvitaeki/app/kjarni/skraning/kort/page.tsx"
-   ],
-   "yfir": null,
-   "eigandi": "bh:gatakort",
-   "undiragentar": [
-    "skraning"
-   ],
-   "kveikjuord": [
-    "Gatakort",
-    "áætluð göt",
-    "lög á teikningu",
-    "brunayfirlit",
-    "kortleggja húsnæði",
-    "púsla saman teikningum",
-    "hinn endann vantar",
-    "nýja Ajour"
-   ],
-   "merki": null,
-   "stada": "✅",
-   "astaeda": [],
-   "eigandi_nafn": "gatakort",
-   "eigandi_utan": true
-  },
-  {
-   "vefur": "kjarni",
-   "repo": "kjarni",
    "id": "slokkvitaeki:/kjarni/skraning/greining",
    "titill": "Skráning — greining",
    "tegund": "sida",
@@ -17017,10 +17081,8 @@
     "apps/web/src/app/3dwork/page.tsx"
    ],
    "yfir": null,
-   "eigandi": "3dwork",
-   "undiragentar": [
-    "skill:3dJoker"
-   ],
+   "eigandi": "skill:3dJoker",
+   "undiragentar": [],
    "kveikjuord": [
     "3dwork",
     "STL",
@@ -17029,8 +17091,8 @@
    "merki": null,
    "stada": "✅",
    "astaeda": [],
-   "eigandi_nafn": "3dwork",
-   "eigandi_utan": false
+   "eigandi_nafn": "3dJoker",
+   "eigandi_utan": true
   },
   {
    "vefur": "kjarni",
@@ -17043,16 +17105,14 @@
     "apps/web/src/app/api/3dwork/github/geometry/[id]/route.ts"
    ],
    "yfir": null,
-   "eigandi": "3dwork",
-   "undiragentar": [
-    "skill:3dJoker"
-   ],
+   "eigandi": "skill:3dJoker",
+   "undiragentar": [],
    "kveikjuord": [],
    "merki": null,
    "stada": "✅",
    "astaeda": [],
-   "eigandi_nafn": "3dwork",
-   "eigandi_utan": false
+   "eigandi_nafn": "3dJoker",
+   "eigandi_utan": true
   },
   {
    "vefur": "kjarni",
@@ -17065,16 +17125,14 @@
     "apps/web/src/app/api/3dwork/github/projects/[id]/route.ts"
    ],
    "yfir": null,
-   "eigandi": "3dwork",
-   "undiragentar": [
-    "skill:3dJoker"
-   ],
+   "eigandi": "skill:3dJoker",
+   "undiragentar": [],
    "kveikjuord": [],
    "merki": null,
    "stada": "✅",
    "astaeda": [],
-   "eigandi_nafn": "3dwork",
-   "eigandi_utan": false
+   "eigandi_nafn": "3dJoker",
+   "eigandi_utan": true
   },
   {
    "vefur": "kjarni",
@@ -17087,16 +17145,14 @@
     "apps/web/src/app/api/3dwork/github/projects/route.ts"
    ],
    "yfir": null,
-   "eigandi": "3dwork",
-   "undiragentar": [
-    "skill:3dJoker"
-   ],
+   "eigandi": "skill:3dJoker",
+   "undiragentar": [],
    "kveikjuord": [],
    "merki": null,
    "stada": "✅",
    "astaeda": [],
-   "eigandi_nafn": "3dwork",
-   "eigandi_utan": false
+   "eigandi_nafn": "3dJoker",
+   "eigandi_utan": true
   },
   {
    "vefur": "kjarni",
@@ -17109,16 +17165,14 @@
     "apps/web/src/app/api/3dwork/github/route.ts"
    ],
    "yfir": null,
-   "eigandi": "3dwork",
-   "undiragentar": [
-    "skill:3dJoker"
-   ],
+   "eigandi": "skill:3dJoker",
+   "undiragentar": [],
    "kveikjuord": [],
    "merki": null,
    "stada": "✅",
    "astaeda": [],
-   "eigandi_nafn": "3dwork",
-   "eigandi_utan": false
+   "eigandi_nafn": "3dJoker",
+   "eigandi_utan": true
   },
   {
    "vefur": "kjarni",
@@ -17231,8 +17285,8 @@
    "repo": "slokkvitaeki",
    "utgafa": 1,
    "vefagent": "bord-flettur",
-   "alls": 123,
-   "med_eiganda": 120,
+   "alls": 124,
+   "med_eiganda": 121,
    "vidvorun": 0,
    "an_eiganda": 3,
    "hlutfall": 98
@@ -17242,8 +17296,8 @@
    "repo": "kjarni",
    "utgafa": 1,
    "vefagent": "kjarni-vefur",
-   "alls": 105,
-   "med_eiganda": 105,
+   "alls": 103,
+   "med_eiganda": 103,
    "vidvorun": 0,
    "an_eiganda": 0,
    "hlutfall": 100
@@ -17252,19 +17306,13 @@
  "kjarni_afrit_sleppt": [
   "adstod.md",
   "birgdastjori.md",
-  "black-widow.md",
   "bokari.md",
   "bord-flettur.md",
-  "captain-america.md",
-  "center-hotel.md",
   "elon-musk.md",
   "endurskodandi.md",
   "framendi.md",
   "fyrirtaeki.md",
   "gagnaleidslur.md",
-  "gatakort.md",
-  "hawkeye.md",
-  "heimaleiga.md",
   "hradi.md",
   "innkaupabokari.md",
   "jarvis.md",
@@ -17288,11 +17336,9 @@
   "sara-coworker.md",
   "sara-organizer.md",
   "skjol.md",
-  "spider-man.md",
   "tengingar.md",
   "thema.md",
   "thjonustugatt.md",
-  "tony-stark.md",
   "utlitsserfraedingur.md",
   "verkstadur.md"
  ]

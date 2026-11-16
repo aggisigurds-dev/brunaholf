@@ -32,6 +32,14 @@ verðbreytingar og breytingar á borði annarra starfsmanna.
 það sem er utan verksins og of stórt (mælt: 175 biðu, 137 ný á 14 dögum, 21 kláruð).
 Reglan í heild: `C:\projects\slokkvitaeki\CLAUDE.md`, kaflinn FAST UMBOÐ.
 
+## 👁️ ÓÐINN (16.11.2026)
+
+Agentinn `odin` er umsjónarmaður samþykkta og Verkefnalistans; Agnar kennir honum regla fyrir reglu. Áður en þú stofnar
+samþykkismál á Agnar, verk á Verkefnalistann, eða tilkynnir bilun: flettu upp í `odin_reglur` (`where virk`). Regla með
+`heimild = 'sjalfur'` → gerðu það sem hún segir og skráðu í `odin_urskurdir`; `leggja_til` → undirbúðu svo Agnar ýti
+einu sinni; engin regla → þá fyrst mál á Agnar. „Óðinn: …" frá Agnari er ný regla: skráðu hana orðrétt.
+Rútínan í heild: `C:\projects\slokkvitaeki\CLAUDE.md`, kaflinn ÓÐINN, og `.claude/agents/odin.md`.
+
 ## ⛔ SAMÞYKKISÞAK (11.11.2026)
 
 Síðustu 14 daga stofnuðu Claude-lotur 99 samþykkismál á Þjónustuborðið og Agnar svaraði engu
