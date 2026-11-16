@@ -1171,3 +1171,27 @@ færist á (checked_date ræður), (3) athuga hvort hún var þegar rukkuð í f
   báðar hliðar haldnar), `npm install` (@anthropic-ai/sdk), 11/11 próf í `test/moppur.test.js`, ýtt.
 - LÆRDÓMUR (SKILL): `checked_date IS NULL` í `ajour_registrations` þýðir EKKI „óhakað í Ajour"; það þýðir aðeins að EI60 sé óhakað.
   Lesa hökin úr Ajour (listagögn) eða CSV-inu áður en fullyrt er að hak vanti.
+
+
+## 16.11.2026 (kvöld) — Gatakort uppfært úr Ajour + pörun endurkeyrð (Agnar: „Geturðu matchað eitthvað meira")
+
+- **Útflutningur** (`ajour-export-allt.js --project NLSH --no-photos --no-pdf`, aðeins lestur): 11.219 skráningar, 13 teikningar.
+- **Innflutningur** (`skraning-gatakort-innflutningur.cjs`, þurrkeyrsla svo `--write`): `skr_skraningar` verk 4 11.206 → **11.219**, eytt óbreytt 497
+  (466 án teikningar + 31 OFAN_FRÁ, sannreynt fyrir keyrslu að annað væri ekki falið), hæsta nr. 12397. Á `6H 2S-1S Rafmagnsþéttingar.jpg` er engin
+  skráning eftir í „Raufar. (Metrer) LV“ (Raflagnaþéttingar 54, Raf raufar 183). Nýjar frá 10.11: 13 (nr. 12385–12397).
+- **Afrit** af `skr_aaetlud.parad` fyrir pörun: taflan `skr_aaetlud_afrit_parad_20261116` (RLS á; stofnuð með execute_sql, ekki migration).
+- **Pörun** (`skraning-gatakort-para.cjs --haed 6H|5H`, þurrkeyrsla svo `--write`, radíus 60 px):
+  6H 2.005 → **2.009** af 3.012 stökum (fullt 778 → 780, hluti 73 → 72, vantar 446 → 445; 6 göt skiptu um stöðu);
+  5H 776 → **780** af 2.392 (fullt 456 → 458, vantar 696 → 694; 4 göt skiptu um stöðu). 6H S2 rafmagn 95 af 110.
+- **Víðari radíus PRÓFAÐUR OG HAFNAÐ** (`scratchpad/raf/para-greining.cjs`, les aðeins): af götum sem vantar í eiga 22–64 % ónotaða skráningu
+  sama hóps í 60–90 px. LYFLEYSA (sömu göt hliðruð um 200 px í 8 áttir) gefur sama eða hærra hlutfall innan 90 px (6H S2 rör: raun 31 %,
+  hliðrað 46 %; 5H S2 raf: raun 24 %, hliðrað 29 %). „Rétt utan radíuss" er því tilviljun í þéttum svæðum, ekki merki. Þriðja umferð með
+  90–120 px hefði parað ~160–270 göt án heimildar. EKKI gert.
+  Fyrirvari sem sama próf sýnir: í þéttustu svæðunum (6H S1/S2 rör) finnur hliðrað gat ónotaða skráningu innan 60 px í 29–47 % tilvika,
+  svo 2. umferð (sami hópur) er veik heimild þar; 1. umferð (sami flokkur) er sterkari.
+- **Annar hópur innan 60 px er ekki pörun:** 270 af 314 óbyrjuðum raf-götum 6H S4/S5 eiga rör- eða loftskráningu innan 1,8 m
+  (Stál Ø40-50 87, Plast Ø20-34 62 …): lagnir og strengir fara gegnum sömu veggi. Ekki parað milli hópa.
+- **4H stútar** (`skraning-gatakort-vidbot-stutar.cjs`, þurrkeyrsla): óbreytt 19 af 35 pöruð. Nýju gólfskráningarnar sex á `4H. S1-S2.jpg`
+  (12392–12395 opnar, 12396–12397 kláraðar, stofnaðar 16.11 kl. 13:54–13:58) liggja í beinni röð við x ≈ 1.890 á yfirlitinu, y 1.102–1.877,
+  11–21 m frá næsta stút og 3,5–18 m frá næsta Ø220-gati gataplans. Þær eiga ekkert áætlað gat á kortinu. Hvað þær eru: ÓMÆLT, spyrja Agnar.
+- LÆRDÓMUR (SKILL): áður en radíus er víkkaður: lyfleysupróf (hliðra götunum og telja sömu hittni). Sé hittnin sú sama er ekkert merki.
