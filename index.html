@@ -12599,7 +12599,9 @@ async function renderGerdReikninga(t){
       // the real case Agnar reported: Efnislisti happening to match raw while Tímabók (edited)
       // disagrees — exactly the "two different numbers" risk.
       const key = name+'|'+month;
-      const savedEdit = (state.ui && state.ui.timabok_edits && state.ui.timabok_edits[key]) || null;
+      const savedEdit0 = (state.ui && state.ui.timabok_edits && state.ui.timabok_edits[key]) || null;
+      // 16.11.2026: eintak sem nær ekki yfir samreikningstímabilið gildir ekki (sjá tbkEditGilt) — þá lifandi Tímavera.
+      const savedEdit = tbkEditGilt(savedEdit0, month, (String(periodQS || '').match(/from=(\d{4}-\d{2}-\d{2})/) || [])[1]) ? savedEdit0 : null;
       let tbDv, tbEv, source;
       if (savedEdit && Array.isArray(savedEdit.rows)) {
         const t = tbkYfSplit(savedEdit.rows, savedEdit.yfirvinna || {on:false, thr:8});
@@ -13812,8 +13814,13 @@ async function renderGerdReikninga(t){
         if(!resp.ok) throw new Error(data.error || ('HTTP '+resp.status));
         const sp = data.split;
         if(!sp || (!sp.hours_dagvinna && !sp.hours_eftirvinna)){ alert(`Engar tímafærslur fyrir ${name} í ${monthLabel(month)}.`); return; }
-        const newDvh = Math.round((Number(sp.hours_dagvinna)||0)*100)/100;
-        const newEvh = Math.round((Number(sp.hours_eftirvinna)||0)*100)/100;
+        // 16.11.2026: sama regla og drog-timar og yfirvinnu-hakið — yfirvinna úr tímabók AÐEINS þegar hakið „Reikna yfirvinnu
+        // af tímabók" er á (drögin bera yfirvinnu eða Verðskrá segir samningsbundna). Annars fer heildin í dagvinnu; áður
+        // laumaði takkinn yfirvinnu á hrein drög (Síðumúli 21: +41 þús. kr) sem drog-timar hélt svo við.
+        const yfHak = (typeof bg.__tbkGetYf === 'function') ? !!bg.__tbkGetYf().on : ((numv('gr-evh') > 0) || pgRow.yfirvinna_samningur === true);
+        const spDv = Number(sp.hours_dagvinna)||0, spEv = Number(sp.hours_eftirvinna)||0;
+        const newDvh = Math.round((yfHak ? spDv : spDv + spEv)*100)/100;
+        const newEvh = Math.round((yfHak ? spEv : 0)*100)/100;
         document.getElementById('gr-dvh').value = String(newDvh).replace('.', ',');
         document.getElementById('gr-evh').value = String(newEvh).replace('.', ',');
         draw();
@@ -13835,11 +13842,17 @@ async function renderGerdReikninga(t){
     try {
       ensureTbkPanelCss();
       const tbkKey = name+'|'+month;
-      const tbkSaved = (state.ui && state.ui.timabok_edits && state.ui.timabok_edits[tbkKey]) || null;
+      const tbkSaved0 = (state.ui && state.ui.timabok_edits && state.ui.timabok_edits[tbkKey]) || null;
+      // 16.11.2026: eintak sem nær ekki yfir samreikningstímabilið er hunsað (tbkEditGilt) — lifandi Tímavera sótt í staðinn.
+      const tbkSaved = tbkEditGilt(tbkSaved0, month, grPeriod && grPeriod.from) ? tbkSaved0 : null;
       let tbkRows = [];
+      // 16.11.2026: án vistaðs vals fylgir yfirvinnu-hakið DRÖGUNUM (yfirvinna > 0) eða Verðskrá (yfirvinna_samningur). Áður
+      // var það alltaf AF, svo ein línubreyting eða „🔄 Endursækja" setti yfirvinnu í 0 þegjandi (Fjallaböðin: −200 þús. kr).
+      // Verðskrá „Yfirvinna leyfð" AF (eftirvinna_leyfid=false) ræður ÖLLU: þá er hakið alltaf af, líka þótt vistað eintak
+      // segi annað (Agnar 16.11.2026: „ekki yfirvinna á Tindasel").
       let tbkYf = (tbkSaved && tbkSaved.yfirvinna)
-        ? { on:!!tbkSaved.yfirvinna.on, thr:(Number(tbkSaved.yfirvinna.thr)>0?Number(tbkSaved.yfirvinna.thr):8) }
-        : { on:false, thr:8 };
+        ? { on: r.evOk !== false && !!tbkSaved.yfirvinna.on, thr:(Number(tbkSaved.yfirvinna.thr)>0?Number(tbkSaved.yfirvinna.thr):8) }
+        : { on: r.evOk !== false && ((evH > 0) || pgRow.yfirvinna_samningur === true), thr:8 };
       const tbkNum = s => Number(String(s).replace(',','.').replace(/[^\d.]/g,''))||0;
       grTbkLive = () => ({ rows: tbkRows, yf: { on: tbkYf.on, thr: tbkYf.thr } });
       const tbkSort = () => tbkRows.sort((a,b)=> String(b.date).localeCompare(String(a.date)) || String(a.employee).localeCompare(String(b.employee),'is'));
@@ -19070,7 +19083,9 @@ async function renderKrofuyfirlit(t){
           if(tvVid!=null && Number.isFinite(tvVid)) nyir = hours - tvVid;
           else { if(!(saved>0)) continue; nyir = hours - saved; }   // drög án tíma (t.d. punktavirði) eru ekki tímadrög
           if(nyir < 0.5) continue;
-          const estN = Math.round(nyir * r.dv * (1 + r.vsk/100));
+          // 16.11.2026: nýir tímar áætlast á taxta DRAGANNA, ekki sjálfgefnum (Tindasel: 10.951 á drögunum, áætlunin reiknaði 9.951).
+          const dvTaxti = Number(dr.rate_dagvinna) > 0 ? Number(dr.rate_dagvinna) : r.dv;
+          const estN = Math.round(nyir * dvTaxti * (1 + r.vsk/100));
           if(estN<=0) continue;
           rows.push({ inv_key:`timavera-vidbot|${w.project}|${month}`, id:null, tilvisun:null, source:'tímavera',
             kt:'', customer:cust, worksite:w.project, work_month:month, hours:nyir,
@@ -19500,7 +19515,12 @@ async function renderKrofuyfirlit(t){
     // PDF-ið sem var vistað með þeim drögum. Aðeins lestur — ekkert er skrifað og ekkert reiknað upp á nýtt.
     const _sjT = tier===1 ? (((state.data||{}).sjalfvirk_tenging)||[]).find(x=>String(x.tilvisun)===String(inv.tilvisun)) : null;
     const _sjK = _sjT ? String(_sjT.draft||'').split('|') : [];
-    const _sjDocs = (_sjK.length===3 ? (EFDOCS[_sjK[1]+'|'+_sjK[2]]||[]) : []).filter(d=>d.doc_type!=='innra' && d.doc_type!=='timabok_pdf' && bhDocUrl(d));
+    // 16.11.2026 (Agnar: „ég þarf að geta séð eldri efnislista, kveiktu á þeim aftur"): reikningur sem hangir á drögum um
+    // payday_invoice_id (eða sami verkstaður + sama upphæð, ein drög) fær tengilinn líka — áður aðeins sjálfvirkt tengdir
+    // reikningar, svo R-364 (Tindasel) og R-386 (Rafís) stóðu án Efnislista þótt PDF-ið væri til.
+    const _vd = (tier===1 && _sjK.length!==3) ? vinnuDrog(inv, 1) : null;
+    const _sjLykill = _sjK.length===3 ? (_sjK[1]+'|'+_sjK[2]) : ((_vd && _vd.worksite_name && _vd.work_month) ? (_vd.worksite_name+'|'+_vd.work_month) : '');
+    const _sjDocs = (_sjLykill ? (EFDOCS[_sjLykill]||[]) : []).filter(d=>d.doc_type!=='innra' && d.doc_type!=='timabok_pdf' && bhDocUrl(d));
     const _sjDoc = _sjDocs.find(d=>d.is_primary) || _sjDocs.find(d=>/pdf/.test(d.doc_type||'')) || _sjDocs[0] || null;
     const sendPdfLine = _sjDoc
       ? `<div class="ky-bank"><a data-ky-sendpdf href="${esc(bhDocUrl(_sjDoc))}" target="_blank" rel="noopener" onclick="event.stopPropagation()" title="${esc(_sjDoc.title||'Efnislisti')} — sundurliðunin sem fylgdi reikningnum" style="color:var(--blue-deep,#1d4f7a);font-weight:600;text-decoration:none">📄 Efnislisti · sundurliðun</a></div>`
@@ -26102,6 +26122,14 @@ async function openTimabok(name, month){
     rows = saved.rows.map(r=>({...r}));
     st.textContent = 'breytt eintak (vistað ' + (saved.saved_at? String(saved.saved_at).slice(0,10).split('-').reverse().join('/') : '') + ')';
     sortRows(); paint();
+    // 16.11.2026: sé mánuðurinn samreikningur (þjónninn skilar þá `period`) og eintakið nær ekki yfir tímabilið, víkur það
+    // fyrir lifandi Tímaveru — annars sýndi glugginn (og PDF-ið úr honum) aðeins seinni mánuðinn. Eintakinu er ekki eytt.
+    if(name && /^\d{4}-\d{2}$/.test(String(month))) fetch(`/api/timabok?worksite=${encodeURIComponent(name)}&month=${encodeURIComponent(month)}`).then(r=>r.json()).then(data=>{
+      if(!bg.isConnected || !data || !data.period || tbkEditGilt(saved, month, data.period.from)) return;
+      rows = (data.rows||[]).map(r=>({ date:r.date||'', employee:r.employee||'', time_in:r.time_in||'', time_out:r.time_out||'', hours:Number(r.hours)||0, project:r.project||'' }));
+      st.textContent = 'samreikningur ' + String(data.period.from).split('-').reverse().join('/') + '–' + String(data.period.to).split('-').reverse().join('/') + ' — sótt úr Tímaveru (eldra eintak náði aðeins yfir einn mánuð)';
+      sortRows(); paint();
+    }).catch(()=>{});
   } else if(!name || !/^\d{4}-\d{2}$/.test(String(month))){
     // Vantar verkstað/mánuð (t.d. Payday-drög án verkstaðar) → ekkert að sækja.
     st.textContent = 'vantar verkstað/mánuð — bættu við línum handvirkt (＋)';
@@ -26229,6 +26257,16 @@ async function openTimabok(name, month){
 // (sjálfgefið 8 klst/dag) sem dagvinna og allt umfram sem yfirvinna. Skiptingin
 // er reiknuð á (starfsmaður, dagur) — margar færslur sama dag leggjast saman
 // áður en þröskuldurinn er borinn við. Notað af modal + PDF + prenti.
+// 16.11.2026 — vistað eintak Tímaskýrslu (state.ui.timabok_edits[verk|mánuður]) er ÓGILT fyrir samreikning þegar það nær
+// ekki aftur fyrir upphaf mánaðarins þótt tímabil draganna geri það. Tindasel okt+nóv: eintak með nóvember einum (125 klst)
+// réð samanburði, innfelldu Tímaskýrslunni og PDF síðu 2 á drögum upp á 152,84 klst — ein línubreyting hefði lækkað
+// reikninginn um 425 þús. kr án viðvörunar. `fra` = period_from draganna (YYYY-MM-DD); venjulegur mánuður er alltaf gildur.
+function tbkEditGilt(saved, month, fra){
+  if(!saved || !Array.isArray(saved.rows)) return false;
+  const m1 = String(month||'') + '-01';
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(String(fra||'')) || !(String(fra) < m1)) return true;
+  return saved.rows.some(r => r && r.date && String(r.date) < m1);
+}
 function tbkYfSplit(rows, yfCfg){
   const on = !!(yfCfg && yfCfg.on);
   const thr = (yfCfg && Number(yfCfg.thr) > 0) ? Number(yfCfg.thr) : 8;
@@ -26586,7 +26624,8 @@ async function buildAndSaveCombinedPdf(name, month, data, rows, yfCfg, overwrite
 // Tímaskýrslu-raðir fyrir samsetta PDF-ið: vistað eintak (timabok_edits, sama
 // og Tímabókar-glugginn sýnir) ef til, annars beint úr Tímaveru.
 async function tbkLoadRows(name, month, period){
-  const saved = (state.ui && state.ui.timabok_edits && state.ui.timabok_edits[name+'|'+month]) || null;
+  const saved0 = (state.ui && state.ui.timabok_edits && state.ui.timabok_edits[name+'|'+month]) || null;
+  const saved = tbkEditGilt(saved0, month, period && period.from) ? saved0 : null;   // 16.11.2026: sjá tbkEditGilt
   const yf = (saved && saved.yfirvinna)
     ? { on: !!saved.yfirvinna.on, thr: (Number(saved.yfirvinna.thr) > 0 ? Number(saved.yfirvinna.thr) : 8) }
     : { on:false, thr:8 };

@@ -262,6 +262,12 @@ svarað í 3 daga'".
   færa hann). Handföngin búa í `wireDetail` — þar sjást hvorki `d`, `kt` né `addr` úr `loadDetail`, lestu `VKDETAIL[name]`.
   Sama dag fóru 14 verk með sendan reikning en enga röð í `pricing_guide` inn með rukkaða taxtanum (notes: „Taxti úr
   síðasta senda reikningi"); 5 verk án greiðanda (Kársnesbraut 96, Ölduselskoli, Fellaskóli, Síminn Ármúla, Reykjarfell) bíða.
+- **16.11.2026 — Samskipti (07) og listinn, eftir úttekt:** leitarorð eru aðeins SÉRTÆK verkstaðarheiti (tölustafur, tvö
+  orð eða ≥ 10 stafir; aldrei „Brunaþéttingar"), gata + húsnúmer leitar á stofni (beyging), nafn greiðanda í heild án
+  félagsforms (ekki fyrsta orðið), og netföng úr customer_info + Payday + `customer_worksite_map.netfang` +
+  `fyrirtaeki.netfang`, klofin á , ; bil. `or=`-gildið er URL-kóðað („&" í verkstaðarheiti gaf áður 400 sem .catch gleypti).
+  Listinn: `confidence='manual'` í kortinu og allir með ógreitt/ósent > 0 eru `skrad` (Rafís, Landspítali, Istanbul Market
+  sáust ekki). ÓLAGAÐ: drög án greiðanda sjást hvergi (Sidumuli 21, NESDEKK, Gullslètta 18 — Agnar ákveður greiðanda).
 - **16.11.2026 — netfang verkkaupa per verkstað:** `customer_worksite_map.netfang` (Áland 6 → Landspítali);
   `/api/worksites` skilar því sem `mapped_customer_info[].ws_netfang` og Efnislistinn forfyllir það í ný drög.
 

@@ -80,7 +80,9 @@ async function list() {
   // skrad = greiðandinn er skráður viljandi (verðskrá eða customer_info) — ekki bara nefndur á reikningi; viðmótið sýnir aðeins þá
   const wsSet = {}; const addWs = (n, w) => { if (n && w) (wsSet[n] = wsSet[n] || new Set()).add(w); };
   for (const p of pg) if (p.customer_name) { const a = get(p.customer_name); a.worksites++; a.skrad = true; if (!a.kt && p.kennitala) a.kt = p.kennitala; addWs(p.customer_name, p.worksite_name); }
-  for (const m of map) if (m.customer_name) { const a = get(m.customer_name); if (!a.kt && m.kt_greidanda) a.kt = m.kt_greidanda; addWs(m.customer_name, m.worksite_name); }
+  // 16.11.2026: greiðandi sem Agnar skráði sjálfur með ✎ Greiðandi (confidence 'manual') er skráður viljandi — áður sást
+  // hvorki Landspítali (Áland 6) né Istanbul Market (Grensásvegur 10) í listanum nema með Payday-rofanum, eða alls ekki.
+  for (const m of map) if (m.customer_name) { const a = get(m.customer_name); if (!a.kt && m.kt_greidanda) a.kt = m.kt_greidanda; addWs(m.customer_name, m.worksite_name); if (m.confidence === 'manual') a.skrad = true; }
   for (const i of info) if (i.customer_name) { const a = get(i.customer_name); if (i.kennitala) a.kt = i.kennitala; a.skrad = true; }
   for (const n of Object.keys(wsSet)) acc[n].worksites = Math.max(acc[n].worksites, wsSet[n].size);
 
@@ -111,6 +113,8 @@ async function list() {
     if (!name) continue;
     get(name).osent += kr(d.total_m_vsk);
   }
+  // 16.11.2026: greiðandi með ógreitt eða ósent er ALLTAF í listanum (Rafís: 2.589.597 kr ógreitt sást aðeins með rofanum).
+  for (const a of Object.values(acc)) if (a.osent + a.ogreitt > 0) a.skrad = true;
   // Staðir í Slökkvitæki (fyrirtaeki á sömu kennitölu) og hvort Búnaðargreining er vistuð — fyrir merkin í listanum (aukaatriði)
   try {
     const kts = [...new Set(Object.values(acc).filter((a) => a.skrad).map((a) => normKt(a.kt)).filter(Boolean))];
@@ -171,21 +175,40 @@ async function detail(name) {
   const like = (s) => `*${String(s).replace(/[*,()]/g, ' ').trim()}*`;
   // 11.11.2026: ilike þekkir ekki broddstafi (Sidumuli ≠ Síðumúli): sérhljóðar og d/ð/þ verða „_" (einn stafur) — nákvæmt nóg með götunúmerinu.
   const brodd = (s) => `*${String(s).replace(/[*,()%]/g, ' ').trim().replace(/[aeiouyádðþéíóúýæöàäâèêëìîïòôùüû]/gi, '_').replace(/\s+/g, ' ')}*`;
-  for (const w of wsNames.slice(0, 12)) { for (const f of ['subject', 'snippet', 'body_preview']) orParts.push(`${f}.ilike.${brodd(w)}`); }
-  const first = name.split(/\s+/)[0];
-  if (first && first.length > 3) { orParts.push(`sender_name.ilike.${like(first)}`); orParts.push(`subject.ilike.${like(first)}`); }
+  // 16.11.2026 (Agnar: „ég sé ekkert í þessari bölvaðri samskiptasögu" — úttekt: 17 greiðendur fylltu 40-pósta þakið af
+  // póstum ANNARRA): (1) aðeins sértæk verkstaðarheiti eru leitarorð — með tölustaf, tveimur orðum eða ≥ 10 stafa — því
+  // „Mosó" varð `M_s_` og „Fjörður" greip allan Hafnarfjörð; almenna heitið „Brunaþéttingar" er aldrei leitarorð.
+  // (2) Gata + húsnúmer leitar á stofni götunnar svo beygingin skipti ekki máli („Grensásvegur 10" finnur „Grensásvegi 10").
+  // (3) Fyrsta orð nafnsins er ekki lengur leitarorð („Sigurður" greip alla Sigurða, „Auto" greip „Automatic reply") —
+  // heila nafnið án félagsforms: í sendanda ef ≥ 4 stafir, í efnislínu aðeins ef ≥ 8.
+  const sertaekt = (w) => { const s = String(w || '').trim(); return !/^brunaþéttingar?$/i.test(s) && (/\d/.test(s) || /\s/.test(s) || s.length >= 10); };
+  const wsMynstur = (w) => { const m = String(w).trim().match(/^(\S{6,})\s+(\d+\s?\w?)$/); return m ? brodd(m[1].slice(0, -2)).replace(/\*$/, '') + '* ' + m[2].replace(/[*,()%]/g, '') + '*' : brodd(w); };
+  for (const w of wsNames.filter(sertaekt).slice(0, 12)) { for (const f of ['subject', 'snippet', 'body_preview']) orParts.push(`${f}.ilike.${wsMynstur(w)}`); }
+  const kjarni = name.replace(/[,.]?\s*\b(ehf|hf|slf|sf|ses|ohf)\b\.?\s*$/i, '').trim();
+  if (kjarni.length >= 4) orParts.push(`sender_name.ilike.${like(kjarni)}`);
+  if (kjarni.length >= 8) orParts.push(`subject.ilike.${like(kjarni)}`);
   // 16.11.2026 (Agnar: „tengingu við tölvupóstana" — Tindasel/Deluxe Lodges: raunveruleg samskipti við
   // sigurdur@deluxeiceland.is fundust ekki, því hvorki nafn né verkstaður birtast orðrétt í þræðinum, bara
   // netfangið. Þekkt netfang greiðandans (tengiliður eða reikningspóstur) er sterkari vísbending en texti-leit —
   // bætt við hér, ekki í staðinn fyrir hana. Dalbraut-16-dæmið (virkar vel) sýnir að verkstaða-nafnaleitin er
   // annars í lagi — þetta er viðbót fyrir þegar netfangið er þekkt en textinn ekki.
-  for (const addr of [info.contact_email, info.invoice_email].filter(Boolean)) {
+  // 16.11.2026: netföng úr ÖLLUM skrám sem þekkja greiðandann — customer_info, Payday-greiðendaskráin, netfang verkstaðar
+  // (customer_worksite_map.netfang) og staðir í Slökkvitæki (fyrirtaeki.netfang) — áður aðeins customer_info (34 af 117).
+  // Reitur með mörgum netföngum (komma, semikomma, bil) er klofinn; eigin pósthólf eru aldrei leitarorð.
+  let stadaNetfong = [];
+  if (ktN) stadaNetfong = (await sb(`fyrirtaeki?select=netfang&deleted_at=is.null&kennitala=eq.${ktN}&netfang=not.is.null&limit=20`).catch(() => [])).map((f) => f.netfang);
+  const netfong = [...new Set([info.contact_email, info.invoice_email, payday && payday.netfang, ...map.map((m) => m.netfang), ...stadaNetfong]
+    .filter(Boolean).flatMap((s) => String(s).split(/[,;\s]+/)).map((s) => s.trim().toLowerCase())
+    .filter((s) => /^[^@\s]+@[^@\s]+\.[a-z]{2,}$/.test(s) && !/@(brunaholf|eldklar|slokkvitaeki)\./.test(s)))].slice(0, 8);
+  for (const addr of netfong) {
     orParts.push(`sender_email.ilike.${like(addr)}`);
     orParts.push(`to_addresses.ilike.${like(addr)}`);
   }
   let samskipti = [];
   if (orParts.length) {
-    samskipti = await sb(`email_digest?select=id,sender_name,sender_email,subject,snippet,received_at,folder&or=(${orParts.join(',')})&order=received_at.desc&limit=40`).catch(() => []);
+    // or-gildið VERÐUR að vera kóðað: „&" í verkstaðarheiti („Gjáhella 5 bil 107 & 110") klauf slóðina, PostgREST svaraði 400
+    // og .catch gleypti villuna — síðan sagði „Engir póstar fundust" hjá Martim og Stálsmiðjunni.
+    samskipti = await sb(`email_digest?select=id,sender_name,sender_email,subject,snippet,received_at,folder&or=${encodeURIComponent('(' + orParts.join(',') + ')')}&order=received_at.desc&limit=40`).catch(() => []);
   }
 
   // 03.11.2026 (Agnar: „Taka tvítök"): bankaspeglar Payday-reikninga og handskráðar Tekjur-raðir detta út; kredit-par (ógiltur
@@ -218,7 +241,7 @@ async function detail(name) {
   }
   const iSum = (v) => !v.falid && kr(v.upphaed_total) > 0;
   const samtals = {
-    krofur: inv2.filter((v) => v.stada !== 'drog' && v.stada !== 'ogilt').length,
+    krofur: inv2.filter((v) => v.stada !== 'drog' && v.stada !== 'ogilt' && v.stada !== 'kredit').length,   // 16.11.2026: kreditreikningar teljast ekki (listinn sleppti þeim þegar)
     ogreitt: inv2.filter((v) => v.stada === 'ogreitt' && iSum(v)).reduce((a, v) => a + kr(v.upphaed_total), 0),
     greitt: inv2.filter((v) => v.stada === 'greitt').reduce((a, v) => a + kr(v.upphaed_total), 0),
     osent: drog.reduce((a, d) => a + d.total_m_vsk, 0)

@@ -41,7 +41,7 @@ exports.handler = async (event) => {
       'select=id,tilvisun,kt_greidanda,customer_name,gjalddagi,eindagi,hofudstoll,upphaed_total,status,source');
     // invoice_drafts feed the „Ósendar kröfur" (tier2) totals — a failure hides real drafts.
     drafts = await fetchAll('invoice_drafts',
-      'select=worksite_name,work_month,total_m_vsk,customer_name,kennitala,status,payday_invoice_id,tilvisun')
+      'select=worksite_name,work_month,total_m_vsk,customer_name,kennitala,status,payday_invoice_id,tilvisun,merged_into')
       .catch(() => { warnings.push('invoice_drafts lestur mistókst — ósendar drög gætu vantað í þrep 2'); return []; });
     // meta carries the manual greitt/falið/staðfest flags — without it, hidden or
     // paid krófur reappear and the outstanding totals are wrong.
@@ -212,6 +212,9 @@ exports.handler = async (event) => {
     // Sama meðferð og eldra 'skipped': röðin lifir, en dettur úr þrepi 2 svo
     // upphæðin tvítelst ekki á móti samreikningnum.
     if (EKKI_OSENT.has(String(d.status || ''))) continue;
+    // 16.11.2026: mánuður sem rann inn í samreikning (merged_into) telst ALDREI sér, líka ef staðan fór aftur í 'draft' —
+    // sama regla og K.erOsent (Viðskiptavinir), annars sýndu síðurnar tvær ólíkar tölur og upphæðin tvíteldist.
+    if (d.merged_into) continue;
     // Payday-röð á drögunum = reikningurinn er farinn, hvað sem staðan segir.
     if (d.payday_invoice_id != null) continue;
     const amt = +d.total_m_vsk || 0;

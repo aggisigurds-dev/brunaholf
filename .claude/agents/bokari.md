@@ -131,6 +131,16 @@ greinir sjálfkrafa hvor túlkunin endurskapar `samtals`.
 - Brunahólf-reikningar (Efnislisti) bera sjálfstætt Brunahólf-lógó — ekki sameinaða Slökkvitæki + Brunahólf-lógóið [lota 532a8e1d 13.06.2026].
 - Tímabók-hnappurinn „Endursækja“ kallar `/api/timabok` (les `timavera_entries` úr Supabase), EKKI `/api/timavera-pull` [lota 177227fe 03.08.2026].
 - Í Kröfu yfirliti má sameina mörg ósend drög (þrep 2) í eitt: allar tímabækur verða ein tímabók og einn efnislisti [lota 177227fe 03.08.2026].
+- **Tímaskýrsla í Efnislistanum — þrjár reglur (16.11.2026, úttekt eftir Tindasel):** (1) `tbkEditGilt(saved, month, fra)`:
+  vistað eintak (`state.ui.timabok_edits[verk|mánuður]`) sem nær ekki aftur fyrir upphaf mánaðar þótt tímabil draganna geri
+  það er HUNSAÐ í samanburði, innfelldu Tímaskýrslunni, Tímaskýrslu-glugganum og PDF síðu 2 (áður réð nóvember-eintak
+  samreikningi okt+nóv: ein línubreyting = −425 þús. kr). (2) Yfirvinnu-hakið fylgir drögunum án vistaðs vals: á ef drögin
+  bera yfirvinnu eða Verðskrá `yfirvinna_samningur`; áður alltaf af, svo línubreyting/„🔄 Endursækja" núllaði yfirvinnu
+  þegjandi (Fjallaböðin −200 þús.). Verðskrá „Yfirvinna leyfð" AF (`eftirvinna_leyfid=false`) slekkur ALLTAF — Tindasel er
+  þannig („ekki yfirvinna á Tindasel"). (3) „📥 Fylla/Samræma við tímabók" skiptir í yfirvinnu AÐEINS þegar hakið er á —
+  sama regla og drog-timar. Kröfu yfirlit: nýir tímar (vidbot) áætlast á taxta DRAGANNA; Efnislista-tengill á sendum
+  reikningi finnst líka um `payday_invoice_id` (vinnuDrog); `merged_into` telst aldrei sér í þrepi 2.
+  Tindasel-akstur: 2 × 110 km hvern vinnudag (Agnar 16.11.).
 - **Samreikningur + tímabók (16.11.2026):** `/api/timabok?month=` á samreiknings-mánuð (drög með `merged_from`) spannar SJÁLFT tímabil draganna (period_from/to, annars 1. dagur elsta mánaðar → síðasti dagur). Áður datt fyrri mánuðurinn út við „🔄 Endursækja" og í Tímaskýrslu Kröfu yfirlits (Tindasel okt+nóv: 112,79 í stað 152,84). Endursókn Efnislistans (index.html, `gr-tbk-refetch`) notar líka `grPeriodQS`. Verk utan Verðskrár (t.d. Tindasel) fá engin sjálfvirk drög, svo „🔗 Sameina" birtist ekki fyrr en drög mánaðanna eru vistuð.
 - Útlagður kostnaður/efni sem er endurrukkað fer á fullu listaverði; afsláttur birgja er framlegð okkar og kemur aldrei fram á reikningi kúnna [C#410].
 - Efniskostnaðar-glugginn (`rgOpenEfniEditor`) er opinn fyrir handvirka leiðréttingu síðan 03.09.2026: verkstaður reiknings og „Á verkstað“ á hverri línu (`redder_line_items.worksite_override`) — notaðu hann í stað þess að giska þegar Redder-lína lendir á röngu verki [C#386].
