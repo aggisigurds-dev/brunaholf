@@ -249,7 +249,18 @@ async function detail(name) {
   // slepptu þeim nú þegar), aðeins það sem birtist. v.falid heldur áfram að geta þýtt annað (handvirkt falið í
   // Kröfu yfirliti) — þær raðir eiga að sjást áfram, svo skilyrðið hér er sértækt við tvitekin-drögin.
   const krofurOut = inv2.filter((v) => !(v.stada === 'drog' && tvitekin.has(K.invKey(v))));
-  return json(200, { info, kt, worksites: pg, map, krofur: krofurOut, drog, samskipti, samtals, stadir, verkstadir_heimili, payday, generated_at: new Date().toISOString() });
+  // 16.11.2026 (Agnar: „við erum búnir að senda reikninginn, svo auðvitað er það þá verðið"): taxtinn sem var síðast
+  // rukkaður per verkstað (nýjustu send drög með dagvinnutaxta) — „＋ Skrá taxta" forfyllir hann í stað sjálfgefins 9.951.
+  // `drafts` er raðað nýjast fyrst, svo fyrsta hitt per verkstað er nýjasti mánuðurinn.
+  const sidasti_taxti = {};
+  for (const d of drafts) {
+    if (!d.worksite_name || sidasti_taxti[d.worksite_name]) continue;
+    if (!['invoiced', 'sent'].includes(String(d.status || '')) || !(Number(d.rate_dagvinna) > 0)) continue;
+    if (!(sami(d) || wsNames.includes(d.worksite_name))) continue;
+    sidasti_taxti[d.worksite_name] = { dv: Number(d.rate_dagvinna), ev: Number(d.rate_eftirvinna) || null, work_month: d.work_month,
+      yfirvinna: (Number(d.hours_eftirvinna) || 0) > 0, kennitala: d.kennitala || null, heimilisfang: d.heimilisfang || null };
+  }
+  return json(200, { info, kt, worksites: pg, map, krofur: krofurOut, drog, samskipti, samtals, stadir, verkstadir_heimili, payday, sidasti_taxti, generated_at: new Date().toISOString() });
 }
 
 async function save(event) {

@@ -3563,10 +3563,21 @@ function renderVidskiptavinir(t) {
     if (pd && pd.simi && nrm(pd.simi) !== nrm(i.contact_phone)) pdTill.push(['contact_phone', 'Sími', pd.simi]);
     const pdHtml = pdTill.length ? '<div class="vk-pd"><b>Í Payday</b>' + pdTill.map(t => '<span>' + t[1] + ': ' + escapeHtml(t[2]) + ' <button type="button" class="vk-edit-btn" data-vk-pd="' + t[0] + '" data-v="' + escapeAttr(t[2]) + '">Nota</button></span>').join('') + '</div>' : '';
     // Verkstaðir greiðandans í kortinu sem eiga enga verðskrá — sjást í samningnum með „＋ Skrá taxta" (áður: „Enginn verkstaður skráður")
-    const medVerdskra = new Set((hopar()[name] || []).map(w => w.worksite_name));
-    const anVerdskrar = [...new Set((d.map || []).map(m => m.worksite_name).filter(w => w && !medVerdskra.has(w)))];
-    const anKort = anVerdskrar.map(w => '<div class="vk-ws-item vk-ws-an"><div class="vk-ws-name">' + escapeHtml(w) + '</div><div class="vk-muted" style="font-size:12px">Engin verðskrá — rukkað eftir Payday</div>'
-      + '<button class="vk-edit-btn" data-vk-skrataxta="' + escapeAttr(w) + '">＋ Skrá taxta</button></div>').join('');
+    // 16.11.2026 (Agnar: „ég get ekki sett verðið inn hjá viðskiptavinunum" / „við erum búnir að senda reikninginn, svo
+    // auðvitað er það þá verðið"): (1) verkstaðir úr kortinu, ósendum drögum OG sendum reikningum fá spjald; (2) spjaldið
+    // sýnir taxtann sem var síðast rukkaður og „＋ Skrá taxta" forfyllir hann + kt + heimilisfang; (3) „＋ Skrá verkstað
+    // og taxta" er ALLTAF til staðar — áður stóð aðeins „Enginn verkstaður skráður" og engin leið að skrá verð.
+    // Verkstaður sem á verðskrá undir ÖÐRUM greiðanda er ekki boðinn hér (vistun myndi færa hann milli greiðenda).
+    const iVerdskra = new Set(allRows.map(r => r.worksite_name));
+    const sidTaxti = d.sidasti_taxti || {};
+    const manTxt = m => /^\d{4}-\d{2}$/.test(String(m || '')) ? String(m).slice(5) + '/' + String(m).slice(0, 4) : '';
+    const anVerdskrar = [...new Set([...(d.map || []).map(m => m.worksite_name), ...(d.drog || []).map(x => x.worksite_name), ...Object.keys(sidTaxti)].filter(w => w && !iVerdskra.has(w)))];
+    const anKort = anVerdskrar.map(w => { const t = sidTaxti[w];
+      return '<div class="vk-ws-item vk-ws-an"><div class="vk-ws-name">' + escapeHtml(w) + '</div><div class="vk-muted" style="font-size:12px">'
+        + (t ? 'Engin verðskrá — síðast rukkað <b>' + fmtKr(t.dv) + ' kr/klst</b>' + (manTxt(t.work_month) ? ' (' + manTxt(t.work_month) + ')' : '') : 'Engin verðskrá skráð') + '</div>'
+        + '<button class="vk-edit-btn" data-vk-skrataxta="' + escapeAttr(w) + '">＋ Skrá taxta</button></div>'; }).join('');
+    const nyttKort = '<div class="vk-ws-item vk-ws-an"><div class="vk-muted" style="font-size:12px">' + (((hopar()[name] || []).length || anVerdskrar.length) ? 'Annar verkstaður hjá þessum greiðanda?' : 'Enginn verkstaður skráður enn.') + '</div>'
+      + '<button class="vk-edit-btn" data-vk-skrataxta="">＋ Skrá verkstað og taxta</button></div>';
     box.innerHTML = ''
       + '<div class="vk-sec"><div class="vk-sec-h"><span class="boss-plate">03</span>Tengiliður og skilmálar <small>vistast strax þegar reit er lokað</small><span class="vk-st" data-vk-notes-st></span></div><div class="vk-facts">'
         + fact('contact_name','Tengiliður','Nafn þess sem tekur við reikningum')
@@ -3579,7 +3590,7 @@ function renderVidskiptavinir(t) {
         + pmSel
         + fact('retention_pct','Verktrygging %','t.d. 5')
       + '</div>' + pdHtml + '</div>'
-      + '<div class="vk-sec"><div class="vk-sec-h"><span class="boss-plate">04</span>Samningurinn <small>taxtar og reglur per verkstað</small></div><div class="vk-ws-grid">' + (((hopar()[name]||[]).map(wsCard).join('') + anKort) || '<div class="vk-muted">Enginn verkstaður skráður.</div>') + '</div></div>'
+      + '<div class="vk-sec"><div class="vk-sec-h"><span class="boss-plate">04</span>Samningurinn <small>taxtar og reglur per verkstað</small></div><div class="vk-ws-grid">' + ((hopar()[name]||[]).map(wsCard).join('') + anKort + nyttKort) + '</div></div>'
       + (d.drog && d.drog.length ? ('<div class="vk-sec"><div class="vk-sec-h"><span class="boss-plate">05</span>Ósendar kröfur <small>' + d.drog.length + ' drög · ' + vkMoney(S.osent) + ' kr</small></div>'
         + '<table class="vk-tbl"><thead><tr><th>Verkstaður</th><th>Mánuður</th><th class="n">Klst</th><th class="n">Upphæð</th><th></th></tr></thead><tbody>'
         + d.drog.map(x => '<tr><td>' + escapeHtml(x.worksite_name) + '</td><td>' + vkMonth(x.work_month) + '</td><td class="n">' + (x.hours ? x.hours : '—') + '</td><td class="n">' + vkMoney(x.total_m_vsk) + '</td>'
@@ -3764,8 +3775,13 @@ function renderVidskiptavinir(t) {
       else b.disabled = false;
     }));
     box.querySelectorAll('[data-vk-skrataxta]').forEach(b => b.addEventListener('click', () => {
-      openModal(null, name);
-      const ws = document.getElementById('vkm-ws'); if (ws) ws.value = b.dataset.vkSkrataxta;
+      // wireDetail sér hvorki d, kt né addr úr loadDetail — lesið úr VKDETAIL (sama svar) með sömu forgangsröð.
+      const dd = VKDETAIL[name] || {}, ii = dd.info || {};
+      const w = b.dataset.vkSkrataxta || '', t = (dd.sidasti_taxti || {})[w] || null;
+      const kt0 = kennitalaFyrir(name, ii) || dd.kt || ((dd.map || []).find(m => m.kt_greidanda) || {}).kt_greidanda || '', addr0 = heimilisfangFyrir(name, ii) || '';
+      openModal(null, name, { worksite_name: w, dagvinna_rate: t && t.dv, eftirvinna_rate: t && t.ev,
+        kennitala: kt0 || (t && t.kennitala) || '', heimilisfang: addr0 || (t && t.heimilisfang) || '',
+        skyring: t ? 'Taxtinn er forfylltur úr síðasta senda reikningi' + (t.work_month ? ' (' + String(t.work_month).slice(5) + '/' + String(t.work_month).slice(0, 4) + ')' : '') + ' — breyttu ef samið var um annað.' : '' });
     }));
     const allar = box.querySelector('[data-vk-allar]');
     if (allar) allar.addEventListener('click', () => { const t = box.querySelector('[data-vk-krofur]'); if (!t) return; const on = t.classList.toggle('allar'); allar.textContent = on ? 'Sýna 12 nýjustu' : 'Sýna allar ' + t.querySelectorAll('tbody tr').length; });
@@ -3804,7 +3820,7 @@ function renderVidskiptavinir(t) {
     else if (window.innerWidth > 980) { const first = Object.keys(hopar()).sort((a,b) => a.localeCompare(b,'is'))[0]; if (first) velja(first); }
   }
 
-  function openModal(w, defaultCustomer) {
+  function openModal(w, defaultCustomer, forfyll) {
     const isNew = !w;
     const d = w || {
       worksite_name:'', customer_name: defaultCustomer||'',
@@ -3818,6 +3834,8 @@ function renderVidskiptavinir(t) {
       const sib = allRows.find(r => r.customer_name === defaultCustomer && r.kennitala);
       if (sib) { d.kennitala = sib.kennitala||''; d.heimilisfang = sib.heimilisfang||''; }
     }
+    // 16.11.2026: „＋ Skrá taxta" sendir það sem þegar er vitað (verkstaður, rukkaður taxti, kt, heimilisfang) — tóm gildi yfirskrifa ekkert.
+    if (isNew && forfyll) for (const k of ['worksite_name','dagvinna_rate','eftirvinna_rate','kennitala','heimilisfang']) if (forfyll[k] != null && forfyll[k] !== '') d[k] = forfyll[k];
     const lunch = Number(d.lunch_fradrattur_h||0);
     const evOk = d.eftirvinna_leyfid !== false;
 
@@ -3840,6 +3858,7 @@ function renderVidskiptavinir(t) {
         <option value="fixed" ${d.source==='fixed'?'selected':''}>Fast upphæð</option>
       </select></div>
       <div class="vk-sect-lbl">Taxtasetning</div>
+      ${isNew && forfyll && forfyll.skyring ? '<p style="font-size:11px;color:var(--ink3);margin:0 0 6px">' + escapeHtml(forfyll.skyring) + '</p>' : ''}
       <div class="vk-row2">
         <div class="vk-field"><label>Dagvinna (kr/klst)</label><input id="vkm-dv" type="number" value="${d.dagvinna_rate||9951}"></div>
         <div class="vk-field"><label>VSK %</label><input id="vkm-vsk" type="number" value="${d.vsk_pct||24}"></div>

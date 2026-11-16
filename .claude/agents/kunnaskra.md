@@ -254,6 +254,17 @@ svarað í 3 daga'".
 
 ## Viðskiptavinir-flipinn + customer_info — 16.10.2026
 
+- **16.11.2026 — „04 Samningurinn" er alltaf vinnanlegur (Agnar: „ég get ekki sett verðið inn", „sendur reikningur er
+  verðið"):** `/api/verkkaupar?name=` skilar `sidasti_taxti{verkstaður:{dv,ev,work_month,kennitala,heimilisfang}}` (nýjustu
+  send drög með dagvinnutaxta). Verkstaðir úr korti, ósendum drögum OG sendum reikningum fá spjald með „síðast rukkað X
+  kr/klst"; „＋ Skrá taxta" opnar `openModal(null, name, forfyll)` forfyllt (taxti, kt, heimilisfang) og „＋ Skrá verkstað og
+  taxta" er alltaf til staðar. Verkstaður með verðskrá undir ÖÐRUM greiðanda er ekki boðinn (upsert á worksite_name myndi
+  færa hann). Handföngin búa í `wireDetail` — þar sjást hvorki `d`, `kt` né `addr` úr `loadDetail`, lestu `VKDETAIL[name]`.
+  Sama dag fóru 14 verk með sendan reikning en enga röð í `pricing_guide` inn með rukkaða taxtanum (notes: „Taxti úr
+  síðasta senda reikningi"); 5 verk án greiðanda (Kársnesbraut 96, Ölduselskoli, Fellaskóli, Síminn Ármúla, Reykjarfell) bíða.
+- **16.11.2026 — netfang verkkaupa per verkstað:** `customer_worksite_map.netfang` (Áland 6 → Landspítali);
+  `/api/worksites` skilar því sem `mapped_customer_info[].ws_netfang` og Efnislistinn forfyllir það í ný drög.
+
 - `customer_info` fékk þrjá dálka (apply_migration + `sql/2026-10-16_customer_info_tengilidur.sql`): `contact_name`
   (tengiliður), `invoice_email` (reikningspóstur), `heimilisfang`. `netlify/functions/verkkaupar.js` INFO_FIELDS
   leyfir þá í POST (upsert á customer_name); `detail()` skilar nú `kt` í röðinni customer_info → pricing_guide →
