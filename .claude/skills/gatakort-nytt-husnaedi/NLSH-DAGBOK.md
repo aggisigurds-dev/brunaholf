@@ -877,3 +877,16 @@ M814: 46 → A+B+C 19; M815: 20 → 6. Sjónskoðun (`raf/gat13-flisar.png`): Ø
 niðurföll út, ekki hæðaskil → SLEPPT (16). Ø220 öll við horn lagnastokka með lögn → 9 sett inn (`gat13_setja.cjs`, fjoldi 1, flokkur null):
 4H (M814) 5, 5H (M815) 4. Apex Eftir: 4H 16 → 21, 5H 403 → 407.
 ÓMÆLT: hvort lagnastokkarnir séu sjálfstæð brunahólf (þá væri þéttingin í stokkveggnum, ekki plötunni) — spyrja Agnar ef hann efast.
+
+
+## 16.11.2026 — Rannsókn á Ø220-götunum (Agnar: „ég er bara ekki viss, mátt rannsaka betur“)
+
+- Brunayfirlit A285-31: hvert Ø220-gat er í litlu SKOTI við horn lagnastokks, UTAN stokksins; stokkarnir eru „Lagnastokkur – opið niður“
+  með EI60-CS hurð (sjálfstæð brunahólf opin niður). Nærmyndir M115/M315/M715: gatið er undir hreinlætistæki (skolvaskur/salerni) í skotinu.
+- Ø220-götin eru nákvæmlega 24 (M814 12, M815 12) ≈ útboðsliður 1.3 Ø210-300: 25 stk → þetta ERU 1.3-götin. Ø250 í ljósgörðum/garði/við gler
+  eru utan þeirrar tölu (líklega niðurföll út) — sleppt áfram.
+- Aðeins 2 gólfskráningar við þau (#6465 við M814-15/M815-15, #12143 við M814-19/M815-19, ≤ 0,7 m). Skráningar 0,1–0,9 m frá hinum eru
+  VEGGJAGEGNUMTÖK í stokkveggnum (Stál/Loft), ekki gatið → vísbending B („engin skráning í neinum flokki 0,75 m“) var of ströng.
+- `raf/gat13_vidbot.cjs`: 11 Ø220 bætt við (M814-01/04/08/13/16, M815-01/04/07/08/13/16). Alls 20 Ø220 sem áætluð göt (fag golf, fjoldi 1).
+  Apex Eftir: 4H 21 → 26, 5H 407 → 413.
+- Opið: hvort pípulagningamenn þétti þessi göt sjálfir (stundum fylgir eldvarnarkragi niðurfallinu) — ÓMÆLT; Agnar veit það.
