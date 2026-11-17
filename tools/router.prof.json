@@ -287,6 +287,20 @@
         "bord-flettur"
       ],
       "fremstur": "bord-flettur"
+    },
+    {
+      "prompt": "Já, birta núna",
+      "cwd": "C:projectsslokkvitaeki",
+      "ekki": [
+        "artcraft"
+      ]
+    },
+    {
+      "prompt": "birta mynd í Kastljós",
+      "cwd": "C:projectsslokkvitaeki",
+      "vaent": [
+        "artcraft"
+      ]
     }
   ]
 }
