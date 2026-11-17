@@ -13,7 +13,7 @@
 //
 // Endurnýtir gmail-ingest sitt eigið handler BEINT (require, ekkert HTTP-hopp og
 // engin tvítekin rökfræði). gmail-ingest hafnar öðru en GET, svo við sendum GET.
-const { handler: ingest } = require('./gmail-ingest');
+const _gi = require('./gmail-ingest'); const ingest = _gi._innra || _gi.handler; // lota 13: óvarinn handler — vörðurinn (_vord) er fyrir HTTP, ekki bein innri köll
 
 // Bæta netfangi hér til að sópa fleiri skýja-pósthólf inn sjálfvirkt. (@brunaholf.is
 // kemur um luna-bridge af tölvu — ekki hér.)

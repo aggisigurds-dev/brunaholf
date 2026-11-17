@@ -250,8 +250,16 @@ if (typeof fetchUpphaflegt === 'function' && !globalThis.__vordFetch) {
       if (eiginFall(url)) {
         const t = await myntaToki();
         if (t) {
-          const hausar = new Headers((init && init.headers) || (input && typeof input === 'object' && input.headers) || {});
-          if (!hausar.has(TOKI_HAUS)) hausar.set(TOKI_HAUS, t);
+          // Venjulegur haus-hlutur helst venjulegur hlutur (kallendur og prófbúnaður lesa hann sem slíkan — CI 17.11.2026);
+          // Headers / fylki → Headers.
+          const h0 = (init && init.headers) || (input && typeof input === 'object' && !(input instanceof URL) && input.headers) || {};
+          let hausar;
+          if (h0 && typeof h0 === 'object' && !Array.isArray(h0) && !(typeof Headers === 'function' && h0 instanceof Headers)) {
+            hausar = Object.keys(h0).some((k) => k.toLowerCase() === TOKI_HAUS) ? h0 : { ...h0, [TOKI_HAUS]: t };
+          } else {
+            hausar = new Headers(h0);
+            if (!hausar.has(TOKI_HAUS)) hausar.set(TOKI_HAUS, t);
+          }
           return fetchUpphaflegt(input, { ...(init || {}), headers: hausar });
         }
       }

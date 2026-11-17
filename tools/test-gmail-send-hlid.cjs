@@ -72,9 +72,19 @@ const SEND = { account: 'eldklar@eldklar.is', to: ['prof@example.invalid'], subj
   const id = JSON.parse(lst.body).users.find((u) => u.nn === 'LS').id;
   const s1 = await HUB.handler({ httpMethod: 'POST', body: JSON.stringify({ action: 'senda', id }), headers: { host: 'brunaholf.netlify.app', cookie: koka }, queryStringParameters: {} });
   ok(s1.statusCode === 200 && sent === 2, 'hub-adgangar aðgangspóstur kemst í gegn (tóki)');
+  // Líkanið svarar ekki app_kv: kaldræsing vörðsins án lesturs fer þá eftir HUB_VORD_SJALFGEFID — hér endanlega lokað.
+  process.env.HUB_VORD_SJALFGEFID = 'lokad';
   const DH = require(path.join(FN, 'daily-health.js'));
-  const d = await DH.handler({ httpMethod: 'GET', queryStringParameters: { send: '1', force: '1' }, headers: { host: 'brunaholf.netlify.app' } });
+  // Síðan 17.11.2026 (lota 13) er daily-health vafið í vörðinn (_vord.js): HTTP-köll krefjast innskráningar eða tóka.
+  // Áætlaða heilsuvaktin kallar beint á óvarinn handler (_innra) — prófað hér eins og hún keyrir í loftinu.
+  const d = await (DH._innra || DH.handler)({ httpMethod: 'GET', queryStringParameters: { send: '1', force: '1' }, headers: { host: 'brunaholf.netlify.app' } });
   ok(d.statusCode === 200 && JSON.parse(d.body).sent === true && sent === 3, 'daily-health heilsuvakt kemst í gegn (tóki)');
+  const an = await DH.handler({ httpMethod: 'GET', queryStringParameters: { send: '1', force: '1' }, headers: { host: 'brunaholf.netlify.app' } });
+  ok(an.statusCode === 401 && sent === 3, 'daily-health um HTTP án innskráningar → 401 (vörðurinn), ekkert sent');
+  const BG = require(path.join(FN, 'daily-health-background.js'));
+  const b = await BG.handler();
+  const bb = JSON.parse(b.body || '{}');
+  ok(b.statusCode === 200 && bb.inner_status !== 401, 'áætlaða heilsuvaktin (daily-health-background) kemst framhjá verðinum');
   console.log(`\n${pass} í lagi, ${fail} féllu`);
   process.exit(fail ? 1 : 0);
 })().catch((e) => { console.error(e); process.exit(2); });

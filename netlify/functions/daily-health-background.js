@@ -27,7 +27,7 @@
 // dagur þar sem allt er í lagi er hljóður. Móttakandi ræðst af HEALTH_ALERT_TO í
 // Netlify-umhverfinu — engin breyting á kóða þarf til að beina honum annað eða
 // þagga hann (setjið HEALTH_ALERT_OFF=1).
-const { handler: health } = require('./daily-health');
+const _dh = require('./daily-health'); const health = _dh._innra || _dh.handler; // lota 13: óvarinn handler — vörðurinn (_vord) er fyrir HTTP, ekki bein innri köll
 
 exports.handler = async () => {
   if (process.env.HEALTH_ALERT_OFF === '1') {

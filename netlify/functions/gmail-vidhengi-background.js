@@ -12,7 +12,7 @@
 // message_id og unique(account, gmail_msg_id, filename).
 'use strict';
 const P = require('./_portal');
-const { handler: ingest } = require('./gmail-ingest');
+const _gi = require('./gmail-ingest'); const ingest = _gi._innra || _gi.handler; // lota 13: óvarinn handler — vörðurinn (_vord) er fyrir HTTP, ekki bein innri köll
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;

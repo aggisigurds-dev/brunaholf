@@ -201,6 +201,27 @@ test(`öll vafin föll (${vafin.length}) svara 401 óinnskráð og flytja út ó
   if (ekkiHladid.length) console.log('# ekki hlaðið (vantar pakka):', ekkiHladid.join(' · '));
   assert.ok(ekkiHladid.length <= 10, 'of mörg föll hlóðust ekki: ' + ekkiHladid.length);
 });
+// Bein innri köll (require) fara framhjá HTTP og bera hvorki köku né tóka: þau VERÐA að nota _innra, annars stöðvar
+// vörðurinn t.d. áætlaða heilsuvakt eða póstinnsog þegar lokað er (daily-health-background, gmail-ingest-background — CI 17.11).
+test('ekkert fall kallar beint á vafinn handler (aðeins um _innra)', () => {
+  const vafinNofn = new Set(vafin.map(f => f.replace(/\.js$/, '')));
+  const brot = [];
+  for (const f of fs.readdirSync(DIR).filter(x => x.endsWith('.js'))) {
+    const s = fs.readFileSync(path.join(DIR, f), 'utf8');
+    for (const m of s.matchAll(/\{([^}]*)\}\s*=\s*require\(\s*['"]\.\/([\w-]+?)(?:\.js)?['"]\s*\)/g)) {
+      if (vafinNofn.has(m[2]) && /\bhandler\b/.test(m[1])) brot.push(`${f}: {…handler…} = require('./${m[2]}')`);
+    }
+    for (const m of s.matchAll(/require\(\s*['"]\.\/([\w-]+?)(?:\.js)?['"]\s*\)\s*\.handler/g)) if (vafinNofn.has(m[1])) brot.push(`${f}: require('./${m[1]}').handler`);
+    for (const m of s.matchAll(/(?:const|let|var)\s+(\w+)\s*=\s*require\(\s*['"]\.\/([\w-]+?)(?:\.js)?['"]\s*\)/g)) {
+      if (!vafinNofn.has(m[2])) continue;
+      const v = m[1];
+      const allt = (s.match(new RegExp('\\b' + v + '\\.handler\\b', 'g')) || []).length;
+      const varid = (s.match(new RegExp('\\b' + v + '\\._innra\\s*\\|\\|\\s*' + v + '\\.handler\\b', 'g')) || []).length;
+      if (allt > varid) brot.push(`${f}: ${v}.handler (${m[2]}) án _innra`);
+    }
+  }
+  assert.deepEqual(brot, []);
+});
 test('ESM-fallið timavera-maeting er vafið og svarar 401 óinnskráð', async () => {
   nytt(); V._endurstilla();
   const m = await import(require('node:url').pathToFileURL(path.join(DIR, 'timavera-maeting.js')).href);
