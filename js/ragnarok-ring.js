@@ -18,7 +18,7 @@
   .arc{inset:17%;-webkit-mask:radial-gradient(circle,transparent calc(50% - 5px),#000 calc(50% - 4px),#000 50%);mask:radial-gradient(circle,transparent calc(50% - 5px),#000 calc(50% - 4px),#000 50%);filter:drop-shadow(0 0 6px rgba(255,140,40,.9))}
   .needle{position:absolute;left:50%;top:50%;width:2px;height:28%;margin-left:-1px;transform-origin:50% 0;background:linear-gradient(180deg,#fff6d8,#ff9a3a 60%,transparent);box-shadow:0 0 6px rgba(255,160,60,.9)}
   .hub{position:absolute;left:50%;top:50%;width:8px;height:8px;margin:-4px;border-radius:50%;background:radial-gradient(circle,#fff6d8,#ff8c2a);box-shadow:0 0 10px #ff9a3a}
-  canvas{position:absolute;inset:6%;width:100%;height:100%;border-radius:50%}
+  canvas{position:absolute;inset:6%;width:88%;height:88%;border-radius:50%}
   .txt{position:absolute;inset:32%;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding-bottom:12%;box-sizing:border-box;gap:4px;text-align:center;pointer-events:none;color:#ffcf6a;text-shadow:0 0 3px #000,0 0 6px #000,0 0 10px rgba(255,140,40,.9);font-weight:600;letter-spacing:.3em}
   .txt small{font-size:max(7px,.6em);letter-spacing:.2em;color:#ffcf6a;font-weight:600;text-shadow:0 0 3px #000,0 0 6px #000}
   .gl{position:absolute;left:-10%;right:-10%;top:100%;margin-top:4px;text-align:center;font-weight:600;letter-spacing:.06em;color:#f3e4bf;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
