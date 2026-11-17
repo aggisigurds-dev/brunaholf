@@ -24147,6 +24147,9 @@ async function renderEfniskostnadur(t){
       fetch('/api/redder-invoices'),
       fetch('/api/worksites?year=combined').catch(()=>null),
     ]);
+    // 17.11.2026 (villur #21, Verkefnalisti f19c0503): notandinn gat farið af síðunni á meðan beðið var — þá eru hólfin
+    // horfin og hver skrif hér á eftir (líka í catch) köstuðu „Cannot set properties of null" (unhandledrejection, 39×).
+    if (!document.getElementById('ef-meta')) return;
     if(!r.ok) throw new Error('HTTP '+r.status);
     const { rows, summary } = await r.json();
     const fmt = n => Math.round(n||0).toLocaleString('is-IS');
@@ -24414,7 +24417,8 @@ async function renderEfniskostnadur(t){
     $fWs.addEventListener('change', renderTable);
     renderTable();
   } catch(e) {
-    document.getElementById('ef-meta').textContent = 'Villa: '+(e.message||e);
+    const efMeta = document.getElementById('ef-meta');   // horfið ef notandinn fór af síðunni — þá ekkert að segja
+    if (efMeta) efMeta.textContent = 'Villa: '+(e.message||e);
   }
 }
 
@@ -24746,6 +24750,9 @@ async function efKostnadarYfirlit(){
   let KIDS = {};
   try{ const r = await fetch('/api/reikningspunktar?op=stada'); if(r.ok){ const st = await r.json(); KIDS = (st&&st.kunnaIds)||{}; document.getElementById('ef-kunnar').innerHTML = ((st&&st.kunnalisti)||[]).map(n=>'<option value="'+esc(n)+'">').join(''); } }catch(_){}
 
+  // 17.11.2026 (villur #763, Verkefnalisti f19c0503): kallið hér á undan er beðið eftir — hafi notandinn farið af síðunni
+  // eru hólfin horfin og drop.onclick kastaði „Cannot set properties of null" (7×). Þá ekkert að teikna.
+  if (!host.isConnected || !document.getElementById('ef-drop')) return;
   const drop = document.getElementById('ef-drop'), file = document.getElementById('ef-kost-file'), log = document.getElementById('ef-kost-log');
   const logLine = (html) => { const d = document.createElement('div'); d.innerHTML = html; log.appendChild(d); return d; };
   drop.onclick = e => { if (e.target.closest('button')) return; file.click(); };
