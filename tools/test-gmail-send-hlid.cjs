@@ -29,6 +29,8 @@ global.fetch = async (url, opt = {}) => {
     return { ok: r.statusCode < 300, status: r.statusCode, json: async () => JSON.parse(r.body), text: async () => r.body };
   }
   if (u.pathname === '/api/data-sources-status') return resp(200, { sources: [] });
+  // Vörðurinn (fail-open síðan 17.11.2026): lokar aðeins þegar hamurinn er SANNARLEGA lesinn sem 'lokad'.
+  if (u.pathname.endsWith('/rest/v1/app_kv') && u.searchParams.get('key') === 'eq.hub_vord') return resp(200, [{ value: { hamur: 'lokad' } }]);
   return mockFetch(url, opt);
 };
 
@@ -72,8 +74,7 @@ const SEND = { account: 'eldklar@eldklar.is', to: ['prof@example.invalid'], subj
   const id = JSON.parse(lst.body).users.find((u) => u.nn === 'LS').id;
   const s1 = await HUB.handler({ httpMethod: 'POST', body: JSON.stringify({ action: 'senda', id }), headers: { host: 'brunaholf.netlify.app', cookie: koka }, queryStringParameters: {} });
   ok(s1.statusCode === 200 && sent === 2, 'hub-adgangar aðgangspóstur kemst í gegn (tóki)');
-  // Líkanið svarar ekki app_kv: kaldræsing vörðsins án lesturs fer þá eftir HUB_VORD_SJALFGEFID — hér endanlega lokað.
-  process.env.HUB_VORD_SJALFGEFID = 'lokad';
+  // Líkanið svarar app_kv með hamur 'lokad' (sjá fetch-líkanið efst) — vörðurinn lokar þá HTTP-köllum án innskráningar.
   const DH = require(path.join(FN, 'daily-health.js'));
   // Síðan 17.11.2026 (lota 13) er daily-health vafið í vörðinn (_vord.js): HTTP-köll krefjast innskráningar eða tóka.
   // Áætlaða heilsuvaktin kallar beint á óvarinn handler (_innra) — prófað hér eins og hún keyrir í loftinu.

@@ -21,15 +21,19 @@
 //   Skrif: sjálfgefið nægir virkur starfsmaður (6 af 9 virkum notendum eru ekki Admin og vinna í þessum föllum);
 //   föll sem eiga aðeins að vera fyrir stjórnanda fá { stjornandi: true } → 403 fyrir aðra.
 //
-// HAMUR (app_kv 'hub_vord', lesinn með 60 s skyndiminni):
-//   { "hamur": "skraning" | "lokad", "lokud": [föll], "opin": [föll] }
-//   skraning = hleypir í gegn en SKRÁIR í agent_logs hvað hefði verið stöðvað (agent 'vord', action 'myndi_hafna').
-//   lokad    = 401 / 403 / 503 / 502. „opin“ yfirtekur (föll sem kallendur utan vafra ná ekki enn að auðkenna sig fyrir),
-//   „lokud“ lokar einstöku falli þótt hamurinn sé skraning. Röð VANTAR eða er ekki hlutur, eða lestur BREGST →
-//   síðasti þekkti hamur helst (vantar röðin: viðvörun í agent_logs, action 'hamur_vantar'); kaldræsing án gilds
-//   lesturs → HUB_VORD_SJALFGEFID ('lokad' eftir að lokað hefur verið fyrir fullt og allt, annars 'skraning').
+// HAMUR (app_kv 'hub_vord') — FAIL-OPEN (endurhannað 17.11.2026 kvöld eftir að vörðurinn lamaði lotur):
+//   { "hamur": "af" | "skraning" | "lokad", "lokud": [föll], "opin": [föll] }
+//   af       = vörðurinn gerir EKKERT (engin athugun, engin skráning) — rofi án birtingar.
+//   skraning = hleypir öllu í gegn STRAX; athugun og skráning (agent 'vord', action 'myndi_hafna') í bakgrunni.
+//   lokad    = 401 / 403 — en AÐEINS þegar hamurinn hefur SANNARLEGA verið lesinn sem 'lokad' (eða fallið er á „lokud“).
+//   „opin“ yfirtekur (hleypt strax), „lokud“ lokar einstöku falli þótt hamurinn sé skraning.
+//   NÁIST HAMURINN EKKI (Supabase niðri, tímafall, röð vantar, rusl, óþekkt gildi) → hleypt í gegn og viðvörun skráð
+//   (action 'hamur_olesanlegur' / 'hamur_ogildur'); ALDREI 401 af því stillingin náðist ekki. Síðasti gildi lestur
+//   helst í minni tilviksins: eftir 60 s er hann notaður áfram og lesið aftur í bakgrunni (beðið aldrei). Milli
+//   kaldræsinga er ekkert minni (/tmp og minni lifa aðeins í sama tilviki) — þá bíður fyrsta beiðnin mest
+//   HAMUR_FRESTUR_MS (1,2 s) og hleypir svo í gegn meðan lesturinn klárast.
 //
-// BILAR LOKAÐ: innskráningarstillingar ólesanlegar → 503; gagnagrunnur svarar ekki → 502.
+// BILAR (aðeins í lokuðum ham): innskráningarstillingar ólesanlegar → 503; gagnagrunnur svarar ekki → 502.
 'use strict';
 const crypto = require('crypto');
 
@@ -173,27 +177,49 @@ async function hver(event) {
   }
 }
 
-// ── hamur ─────────────────────────────────────────────────────────────────────────────────────────────────────
-// Lestur sem BREGST (net, 5xx) — eða röð sem VANTAR — heldur síðasta þekkta ham og reynir aftur eftir 10 s — stutt Supabase-hik má ekki
-// læsa öllum föllum í skráningarham (ábending stjórnlotu 17.11.2026). Kaldræsing án lesturs: HUB_VORD_SJALFGEFID
-// ('lokad' þegar lokað hefur verið fyrir fullt og allt; annars 'skraning'). Vanti röðin: viðvörun, ekki lokun alls.
-const KALT = process.env.HUB_VORD_SJALFGEFID === 'lokad' ? 'lokad' : 'skraning';
-let _ham = null, _hamT = 0;
-async function hamurFyrir(fall) {
-  if (!_ham || Date.now() - _hamT > 60000) {
-    let lesid = false, v = null;
+// ── hamur (FAIL-OPEN) ─────────────────────────────────────────────────────────────────────────────────────────────
+// Skilar: 'af' | 'opid' (á opin-lista) | 'ovist' (hamur náðist ekki — hleypt) | 'skraning' | 'lokad' (sannarlega lesið).
+const HAMUR_FRESTUR_MS = Math.max(50, Number(process.env.HUB_VORD_HAMUR_FRESTUR_MS) || 1200);
+const HAMIR = new Set(['af', 'skraning', 'lokad']);
+let _ham = null, _hamT = 0, _lestur = null, _lesturT = 0, _villaT = 0;
+const gildurHamur = (v) => (v && typeof v === 'object' && !Array.isArray(v) && HAMIR.has(v.hamur) ? v : null);
+function lesaHam() {
+  if (_lestur) return _lestur;
+  _lesturT = Date.now();
+  _lestur = (async () => {
+    let v, lesid = false;
     try {
       const r = await sb(`app_kv?key=eq.${HAMUR_KV}&select=value`);
-      if (r.ok) { const j = await r.json(); v = j[0] ? j[0].value : null; lesid = true; }
+      if (r.ok) { const j = await r.json(); v = Array.isArray(j) && j[0] ? j[0].value : null; lesid = true; }
     } catch (_) { lesid = false; }
-    if (lesid && v && typeof v === 'object' && !Array.isArray(v)) { _ham = v; _hamT = Date.now(); }
-    else if (lesid) { _ham = _ham || { hamur: KALT }; _hamT = Date.now(); vidvorun('hamur_vantar', { gildi: v === null ? 'röð vantar' : typeof v }); }
-    else { _ham = _ham || { hamur: KALT }; _hamT = Date.now() - 50000; }
+    const g = gildurHamur(v);
+    if (g) { _ham = g; _hamT = Date.now(); _villaT = 0; return _ham; }
+    _villaT = Date.now();   // næsta tilraun eftir 10 s (sjá hamurFyrir) — síðasti gildi hamur, ef einhver, helst
+    vidvorun(lesid ? 'hamur_ogildur' : 'hamur_olesanlegur', { gildi: !lesid ? 'lestur brást' : v === null ? 'röð vantar' : (v && typeof v === 'object' && !Array.isArray(v)) ? 'óþekktur hamur: ' + String(v.hamur).slice(0, 20) : typeof v, sidasti: _ham ? _ham.hamur : null });
+    return _ham;
+  })().catch(() => _ham).finally(() => { _lestur = null; });
+  return _lestur;
+}
+async function hamurFyrir(fall) {
+  const nu = Date.now();
+  const maReyna = !_villaT || nu - _villaT > 10000;
+  if (!_ham) {
+    // kaldræsing: bíða mest HAMUR_FRESTUR_MS eftir lestri; annars hleypa (lesturinn heldur áfram fyrir næstu beiðni)
+    // Lestur sem þegar er á leiðinni telur: önnur beiðni bíður aðeins það sem eftir er af þakinu, aldrei aftur heilt þak.
+    const eftir = _lestur ? HAMUR_FRESTUR_MS - (nu - _lesturT) : HAMUR_FRESTUR_MS;
+    if (maReyna && eftir > 0) {
+      let t;
+      await Promise.race([lesaHam(), new Promise((res) => { t = setTimeout(res, eftir); })]).finally(() => clearTimeout(t));
+    }
+    if (!_ham) return 'ovist';
+  } else if (nu - _hamT > 60000 && maReyna) {
+    lesaHam();   // endurnýja í bakgrunni; gamla gildið gildir á meðan
   }
+  if (_ham.hamur === 'af') return 'af';
   const listi = (k) => (Array.isArray(_ham[k]) ? _ham[k] : []);
   if (listi('opin').includes(fall)) return 'opid';
   if (listi('lokud').includes(fall)) return 'lokad';
-  return _ham.hamur === 'skraning' ? 'skraning' : 'lokad';
+  return _ham.hamur === 'lokad' ? 'lokad' : 'skraning';
 }
 
 // ── skráning (mest ein lína per fall+uppruna+niðurstöðu á 10 mín hjá hverju tilviki) ──────────────────────────
@@ -252,34 +278,35 @@ function forspurnApps(event) {
 async function hlid(event, { fall, stjornandi = false, opidEf = null } = {}) {
   if (!event) return null;
   if (event.httpMethod === 'OPTIONS') return forspurnApps(event);
-
-  // ─────────────────────────────────────────────────────────────────────────────────────────────
-  // 17.11.2026 — SLÖKKT AÐ BEIÐNI AGNARS („slökktu á þessu session innskráningar veseni · allt
-  // lamað í öllum sessions · að active sessions fái heimild til að vinna í síðunni").
-  // Ástæða: hliðið er FAIL-CLOSED. Bregðist lestur á app_kv['hub_vord'] (kaldræsing, tímaþak 2,5 s)
-  // verður hamurinn 'lokad' í 60 s og ÖLL vafin föll svara 401 — líka þau sem eru á opin-lista.
-  // Mælt í agent_logs 17.11: action='hafnad' á automations (15×), drive-list, veidin, fjarmal-yfirlit,
-  // kerfisheilsa, krofu-greidslur, nlsh-dashboard — öll á opin-lista eða í skráningarham.
-  // Hliðið hleypir því öllu í gegn (eins og fyrir 06:42 í dag) þar til það er endurhannað FAIL-OPEN.
-  // Forspurn appsins fyrir x-hub-toki (plástur 514) er svarað áfram, línan hér að ofan.
-  // AFTURKALLA: git revert á þessu commiti + birta.
-  return null;
-  // ─────────────────────────────────────────────────────────────────────────────────────────────
-  if (typeof opidEf === 'function') { try { if (await opidEf(event)) return null; } catch (_) {} }
   const hamur = await hamurFyrir(fall);
-  // Opinn/skráningarhamur: athugunin má aldrei tefja fallið meira en eitt þak, og skráningin bíður ekki (skra grípur
-  // sjálf allar villur). Lokaður hamur: hvert kall hefur sitt þak; tímafall → 502.
-  const mjukt = hamur !== 'lokad';
-  const h = mjukt ? await medThaki(hver(event), FRESTUR_MS) : await hver(event);
+  if (hamur === 'af') return null;
+  if (hamur !== 'lokad') {
+    // FAIL-OPEN: skraning / opið / hamur óviss → fallið keyrir STRAX. Athugun og skráning í bakgrunni — tefja aldrei og
+    // geta ekki fellt beiðnina. Óviss hamur (Supabase líklega niðri) er ekki athugaður frekar, svo álagið aukist ekki.
+    if (hamur !== 'ovist') bakgrunnsathugun(fall, event, hamur, stjornandi, opidEf);
+    return null;
+  }
+  // LOKAÐ (hamurinn lesinn sem slíkur). opidEf (t.d. skjal-tóki kúnnagáttar) fyrst.
+  if (typeof opidEf === 'function') { try { if (await opidEf(event)) return null; } catch (_) {} }
+  const h = await hver(event);   // hvert Supabase-kall hefur sitt þak (FRESTUR_MS); tímafall → 502
   let villa = h.villa || 0;
   if (!villa && stjornandi && !h.stjornandi) villa = 403;
   if (!villa) {
-    if (h.via === 'toki') skra(fall, event, 'inn', { via: 'toki' }); // sannar að brýrnar virki (bíður ekki)
+    if (h.via === 'toki') skra(fall, event, 'inn', { via: 'toki' });
     return null;
   }
-  if (mjukt) { skra(fall, event, 'myndi_hafna', { villa, timi: !!h.timi, hamur }); return null; }
-  await skra(fall, event, 'hafnad', { villa });
+  skra(fall, event, 'hafnad', { villa });   // bíður ekki
   return hafnad(villa, event);
+}
+function bakgrunnsathugun(fall, event, hamur, stjornandi, opidEf) {
+  Promise.resolve().then(async () => {
+    if (typeof opidEf === 'function') { try { if (await opidEf(event)) return; } catch (_) {} }
+    const h = await medThaki(hver(event), FRESTUR_MS);
+    let villa = h.villa || 0;
+    if (!villa && stjornandi && !h.stjornandi) villa = 403;
+    if (!villa) { if (h.via === 'toki') await skra(fall, event, 'inn', { via: 'toki' }); return; }
+    await skra(fall, event, 'myndi_hafna', { villa, timi: !!h.timi, hamur });
+  }).catch(() => { /* bakgrunnsathugun má aldrei fella neitt */ });
 }
 
 // Fjarlægir _hubtoki svo fallið sjálft sjái hann ekki (sum föll ítra yfir allar færibreytur)
@@ -343,5 +370,6 @@ if (typeof fetchUpphaflegt === 'function' && !globalThis.__vordFetch) {
 }
 
 module.exports = { vafinn, hlid, hver, myntaToki, erGildurToki, erGildurSkjalToki, hamurFyrir, eiginFall, TOKI_HAUS, TOKI_QS, HAMUR_KV,
-  _endurstilla() { _st = null; _stT = 0; _ham = null; _hamT = 0; _skrad.clear(); _notendur.clear(); _vidvT = {}; },
-  _rennaUt() { _hamT = 0; }, _gleymaStillingu() { _st = null; _stT = 0; }, FRESTUR_MS };
+  _endurstilla() { _st = null; _stT = 0; _ham = null; _hamT = 0; _villaT = 0; _lestur = null; _lesturT = 0; _skrad.clear(); _notendur.clear(); _vidvT = {}; },
+  _rennaUt() { _hamT = 0; _villaT = 0; }, _gleymaStillingu() { _st = null; _stT = 0; }, _bidaLestur() { return _lestur || Promise.resolve(_ham); },
+  FRESTUR_MS, HAMUR_FRESTUR_MS };
