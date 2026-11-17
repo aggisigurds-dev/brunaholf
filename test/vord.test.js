@@ -175,3 +175,11 @@ test(`öll vafin föll (${vafin.length}) svara 401 óinnskráð og flytja út ó
   if (ekkiHladid.length) console.log('# ekki hlaðið (vantar pakka):', ekkiHladid.join(' · '));
   assert.ok(ekkiHladid.length <= 10, 'of mörg föll hlóðust ekki: ' + ekkiHladid.length);
 });
+test('ESM-fallið timavera-maeting er vafið og svarar 401 óinnskráð', async () => {
+  nytt(); V._endurstilla();
+  const m = await import(require('node:url').pathToFileURL(path.join(DIR, 'timavera-maeting.js')).href);
+  assert.equal(m.handler._vord, 'timavera-maeting');
+  const fyrirUt = UTKOLL.length;
+  assert.equal((await m.handler(ev())).statusCode, 401);
+  assert.equal(UTKOLL.length, fyrirUt);
+});
