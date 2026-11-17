@@ -28,9 +28,9 @@ function nytt() {
   NOTENDUR = { 1: { id: 1, nafn: 'Prufa Stjóri', notandanafn: 'ps', rola: 'Admin', virkur: true },
     2: { id: 2, nafn: 'Prufa Starfs', notandanafn: 'pst', rola: 'Starfsmaður', virkur: true },
     3: { id: 3, nafn: 'Hætt', notandanafn: 'h', rola: 'Starfsmaður', virkur: false } };
-  HAMUR = undefined; LOG = []; UTKOLL = []; DB_NIDRI = false; HAMUR_BILAR = false;
+  HAMUR = { hamur: 'lokad' }; LOG = []; UTKOLL = []; DB_NIDRI = false; HAMUR_BILAR = false; NOTANDALEIT = 0;   // prófin ganga út frá þekktum LOKUÐUM ham
 }
-let HAMUR_BILAR = false, HANGIR = false;
+let HAMUR_BILAR = false, HANGIR = false, NOTANDALEIT = 0;
 nytt();
 const ok = (j) => ({ ok: true, status: 200, json: async () => j, text: async () => JSON.stringify(j) });
 globalThis.fetch = async (input, init = {}) => {
@@ -40,7 +40,7 @@ globalThis.fetch = async (input, init = {}) => {
     if (DB_NIDRI) return { ok: false, status: 500, json: async () => ({}), text: async () => '' };
     const p = url.slice('https://x.test/rest/v1/'.length);
     if (p.startsWith('hub_adgangar_stilling')) return ok(STILLING);
-    if (p.startsWith('hub_adgangar?id=eq.')) { const id = Number(p.match(/id=eq\.(\d+)/)[1]); return ok(NOTENDUR[id] ? [NOTENDUR[id]] : []); }
+    if (p.startsWith('hub_adgangar?id=eq.')) { NOTANDALEIT++; const id = Number(p.match(/id=eq\.(\d+)/)[1]); return ok(NOTENDUR[id] ? [NOTENDUR[id]] : []); }
     if (p.startsWith('app_kv?key=eq.hub_vord')) {
       if (HAMUR_BILAR) return { ok: false, status: 503, json: async () => ({}), text: async () => '' };
       return ok(HAMUR === undefined ? [] : [{ value: HAMUR }]);
@@ -119,7 +119,7 @@ fyrir(['innskráning ekki sett upp → 503; gagnagrunnur niðri → 502 (aldrei 
   const r = await h(ev({ headers: { cookie: kaka(1) } }));
   assert.ok([502, 503].includes(r.statusCode), String(r.statusCode));
 }]);
-fyrir(['hamur: röð vantar → lokað; skraning hleypir í gegn og skráir; opin hleypir; lokud yfirtekur skraning', async () => {
+fyrir(['hamur: lokad → 401; skraning hleypir í gegn og skráir; opin hleypir; lokud yfirtekur skraning', async () => {
   let { h, kallad } = vafid();
   assert.equal((await h(ev())).statusCode, 401);
   HAMUR = { hamur: 'skraning' }; V._endurstilla();
@@ -146,9 +146,18 @@ fyrir(['hamur: misheppnaður lestur heldur síðasta þekkta ham (Supabase-hik l
   assert.equal((await h(ev())).statusCode, 401);
   V._rennaUt(); HAMUR_BILAR = true;
   assert.equal((await h(ev())).statusCode, 401, 'hik opnar ekki');
-  // lesið og röðin VANTAR → lokað
-  HAMUR_BILAR = false; HAMUR = undefined; V._endurstilla();
-  assert.equal((await h(ev())).statusCode, 401);
+  // röðin hverfur (lesið, ekkert) eftir þekktan lokaðan ham → helst lokað + viðvörun (læsir ekki/opnar ekki allt)
+  HAMUR_BILAR = false; V._rennaUt(); HAMUR = undefined;
+  assert.equal((await h(ev())).statusCode, 401, 'röð hvarf: síðasti þekkti hamur (lokad) helst');
+  assert.ok(LOG.some(l => l.action === 'hamur_vantar'), 'viðvörun skráð');
+  // röðin hverfur eftir þekktan skráningarham → helst skraning (ekki allt læst)
+  HAMUR = { hamur: 'skraning' }; V._endurstilla();
+  assert.equal((await h(ev())).statusCode, 200);
+  V._rennaUt(); HAMUR = [1, 2];   // ekki hlutur
+  assert.equal((await h(ev())).statusCode, 200, 'röð ekki hlutur: skraning helst');
+  // kaldræsing og röðin vantar → HUB_VORD_SJALFGEFID (ósett = skraning) + viðvörun
+  HAMUR = undefined; V._endurstilla();
+  assert.equal(await V.hamurFyrir('prufufall'), 'skraning');
 }]);
 fyrir(['Supabase HANGIR: skráningarhamur hleypir beint í gegn innan þaks; lokaður hamur → 502 innan þaks; myntun tóka gefst upp', async () => {
   const { h, kallad } = vafid();
@@ -187,11 +196,39 @@ fyrir(['OPTIONS fer alltaf í gegn; opidEf hleypir kúnnaslóð í gegn', async 
   assert.equal((await h(ev({ queryStringParameters: { list: '1' } }))).statusCode, 401);
   assert.equal(kallad.length, 2);
 }]);
-fyrir(['stjornandi: starfsmaður → 403, Admin → inn, tóki → inn', async () => {
+fyrir(['stjornandi: starfsmaður → 403, Admin-kaka → inn, tóki (starfsmannsréttindi) → 403', async () => {
   const { h } = vafid({ stjornandi: true });
   assert.equal((await h(ev({ headers: { cookie: kaka(2) } }))).statusCode, 403);
   assert.equal((await h(ev({ headers: { cookie: kaka(1) } }))).statusCode, 200);
-  assert.equal((await h(ev({ headers: { 'x-hub-toki': toki() } }))).statusCode, 200);
+  assert.equal((await h(ev({ headers: { 'x-hub-toki': toki() } }))).statusCode, 403, 'tóki veitir ekki stjórnandaréttindi');
+}]);
+fyrir(['forspurn appsins með x-hub-toki fær 204 frá verðinum; annar uppruni/aðrir hausar → fallið svarar sjálft', async () => {
+  const { h, kallad } = vafid();
+  const APP = 'https://slokkvitaeki.netlify.app';
+  const r = await h(ev({ httpMethod: 'OPTIONS', headers: { origin: APP, 'access-control-request-headers': 'content-type, x-hub-toki' } }));
+  assert.equal(r.statusCode, 204);
+  assert.equal(r.headers['Access-Control-Allow-Origin'], APP);
+  assert.match(r.headers['Access-Control-Allow-Headers'], /x-hub-toki/);
+  assert.equal(kallad.length, 0);
+  assert.equal((await h(ev({ httpMethod: 'OPTIONS', headers: { origin: 'https://illt.example', 'access-control-request-headers': 'x-hub-toki' } }))).statusCode, 200);
+  assert.equal((await h(ev({ httpMethod: 'OPTIONS', headers: { origin: APP, 'access-control-request-headers': 'content-type' } }))).statusCode, 200);
+  assert.equal(kallad.length, 2);
+}]);
+fyrir(['skjal-tóki kúnnagáttarinnar: opnar AÐEINS sitt skjal og aðeins stutta stund', async () => {
+  const st = (id, exp = Math.floor(Date.now() / 1000) + 600, leynd = LEYND) => exp + '.' + crypto.createHmac('sha256', leynd).update('skjal|' + id + '|' + exp).digest('hex');
+  const { h, kallad } = vafid({ opidEf: (e) => { const q = (e && e.queryStringParameters) || {}; return !!(q.id && q.st) && V.erGildurSkjalToki(q.id, q.st); } });
+  assert.equal((await h(ev({ queryStringParameters: { id: 'drive-1', st: st('drive-1') } }))).statusCode, 200);
+  assert.equal((await h(ev({ queryStringParameters: { id: 'drive-2', st: st('drive-1') } }))).statusCode, 401, 'annað skjal');
+  assert.equal((await h(ev({ queryStringParameters: { id: 'drive-1', st: st('drive-1', Math.floor(Date.now() / 1000) - 5) } }))).statusCode, 401, 'útrunninn');
+  assert.equal((await h(ev({ queryStringParameters: { id: 'drive-1', st: st('drive-1', Math.floor(Date.now() / 1000) + 3600) } }))).statusCode, 401, 'of langur gildistími');
+  assert.equal((await h(ev({ queryStringParameters: { id: 'drive-1', st: st('drive-1', undefined, 'rangt-leyndarmal') } }))).statusCode, 401, 'rangur lykill');
+  assert.equal(kallad.length, 1);
+}]);
+fyrir(['notandaleitin er í skyndiminni (60 s): sama kaka tvisvar → ein leit', async () => {
+  const { h } = vafid();
+  await h(ev({ headers: { cookie: kaka(2) } }));
+  await h(ev({ headers: { cookie: kaka(2) } }));
+  assert.equal(NOTANDALEIT, 1);
 }]);
 fyrir(['401 til Slökkvitækis-appsins ber CORS-haus svo appið sjái villuna; aðrir uppruni ekki', async () => {
   const { h } = vafid();

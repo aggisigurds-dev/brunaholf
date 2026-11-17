@@ -75,4 +75,4 @@ exports.handler = async (event) => {
 };
 
 // ── Vörður (Powerplan lota 13, 17.11.2026): innskráning (hub_user) eða tóki (x-hub-toki / _hubtoki) — sjá _vord.js ──
-{ const _V = require('./_vord'); exports._innra = exports.handler; exports.handler = _V.vafinn(exports.handler, { fall: 'skjal' }); }
+{ const _V = require('./_vord'); exports._innra = exports.handler; exports.handler = _V.vafinn(exports.handler, { fall: 'skjal', opidEf: (e) => { const q = (e && e.queryStringParameters) || {}; return !!(q.id && q.st) && _V.erGildurSkjalToki(q.id, q.st); } }); } // st = skjal-tóki kúnnagáttarinnar (gatt-doc), gildir aðeins fyrir þetta skjal

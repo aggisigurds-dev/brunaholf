@@ -24,3 +24,9 @@ jobs:
       # 15.11.2026: gmail-send má aldrei opnast aftur — póstsending án innskráningar eða tóka = rautt.
       - name: Hlið gmail-send (póstsending krefst innskráningar)
         run: node tools/test-gmail-send-hlid.cjs
+      # Lota 13 (17.11.2026): öll prófin, líka vörðurinn (test/vord.test.js hleður öll 155 vöfðu föllin, svo pakkarnir
+      # pdf-parse, xlsx, pdf-lib, mailparser … verða að vera til). Engin package-lock.json í repóinu → npm install, ekki ci.
+      - name: Pakkar (fyrir npm test)
+        run: npm install --no-audit --no-fund --ignore-scripts
+      - name: Öll próf (npm test)
+        run: npm test

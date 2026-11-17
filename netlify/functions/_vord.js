@@ -25,9 +25,9 @@
 //   { "hamur": "skraning" | "lokad", "lokud": [föll], "opin": [föll] }
 //   skraning = hleypir í gegn en SKRÁIR í agent_logs hvað hefði verið stöðvað (agent 'vord', action 'myndi_hafna').
 //   lokad    = 401 / 403 / 503 / 502. „opin“ yfirtekur (föll sem kallendur utan vafra ná ekki enn að auðkenna sig fyrir),
-//   „lokud“ lokar einstöku falli þótt hamurinn sé skraning. Röð VANTAR → lokað (aldrei opið af slysni). Lestur
-//   BREGST → síðasti þekkti hamur helst (reynt aftur eftir 10 s); kaldræsing án lesturs → HUB_VORD_SJALFGEFID
-//   ('lokad' eftir að lokað hefur verið fyrir fullt og allt, annars 'skraning').
+//   „lokud“ lokar einstöku falli þótt hamurinn sé skraning. Röð VANTAR eða er ekki hlutur, eða lestur BREGST →
+//   síðasti þekkti hamur helst (vantar röðin: viðvörun í agent_logs, action 'hamur_vantar'); kaldræsing án gilds
+//   lesturs → HUB_VORD_SJALFGEFID ('lokad' eftir að lokað hefur verið fyrir fullt og allt, annars 'skraning').
 //
 // BILAR LOKAÐ: innskráningarstillingar ólesanlegar → 503; gagnagrunnur svarar ekki → 502.
 'use strict';
@@ -98,6 +98,19 @@ function tokiUrBeidni(event) {
   const qs = (event && event.queryStringParameters) || {};
   return String(h[TOKI_HAUS] || h[TOKI_HAUS.toUpperCase()] || qs[TOKI_QS] || '');
 }
+// Skjal-tóki (lota 13, 17.11.2026): kúnnagátt Slökkvitækis (gatt-doc.cjs) vísar kúnna á /api/skjal?id=… — kúnninn á
+// hvorki köku né almennan tóka. gatt-doc hefur þegar sannreynt eignarhald skjalsins og myntar
+//   st = <útrennsla-sek>.<HMAC-SHA256(session_secret, 'skjal|' + id + '|' + útrennsla)>   (hub-adgangar.cjs skjalToki)
+// sem gildir aðeins fyrir ÞETTA skjal og í mest 15 mín. Opnar ekkert annað fall.
+async function erGildurSkjalToki(id, st) {
+  const [expStr, sig] = String(st || '').split('.');
+  const exp = Number(expStr), nu = Math.floor(Date.now() / 1000);
+  if (!id || !Number.isInteger(exp) || exp < nu || exp > nu + 900 || !/^[0-9a-f]{64}$/.test(sig || '')) return false;
+  const s2 = await stilling();
+  const rett = Buffer.from(crypto.createHmac('sha256', String(s2.session_secret)).update('skjal|' + String(id) + '|' + exp).digest('hex'), 'hex');
+  const gefid = Buffer.from(sig, 'hex');
+  return gefid.length === rett.length && crypto.timingSafeEqual(gefid, rett);
+}
 async function erGildurToki(t) {
   const [mStr, sig] = String(t || '').split('.');
   const m = Number(mStr), nu = Math.floor(Date.now() / 60000);
@@ -118,6 +131,8 @@ function kokur(event) {
   });
   return ut;
 }
+// Notandaleit í hub_adgangar: 60 s skyndiminni per tilvik (óvirkjaður notandi missir aðgang innan mínútu)
+const _notendur = new Map();
 async function notandi(event) {
   const tok = kokur(event)[COOKIE];
   if (typeof tok !== 'string' || tok.length < 20 || tok.length > 2000) return { villa: 401 };
@@ -134,9 +149,15 @@ async function notandi(event) {
   if (String(p.v || '') !== String(st.pw_changed_at || '')) return { villa: 401 };
   const uid = p.uid;
   if (typeof uid !== 'number' || !Number.isInteger(uid) || uid < 1) return { villa: 401 };
-  const u = await sb(`hub_adgangar?id=eq.${uid}&select=id,nafn,notandanafn,rola,virkur`);
-  if (!u.ok) return { villa: 502 };
-  const n = (await u.json())[0];
+  let n;
+  const geymt = _notendur.get(uid);
+  if (geymt && Date.now() - geymt.t < 60000) n = geymt.n;
+  else {
+    const u = await sb(`hub_adgangar?id=eq.${uid}&select=id,nafn,notandanafn,rola,virkur`);
+    if (!u.ok) return { villa: 502 };
+    n = (await u.json())[0] || null;
+    _notendur.set(uid, { n, t: Date.now() });
+  }
   if (!n || !n.virkur) return { villa: 401 };
   return { via: 'kaka', nafn: (String(n.nafn || '').trim().split(/\s+/)[0] || String(n.notandanafn || '') || 'Ónefndur').slice(0, 40), stjornandi: STJORNENDUR.includes(n.rola) };
 }
@@ -145,7 +166,7 @@ async function notandi(event) {
 async function hver(event) {
   try {
     const t = tokiUrBeidni(event);
-    if (t && await erGildurToki(t)) return { via: 'toki', nafn: 'þjónn', stjornandi: true };
+    if (t && await erGildurToki(t)) return { via: 'toki', nafn: 'þjónn', stjornandi: false }; // tóki = starfsmaður; stjórnandaföll krefjast Admin-köku
     return await notandi(event);
   } catch (e) {
     return { villa: e && e.villa ? e.villa : 502 };
@@ -153,9 +174,9 @@ async function hver(event) {
 }
 
 // ── hamur ─────────────────────────────────────────────────────────────────────────────────────────────────────
-// Lestur sem BREGST (net, 5xx) heldur síðasta þekkta ham og reynir aftur eftir 10 s — stutt Supabase-hik má ekki
+// Lestur sem BREGST (net, 5xx) — eða röð sem VANTAR — heldur síðasta þekkta ham og reynir aftur eftir 10 s — stutt Supabase-hik má ekki
 // læsa öllum föllum í skráningarham (ábending stjórnlotu 17.11.2026). Kaldræsing án lesturs: HUB_VORD_SJALFGEFID
-// ('lokad' þegar lokað hefur verið fyrir fullt og allt; annars 'skraning'). Röð sem VANTAR (lesið, ekkert) = lokað.
+// ('lokad' þegar lokað hefur verið fyrir fullt og allt; annars 'skraning'). Vanti röðin: viðvörun, ekki lokun alls.
 const KALT = process.env.HUB_VORD_SJALFGEFID === 'lokad' ? 'lokad' : 'skraning';
 let _ham = null, _hamT = 0;
 async function hamurFyrir(fall) {
@@ -165,7 +186,8 @@ async function hamurFyrir(fall) {
       const r = await sb(`app_kv?key=eq.${HAMUR_KV}&select=value`);
       if (r.ok) { const j = await r.json(); v = j[0] ? j[0].value : null; lesid = true; }
     } catch (_) { lesid = false; }
-    if (lesid) { _ham = (v && typeof v === 'object') ? v : { hamur: 'lokad' }; _hamT = Date.now(); }
+    if (lesid && v && typeof v === 'object' && !Array.isArray(v)) { _ham = v; _hamT = Date.now(); }
+    else if (lesid) { _ham = _ham || { hamur: KALT }; _hamT = Date.now(); vidvorun('hamur_vantar', { gildi: v === null ? 'röð vantar' : typeof v }); }
     else { _ham = _ham || { hamur: KALT }; _hamT = Date.now() - 50000; }
   }
   const listi = (k) => (Array.isArray(_ham[k]) ? _ham[k] : []);
@@ -194,6 +216,13 @@ async function skra(fall, event, action, utkoma) {
   } catch (_) { /* skráning má aldrei fella beiðni */ }
 }
 
+let _vidvT = {};
+function vidvorun(action, output) {
+  if (_vidvT[action] && Date.now() - _vidvT[action] < 600000) return;
+  _vidvT[action] = Date.now();
+  sb('agent_logs', { method: 'POST', headers: { Prefer: 'return=minimal' },
+    body: JSON.stringify({ agent: 'vord', action, target: HAMUR_KV, status: 'villa', session_id: 'powerplan-lota13', output }) }).catch(() => {});
+}
 function svar(status, body, event) {
   const h = (event && event.headers) || {};
   const origin = String(h.origin || h.Origin || '');
@@ -209,9 +238,21 @@ function hafnad(v, event) {
 }
 
 // Hliðið sjálft → null (inn) eða svar. opidEf(event) → true = þessi beiðni er opin af ásetningi (t.d. kúnnaslóð með tóka).
+// Forspurn frá Slökkvitækis-appinu sem vill senda x-hub-toki (haus í stað slóðar, svo tókinn lendi ekki í annálum):
+// vörðurinn svarar henni sjálfur, því flest föll leyfa aðeins content-type í eigin forspurn.
+function forspurnApps(event) {
+  const h = (event && event.headers) || {};
+  const origin = String(h.origin || h.Origin || '');
+  const bed = String(h['access-control-request-headers'] || h['Access-Control-Request-Headers'] || '').toLowerCase();
+  if (event.httpMethod !== 'OPTIONS' || origin !== APP_ORIGIN || !bed.split(',').map((x) => x.trim()).includes(TOKI_HAUS)) return null;
+  return { statusCode: 204, headers: { 'Access-Control-Allow-Origin': APP_ORIGIN, Vary: 'Origin',
+    'Access-Control-Allow-Methods': 'GET, POST, PATCH, PUT, DELETE, OPTIONS',
+    'Access-Control-Allow-Headers': bed.slice(0, 300), 'Access-Control-Max-Age': '600' }, body: '' };
+}
 async function hlid(event, { fall, stjornandi = false, opidEf = null } = {}) {
-  if (!event || event.httpMethod === 'OPTIONS') return null;
-  if (typeof opidEf === 'function') { try { if (opidEf(event)) return null; } catch (_) {} }
+  if (!event) return null;
+  if (event.httpMethod === 'OPTIONS') return forspurnApps(event);
+  if (typeof opidEf === 'function') { try { if (await opidEf(event)) return null; } catch (_) {} }
   const hamur = await hamurFyrir(fall);
   // Opinn/skráningarhamur: athugunin má aldrei tefja fallið meira en eitt þak, og skráningin bíður ekki (skra grípur
   // sjálf allar villur). Lokaður hamur: hvert kall hefur sitt þak; tímafall → 502.
@@ -288,6 +329,6 @@ if (typeof fetchUpphaflegt === 'function' && !globalThis.__vordFetch) {
   };
 }
 
-module.exports = { vafinn, hlid, hver, myntaToki, erGildurToki, hamurFyrir, eiginFall, TOKI_HAUS, TOKI_QS, HAMUR_KV,
-  _endurstilla() { _st = null; _stT = 0; _ham = null; _hamT = 0; _skrad.clear(); },
+module.exports = { vafinn, hlid, hver, myntaToki, erGildurToki, erGildurSkjalToki, hamurFyrir, eiginFall, TOKI_HAUS, TOKI_QS, HAMUR_KV,
+  _endurstilla() { _st = null; _stT = 0; _ham = null; _hamT = 0; _skrad.clear(); _notendur.clear(); _vidvT = {}; },
   _rennaUt() { _hamT = 0; }, _gleymaStillingu() { _st = null; _stT = 0; }, FRESTUR_MS };
