@@ -58,7 +58,7 @@ window.BH_VV_GOGN = {
   },
   "t": {
    "bordi.merki": {
-    "x": "Brunahólf slökkvitæki ehf."
+    "x": "Brunahólf Slökkvitæki ehf."
    }
   },
   "thema": {
