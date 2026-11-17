@@ -184,3 +184,6 @@ function isoTimestamp(v) {
   const d = new Date(s);
   return isNaN(d.getTime()) ? null : d.toISOString();
 }
+
+// ── Vörður (Powerplan lota 13, 17.11.2026): innskráning (hub_user) eða tóki (x-hub-toki / _hubtoki) — sjá _vord.js ──
+{ const _V = require('./_vord'); exports._innra = exports.handler; exports.handler = _V.vafinn(exports.handler, { fall: 'email-ingest-browser' }); }

@@ -117,3 +117,6 @@ async function ensureFolder(token, name) {
   if (!mk.ok) throw new Error(`${mk.status}: ${(await mk.text()).slice(0, 200)}`);
   return (await mk.json()).id;
 }
+
+// ── Vörður (Powerplan lota 13, 17.11.2026): innskráning (hub_user) eða tóki (x-hub-toki / _hubtoki) — sjá _vord.js ──
+{ const _V = require('./_vord'); exports._innra = exports.handler; exports.handler = _V.vafinn(exports.handler, { fall: 'efnislisti-pdf' }); }

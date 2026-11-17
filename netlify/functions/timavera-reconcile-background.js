@@ -22,7 +22,7 @@ const base = require('./timavera-pull.js');
 
 exports.handler = async (event) => {
   const days = ((event && event.queryStringParameters) || {}).days || '60';
-  return base.handler({
+  return (base._innra || base.handler)({
     ...(event || {}),
     httpMethod: 'GET',
     body: null,

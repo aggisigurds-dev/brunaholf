@@ -16,7 +16,7 @@ function stub() {
   };
   return kall;
 }
-const post = (b) => F.handler({ httpMethod: 'POST', body: JSON.stringify(b), headers: {}, queryStringParameters: {} });
+const post = (b) => (F._innra || F.handler)({ httpMethod: 'POST', body: JSON.stringify(b), headers: {}, queryStringParameters: {} });
 const gott = { action: 'add', kind: 'kostnadur', worksite_name: 'Heklu reitur', work_month: '2026-11', item_label: 'Skrúfur og festingar', category: 'BYKO', unit_price: 8065, note: 'kvittun m. vsk 10.000 kr', author: 'Lena' };
 
 test('kostnadur: gilt skráning fer í field_entries með qty 1 og unit „kaup“', async () => {
@@ -70,7 +70,7 @@ test('bootstrap: verk í vinnslu = Tímavera mánaðarins + vika + ósend drög 
     const data = { timavera_entries: tv, invoice_drafts: [{ worksite_name: 'Drög í Kröfu yfirliti' }], field_entries: u.searchParams.get('kind') === 'eq.verk' ? [{ worksite_name: 'Nýtt verk', note: 'úr appi' }] : [] }[t] || [];
     return { ok: true, status: 200, json: async () => data, text: async () => '' };
   };
-  const r = await F.handler({ httpMethod: 'GET', headers: {}, queryStringParameters: { op: 'bootstrap', month: idag.slice(0, 7) } });
+  const r = await (F._innra || F.handler)({ httpMethod: 'GET', headers: {}, queryStringParameters: { op: 'bootstrap', month: idag.slice(0, 7) } });
   const ws = Object.fromEntries(JSON.parse(r.body).worksites.map((w) => [w.name, w.tags]));
   assert.ok('Mánaðarverk' in ws, 'Tímavera mánaðarins');
   assert.deepEqual(ws['Vikuverk'], ['vika']);
@@ -88,7 +88,7 @@ test('bootstrap: nafnavalið sleppir þeim sem Agnar tók út og hefur Agnar all
     const data = t === 'timavera_entries' ? ['Hamza', 'Lena', 'Rui Armando', 'Marcin Surowik', 'ALFRED', 'Lena'].map((employee) => ({ employee, project: 'X', hours: 1, date: new Date().toISOString().slice(0, 10) })) : [];
     return { ok: true, status: 200, json: async () => data, text: async () => '' };
   };
-  const r = await F.handler({ httpMethod: 'GET', headers: {}, queryStringParameters: { op: 'bootstrap' } });
+  const r = await (F._innra || F.handler)({ httpMethod: 'GET', headers: {}, queryStringParameters: { op: 'bootstrap' } });
   assert.deepEqual(JSON.parse(r.body).names, ['Agnar', 'Lena']);
 });
 

@@ -186,7 +186,7 @@ async function stofnaDrog({ dry, man, PG, alltDrog, resolvePayer, minni, ut }) {
     if (astaeda) { ut.stofnun.push({ ...lina, sleppt: astaeda }); continue; }
 
     try {
-      const svar = await timabok.handler({ httpMethod: 'GET', queryStringParameters: { worksite: ws, month: man } });
+      const svar = await (timabok._innra || timabok.handler)({ httpMethod: 'GET', queryStringParameters: { worksite: ws, month: man } });
       const tb = JSON.parse(svar.body || '{}');
       if (svar.statusCode !== 200) throw new Error('timabok: ' + (tb.error || svar.statusCode));
       const tvNu = r2(Number((tb.totals || {}).hours) || 0);
@@ -297,7 +297,7 @@ async function keyra(opts) {
       else if (tenging.has(K.draftKey(d))) astaeda = 'tengt Payday-reikningi';
       if (astaeda) { ut.sleppt++; ut.linur.push({ ...lina, sleppt: astaeda }); continue; }
 
-      const svar = await timabok.handler({ httpMethod: 'GET', queryStringParameters: { worksite: d.worksite_name, month: d.work_month } });
+      const svar = await (timabok._innra || timabok.handler)({ httpMethod: 'GET', queryStringParameters: { worksite: d.worksite_name, month: d.work_month } });
       const tb = JSON.parse(svar.body || '{}');
       if (svar.statusCode !== 200) throw new Error('timabok: ' + (tb.error || svar.statusCode));
       const tvNu = r2(Number((tb.totals || {}).hours) || 0);
@@ -396,7 +396,7 @@ async function stofnaHandvirkt({ worksite, months, by }) {
     const fyrir = wsDrog.find((d) => d.work_month === m);
     if (fyrir) { ut.til.push({ m, id: fyrir.id, status: fyrir.status }); continue; }
     try {
-      const svar = await timabok.handler({ httpMethod: 'GET', queryStringParameters: { worksite: ws, month: m } });
+      const svar = await (timabok._innra || timabok.handler)({ httpMethod: 'GET', queryStringParameters: { worksite: ws, month: m } });
       const tb = JSON.parse(svar.body || '{}');
       if (svar.statusCode !== 200) throw new Error('timabok: ' + (tb.error || svar.statusCode));
       const tvNu = r2(Number((tb.totals || {}).hours) || 0);
@@ -460,3 +460,6 @@ exports.handler = async (event) => {
 function cors() { return { 'access-control-allow-origin': '*', 'access-control-allow-methods': 'GET, POST, OPTIONS', 'access-control-allow-headers': 'content-type' }; }
 function json(statusCode, payload) { return resp(statusCode, JSON.stringify(payload), { 'content-type': 'application/json', ...cors() }); }
 function resp(statusCode, body, headers) { return { statusCode, headers, body }; }
+
+// ── Vörður (Powerplan lota 13, 17.11.2026): innskráning (hub_user) eða tóki (x-hub-toki / _hubtoki) — sjá _vord.js ──
+{ const _V = require('./_vord'); exports._innra = exports.handler; exports.handler = _V.vafinn(exports.handler, { fall: 'drog-timar' }); }

@@ -404,3 +404,6 @@ async function addSite(body) {
   if (!res.ok) throw new Error('add-site: ' + res.error);
   return { ok: true, site: res.row, existed: res.hvernig === 'reuse', astaeda: res.astaeda || null };
 }
+
+// ── Vörður (Powerplan lota 13, 17.11.2026): innskráning (hub_user) eða tóki (x-hub-toki / _hubtoki) — sjá _vord.js ──
+{ const _V = require('./_vord'); exports._innra = exports.handler; exports.handler = _V.vafinn(exports.handler, { fall: 'match-station' }); }

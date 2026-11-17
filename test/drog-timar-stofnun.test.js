@@ -318,7 +318,7 @@ test('bakgrunnsfallið skráir stofnuð drög OG villur í automation_runs', asy
   const B = require('../netlify/functions/drog-timar-background.js');
   const h = heimur();
   const kall = stub(h, { insertBilar: new Set(['Grensásvegur 1']) });
-  const r = await B.handler({});
+  const r = await (B._innra || B.handler)({});
   assert.equal(r.statusCode, 200);
   const run = kall.find((k) => k.method === 'POST' && k.url.includes('/automation_runs'));
   assert.ok(run, 'automation_runs skráð');
@@ -377,7 +377,7 @@ test('GET á handlerinn er ALLTAF áætlun — líka án ?dry=1 (GET framkvæmir
   for (const q of [{ dry: '1' }, {}, { dry: '0' }]) {
     const h = heimur();
     const kall = stub(h);
-    const r = await D.handler({ httpMethod: 'GET', queryStringParameters: q, headers: {} });
+    const r = await (D._innra || D.handler)({ httpMethod: 'GET', queryStringParameters: q, headers: {} });
     assert.equal(r.statusCode, 200, JSON.stringify(q));
     assert.equal(JSON.parse(r.body).dry, true, JSON.stringify(q));
     assert.deepEqual(kall.filter((k) => k.method !== 'GET'), [], JSON.stringify(q));
@@ -387,7 +387,7 @@ test('GET á handlerinn er ALLTAF áætlun — líka án ?dry=1 (GET framkvæmir
 test('POST á handlerinn keyrir (dry=1 virt)', async () => {
   const h = heimur();
   const kall = stub(h);
-  const r = await D.handler({ httpMethod: 'POST', queryStringParameters: { dry: '1' }, headers: {} });
+  const r = await (D._innra || D.handler)({ httpMethod: 'POST', queryStringParameters: { dry: '1' }, headers: {} });
   assert.equal(JSON.parse(r.body).dry, true);
   assert.deepEqual(kall.filter((k) => k.method !== 'GET'), []);
 });
@@ -402,7 +402,7 @@ test('starfsmanna-hlið: með HUB_STAFF_PASSWORD fá GET og POST 401 án innskr�
     const D2 = require(slod);
     const kall = stub(heimur());
     for (const httpMethod of ['GET', 'POST']) {
-      const r = await D2.handler({ httpMethod, queryStringParameters: {}, headers: {} });
+      const r = await (D2._innra || D2.handler)({ httpMethod, queryStringParameters: {}, headers: {} });
       assert.equal(r.statusCode, 401, httpMethod);
     }
     assert.equal(kall.length, 0, 'ekkert kall á grunninn');
@@ -419,7 +419,7 @@ test('timabok: verkheiti með & og " finnur færslurnar sínar (in-listinn er k�
   const ws = 'Gjáhella 5 bil 107 & 110 "B"';
   h.entries.push(faersla('2026-11-09', 'Jón', ws, 7), faersla('2026-11-10', 'Jón', ws, 2));
   const kall = stub(h);
-  const r = await T.handler({ httpMethod: 'GET', queryStringParameters: { worksite: ws, month: '2026-11' } });
+  const r = await (T._innra || T.handler)({ httpMethod: 'GET', queryStringParameters: { worksite: ws, month: '2026-11' } });
   assert.equal(r.statusCode, 200, r.body);
   assert.equal(JSON.parse(r.body).totals.hours, 9);
   const tb = kall.find((k) => new URL(k.url).searchParams.has('project'));

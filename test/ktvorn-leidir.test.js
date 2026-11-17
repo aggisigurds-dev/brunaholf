@@ -65,7 +65,7 @@ const reikningar = require('../netlify/functions/reikningar-read.js');
 // ── match-station add-site ──────────────────────────────────────────────────
 test('match-station add-site: sama nafn á kt → röðin sem er til, sett í þjónustu, ENGIN ný röð (Krókur-mynstrið)', async () => {
   const db = gervi(KROKUR());
-  const r = await matchStation.handler(post({ action: 'add-site', base_id: 1238, nafn: 'Krókur 77 ehf.', heimilisfang: 'Suðurlandsbraut 4, 108 Reykjavík' }));
+  const r = await (matchStation._innra || matchStation.handler)(post({ action: 'add-site', base_id: 1238, nafn: 'Krókur 77 ehf.', heimilisfang: 'Suðurlandsbraut 4, 108 Reykjavík' }));
   assert.equal(r.statusCode, 200);
   assert.deepEqual([body(r).existed, body(r).astaeda, body(r).site.id], [true, 'nafn', 1895]);
   assert.equal(fyPosts(db).length, 0);
@@ -73,7 +73,7 @@ test('match-station add-site: sama nafn á kt → röðin sem er til, sett í þ
 });
 test('match-station add-site: nýtt nafn + annað heimilisfang → nýr staður með nr 2 (∅ ⇒ 2), í þjónustu, sama base', async () => {
   const db = gervi(KROKUR());
-  const r = await matchStation.handler(post({ action: 'add-site', base_id: 1238, nafn: 'Krókur 77 ehf. - Suðurhella 5', heimilisfang: 'Suðurhella 5, 221 Hafnarfjörður' }));
+  const r = await (matchStation._innra || matchStation.handler)(post({ action: 'add-site', base_id: 1238, nafn: 'Krókur 77 ehf. - Suðurhella 5', heimilisfang: 'Suðurhella 5, 221 Hafnarfjörður' }));
   assert.equal(r.statusCode, 200);
   assert.equal(body(r).existed, false);
   const s = body(r).site;
@@ -82,28 +82,28 @@ test('match-station add-site: nýtt nafn + annað heimilisfang → nýr staður 
 });
 test('match-station add-site: sama heimilisfang (þágufall) annað nafn → röðin sem er til', async () => {
   const db = gervi({ fyrirtaeki: [{ id: 1, nafn: 'Pitstop þjónustan ehf.', kennitala: '660219-0480', heimilisfang: 'Hjallahrauni 4, 220 Hafnarfirði', customer_base_id: 9 }], customers_base: [{ id: 9, kennitala: '660219-0480' }] });
-  const r = await matchStation.handler(post({ action: 'add-site', base_id: 9, nafn: 'Pitstop Hjallahraun', heimilisfang: 'Hjallahraun 4, 220 Hafnarfjörður' }));
+  const r = await (matchStation._innra || matchStation.handler)(post({ action: 'add-site', base_id: 9, nafn: 'Pitstop Hjallahraun', heimilisfang: 'Hjallahraun 4, 220 Hafnarfjörður' }));
   assert.deepEqual([body(r).existed, body(r).astaeda], [true, 'heimilisfang']);
   assert.equal(fyPosts(db).length, 0);
 });
 test('match-station add-site: LEITARVILLA → 500 og EKKERT stofnað', async () => {
   const db = gervi(KROKUR()); db.failGet.fyrirtaeki = 1;
-  const r = await matchStation.handler(post({ action: 'add-site', base_id: 1238, nafn: 'Krókur 77 ehf.', heimilisfang: 'Suðurlandsbraut 4, 108 Reykjavík' }));
+  const r = await (matchStation._innra || matchStation.handler)(post({ action: 'add-site', base_id: 1238, nafn: 'Krókur 77 ehf.', heimilisfang: 'Suðurlandsbraut 4, 108 Reykjavík' }));
   assert.equal(r.statusCode, 500);
   assert.match(body(r).error, /ekkert stofnað/);
   assert.equal(fyPosts(db).length, 0);
 });
 test('match-station add-site: base án gildrar kt (VANTAR-…) → leitað á base, ekkert stadur_nr á kt-lausa röð', async () => {
   const db = gervi({ fyrirtaeki: [{ id: 5, nafn: 'Hótel Atlantic', kennitala: 'VANTAR-1301', heimilisfang: 'Gata 1, 220', customer_base_id: 1078 }], customers_base: [{ id: 1078, kennitala: 'VANTAR-1301' }] });
-  const r1 = await matchStation.handler(post({ action: 'add-site', base_id: 1078, nafn: 'Hótel Atlantic', heimilisfang: '' }));
+  const r1 = await (matchStation._innra || matchStation.handler)(post({ action: 'add-site', base_id: 1078, nafn: 'Hótel Atlantic', heimilisfang: '' }));
   assert.equal(body(r1).existed, true);                                  // sama nafn á base
-  const r2 = await matchStation.handler(post({ action: 'add-site', base_id: 1078, nafn: 'Hótel Atlantic annex', heimilisfang: 'Önnur 2, 220 Hafnarfjörður' }));
+  const r2 = await (matchStation._innra || matchStation.handler)(post({ action: 'add-site', base_id: 1078, nafn: 'Hótel Atlantic annex', heimilisfang: 'Önnur 2, 220 Hafnarfjörður' }));
   assert.equal(body(r2).existed, false);
   assert.equal(body(r2).site.stadur_nr, null);
 });
 
 // ── verkkaupar stofna_stad ───────────────────────────────────────────────────
-const stofna = (o) => verkkaupar.handler(post(Object.assign({ action: 'stofna_stad', customer_name: 'Krókur 77 ehf.' }, o)));
+const stofna = (o) => (verkkaupar._innra || verkkaupar.handler)(post(Object.assign({ action: 'stofna_stad', customer_name: 'Krókur 77 ehf.' }, o)));
 test('verkkaupar stofna_stad: sama nafn, kt án bandstriks, örlítið annað heimilisfang → röðin sem er til (áður: tvífari)', async () => {
   const db = gervi(KROKUR());
   const r = await stofna({ nafn: 'Krókur 77 ehf.', heimilisfang: 'Suðurlandsbraut 4, 108 Reykjavík', kennitala: '4905171620' });
@@ -132,7 +132,7 @@ test('verkkaupar stofna_stad: heimilisfang án póstnúmers → 400 (óbreytt)',
 });
 
 // ── doc-index create / reikningar-read create ───────────────────────────────────
-const create = (h, o) => h.handler(post(Object.assign({ action: 'create', kt: '490517-1620', customer_name: 'Krókur 77 ehf.', address: 'Suðurlandsbraut 4, 108 Reykjavík' }, o)));
+const create = (h, o) => (h._innra || h.handler)(post(Object.assign({ action: 'create', kt: '490517-1620', customer_name: 'Krókur 77 ehf.', address: 'Suðurlandsbraut 4, 108 Reykjavík' }, o)));
 for (const [nafn, h] of [['doc-index', docIndex], ['reikningar-read', reikningar]]) {
   test(nafn + ' create: kt á þegar base og röð → engin ný fyrirtaeki-röð', async () => {
     const db = gervi(KROKUR());

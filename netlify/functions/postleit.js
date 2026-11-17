@@ -78,3 +78,6 @@ exports.handler = async (event) => {
 function cors() { return { 'access-control-allow-origin': '*', 'access-control-allow-methods': 'GET, OPTIONS', 'access-control-allow-headers': 'content-type' }; }
 function json(s, b) { return resp(s, JSON.stringify(b), { 'content-type': 'application/json', 'cache-control': 'no-store', ...cors() }); }
 function resp(statusCode, body, headers) { return { statusCode, headers, body }; }
+
+// ── Vörður (Powerplan lota 13, 17.11.2026): innskráning (hub_user) eða tóki (x-hub-toki / _hubtoki) — sjá _vord.js ──
+{ const _V = require('./_vord'); exports._innra = exports.handler; exports.handler = _V.vafinn(exports.handler, { fall: 'postleit' }); }

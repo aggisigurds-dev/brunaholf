@@ -59,7 +59,7 @@ global.fetch = async (url, opts = {}) => {
   };
 };
 
-const { handler } = require('../netlify/functions/charlize-stada.js');
+const { _innra: handler } = require('../netlify/functions/charlize-stada.js');
 const get = async (q) => {
   const r = await handler({ httpMethod: 'GET', queryStringParameters: q || {}, headers: {} });
   assert.equal(r.statusCode, 200, r.body);

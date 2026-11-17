@@ -146,3 +146,6 @@ async function rateLimit() {
   await P.sbPost('app_kv?on_conflict=key', { key, value: { n: n + 1 }, updated_at: new Date().toISOString() }, { Prefer: 'resolution=merge-duplicates,return=minimal' }).catch(() => {});
   return null;
 }
+
+// ── Vörður (Powerplan lota 13, 17.11.2026): innskráning (hub_user) eða tóki (x-hub-toki / _hubtoki) — sjá _vord.js ──
+{ const _V = require('./_vord'); exports._innra = exports.handler; exports.handler = _V.vafinn(exports.handler, { fall: 'punktur-greining' }); }

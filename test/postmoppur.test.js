@@ -50,7 +50,7 @@ test.before(() => { fall = require('../netlify/functions/postmoppur.js'); });
 async function kalla(s, ev) {
   const fyrri = global.fetch;
   global.fetch = s.fetch;
-  try { const r = await fall.handler(ev); return { status: r.statusCode, body: JSON.parse(r.body || 'null') }; }
+  try { const r = await (fall._innra || fall.handler)(ev); return { status: r.statusCode, body: JSON.parse(r.body || 'null') }; }
   finally { global.fetch = fyrri; }
 }
 

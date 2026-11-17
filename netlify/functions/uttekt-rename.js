@@ -431,3 +431,6 @@ async function matchSite(baseId, address) {
   const m = rows.filter(s => siteAddrKey(s.heimilisfang) === ak);
   return m.length === 1 ? m[0].id : null;
 }
+
+// ── Vörður (Powerplan lota 13, 17.11.2026): innskráning (hub_user) eða tóki (x-hub-toki / _hubtoki) — sjá _vord.js ──
+{ const _V = require('./_vord'); exports._innra = exports.handler; exports.handler = _V.vafinn(exports.handler, { fall: 'uttekt-rename' }); }

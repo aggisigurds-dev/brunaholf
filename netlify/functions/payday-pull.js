@@ -404,3 +404,6 @@ function isoDate(v) {
 exports.getAccessToken = getAccessToken;
 exports.API_BASE = API_BASE;
 exports.API_VERSION = API_VERSION;
+
+// ── Vörður (Powerplan lota 13, 17.11.2026): innskráning (hub_user) eða tóki (x-hub-toki / _hubtoki) — sjá _vord.js ──
+{ const _V = require('./_vord'); exports._innra = exports.handler; exports.handler = _V.vafinn(exports.handler, { fall: 'payday-pull' }); }

@@ -21,3 +21,6 @@ exports.handler = async (event) => {
 
 function cors() { return { 'access-control-allow-origin': '*', 'access-control-allow-methods': 'GET, OPTIONS', 'access-control-allow-headers': 'content-type' }; }
 function json(statusCode, payload) { return { statusCode, headers: { 'content-type': 'application/json', 'cache-control': 'no-store', ...cors() }, body: JSON.stringify(payload) }; }
+
+// ── Vörður (Powerplan lota 13, 17.11.2026): innskráning (hub_user) eða tóki (x-hub-toki / _hubtoki) — sjá _vord.js ──
+{ const _V = require('./_vord'); exports._innra = exports.handler; exports.handler = _V.vafinn(exports.handler, { fall: 'leidsogn' }); }

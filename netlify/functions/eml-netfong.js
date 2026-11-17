@@ -185,3 +185,6 @@ async function backupAndFill(co, to, matchedBy, file) {
   });
   if (!r.ok) throw new Error('update ' + r.status + ' ' + (await r.text()).slice(0, 120));
 }
+
+// ── Vörður (Powerplan lota 13, 17.11.2026): innskráning (hub_user) eða tóki (x-hub-toki / _hubtoki) — sjá _vord.js ──
+{ const _V = require('./_vord'); exports._innra = exports.handler; exports.handler = _V.vafinn(exports.handler, { fall: 'eml-netfong' }); }

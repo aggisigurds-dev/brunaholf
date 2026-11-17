@@ -378,3 +378,6 @@ exports.handler = async (event) => {
     return json(500, { error: String(e && e.message || e).slice(0, 300) });
   }
 };
+
+// ── Vörður (Powerplan lota 13, 17.11.2026): innskráning (hub_user) eða tóki (x-hub-toki / _hubtoki) — sjá _vord.js ──
+{ const _V = require('./_vord'); exports._innra = exports.handler; exports.handler = _V.vafinn(exports.handler, { fall: 'para-rekstrarfelag' }); }

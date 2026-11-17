@@ -58,3 +58,6 @@ exports.handler = async (event) => {
   await stada(jobId, log);
   return { statusCode: 200, body: JSON.stringify({ ok: true, jobId, log }) };
 };
+
+// ── Vörður (Powerplan lota 13, 17.11.2026): innskráning (hub_user) eða tóki (x-hub-toki / _hubtoki) — sjá _vord.js ──
+{ const _V = require('./_vord'); exports._innra = exports.handler; exports.handler = _V.vafinn(exports.handler, { fall: 'gmail-vidhengi-background' }); }

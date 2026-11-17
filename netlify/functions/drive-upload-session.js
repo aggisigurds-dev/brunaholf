@@ -93,3 +93,6 @@ exports.handler = async (event) => {
     note: 'PUT raw bytes to uploadUrl with Content-Length=size. On 200, response body is the new Drive file metadata (id, mimeType, size).',
   });
 };
+
+// ── Vörður (Powerplan lota 13, 17.11.2026): innskráning (hub_user) eða tóki (x-hub-toki / _hubtoki) — sjá _vord.js ──
+{ const _V = require('./_vord'); exports._innra = exports.handler; exports.handler = _V.vafinn(exports.handler, { fall: 'drive-upload-session' }); }

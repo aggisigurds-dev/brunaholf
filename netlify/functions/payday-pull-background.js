@@ -38,7 +38,7 @@ exports.handler = async (event) => {
   // (`:50 if (event.httpMethod !== 'GET') return json(405)`). Umgjörðin umbreytir,
   // nákvæmlega eins og timavera-pull-background gerir.
   const p = (event && event.queryStringParameters) || {};
-  return base.handler({
+  return (base._innra || base.handler)({
     ...(event || {}),
     httpMethod: 'GET',
     body: null,

@@ -362,3 +362,6 @@ async function insertDoc(row) {
   });
   if (!r.ok) throw new Error('insert ' + r.status + ' ' + (await r.text()).slice(0, 200));
 }
+
+// ── Vörður (Powerplan lota 13, 17.11.2026): innskráning (hub_user) eða tóki (x-hub-toki / _hubtoki) — sjá _vord.js ──
+{ const _V = require('./_vord'); exports._innra = exports.handler; exports.handler = _V.vafinn(exports.handler, { fall: 'doc-index' }); }

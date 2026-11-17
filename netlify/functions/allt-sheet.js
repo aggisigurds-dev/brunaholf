@@ -113,3 +113,6 @@ function parseName(name, id){
   for (const p of tail.concat(parts)) { const k = p.toLowerCase().replace(/\.$/,''); if (MONTHS[k]) { mon=p; monnum=MONTHS[k]; break; } }
   return [company, address, kt, year, monnum, mon, nm, 'https://brunaholf.netlify.app/api/skjal?id='+id];
 }
+
+// ── Vörður (Powerplan lota 13, 17.11.2026): innskráning (hub_user) eða tóki (x-hub-toki / _hubtoki) — sjá _vord.js ──
+{ const _V = require('./_vord'); exports._innra = exports.handler; exports.handler = _V.vafinn(exports.handler, { fall: 'allt-sheet' }); }

@@ -18,7 +18,7 @@ exports.handler = async () => {
   const sam = { umferdir: 0, lesnir: 0, linur: 0, villur: 0, eftir: null, oskyrd_heiti: 0 };
   let villa = null;
   for (let i = 0; i < 20; i++) {
-    const svar = await lesari.handler({ httpMethod: 'GET', queryStringParameters: { nyir: '1', limit: '12' } });
+    const svar = await (lesari._innra || lesari.handler)({ httpMethod: 'GET', queryStringParameters: { nyir: '1', limit: '12' } });
     let j = {};
     try { j = JSON.parse(svar.body || '{}'); } catch (_) {}
     if (svar.statusCode !== 200) { villa = j.error || ('HTTP ' + svar.statusCode); break; }

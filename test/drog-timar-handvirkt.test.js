@@ -140,8 +140,8 @@ test('gata-verk, fast verð, engir tímar og vöntun á viðföngum: ekkert stof
 
 test('/api/invoice-drafts action stofna_ur_timaveru skilar sömu niðurstöðu og 4xx sem villu', async () => {
   const h = heimur(); stub(h);
-  const ok = await ID.handler({ httpMethod: 'POST', body: JSON.stringify({ action: 'stofna_ur_timaveru', worksite_name: TS, months: ['2026-10'], updated_by: 'kröfuyfirlit' }) });
+  const ok = await (ID._innra || ID.handler)({ httpMethod: 'POST', body: JSON.stringify({ action: 'stofna_ur_timaveru', worksite_name: TS, months: ['2026-10'], updated_by: 'kröfuyfirlit' }) });
   assert.equal(ok.statusCode, 200); assert.equal(JSON.parse(ok.body).stofnud.length, 1);
-  const nei = await ID.handler({ httpMethod: 'POST', body: JSON.stringify({ action: 'stofna_ur_timaveru', worksite_name: 'Heklu reitur', months: ['2026-11'] }) });
+  const nei = await (ID._innra || ID.handler)({ httpMethod: 'POST', body: JSON.stringify({ action: 'stofna_ur_timaveru', worksite_name: 'Heklu reitur', months: ['2026-11'] }) });
   assert.equal(nei.statusCode, 409); assert.match(JSON.parse(nei.body).error, /götum/);
 });

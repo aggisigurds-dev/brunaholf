@@ -48,7 +48,7 @@ global.fetch = async (url) => ({
 });
 
 const fn = require('../netlify/functions/nlsh-starfsmadur.js');
-const kalla = async (q) => JSON.parse((await fn.handler({ httpMethod: 'GET', queryStringParameters: q })).body);
+const kalla = async (q) => JSON.parse((await (fn._innra || fn.handler)({ httpMethod: 'GET', queryStringParameters: q })).body);
 
 test('einn starfsmaður: klárað og ólokið teljast í sundur', async () => {
   const d = await kalla({ nr: '20', dagar: '7' });

@@ -4,7 +4,7 @@ const assert = require('node:assert');
 // _google.js les env við innhleðslu en kastar ekki — nóg að hlaða fallið.
 process.env.SUPABASE_URL = process.env.SUPABASE_URL || 'http://localhost';
 process.env.SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || 'x';
-const { _test, handler } = require('../netlify/functions/drive-til-supabase.js');
+const { _test, _innra: handler } = require('../netlify/functions/drive-til-supabase.js'); // _innra: virkni fallsins (vörðurinn prófaður í vord.test.js)
 
 test('heiti hlutarins er dregið af id-um, aldrei Drive-heitinu (sem getur verið rangt)', () => {
   const p = _test.objectPath('uttektarskyrsla', 10359, '1-QDf5VUmmIl66amSbI2mgZu-J7nBG9KG', 'application/pdf', 'Rangt nafn á staðnum ð þ æ.pdf');

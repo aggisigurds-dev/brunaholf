@@ -224,3 +224,6 @@ async function extractText(url) {
   const d = await pdf(bytes).catch(e => { throw new Error('pdf-parse: ' + (e.message || e)); });
   return json(200, { ok: true, text: d.text || '', pages: d.numpages || null });
 }
+
+// ── Vörður (Powerplan lota 13, 17.11.2026): innskráning (hub_user) eða tóki (x-hub-toki / _hubtoki) — sjá _vord.js ──
+{ const _V = require('./_vord'); exports._innra = exports.handler; exports.handler = _V.vafinn(exports.handler, { fall: 'pdf-tools' }); }

@@ -93,7 +93,7 @@ async function fetchFromTimavera() {
   throw new Error('TIMAVERA_API_TOKEN not configured — falling back to Sheet');
 }
 
-export const handler = async (event) => {
+const _handler = async (event) => {
   let payload, sourceUsed;
   try {
     if (process.env.TIMAVERA_API_TOKEN) {
@@ -135,3 +135,7 @@ export const handler = async (event) => {
     };
   }
 };
+
+// ── Vörður (Powerplan lota 13, 17.11.2026): innskráning (hub_user) eða tóki (x-hub-toki / _hubtoki) — sjá _vord.js ──
+import _V from './_vord.js';
+export const handler = _V.vafinn(_handler, { fall: 'timavera-maeting' });
