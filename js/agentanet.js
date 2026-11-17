@@ -85,6 +85,11 @@
   function eigandaSidur(e) { return (e && e.sidur || []).filter(function (s) { return s.hlutverk === 'eigandi'; }); }
   function persona(e) { if (!e) return ''; return (e.rodd || '').replace(/\s*\(.*$/, '').trim(); }
   function erNyr(n) { return NYIR.indexOf(n) !== -1; }
+  /* 17.11.2026: Agentanetið teiknar fjögur SKILLS með agentunum (villuleit og variant-analysis í varðastikunni, arnold og
+   * 3dJoker meðal sérfræðinga) — um harðkóðaða lista, ekki af því þau séu agentar. Þau haldast á netinu en merkjast sýnilega
+   * sem skill, svo enginn haldi að hægt sé að ræsa þau sem undirlotu (Agent-tól) eða að þau beri eigin agentaskrá. */
+  function erSkill(n) { var e = entry(n); return !!(e && e.type === 'skill'); }
+  var SKILL_MERKI = '<i class="tg-skill" title="Skill — ekki agent: kallað með Skill-tólinu, á enga agentaskrá">skill</i>';
 
   /* ---------- gögn ---------- */
   var D = { sidukort: null, lotur: null, stada: null };
@@ -392,7 +397,7 @@
       var p = P[e.name], lv = live[e.name], sidur = eigandaSidur(e).length;
       var v = STJORI_VEFUR[e.name], th = v && ((D.sidukort && D.sidukort.vefir) || R.thekja || []).filter(function (t) { return t.vefur === v; })[0];
       var sub = (persona(e) ? esc(persona(e)) + ' · ' : '') + (th ? th.alls + ' síður' + (th.an_eiganda ? ' · <span class="red">' + th.an_eiganda + ' án eiganda</span>' : '') : sidur + ' síður');
-      return '<div class="nd ' + cls + (erNyr(e.name) ? ' nd-new' : '') + (valinn === e.name ? ' nd-sel' : '') + '" data-ag="' + esc(e.name) + '" style="left:' + p.x.toFixed(0) + 'px;top:' + p.y.toFixed(0) + 'px">' + stPunktur(live, e.name) + '<b>' + esc(e.name) + '</b>' + sub +
+      return '<div class="nd ' + cls + (erNyr(e.name) ? ' nd-new' : '') + (erSkill(e.name) ? ' nd-skill' : '') + (valinn === e.name ? ' nd-sel' : '') + '" data-ag="' + esc(e.name) + '" data-tegund="' + (erSkill(e.name) ? 'skill' : 'agent') + '" style="left:' + p.x.toFixed(0) + 'px;top:' + p.y.toFixed(0) + 'px">' + stPunktur(live, e.name) + '<b>' + esc(e.name) + (erSkill(e.name) ? ' ' + SKILL_MERKI : '') + '</b>' + sub +
         (lv ? '<span class="lif" title="Kallaður í ' + lv.lotur + ' lotu(m) síðustu 7 daga">' + lv.lotur + '</span>' : '') + '</div>';
     };
     L.stj.forEach(function (e) { nd += node(e, 'nd-st'); });
@@ -431,7 +436,7 @@
     f.innerHTML = '<span class="l">VERÐIR OG KERFI · <span class="dim">KALLAST Á UNDAN AÐGERÐ, EKKI Í KEÐJUNNI</span></span>' + VERDIR.map(function (n) {
       var e = entry(n); if (!e) return '';
       var cls = (n === 'netvordur' || n === 'rambo') ? ' gw-bad' : erNyr(n) ? ' gw-warn' : n === 'oryggi' ? ' gw-acc' : '';
-      return '<button type="button" class="gw' + cls + '" data-ag="' + esc(n) + '">' + stPunktur(live, n) + esc(n) + (persona(e) ? ' · ' + esc(persona(e)) : '') + (live[n] ? ' · ' + live[n].lotur + ' lotur' : '') + '</button>';
+      return '<button type="button" class="gw' + cls + (erSkill(n) ? ' gw-skill' : '') + '" data-ag="' + esc(n) + '" data-tegund="' + (erSkill(n) ? 'skill' : 'agent') + '">' + stPunktur(live, n) + esc(n) + (erSkill(n) ? ' ' + SKILL_MERKI : '') + (persona(e) ? ' · ' + esc(persona(e)) : '') + (live[n] ? ' · ' + live[n].lotur + ' lotur' : '') + '</button>';
     }).join('');
   }
 

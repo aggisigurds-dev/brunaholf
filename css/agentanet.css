@@ -135,6 +135,9 @@ body.an-lock #jvt-launch,body.an-lock #jvt-panel{display:none!important}
 .an-ov .gw:hover{border-color:var(--acc);color:var(--acc-hi)}
 .an-ov .gw-bad{border-color:var(--bad);color:var(--bad);box-shadow:inset 0 0 10px var(--bad-in)}
 .an-ov .gw-warn{border-color:var(--warn);color:var(--warn)}
+/* 17.11.2026: skill (ekki agent) á netinu — punktalína og lítið merki, sjá erSkill() í js/agentanet.js */
+.an-ov .nd-skill,.an-ov .gw-skill{border-style:dotted}
+.an-ov .tg-skill{display:inline-block;margin-left:5px;padding:0 4px;border:1px solid currentColor;border-radius:3px;font-style:normal;font-weight:600;font-size:8.5px;line-height:12px;letter-spacing:.06em;text-transform:uppercase;opacity:.8;vertical-align:1px}
 .an-ov .gw-acc{border-color:var(--acc);color:var(--acc)}
 .an-ov .led{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--ok);box-shadow:0 0 8px var(--ok);margin-right:8px}
 
