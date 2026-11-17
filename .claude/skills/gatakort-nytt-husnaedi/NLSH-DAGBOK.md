@@ -1213,3 +1213,4 @@ færist á (checked_date ræður), (3) athuga hvort hún var þegar rukkuð í f
   `hkStutar` og stútamerkin á kortinu (Haedir.tsx) eru ÓBREYTT: þau telja áfram aðeins stútana.
   Næsta viðbótarverk á 4H: setja `parad.vidbot = '<lykill>'` á áætlaða gatið og það kemur sjálft í spjaldið.
   Týpuprófun: 38 villur, allar gamla ImageZoom-hástafavillan á Windows (TS1192/TS1149), engin í skraning/.
+  Birt og lesið af lifandi síðu (kjarni.vercel.app/kjarni/skraning/skyrsla, Vercel dpl_2erUwZU3… READY): sömu tölur, 13 af 41 = 32 %.
