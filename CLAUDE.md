@@ -360,3 +360,42 @@ Never read `index.html` or `graphify-out/` whole. Grep first, then Read with off
 No build step: edit `index.html` and Netlify functions directly. Always-allow-save (Vista never blocks on validation). UI text is Icelandic.
 
 graphify hooks in `.claude/settings.json` will not exist on most Cloud VMs. Ignore them; do not install graphify here.
+
+## Innskráning lotunnar — ALDREI biðja Agnar að skrá sig inn (17.11.2026)
+
+Hver Claude-lota hefur sinn eigin vafra og sínar eigin kökur. Agnar vinnur oft úr síma og kemst þá
+**alls ekki** í vafrann hjá lotunni. Hans orð 17.11: „þetta bara að þurfa að skrá sig inn gegnum
+browserinn hjá hverju sessioni á báðar síðurnar … ef ég er að vinna gegnum símann, þá kemst ég ekkert
+inn á browserinn hjá sessions.“
+
+Lotan skráir sig því inn SJÁLF. Myntaðu undirritaða `hub_user`-köku með Supabase (þjónustuhlutverk):
+
+```sql
+select kaka, notandi, rola, rennur_ut from innri.lotu_koku(1, 12);   -- uid 1 = Agnar (Admin), 12 klst.
+```
+
+**Sama kaka gildir á BÁÐUM vefjum** (brunaholf og slokkvitaeki staðfesta hana bæði gegn
+`hub_adgangar_stilling.session_secret`).
+
+Í vafra lotunnar: opnaðu fyrst slóð á réttu léni (t.d. `/adgangar.html`), settu svo kökuna og
+endurhlaðið:
+
+```js
+document.cookie = 'hub_user=<kaka>; path=/; max-age=43200; samesite=lax';
+location.replace('/');
+```
+
+Úr skel eða `fetch`: hausinn `Cookie: hub_user=<kaka>`.
+
+**ALDREI:** skrifa kökuna eða `session_secret` í skrá, commit, annál, skjáskot eða svar til Agnars —
+kakan ER innskráning sem Admin. Myntaðu nýja þegar þarf í stað þess að geyma hana.
+Skemað `innri` er ekki opið PostgREST, svo fallið næst hvorki með publishable-lykli né RPC.
+
+Mælt 17.11 kl. 16:55: `/api/odin` (BH) og `/api/afgreidsla` (SL) svara 401 án kökunnar og 200 með;
+fölsuð kaka fær 401.
+
+### Vörðurinn (`_vord.js`) er SLÖKKTUR síðan 17.11 kl. 16:47
+`hlid()` skilar `null` strax eftir CORS-forspurnina. Ástæða: hann var fail-closed — bregðist lestur á
+`app_kv['hub_vord']` (kaldræsing, tímaþak) varð hamurinn `lokad` í 60 s og ÖLL 155 vafin föll svöruðu
+401, líka þau á `opin`-lista. Það lamaði bæði loturnar og vinnu Agnars. Verði hann endurvakinn verður
+hann að vera **fail-OPEN**: náist hamurinn ekki, hleypa í gegn og skrá.
