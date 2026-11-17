@@ -10,7 +10,9 @@
   # (exit 1 = byggja, exit 0 = sleppa). Hvert framleiðslu-deploy kostar 15 krítur; 218 ýtingar á 20
   # dögum hefðu verið ~3.300 krítur. Ýtingar samstilla vélarnar áfram; birting = `git commit -m
   # "[deploy] …"` (má vera tómt commit) eða morgunkeyrslan kl. 06:15 sem ýtir [deploy] ef eitthvað er óbirt.
-  ignore = "git log -1 --pretty=%B | grep -qF '[deploy]' && exit 1 || exit 0"
+  # 17.11.2026 (lota 9, Verkefnalisti 166530a8): aðeins FYRIRSÖGNIN (%s) — áður %B (öll skilaboðin), svo merkið í meginmáli
+  # („Ekki [deploy] …", lota 2ef635f0 10.11.) birti óvart báðar síður.
+  ignore = "git log -1 --pretty=%s | grep -qF '[deploy]' && exit 1 || exit 0"
 
 # --- Innri skrár EKKI birtar opinberlega -------------------------------------
 # `publish = "."` birtir rót verkefnisins, svo ALLT sem er í repo-inu var sótt-
