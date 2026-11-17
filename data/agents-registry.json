@@ -1,5 +1,5 @@
 {
- "generated": "2026-11-16",
+ "generated": "2026-11-17",
  "agents": 50,
  "skills": 59,
  "a_odrum_velum": 4,
@@ -620,12 +620,12 @@
     {
      "repo": "slokkvitaeki",
      "path": ".claude/agents/birgdastjori.md",
-     "uppfaert": "2026-11-16",
-     "linur": 106
+     "uppfaert": "2026-11-17",
+     "linur": 110
     }
    ],
    "afbrigdi": [],
-   "uppfaert": "2026-11-16",
+   "uppfaert": "2026-11-17",
    "sidur": [
     {
      "id": "vorubirgdir",
@@ -724,12 +724,12 @@
     {
      "repo": "slokkvitaeki",
      "path": ".claude/agents/black-widow.md",
-     "uppfaert": "2026-11-16",
-     "linur": 93
+     "uppfaert": "2026-11-17",
+     "linur": 95
     }
    ],
    "afbrigdi": [],
-   "uppfaert": "2026-11-16",
+   "uppfaert": "2026-11-17",
    "sidur": [
     {
      "id": "verdsamanburdur",
@@ -804,7 +804,7 @@
      "repo": "brunaholf",
      "path": ".claude/agents/bokari.md",
      "uppfaert": "2026-11-16",
-     "linur": 774
+     "linur": 790
     }
    ],
    "afbrigdi": [],
@@ -1141,12 +1141,12 @@
     {
      "repo": "slokkvitaeki",
      "path": ".claude/agents/bord-flettur.md",
-     "uppfaert": "2026-11-16",
-     "linur": 833
+     "uppfaert": "2026-11-17",
+     "linur": 842
     }
    ],
    "afbrigdi": [],
-   "uppfaert": "2026-11-16",
+   "uppfaert": "2026-11-17",
    "sidur": [
     {
      "id": "field",
@@ -1480,7 +1480,7 @@
     {
      "repo": "slokkvitaeki",
      "path": ".claude/agents/center-hotel.md",
-     "uppfaert": "2026-11-16",
+     "uppfaert": "2026-11-17",
      "linur": 150
     },
     {
@@ -1491,7 +1491,7 @@
     }
    ],
    "afbrigdi": [],
-   "uppfaert": "2026-11-16",
+   "uppfaert": "2026-11-17",
    "sidur": [
     {
      "id": "rekstrarfelog",
@@ -1784,7 +1784,7 @@
      "repo": "brunaholf",
      "path": ".claude/agents/framendi.md",
      "uppfaert": "2026-11-16",
-     "linur": 505
+     "linur": 516
     }
    ],
    "afbrigdi": [],
@@ -1978,7 +1978,7 @@
      "repo": "slokkvitaeki",
      "path": ".claude/agents/fyrirtaeki.md",
      "uppfaert": "2026-11-16",
-     "linur": 115
+     "linur": 117
     }
    ],
    "afbrigdi": [],
@@ -2076,7 +2076,7 @@
      "repo": "brunaholf",
      "path": ".claude/agents/gagnaleidslur.md",
      "uppfaert": "2026-11-16",
-     "linur": 502
+     "linur": 512
     }
    ],
    "afbrigdi": [],
@@ -2477,8 +2477,8 @@
     {
      "repo": "slokkvitaeki",
      "path": ".claude/agents/heimaleiga.md",
-     "uppfaert": "2026-11-15",
-     "linur": 208
+     "uppfaert": "2026-11-17",
+     "linur": 210
     },
     {
      "repo": "kjarni",
@@ -2488,7 +2488,7 @@
     }
    ],
    "afbrigdi": [],
-   "uppfaert": "2026-11-15",
+   "uppfaert": "2026-11-17",
    "sidur": [
     {
      "id": "rekstrarfelog",
@@ -2625,7 +2625,7 @@
      "repo": "slokkvitaeki",
      "path": ".claude/agents/innkaupabokari.md",
      "uppfaert": "2026-11-16",
-     "linur": 85
+     "linur": 87
     }
    ],
    "afbrigdi": [],
@@ -2910,8 +2910,8 @@
     {
      "repo": "slokkvitaeki",
      "path": ".claude/agents/joker.md",
-     "uppfaert": "2026-11-16",
-     "linur": 630
+     "uppfaert": "2026-11-17",
+     "linur": 632
     }
    ],
    "afbrigdi": [
@@ -2936,7 +2936,7 @@
      ]
     }
    ],
-   "uppfaert": "2026-11-16",
+   "uppfaert": "2026-11-17",
    "sidur": [
     {
      "id": "vefryni",
@@ -3456,8 +3456,8 @@
     {
      "repo": "slokkvitaeki",
      "path": ".claude/agents/kodafraedingur.md",
-     "uppfaert": "2026-11-16",
-     "linur": 121
+     "uppfaert": "2026-11-17",
+     "linur": 127
     }
    ],
    "afbrigdi": [
@@ -3487,7 +3487,7 @@
      ]
     }
    ],
-   "uppfaert": "2026-11-16",
+   "uppfaert": "2026-11-17",
    "sidur": [
     {
      "id": "uppferslubord",
@@ -3654,7 +3654,7 @@
      "repo": "brunaholf",
      "path": ".claude/agents/kunnaskra.md",
      "uppfaert": "2026-11-16",
-     "linur": 364
+     "linur": 390
     },
     {
      "repo": "slokkvitaeki",
@@ -4145,12 +4145,12 @@
     {
      "repo": "slokkvitaeki",
      "path": ".claude/agents/netvordur.md",
-     "uppfaert": "2026-11-16",
-     "linur": 121
+     "uppfaert": "2026-11-17",
+     "linur": 125
     }
    ],
    "afbrigdi": [],
-   "uppfaert": "2026-11-16",
+   "uppfaert": "2026-11-17",
    "sidur": [
     {
      "id": "jarvis-villuleit",
@@ -4242,12 +4242,12 @@
     {
      "repo": "slokkvitaeki",
      "path": ".claude/agents/odin.md",
-     "uppfaert": "2026-11-16",
-     "linur": 154
+     "uppfaert": "2026-11-17",
+     "linur": 179
     }
    ],
    "afbrigdi": [],
-   "uppfaert": "2026-11-16",
+   "uppfaert": "2026-11-17",
    "sidur": []
   },
   {
@@ -4300,12 +4300,12 @@
     {
      "repo": "slokkvitaeki",
      "path": ".claude/agents/opp.md",
-     "uppfaert": "2026-11-16",
-     "linur": 87
+     "uppfaert": "2026-11-17",
+     "linur": 93
     }
    ],
    "afbrigdi": [],
-   "uppfaert": "2026-11-16",
+   "uppfaert": "2026-11-17",
    "sidur": [
     {
      "id": "opp",
@@ -4576,12 +4576,12 @@
     {
      "repo": "brunaholf",
      "path": ".claude/agents/oryggi.md",
-     "uppfaert": "2026-11-16",
-     "linur": 240
+     "uppfaert": "2026-11-17",
+     "linur": 253
     }
    ],
    "afbrigdi": [],
-   "uppfaert": "2026-11-16",
+   "uppfaert": "2026-11-17",
    "sidur": [
     {
      "id": "stillingar",
@@ -4704,12 +4704,12 @@
     {
      "repo": "slokkvitaeki",
      "path": ".claude/agents/postur.md",
-     "uppfaert": "2026-11-16",
-     "linur": 193
+     "uppfaert": "2026-11-17",
+     "linur": 221
     }
    ],
    "afbrigdi": [],
-   "uppfaert": "2026-11-16",
+   "uppfaert": "2026-11-17",
    "sidur": [
     {
      "id": "dagurinn",
@@ -5007,13 +5007,13 @@
      "repo": "brunaholf",
      "path": ".claude/agents/rukkari.md",
      "uppfaert": "2026-11-16",
-     "linur": 345
+     "linur": 363
     },
     {
      "repo": "slokkvitaeki",
      "path": ".claude/agents/rukkari.md",
-     "uppfaert": "2026-11-16",
-     "linur": 159
+     "uppfaert": "2026-11-17",
+     "linur": 167
     }
    ],
    "afbrigdi": [
@@ -5035,7 +5035,7 @@
      ]
     }
    ],
-   "uppfaert": "2026-11-16",
+   "uppfaert": "2026-11-17",
    "sidur": [
     {
      "id": "yfirlit",
@@ -5239,8 +5239,9 @@
    "rodd": "Jerry Maguire (Tom Cruise)",
    "flokkur": "len",
    "svid": null,
-   "lysing": "Sala/POS, reikningagerð og -sending (Gmail), Payday, afslættir, verðlistar og vörur, PDF-vistun, tilboð og þjónustusamningar, reikninga-póstur og úttektartexti í Slökkvitæki-appinu. Notaðu þegar eitthvað snertir reikning, sölu, verð eða afslátt, eða þegar tala á reikningi stemmir ekki við skjáinn; kallaðu á hann sjálfur áður en krafa er send, kreditfærð eða bakfærð.",
+   "lysing": "EINI agentinn sem býr til, leiðréttir, kreditfærir og færir reikninga í Slökkvitæki-appinu — eftir verkferlinu efst í skránni (greiðandi fyrst, lokaathugun síðast, tafla til Agnars). Líka sala/POS, Payday, afslættir, verðlistar og vörur, PDF-vistun, tilboð og þjónustusamningar, reikninga-póstur og úttektartexti. Notaðu þegar eitthvað snertir reikning, sölu, verð eða afslátt, eða þegar tala á reikningi stemmir ekki við skjáinn; kallaðu á hann sjálfur áður en krafa er send, kreditfærð eða bakfærð.",
    "serhaefing": [
+    "Býr til, leiðréttir, kreditfærir og færir reikninga — verkferli: greiðandi fyrst, lokaathugun síðast",
     "Sala/POS, reikningagerð og dkPlus/Payday",
     "Afslættir, sjálfvirk PDF-vistun og reikninga-póstur",
     "Úttektartexti — ALLTAF LEYFA VISTUN"
@@ -5257,6 +5258,23 @@
     "krafa",
     "kredit",
     "Kreditfæra",
+    "kreditfæra og endurgera",
+    "endurgera reikning",
+    "leiðrétta reikning",
+    "Leiðrétta",
+    "færa á kennitölu",
+    "færa á aðra kennitölu",
+    "færa reikning",
+    "aðra kennitölu",
+    "nýja kennitölu",
+    "vitlaus kennitala",
+    "röng kennitala",
+    "rangur greiðandi",
+    "rangt nafn á reikningi",
+    "endurgera",
+    "bæta tækjum við reikning",
+    "reikningur úr úttekt",
+    "lokaathugun",
     "Hreyfingarlisti",
     "verðlisti",
     "birgðir",
@@ -5268,6 +5286,7 @@
     "Bókhald yfirferð"
    ],
    "aldrei": [
+    "Segja reikning tilbúinn án lokaathugunar",
     "Afsláttur á tvo vegu",
     "Blokka Vista",
     "Yfirskrifa úttektartexta",
@@ -5287,12 +5306,12 @@
     {
      "repo": "slokkvitaeki",
      "path": ".claude/agents/sala-reikningar.md",
-     "uppfaert": "2026-11-16",
-     "linur": 692
+     "uppfaert": "2026-11-17",
+     "linur": 1054
     }
    ],
    "afbrigdi": [],
-   "uppfaert": "2026-11-16",
+   "uppfaert": "2026-11-17",
    "sidur": [
     {
      "id": "krofuyfirlit",
@@ -5583,7 +5602,7 @@
      "repo": "slokkvitaeki",
      "path": ".claude/agents/samthykktir.md",
      "uppfaert": "2026-11-16",
-     "linur": 413
+     "linur": 416
     }
    ],
    "afbrigdi": [],
@@ -5677,7 +5696,7 @@
    "rodd": "Sara (skýrslur) · Coworker",
    "flokkur": "rodd",
    "svid": null,
-   "lysing": "Fyllir út úttektarskýrslur LIVE gegnum Cowork/MCP — skrifar úttektar-textann, velur búnað, reiknar verð og afslátt rétt og lætur skýrslu og reikning ALLTAF segja það sama (tækjafjöldi + þjónustutegund). Notaðu þegar á að búa til, fylla eða yfirfara úttektarskýrslu, lesa vinnublað eða para skýrslu við reikning; kallaðu á hana sjálfur, án þess að Agnar nefni hana, þegar vinnublað berst eða skýrsla og reikningur stemma ekki.",
+   "lysing": "Fyllir út úttektarskýrslur LIVE gegnum Cowork/MCP og skilar heimsókninni „í vinnslu“ — klárar ALDREI reikning (það gerir sala-reikningar). Skrifar úttektar-textann, velur búnað, reiknar verð og afslátt rétt og lætur skýrslu og reikning ALLTAF segja það sama (tækjafjöldi + þjónustutegund). Notaðu þegar á að búa til, fylla eða yfirfara úttektarskýrslu, lesa vinnublað eða para skýrslu við reikning; kallaðu á hana sjálfur, án þess að Agnar nefni hana, þegar vinnublað berst eða skýrsla og reikningur stemma ekki.",
    "serhaefing": [
     "Fyllir út úttektarskýrslur LIVE í Slökkvitæki-appinu (Cowork/MCP)",
     "Velur búnað og reiknar verð og afslátt rétt",
@@ -5700,7 +5719,8 @@
     "Yfirskrifa texta sem er þegar í reit",
     "Baka afslátt og geyma líka í afslattur",
     "Segja „vistað“ án lesturs til baka",
-    "Sameina staði"
+    "Sameina staði",
+    "Klára reikning (skilar „í vinnslu“ til sala-reikningar)"
    ],
    "tools": [
     "Bash",
@@ -5716,12 +5736,12 @@
     {
      "repo": "slokkvitaeki",
      "path": ".claude/agents/sara-coworker.md",
-     "uppfaert": "2026-11-16",
-     "linur": 297
+     "uppfaert": "2026-11-17",
+     "linur": 305
     }
    ],
    "afbrigdi": [],
-   "uppfaert": "2026-11-16",
+   "uppfaert": "2026-11-17",
    "sidur": [
     {
      "id": "skodanir",
@@ -7199,12 +7219,12 @@
     {
      "repo": "slokkvitaeki",
      "path": ".claude/skills/allsherjar-uttekt/SKILL.md",
-     "uppfaert": "2026-11-10",
-     "linur": 108
+     "uppfaert": "2026-11-16",
+     "linur": 129
     }
    ],
    "afbrigdi": [],
-   "uppfaert": "2026-11-10",
+   "uppfaert": "2026-11-16",
    "sidur": []
   },
   {
@@ -7255,31 +7275,18 @@
    ],
    "tools": [],
    "heimili": [
-    "slokkvitaeki",
-    "cowork"
+    "slokkvitaeki"
    ],
    "skrar": [
     {
      "repo": "slokkvitaeki",
      "path": ".claude/skills/arnold/SKILL.md",
-     "uppfaert": "2026-11-10",
+     "uppfaert": "2026-11-16",
      "linur": 336
-    },
-    {
-     "repo": "cowork",
-     "path": "cowork-skills/arnold/SKILL.md",
-     "uppfaert": "2026-10-03",
-     "linur": 195
     }
    ],
-   "afbrigdi": [
-    {
-     "repo": "cowork",
-     "lysing": "Sérfræðingur Slökkvitækis ehf í staðsetningu og kröfum brunavarnabúnaðar á Íslandi — slökkvitæki, reykskynjarar, brunaslöngur/slöngukefli, skilti og merkingar. Notaðu þessa skill hvenær sem Agnar spyr hvar búnaður á að vera, hversu mörg tæki þarf í húsnæði, hvað reglugerðin segir, við gerð staðsetningartillagna á teikningar/Miro-borð, við úttektir á nýjum stöðum, eða þegar orðin staðsetning, kröfur, byggingarreglugerð, gönguleið, slökkvigildi, notkunarflokkur, flóttaleið eða merkingar koma fyrir.",
-     "kveikjuord": []
-    }
-   ],
-   "uppfaert": "2026-11-10",
+   "afbrigdi": [],
+   "uppfaert": "2026-11-16",
    "sidur": [
     {
      "id": "turbopaint",
@@ -7589,20 +7596,13 @@
    ],
    "tools": [],
    "heimili": [
-    "slokkvitaeki",
-    "cowork"
+    "slokkvitaeki"
    ],
    "skrar": [
     {
      "repo": "slokkvitaeki",
      "path": ".claude/skills/charlize/SKILL.md",
      "uppfaert": "2026-10-08",
-     "linur": 186
-    },
-    {
-     "repo": "cowork",
-     "path": "cowork-skills/charlize/SKILL.md",
-     "uppfaert": "2026-08-07",
      "linur": 186
     }
    ],
@@ -8376,12 +8376,12 @@
     {
      "repo": "slokkvitaeki",
      "path": ".claude/skills/lotu-uttekt/SKILL.md",
-     "uppfaert": "2026-11-11",
-     "linur": 77
+     "uppfaert": "2026-11-16",
+     "linur": 97
     }
    ],
    "afbrigdi": [],
-   "uppfaert": "2026-11-11",
+   "uppfaert": "2026-11-16",
    "sidur": []
   },
   {
@@ -8628,12 +8628,12 @@
     {
      "repo": "brunaholf",
      "path": ".claude/skills/reikningalota/SKILL.md",
-     "uppfaert": "2026-11-11",
-     "linur": 35
+     "uppfaert": "2026-11-16",
+     "linur": 45
     }
    ],
    "afbrigdi": [],
-   "uppfaert": "2026-11-11",
+   "uppfaert": "2026-11-16",
    "sidur": []
   },
   {
@@ -8769,25 +8769,18 @@
    "aldrei": [],
    "tools": [],
    "heimili": [
-    "slokkvitaeki",
-    "cowork"
+    "slokkvitaeki"
    ],
    "skrar": [
     {
      "repo": "slokkvitaeki",
      "path": ".claude/skills/sara/SKILL.md",
-     "uppfaert": "2026-11-10",
+     "uppfaert": "2026-11-17",
      "linur": 287
-    },
-    {
-     "repo": "cowork",
-     "path": "cowork-skills/sara/SKILL.md",
-     "uppfaert": "2026-08-01",
-     "linur": 123
     }
    ],
    "afbrigdi": [],
-   "uppfaert": "2026-11-10",
+   "uppfaert": "2026-11-17",
    "sidur": []
   },
   {
@@ -9159,12 +9152,12 @@
     {
      "repo": "slokkvitaeki",
      "path": ".claude/skills/verkefnalisti/SKILL.md",
-     "uppfaert": "2026-11-02",
-     "linur": 67
+     "uppfaert": "2026-11-16",
+     "linur": 74
     }
    ],
    "afbrigdi": [],
-   "uppfaert": "2026-11-02",
+   "uppfaert": "2026-11-16",
    "sidur": []
   },
   {
@@ -9197,12 +9190,12 @@
     {
      "repo": "brunaholf",
      "path": ".claude/skills/vidmotsprof/SKILL.md",
-     "uppfaert": "2026-11-02",
-     "linur": 123
+     "uppfaert": "2026-11-16",
+     "linur": 139
     }
    ],
    "afbrigdi": [],
-   "uppfaert": "2026-11-02",
+   "uppfaert": "2026-11-16",
    "sidur": []
   },
   {

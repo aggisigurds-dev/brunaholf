@@ -301,6 +301,36 @@
       "vaent": [
         "artcraft"
       ]
+    },
+    {
+      "prompt": "það er ennþá vitlaus kennitala á bölv reikningnum",
+      "cwd": "C:projectsslokkvitaeki",
+      "fremstur": "sala-reikningar"
+    },
+    {
+      "prompt": "geturðu kreditfært reikninginn og endurgert á nýja kennitölu",
+      "cwd": "C:projectsslokkvitaeki",
+      "fremstur": "sala-reikningar"
+    },
+    {
+      "prompt": "færa reikninginn á aðra kennitölu",
+      "cwd": "C:projectsslokkvitaeki",
+      "fremstur": "sala-reikningar"
+    },
+    {
+      "prompt": "búa til reikning úr úttektinni",
+      "cwd": "C:projectsslokkvitaeki",
+      "vaent": [
+        "sala-reikningar",
+        "sara-coworker"
+      ]
+    },
+    {
+      "prompt": "kúnninn er með ranga kennitölu í skránni",
+      "cwd": "C:projectsslokkvitaeki",
+      "ekki": [
+        "sala-reikningar"
+      ]
     }
   ]
 }

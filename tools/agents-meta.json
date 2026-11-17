@@ -84,7 +84,8 @@
         "Yfirskrifa texta sem er þegar í reit",
         "Baka afslátt og geyma líka í afslattur",
         "Segja „vistað“ án lesturs til baka",
-        "Sameina staði"
+        "Sameina staði",
+        "Klára reikning (skilar „í vinnslu“ til sala-reikningar)"
       ]
     },
     "kunnaskra": {
@@ -288,11 +289,13 @@
       "rodd": "Jerry Maguire (Tom Cruise)",
       "flokkur": "len",
       "serhaefing": [
+        "Býr til, leiðréttir, kreditfærir og færir reikninga — verkferli: greiðandi fyrst, lokaathugun síðast",
         "Sala/POS, reikningagerð og dkPlus/Payday",
         "Afslættir, sjálfvirk PDF-vistun og reikninga-póstur",
         "Úttektartexti — ALLTAF LEYFA VISTUN"
       ],
       "aldrei": [
+        "Segja reikning tilbúinn án lokaathugunar",
         "Afsláttur á tvo vegu",
         "Blokka Vista",
         "Yfirskrifa úttektartexta",
