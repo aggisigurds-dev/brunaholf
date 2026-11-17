@@ -27,8 +27,9 @@ function nytt() {
   NOTENDUR = { 1: { id: 1, nafn: 'Prufa Stjóri', notandanafn: 'ps', rola: 'Admin', virkur: true },
     2: { id: 2, nafn: 'Prufa Starfs', notandanafn: 'pst', rola: 'Starfsmaður', virkur: true },
     3: { id: 3, nafn: 'Hætt', notandanafn: 'h', rola: 'Starfsmaður', virkur: false } };
-  HAMUR = undefined; LOG = []; UTKOLL = []; DB_NIDRI = false;
+  HAMUR = undefined; LOG = []; UTKOLL = []; DB_NIDRI = false; HAMUR_BILAR = false;
 }
+let HAMUR_BILAR = false;
 nytt();
 const ok = (j) => ({ ok: true, status: 200, json: async () => j, text: async () => JSON.stringify(j) });
 globalThis.fetch = async (input, init = {}) => {
@@ -38,7 +39,10 @@ globalThis.fetch = async (input, init = {}) => {
     const p = url.slice('https://x.test/rest/v1/'.length);
     if (p.startsWith('hub_adgangar_stilling')) return ok(STILLING);
     if (p.startsWith('hub_adgangar?id=eq.')) { const id = Number(p.match(/id=eq\.(\d+)/)[1]); return ok(NOTENDUR[id] ? [NOTENDUR[id]] : []); }
-    if (p.startsWith('app_kv?key=eq.hub_vord')) return ok(HAMUR === undefined ? [] : [{ value: HAMUR }]);
+    if (p.startsWith('app_kv?key=eq.hub_vord')) {
+      if (HAMUR_BILAR) return { ok: false, status: 503, json: async () => ({}), text: async () => '' };
+      return ok(HAMUR === undefined ? [] : [{ value: HAMUR }]);
+    }
     if (p.startsWith('agent_logs')) { LOG.push(JSON.parse(init.body)); return ok([]); }
     return ok([]);
   }
@@ -106,7 +110,10 @@ fyrir(['innskráning ekki sett upp → 503; gagnagrunnur niðri → 502 (aldrei 
   const { h } = vafid();
   STILLING = [];
   assert.equal((await h(ev({ headers: { cookie: kaka(1) } }))).statusCode, 503);
-  V._endurstilla(); DB_NIDRI = true;
+  // þekktur lokaður hamur, svo fer gagnagrunnurinn niður → lokað (502/503), aldrei opið
+  V._endurstilla(); HAMUR = { hamur: 'lokad' }; STILLING = [{ session_secret: LEYND, pw_changed_at: PW }];
+  await V.hamurFyrir('prufufall');
+  V._rennaUt(); DB_NIDRI = true;
   const r = await h(ev({ headers: { cookie: kaka(1) } }));
   assert.ok([502, 503].includes(r.statusCode), String(r.statusCode));
 }]);
@@ -121,6 +128,25 @@ fyrir(['hamur: röð vantar → lokað; skraning hleypir í gegn og skráir; opi
   HAMUR = { hamur: 'skraning', lokud: ['prufufall'] }; V._endurstilla();
   assert.equal((await h(ev())).statusCode, 401);
   assert.equal(kallad.length, 2);
+}]);
+fyrir(['hamur: misheppnaður lestur heldur síðasta þekkta ham (Supabase-hik læsir ekki skráningarham); kaldræsing → skraning', async () => {
+  const { h } = vafid();
+  // kaldræsing, lestur bregst → sjálfgefið skraning (HUB_VORD_SJALFGEFID ósett) — engu lokað af hiki
+  HAMUR_BILAR = true;
+  assert.equal(await V.hamurFyrir('prufufall'), 'skraning');
+  // þekktur skraning, svo bregst lestur eftir að skyndiminnið rann út → helst skraning
+  HAMUR_BILAR = false; HAMUR = { hamur: 'skraning' }; V._endurstilla();
+  assert.equal((await h(ev())).statusCode, 200);
+  V._rennaUt(); HAMUR_BILAR = true;
+  assert.equal((await h(ev())).statusCode, 200, 'hik læsir ekki');
+  // þekktur lokad, svo bregst lestur → helst lokad
+  HAMUR_BILAR = false; HAMUR = { hamur: 'lokad' }; V._endurstilla();
+  assert.equal((await h(ev())).statusCode, 401);
+  V._rennaUt(); HAMUR_BILAR = true;
+  assert.equal((await h(ev())).statusCode, 401, 'hik opnar ekki');
+  // lesið og röðin VANTAR → lokað
+  HAMUR_BILAR = false; HAMUR = undefined; V._endurstilla();
+  assert.equal((await h(ev())).statusCode, 401);
 }]);
 fyrir(['OPTIONS fer alltaf í gegn; opidEf hleypir kúnnaslóð í gegn', async () => {
   const { h, kallad } = vafid({ opidEf: (e) => !!(e.queryStringParameters || {}).token });

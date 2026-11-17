@@ -25,7 +25,9 @@
 //   { "hamur": "skraning" | "lokad", "lokud": [föll], "opin": [föll] }
 //   skraning = hleypir í gegn en SKRÁIR í agent_logs hvað hefði verið stöðvað (agent 'vord', action 'myndi_hafna').
 //   lokad    = 401 / 403 / 503 / 502. „opin“ yfirtekur (föll sem kallendur utan vafra ná ekki enn að auðkenna sig fyrir),
-//   „lokud“ lokar einstöku falli þótt hamurinn sé skraning. Röð vantar eða ólæsileg → lokað (aldrei opið af slysni).
+//   „lokud“ lokar einstöku falli þótt hamurinn sé skraning. Röð VANTAR → lokað (aldrei opið af slysni). Lestur
+//   BREGST → síðasti þekkti hamur helst (reynt aftur eftir 10 s); kaldræsing án lesturs → HUB_VORD_SJALFGEFID
+//   ('lokad' eftir að lokað hefur verið fyrir fullt og allt, annars 'skraning').
 //
 // BILAR LOKAÐ: innskráningarstillingar ólesanlegar → 503; gagnagrunnur svarar ekki → 502.
 'use strict';
@@ -133,16 +135,20 @@ async function hver(event) {
 }
 
 // ── hamur ─────────────────────────────────────────────────────────────────────────────────────────────────────
+// Lestur sem BREGST (net, 5xx) heldur síðasta þekkta ham og reynir aftur eftir 10 s — stutt Supabase-hik má ekki
+// læsa öllum föllum í skráningarham (ábending stjórnlotu 17.11.2026). Kaldræsing án lesturs: HUB_VORD_SJALFGEFID
+// ('lokad' þegar lokað hefur verið fyrir fullt og allt; annars 'skraning'). Röð sem VANTAR (lesið, ekkert) = lokað.
+const KALT = process.env.HUB_VORD_SJALFGEFID === 'lokad' ? 'lokad' : 'skraning';
 let _ham = null, _hamT = 0;
 async function hamurFyrir(fall) {
   if (!_ham || Date.now() - _hamT > 60000) {
-    let v = null;
+    let lesid = false, v = null;
     try {
       const r = await sb(`app_kv?key=eq.${HAMUR_KV}&select=value`);
-      if (r.ok) { const j = await r.json(); v = j[0] ? j[0].value : null; }
-    } catch (_) { v = null; }
-    _ham = (v && typeof v === 'object') ? v : { hamur: 'lokad' };
-    _hamT = Date.now();
+      if (r.ok) { const j = await r.json(); v = j[0] ? j[0].value : null; lesid = true; }
+    } catch (_) { lesid = false; }
+    if (lesid) { _ham = (v && typeof v === 'object') ? v : { hamur: 'lokad' }; _hamT = Date.now(); }
+    else { _ham = _ham || { hamur: KALT }; _hamT = Date.now() - 50000; }
   }
   const listi = (k) => (Array.isArray(_ham[k]) ? _ham[k] : []);
   if (listi('opin').includes(fall)) return 'opid';
@@ -255,4 +261,5 @@ if (typeof fetchUpphaflegt === 'function' && !globalThis.__vordFetch) {
 }
 
 module.exports = { vafinn, hlid, hver, myntaToki, erGildurToki, hamurFyrir, eiginFall, TOKI_HAUS, TOKI_QS, HAMUR_KV,
-  _endurstilla() { _st = null; _stT = 0; _ham = null; _hamT = 0; _skrad.clear(); } };
+  _endurstilla() { _st = null; _stT = 0; _ham = null; _hamT = 0; _skrad.clear(); },
+  _rennaUt() { _hamT = 0; } };

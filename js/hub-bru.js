@@ -5,7 +5,7 @@
  * (SameSite=Lax milli vefja) — þá biður síðan appið um tóka og setur hann á eigin /api-köll:
  *   síða → app:  { type:'hub-toki', id }                        (postMessage, aðeins á slokkvitaeki.netlify.app)
  *   app  → síða: { type:'hub-toki-svar', id, toki, gildir_ms }  (appið fær tókann úr /api/bh-toki, sem krefst
- *                                                                 innskráningar appsins — js/patches/5xx-bh-bru.js)
+ *                                                                 innskráningar appsins — slokkvitaeki js/patches/514-bh-bru.js)
  * Tókinn gildir 10 mín; hann er sóttur aftur mínútu áður. Svari appið ekki innan 6 sek fer kallið án tóka (og fær 401
  * ef fallið er lokað) — síðan hangir aldrei. Aðeins fetch á SAMA uppruna /api/ og /.netlify/functions/ fær tókann.
  */
