@@ -1204,3 +1204,12 @@ færist á (checked_date ræður), (3) athuga hvort hún var þegar rukkuð í f
   skráningarnar sjálfar teljast í gólfi 5. hæðar (S2: 104 kláraðar, 11 opnar). Kort og skýrsla EKKI skoðuð í vafra eftir innsetningu.
   Til baka: `update skr_aaetlud set eytt = true where uppruni like 'vidbot:4h-nytt-20261116:%'`.
   Hvers konar verk þetta er (stofn, stærð, hvort fleiri göt eru væntanleg): ÓMÆLT.
+
+- **17.11.2026 — Agnar: „Já, bæta við":** nýja viðbótarverkið á 4. hæð telst nú með í spjaldinu „Viðbótarverk 4. hæðar" í stöðuskýrslunni
+  (kjarni 327f51f, `stutaspjald` í `SkyrslaClient.tsx`). Spjaldið telur stúta (`parad.stutur`) OG áætluð göt á 4H með `parad.vidbot` án
+  `stutur`-lykils; prósentan er af heildinni og textinn sundurliðar hvort um sig. Mælt í grunni og lesið af síðunni á staðbundnum þjóni
+  (Playwright, 1400 px): **13 af 41 = 32 %** (stútar 11 af 35 þéttir, 8 skráðir ekki kláraðir, 16 án skráningar, þar af 7 ekki komnir;
+  nýtt verk 2 af 6 þétt, 4 skráð ekki kláruð). Áður 11 af 35 = 31 %. Hin spjöldin óbreytt (6H 86 %, 5H 68 %, gólf 5H 352 af 515).
+  `hkStutar` og stútamerkin á kortinu (Haedir.tsx) eru ÓBREYTT: þau telja áfram aðeins stútana.
+  Næsta viðbótarverk á 4H: setja `parad.vidbot = '<lykill>'` á áætlaða gatið og það kemur sjálft í spjaldið.
+  Týpuprófun: 38 villur, allar gamla ImageZoom-hástafavillan á Windows (TS1192/TS1149), engin í skraning/.
