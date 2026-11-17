@@ -252,6 +252,19 @@ function forspurnApps(event) {
 async function hlid(event, { fall, stjornandi = false, opidEf = null } = {}) {
   if (!event) return null;
   if (event.httpMethod === 'OPTIONS') return forspurnApps(event);
+
+  // ─────────────────────────────────────────────────────────────────────────────────────────────
+  // 17.11.2026 — SLÖKKT AÐ BEIÐNI AGNARS („slökktu á þessu session innskráningar veseni · allt
+  // lamað í öllum sessions · að active sessions fái heimild til að vinna í síðunni").
+  // Ástæða: hliðið er FAIL-CLOSED. Bregðist lestur á app_kv['hub_vord'] (kaldræsing, tímaþak 2,5 s)
+  // verður hamurinn 'lokad' í 60 s og ÖLL vafin föll svara 401 — líka þau sem eru á opin-lista.
+  // Mælt í agent_logs 17.11: action='hafnad' á automations (15×), drive-list, veidin, fjarmal-yfirlit,
+  // kerfisheilsa, krofu-greidslur, nlsh-dashboard — öll á opin-lista eða í skráningarham.
+  // Hliðið hleypir því öllu í gegn (eins og fyrir 06:42 í dag) þar til það er endurhannað FAIL-OPEN.
+  // Forspurn appsins fyrir x-hub-toki (plástur 514) er svarað áfram, línan hér að ofan.
+  // AFTURKALLA: git revert á þessu commiti + birta.
+  return null;
+  // ─────────────────────────────────────────────────────────────────────────────────────────────
   if (typeof opidEf === 'function') { try { if (await opidEf(event)) return null; } catch (_) {} }
   const hamur = await hamurFyrir(fall);
   // Opinn/skráningarhamur: athugunin má aldrei tefja fallið meira en eitt þak, og skráningin bíður ekki (skra grípur
