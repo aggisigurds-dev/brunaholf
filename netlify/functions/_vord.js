@@ -48,11 +48,29 @@ try { if (process.env.DEPLOY_PRIME_URL) EIGIN_HOST.add(new URL(process.env.DEPLO
 
 const fetchUpphaflegt = globalThis.fetch;
 
-function sb(path, init = {}) {
-  return fetchUpphaflegt(`${SUPABASE_URL}/rest/v1/${path}`, {
-    ...init,
-    headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json', ...(init.headers || {}) },
+// TÍMAÞAK (óháð rýni 17.11.2026): hangi Supabase má vörðurinn ekki halda kallinu þar til Netlify drepur það (10 s) —
+// föll sem notuðu Supabase ekki áður eru nú háð honum. Hvert kall varðarins (svar OG meginmál) fær FRESTUR_MS; kapphlaup
+// við teljara, svo hangandi fetch sem hunsar signal sleppur líka. Skráningarhamur: tímafall → beint í gegn (sjá hlid).
+const FRESTUR_MS = Math.max(50, Number(process.env.HUB_VORD_FRESTUR_MS) || 2000);
+async function sb(path, init = {}) {
+  const ac = new AbortController();
+  let teljari;
+  const tima = new Promise((_, hafna) => {
+    teljari = setTimeout(() => { try { ac.abort(); } catch (_) {} hafna(Object.assign(new Error('vord: Supabase svaraði ekki innan ' + FRESTUR_MS + ' ms'), { villa: 502 })); }, FRESTUR_MS);
   });
+  try {
+    const r = await Promise.race([fetchUpphaflegt(`${SUPABASE_URL}/rest/v1/${path}`, {
+      ...init, signal: init.signal || ac.signal,
+      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json', ...(init.headers || {}) },
+    }), tima]);
+    const texti = await Promise.race([r.text(), tima]);
+    return { ok: r.ok, status: r.status, text: async () => texti, json: async () => (texti ? JSON.parse(texti) : null) };
+  } finally { clearTimeout(teljari); }
+}
+// Kapphlaup við heildarþak (innskráningarathugun í skráningarham) → { villa: 502, timi: true } ef of seint
+function medThaki(loforð, ms) {
+  let t;
+  return Promise.race([loforð, new Promise((res) => { t = setTimeout(() => res({ villa: 502, timi: true }), ms); })]).finally(() => clearTimeout(t));
 }
 
 // ── stillingar innskráningar (session_secret) — 5 mín skyndiminni ──────────────────────────────────────────────
@@ -195,15 +213,17 @@ async function hlid(event, { fall, stjornandi = false, opidEf = null } = {}) {
   if (!event || event.httpMethod === 'OPTIONS') return null;
   if (typeof opidEf === 'function') { try { if (opidEf(event)) return null; } catch (_) {} }
   const hamur = await hamurFyrir(fall);
-  const h = await hver(event);
+  // Opinn/skráningarhamur: athugunin má aldrei tefja fallið meira en eitt þak, og skráningin bíður ekki (skra grípur
+  // sjálf allar villur). Lokaður hamur: hvert kall hefur sitt þak; tímafall → 502.
+  const mjukt = hamur !== 'lokad';
+  const h = mjukt ? await medThaki(hver(event), FRESTUR_MS) : await hver(event);
   let villa = h.villa || 0;
   if (!villa && stjornandi && !h.stjornandi) villa = 403;
   if (!villa) {
-    if (h.via === 'toki') await skra(fall, event, 'inn', { via: 'toki' }); // sannar að brýrnar virki
+    if (h.via === 'toki') skra(fall, event, 'inn', { via: 'toki' }); // sannar að brýrnar virki (bíður ekki)
     return null;
   }
-  if (hamur === 'opid') return null;
-  if (hamur === 'skraning') { await skra(fall, event, 'myndi_hafna', { villa }); return null; }
+  if (mjukt) { skra(fall, event, 'myndi_hafna', { villa, timi: !!h.timi, hamur }); return null; }
   await skra(fall, event, 'hafnad', { villa });
   return hafnad(villa, event);
 }
@@ -270,4 +290,4 @@ if (typeof fetchUpphaflegt === 'function' && !globalThis.__vordFetch) {
 
 module.exports = { vafinn, hlid, hver, myntaToki, erGildurToki, hamurFyrir, eiginFall, TOKI_HAUS, TOKI_QS, HAMUR_KV,
   _endurstilla() { _st = null; _stT = 0; _ham = null; _hamT = 0; _skrad.clear(); },
-  _rennaUt() { _hamT = 0; } };
+  _rennaUt() { _hamT = 0; }, _gleymaStillingu() { _st = null; _stT = 0; }, FRESTUR_MS };

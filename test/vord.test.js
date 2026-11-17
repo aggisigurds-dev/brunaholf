@@ -17,6 +17,7 @@ const path = require('node:path');
 
 process.env.SUPABASE_URL = 'https://x.test';
 process.env.SUPABASE_SERVICE_ROLE_KEY = 'k';
+process.env.HUB_VORD_FRESTUR_MS = '200';   // tímaþak varðarins stytt í prófinu (2000 í loftinu)
 delete process.env.HUB_STAFF_PASSWORD;
 
 const LEYND = 'prufuleyndarmal-vord-0123456789';
@@ -29,12 +30,13 @@ function nytt() {
     3: { id: 3, nafn: 'Hætt', notandanafn: 'h', rola: 'Starfsmaður', virkur: false } };
   HAMUR = undefined; LOG = []; UTKOLL = []; DB_NIDRI = false; HAMUR_BILAR = false;
 }
-let HAMUR_BILAR = false;
+let HAMUR_BILAR = false, HANGIR = false;
 nytt();
 const ok = (j) => ({ ok: true, status: 200, json: async () => j, text: async () => JSON.stringify(j) });
 globalThis.fetch = async (input, init = {}) => {
   const url = String(typeof input === 'string' || input instanceof URL ? input : input.url);
   if (url.startsWith('https://x.test/rest/v1/')) {
+    if (HANGIR) return new Promise(() => {});   // Supabase hangir — og hunsar signal
     if (DB_NIDRI) return { ok: false, status: 500, json: async () => ({}), text: async () => '' };
     const p = url.slice('https://x.test/rest/v1/'.length);
     if (p.startsWith('hub_adgangar_stilling')) return ok(STILLING);
@@ -147,6 +149,36 @@ fyrir(['hamur: misheppnaður lestur heldur síðasta þekkta ham (Supabase-hik l
   // lesið og röðin VANTAR → lokað
   HAMUR_BILAR = false; HAMUR = undefined; V._endurstilla();
   assert.equal((await h(ev())).statusCode, 401);
+}]);
+fyrir(['Supabase HANGIR: skráningarhamur hleypir beint í gegn innan þaks; lokaður hamur → 502 innan þaks; myntun tóka gefst upp', async () => {
+  const { h, kallad } = vafid();
+  const thak = 5 * V.FRESTUR_MS;   // hamur + innskráning + svigrúm — langt undir 10 s Netlify
+  // þekktur skraning, skyndiminni runnið út, Supabase hangir
+  HAMUR = { hamur: 'skraning' }; await V.hamurFyrir('prufufall');
+  V._rennaUt(); V._gleymaStillingu(); HANGIR = true;
+  let t0 = Date.now();
+  let r = await h(ev({ headers: { cookie: kaka(1) } }));
+  assert.equal(r.statusCode, 200, 'fallið keyrir');
+  assert.equal(kallad.length, 1);
+  assert.ok(Date.now() - t0 < thak, 'skraning tafðist ' + (Date.now() - t0) + ' ms');
+  // kaldræsing meðan hangir → skraning → beint í gegn
+  V._endurstilla();
+  t0 = Date.now();
+  assert.equal((await h(ev())).statusCode, 200);
+  assert.ok(Date.now() - t0 < thak);
+  // þekktur lokad, svo hangir → 502 (aldrei opið), innan þaks
+  HANGIR = false; V._endurstilla(); HAMUR = { hamur: 'lokad' }; await V.hamurFyrir('prufufall');
+  V._rennaUt(); V._gleymaStillingu(); HANGIR = true;
+  t0 = Date.now();
+  r = await h(ev({ headers: { cookie: kaka(1) } }));
+  assert.equal(r.statusCode, 502);
+  assert.ok(Date.now() - t0 < thak, 'lokad tafðist ' + (Date.now() - t0) + ' ms');
+  assert.equal(kallad.length, 2, 'fallið keyrði ekki í lokuðum ham');
+  // myntun tóka fyrir innri köll gefst upp og kallið fer án tóka (hangir ekki)
+  t0 = Date.now();
+  assert.equal(await V.myntaToki(), '');
+  assert.ok(Date.now() - t0 < 2 * V.FRESTUR_MS + 100);
+  HANGIR = false;
 }]);
 fyrir(['OPTIONS fer alltaf í gegn; opidEf hleypir kúnnaslóð í gegn', async () => {
   const { h, kallad } = vafid({ opidEf: (e) => !!(e.queryStringParameters || {}).token });
