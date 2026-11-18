@@ -306,13 +306,17 @@ function resp(statusCode, body, headers) { return { statusCode, headers, body };
   // HTTP-kalli í gegn — hver sem er gat látið kerfið senda honum heilsupóst (repóið er opinbert, slóðin finnanleg).
   // SENDING krefst því ALLTAF innskráningar eða tóka, óháð rofanum. Áætlaða vaktin (daily-health-background) kallar á
   // _innra og er ósnert; lestur án send er óbreyttur.
-  const medSendingarvord = async (event, context) => {
+  // Athugunin situr UTAN við vafninginn: vafinn() fjarlægir ?_hubtoki= áður en fallið keyrir, svo inni í honum sæist gildur
+  // tóki í slóð ekki. Forspurn (OPTIONS) er látin fara beint í vörðinn, sem svarar henni eins og áður.
+  const vafid = _V.vafinn(exports._innra, { fall: 'daily-health' });
+  const ytri = async (event, context) => {
     const qs = (event && event.queryStringParameters) || {};
-    if (qs.send === '1' || qs.send === 'true') {
+    if (event && event.httpMethod !== 'OPTIONS' && (qs.send === '1' || qs.send === 'true')) {
       const h = await _V.hver(event);
       if (h.villa) return _V.hafnad(h.villa, event);
     }
-    return exports._innra(event, context);
+    return vafid(event, context);
   };
-  exports.handler = _V.vafinn(medSendingarvord, { fall: 'daily-health' });
+  ytri._vord = vafid._vord;   // merkið sem segir að fallið sé vafið (test/vord.test.js les það)
+  exports.handler = ytri;
 }

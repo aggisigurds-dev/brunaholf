@@ -75,6 +75,8 @@ const ev = (o = {}) => ({ httpMethod: 'GET', headers: {}, queryStringParameters:
 // Meðan rofinn er á er þeim SLEPPT (sýnilega, með ástæðu); þegar honum er snúið vakna þau sjálf og verða að standast.
 const SLEPPA = V.SLOKKT ? 'vörðurinn er slökktur (_vord.js: SLOKKT = true) — prófið vaknar þegar honum er snúið á' : false;
 const fyrir = (t) => test(t[0], { skip: SLEPPA }, async () => { nytt(); V._endurstilla(); await t[1](); });
+// Próf sem eru ÓHÁÐ rofanum keyra alltaf: forspurn appsins (plástur 514 treystir á hana) og tókinn í innri köllum.
+const alltaf = (t) => test(t[0], async () => { nytt(); V._endurstilla(); await t[1](); });
 
 test('rofinn: hliðið og prófin fylgja SLOKKT — slökkt hleypir öllu í gegn, kveikt hafnar óinnskráðum', async () => {
   nytt(); V._endurstilla();
@@ -217,7 +219,7 @@ fyrir(['stjornandi: starfsmaður → 403, Admin-kaka → inn, tóki (starfsmanns
   assert.equal((await h(ev({ headers: { cookie: kaka(1) } }))).statusCode, 200);
   assert.equal((await h(ev({ headers: { 'x-hub-toki': toki() } }))).statusCode, 403, 'tóki veitir ekki stjórnandaréttindi');
 }]);
-fyrir(['forspurn appsins með x-hub-toki fær 204 frá verðinum; annar uppruni/aðrir hausar → fallið svarar sjálft', async () => {
+alltaf(['forspurn appsins með x-hub-toki fær 204 frá verðinum; annar uppruni/aðrir hausar → fallið svarar sjálft', async () => {
   const { h, kallad } = vafid();
   const APP = 'https://slokkvitaeki.netlify.app';
   const r = await h(ev({ httpMethod: 'OPTIONS', headers: { origin: APP, 'access-control-request-headers': 'content-type, x-hub-toki' } }));
@@ -250,7 +252,7 @@ fyrir(['401 til Slökkvitækis-appsins ber CORS-haus svo appið sjái villuna; a
   assert.equal((await h(ev({ headers: { origin: 'https://slokkvitaeki.netlify.app' } }))).headers['Access-Control-Allow-Origin'], 'https://slokkvitaeki.netlify.app');
   assert.equal((await h(ev({ headers: { origin: 'https://illt.example' } }))).headers['Access-Control-Allow-Origin'], undefined);
 }]);
-fyrir(['innri köll: fetch á eigin /api/ og /.netlify/functions/ fær tókann; önnur hýsing ALDREI', async () => {
+alltaf(['innri köll: fetch á eigin /api/ og /.netlify/functions/ fær tókann; önnur hýsing ALDREI', async () => {
   await fetch('https://brunaholf.netlify.app/api/worksites?x=1');
   await fetch('https://brunaholf.netlify.app/.netlify/functions/debtors', { method: 'POST', headers: { 'content-type': 'application/json' } });
   await fetch('https://illt.example/api/worksites');

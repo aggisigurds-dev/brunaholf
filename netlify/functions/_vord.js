@@ -249,8 +249,8 @@ function forspurnApps(event) {
     'Access-Control-Allow-Methods': 'GET, POST, PATCH, PUT, DELETE, OPTIONS',
     'Access-Control-Allow-Headers': bed.slice(0, 300), 'Access-Control-Max-Age': '600' }, body: '' };
 }
-// ROFINN (18.11.2026). true = hliðið hleypir öllu í gegn; ástæðan stendur í hlid() hér að neðan. Prófin lesa rofann
-// (test/vord.test.js, tools/test-gmail-send-hlid.cjs) og sleppa hegðunarprófum varðarins á meðan hann er slökktur, í stað
+// ROFINN (18.11.2026). true = hliðið hleypir öllu í gegn; ástæðan stendur í hlid() hér að neðan. Prófin í
+// test/vord.test.js lesa rofann og sleppa hegðunarprófum varðarins á meðan hann er slökktur, í stað
 // þess að falla á hverri ýtingu: CI á main var rautt frá 17.11.2026 kl. 16:47 og eigandinn fékk „Run failed“ póst frá
 // GitHub við hverja ýtingu. Þegar vörðurinn er endurvakinn: settu false — þá vakna prófin sjálf og verða að standast.
 const SLOKKT = true;
