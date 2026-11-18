@@ -50,7 +50,7 @@
   --text:#161513;
   --muted:#6f685c;         /* 5.3:1 — gólf fyrir gagnatexta */
   --muted-2:#8f8776;       /* AÐEINS placeholders/skil, aldrei gögn */
-  --text-dim:#8f8776;
+  --text-dim:#6f685c;      /* 18.11.2026: var #8f8776 = 3,56:1 á hvítu. Sama gildi og --muted, gólf fyrir gagnatexta. */
   --on-dark:#f4f1ea;
   --on-dark-soft:#c8c1b1;
   --on-dark-mute:#8f8776;
