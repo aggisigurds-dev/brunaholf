@@ -1404,3 +1404,24 @@ Agnar: „Já prófaðu“ (spurt hvort nota ætti hurðaopin í sjálfvirku fæ
 - **Pörun endurkeyrð:** 6H 2.005 pöruð, 5H 785 (óbreytt).
 - **Hurðalínur Agnars:** kortið á þegar tólið „Lína“ (`linuHamur`), vistar í `skr_verk.stillingar.hurdalinur[teikning_id]` sem flatt [x1,y1,x2,y2,…] í
   yfirlitspixlum. Tómt 18.11. Þegar Agnar teiknar þær 26 brunahurðir á hæð sem vantar og glerveggina: lesa þaðan, mála í veggjamyndina og endurkeyra.
+
+### 18.11.2026 (kvöld): línutól á kortinu, þrír litir og strokleður
+Agnar: „Kannski bara að ég geti gert rauðar línur brunaveggi, bláar línur hurðaop og glerveggir, grænar línur sem punktar geta fest við ef þeir eru en
+teljast ekki sem nauðsynlegir til að klára, og strokleður sem eyðir línu með því að koma við hana.“ Og: „að ég geti notað hægri músartakkann til að hreyfa
+mig gegnum mappið.“ Áður hafði hann sagt að nokkrar sjálfvirkar bláar línur væru á röngum stað og að hann gæti ekki eytt þeim.
+- **Geymsla** (`skr_verk.stillingar`, allt flatt [x1,y1,x2,y2,…] í yfirlitspixlum per `teikning_id`):
+  `vegglinur` = rauðar (brunaveggur), `hurdalinur` = bláar (hurðaop, glerveggur), `graenlinur` = grænar (valfrjáls festilína),
+  `hurdalinurFaldar` = sjálfvirkar bláar línur úr `veggir/yfirlit-*.json` sem Agnar fjarlægði (skráin sjálf er óbreytt).
+- **Merking:** rauðar og bláar fara í veggjanetið (`veggjaNet`): punktar sitt hvorum megin eru hinn endinn hvor annars. Grænar fara EKKI í netið:
+  þær kalla ekki á hinn endann og bæta engu við það sem þarf að klára; þær eru aðeins staður sem punktur má sitja á.
+- **Strokleður:** strýkur yfir línu og hún hverfur (eigin línur í öllum litum; sjálfvirk blá lína er falin). Ein vistun þegar sleppt er, engin staðfesting;
+  „Til baka“ afturkallar (aðeins í sömu lotu), „Sýna aftur N faldar“ tæmir földunarlistann.
+- **Hægri músartakki** færir blaðið í hvaða ham sem er; samhengisvalmyndin er lokuð á striganum.
+- **Vistun stillinga löguð:** `setjaStill` skrifaði heilan staðbundinn hlut, svo tæki með eldri stöðu gat yfirskrifað línur af öðru tæki. Nú er nýjasta
+  staðan sótt fyrir hverja vistun og aðeins breytingin lögð ofan á.
+- **GILDRA:** leiðbeiningartextinn `.gk-faera` er með `pointer-events: none`; hnappur inni í honum virkar ekki (þannig var „Sýna aftur“ í 4f1a3c7).
+  Línutólið er nú eigin stika, `.gk-linutol`.
+- **Sjálfvirka færslan les þetta EKKI enn.** `skr-festa.py` notar veggjamynd (rauðir veggir + E-merkt brunahurðaop). Næst: lesa `vegglinur` og
+  `hurdalinur` af verkinu og mála í veggjamyndina, sleppa `hurdalinurFaldar`, og leyfa punkti að festast á `graenlinur` án þess að það teljist brunaskil.
+  Staða þegar þetta var skrifað: 6H 38 bláar línur Agnars og 47 sjálfvirkar faldar; engin rauð eða græn enn.
+- Kóði: kjarni main 0cdd6c4 (tólið) og c3c2ad0 (vistun). Prófað á lifandi korti með öllum skrifum stöðvuðum (Playwright-route).
