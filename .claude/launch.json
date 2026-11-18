@@ -23,12 +23,6 @@
       "port": 8788
     },
     {
-      "name": "slokk-bord-prof",
-      "runtimeExecutable": "npx",
-      "runtimeArgs": ["--yes", "serve", "-l", "8796", "C:\\Users\\Slokkvitaeki\\slokkvitaeki"],
-      "port": 8796
-    },
-    {
       "name": "adgangar-dev",
       "runtimeExecutable": "node",
       "runtimeArgs": [
