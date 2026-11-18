@@ -20,6 +20,11 @@ const BUCKET = 'verkstadir';
 const BH_KT = '5204172300';
 const GERVI_FORSKEYTI = 'Brunahólf - ';
 const LISTI = 'worksite_name,heimilisfang,heimilisfang_heimild,mynd_url,mynd_heimild,mynd_texti,hus,updated_at,updated_by';
+// FotoWeb-cache-slóðir (…/fotoweb/cache/v2/…<lykill>.jpg) eru ALDREI geymdar (18.11.2026): safnið skiptir um lykilinn á
+// 1–2 dögum og slóðin svarar þá 404 (mælt: 12 af 13 geymdum). `infoUrl` er varanlegt og js/verkstadur.js sækir smámyndina
+// eftir því gegnum teikn-mynd. Vafrinn hreinsar þetta líka, en gamalt eintak af honum í skyndiminni má ekki menga töfluna.
+const anCacheSlodar = (t) => (t && typeof t === 'object' && /\/fotoweb\/cache\//i.test(String(t.thumb || ''))) ? { ...t, thumb: null } : t;
+exports._anCacheSlodar = anCacheSlodar;
 
 exports.handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') return resp(204, '', cors());
@@ -93,7 +98,7 @@ exports.handler = async (event) => {
     heimilisfang: String(b.heimilisfang || '').trim() || null,
     heimilisfang_heimild: b.heimilisfang_heimild || null,
     hus: b.hus || null,
-    teikningar: Array.isArray(b.teikningar) ? b.teikningar.slice(0, 60) : null,
+    teikningar: Array.isArray(b.teikningar) ? b.teikningar.slice(0, 60).map(anCacheSlodar) : null,
     updated_at: new Date().toISOString(),
     updated_by: String(b.by || '').slice(0, 60) || null,
   };

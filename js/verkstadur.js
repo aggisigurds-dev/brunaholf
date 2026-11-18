@@ -34,6 +34,28 @@
   // Supabase-smækkun: ALLTAF resize=contain — width eitt sér SKER myndina (mælt 21.10.2026).
   const smaekka = (u, w) => /\/storage\/v1\/object\/public\//.test(u || '') ? u.replace('/storage/v1/object/public/', '/storage/v1/render/image/public/') + '?width=' + (w || 240) + '&resize=contain' : u;
   const imgMedVaraleid = (u, w) => `<img src="${esc(smaekka(u, w))}" alt="" loading="lazy" onerror="if(!this.dataset.f){this.dataset.f=1;this.src=${esc(JSON.stringify(u))}}">`;
+  // Smámynd teikningar úr skjalasafni Reykjavíkur (18.11.2026 — villur #1306–#1427, „Náði ekki í img", 28 raðir á tveimur vikum).
+  // RÓTIN: hus-upplysingar skilar `thumb` sem beinni FotoWeb-slóð (…/fotoweb/cache/v2/…<lykill>.jpg) og safnið skiptir um
+  // lykilinn á 1–2 dögum. MÆLT 18.11: 12 af 13 geymdum slóðum (frá 02.10 til 16.11) svara 404, aðeins sú frá 17.11 svarar 200.
+  // Slóðin var geymd í verkstadur_info.teikningar og sett beint í <img> → auður rammi og ein villuröð per mynd.
+  // LAGFÆRING: nota og geyma ENGA FotoWeb-cache-slóð. `infoUrl` er varanlegur permalink; Slökkvitækja-fallið teikn-mynd flettir
+  // forskoðuninni upp í hvert sinn (?staerd=N — sama leið og séruppdrættir fengu 05.11.2026) og svarið liggur í varanlegu
+  // CDN-minni í ár. Gamlar raðir með dauðu `thumb` lagast því án þess að gögnum sé breytt.
+  // Náist myndin samt ekki (safnið niðri) kemur staðgengill í stað brotinnar myndar; tengillinn á blaðið virkar áfram.
+  const FOTOWEB_CACHE = /\/fotoweb\/cache\//i;
+  const RVK_PERMALINK = /^https:\/\/skjalasafn\.reykjavik\.is\/fotoweb\/archives\/.+\.info$/i;
+  const anCacheSlodar = (u) => (u && !FOTOWEB_CACHE.test(String(u))) ? String(u) : null;
+  const teiknSmamynd = (t) => {
+    const info = String((t && t.infoUrl) || '');
+    if (RVK_PERMALINK.test(info)) return SLOKK + '/.netlify/functions/teikn-mynd?staerd=400&url=' + encodeURIComponent(info);
+    return anCacheSlodar(t && t.thumb) || '';
+  };
+  const teiknMynd = (t) => {
+    const u = teiknSmamynd(t);
+    return u
+      ? `<img src="${esc(u)}" alt="" loading="lazy" onerror="var s=document.createElement('span');s.className='kyvs-pdf';s.textContent='Mynd vantar';this.replaceWith(s)">`
+      : '<span class="kyvs-pdf">PDF</span>';
+  };
   const myndUrl = (ws) => (VSI[ws] && VSI[ws].mynd_url) || '';
   const inni = (ws) => myndUrl(ws) ? imgMedVaraleid(myndUrl(ws), 240) : '<span>＋ mynd</span>';
   function smamynd(ws, titill) {
@@ -105,7 +127,7 @@
     const e = hu.eign || null;
     const fullt = e && e.label ? (e.label + (e.postnr ? ', ' + e.postnr : '')) : heimilisfang;
     const hm = await fetch(SLOKK + '/api/husmynd', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ address: fullt }) }).then((r) => r.json()).catch(() => ({}));
-    const res = (hu.results || []).map((t) => ({ filename: t.filename, infoUrl: t.infoUrl, thumb: t.thumb || null, lysing: t.lysing || '', tegund: t.tegund || '', dags: t.dags || '', haed: t.haed || [], stig: t.stig || [], grunnmynd: !!t.grunnmynd, urelt: !!t.urelt }));
+    const res = (hu.results || []).map((t) => ({ filename: t.filename, infoUrl: t.infoUrl, thumb: anCacheSlodar(t.thumb), lysing: t.lysing || '', tegund: t.tegund || '', dags: t.dags || '', haed: t.haed || [], stig: t.stig || [], grunnmynd: !!t.grunnmynd, urelt: !!t.urelt }));
     res.sort((a, b) => (a.urelt - b.urelt) || (b.grunnmynd - a.grunnmynd) || String(b.dags).localeCompare(String(a.dags)));
     const body = { action: 'vista', ws, heimilisfang, heimilisfang_heimild: heimild,
       nytt_heimilisfang: ((VSI[ws] || {}).heimilisfang || '') !== heimilisfang,
@@ -172,7 +194,7 @@
       const kort = v.heimilisfang ? 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent((e.label ? e.label + ', ' + (e.postnr || '') : v.heimilisfang) + ' Ísland') : '';
       const flis = [e.landnr ? 'Landnr. L' + esc(e.landnr) : '', til.haedir ? esc(til.haedir) + ' hæðir' : '', til.kjallari === 'yes' ? 'kjallari' : '', til.jardhaed === 'yes' ? 'jarðhæð' : '', til.ris === 'yes' ? 'ris' : '']
         .filter(Boolean).map((x) => `<span class="kyvs-f">${x}</span>`).join('');
-      const tHtml = tl.slice(0, 24).map((t) => `<a class="kyvs-tk${t.urelt ? ' urelt' : ''}" href="${esc(t.infoUrl || '#')}" target="_blank" rel="noopener" title="${esc([t.tegund, t.lysing, t.dags].filter(Boolean).join(' · '))}">${t.thumb ? `<img src="${esc(t.thumb)}" alt="" loading="lazy">` : '<span class="kyvs-pdf">PDF</span>'}<span class="kyvs-tl">${esc(t.lysing || t.filename || 'Teikning')}</span><span class="kyvs-td">${esc(t.dags ? dmy(t.dags) : '')}${t.urelt ? ' · úrelt' : ''}</span></a>`).join('');
+      const tHtml = tl.slice(0, 24).map((t) => `<a class="kyvs-tk${t.urelt ? ' urelt' : ''}" href="${esc(t.infoUrl || '#')}" target="_blank" rel="noopener" title="${esc([t.tegund, t.lysing, t.dags].filter(Boolean).join(' · '))}">${teiknMynd(t)}<span class="kyvs-tl">${esc(t.lysing || t.filename || 'Teikning')}</span><span class="kyvs-td">${esc(t.dags ? dmy(t.dags) : '')}${t.urelt ? ' · úrelt' : ''}</span></a>`).join('');
       el.innerHTML = `
         <div class="kyvs-efst${opts.innfellt ? ' innf' : ''}">
           <div class="kyvs-vinstri">
@@ -306,5 +328,5 @@
   }
 
   // info(ws): röð verkstaðarins úr skyndiminninu (heimilisfang, mynd) — Viðskiptavinir · Staðir & teikningar (03.11.2026)
-  window.BhVerkstadur = { hlada, smamynd, bordi, mala, opna, teikna, mynd: myndUrl, tillaga, info: (ws) => VSI[ws] || null };
+  window.BhVerkstadur = { hlada, smamynd, bordi, mala, opna, teikna, mynd: myndUrl, tillaga, info: (ws) => VSI[ws] || null, teiknSmamynd };
 })();
