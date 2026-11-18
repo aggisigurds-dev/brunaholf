@@ -257,8 +257,9 @@ bara 100 % líkur á mistökum og tjóni.“ Og 17.11: „ef ég er að vinna ge
 inn á browserinn hjá sessions.“ **Biddu hann ALDREI að skrá sig inn í vafra lotunnar.**
 
 Hver Claude-lota hefur sinn eigin vafra og sínar eigin kökur, svo lotan skráir sig inn SJÁLF. Til þess
-er sérstakur aðgangur: **uid 10, „Lota (Claude)“, hlutverk Starfsmaður** — ekki manneskja, ekki Agnar,
-og hann má slökkva hvenær sem er með `update hub_adgangar set virkur=false where id=10`.
+er sérstakur aðgangur: **uid 10, „Lota (Claude)“, hlutverk Admin** (Agnar hækkaði hann 18.11.2026 svo
+lotur kæmust líka í borðsins eigin föll) — ekki manneskja, ekki Agnar, og hann má slökkva hvenær sem
+er með `update hub_adgangar set virkur=false where id=10`.
 
 ```sql
 select kaka, notandi, rola, rennur_ut from innri.lotu_koku(10, 2);   -- uid 10 = Lota (Claude), 2 klst.
@@ -284,10 +285,15 @@ Myntaðu nýja í stað þess að geyma hana. Skemað `innri` er ekki opið Post
 með publishable-lykli né RPC.
 
 **Mælt 18.11.2026 kl. 09:30 með uid-10 kökunni:** `/api/odin` svarar 401 án hennar og **200** með;
-`/api/krofu-yfirlit-bru` svarar 200 í báðum tilvikum (opið). Slökkvitækis-megin opnast `/api/bh-toki`
-(401 → 200), en `/api/afgreidsla` og `/api/tekjur-beint` svara **403 „Aðeins fyrir stjórnanda“** —
-þau eru Admin-only og eiga að vera það. Þurfi próf óhjákvæmilega Admin-fall, segðu Agnari hvaða fall
-og hvers vegna; ekki mynta uid 1.
+`/api/krofu-yfirlit-bru` svarar 200 í báðum tilvikum (opið). Slökkvitækis-megin opnast `/api/bh-toki`,
+`/api/afgreidsla` og `/api/tekjur-beint` öll (401 → 200) eftir að aðgangurinn varð Admin.
+
+**Admin fylgir ábyrgð, ekki nýtt leyfi.** Aðgangurinn er til þess að lotan geti SÉÐ og PRÓFAÐ það sem
+hún smíðar. Venjulegu reglurnar standa óbreyttar og Admin-kakan víkur þeim ekki til hliðar: ekkert fer
+út úr húsi (póstur, SMS, krafa, reikningur, kredit, Payday-sending, hlekkur til kúnna), engu er eytt,
+engin fyrirtæki sameinuð, engri kennitölu né verði breytt, og borð annarra starfsmanna eru ósnert.
+Allt slíkt endar sem drög eða tilbúið verk sem Agnar ýtir á. Aðgerðir skrást á „Lota (Claude)“, svo
+þær eru rekjanlegar og aðskildar frá Agnari sjálfum.
 
 ## Verkefnalisti (Claude task board) — vinnureglur
 
