@@ -1,14 +1,17 @@
-// Próf: lotukerfið sækir sjálft nýjustu útgáfu sína (tools/_uppfaera.cjs) + lásinn á notendaskránni (tools/_lokanir.cjs).
+// Próf: lotukerfið veit hvort vélin er með nýjustu útgáfu og segir lotunni frá ef ekki (tools/_uppfaera.cjs),
+// + lásinn á notendaskránni (tools/_lokanir.cjs).
 // Keyrsla: node --test test/lotukerfi-uppfaersla.test.js
 //
 // AF HVERJU: 18.11.2026 var innskráning lotna löguð á einni vél og Agnar fékk sömu spurninguna áfram af hinum („ennþá
-// veseeeen“) — enginn sækir nýja útgáfu af hookunum á hinar vélarnar. Nú gerir lotukerfið það sjálft. Það sem má ALDREI bila:
-//   1. vinnutré sem er á main og hreint fær nýjustu útgáfu (hraðspólun);
-//   2. ALLT annað er látið ósnert: óvistaðar breytingar, grein, staðbundin commit, órakin skrá í veginum, worktree;
-//   3. net/git-bilun kastar engu og snertir ekkert;
-//   4. byrjun lotu tefst ekki: uppfærslan er ræst í aðskildu ferli, mest einu sinni á 3 klst. á vél;
-//   5. tvær lotur sem byrja í sömu andrá tvítaka ekki kaflana í ~/.claude/CLAUDE.md.
-// Allt keyrir á bráðabirgða-git-repóum í tmp; ekkert net og ekkert raunverulegt vinnutré er snert.
+// veseeeen“) — enginn sækir nýja útgáfu af hookunum á hinar vélarnar. Það sem má ALDREI bila:
+//   1. vél sem er á eftir origin/main: lotan fær EINA línu um að sækja; vél með nýjustu útgáfu: engin lína;
+//   2. athugunin SKRIFAR EKKERT í repóið — hún sækir ekki, sameinar ekki og snertir ekki vinnutréð (rýni 18.11.2026 sýndi
+//      að sjálfvirk hraðspólun getur skilið tré eftir hálfuppfært; þess vegna tilkynnir kerfið og lotan framkvæmir);
+//   3. línan hverfur um leið og lota hefur sótt, án nets;
+//   4. net/git-bilun kastar engu, og vél sem var á eftir telst það áfram;
+//   5. byrjun lotu tefst ekki að ráði: mest ein athugun á 3 klst., með tímaþaki;
+//   6. tvær lotur sem byrja í sömu andrá tvítaka ekki kaflana í ~/.claude/CLAUDE.md.
+// Allt keyrir á bráðabirgða-git-repóum í tmp („origin“ er mappa á diski): ekkert net, ekkert raunverulegt vinnutré.
 'use strict';
 const test = require('node:test');
 const assert = require('node:assert/strict');
@@ -22,12 +25,10 @@ const UPP = require(path.join(ROT, 'tools', '_uppfaera.cjs'));
 const LOK = require(path.join(ROT, 'tools', '_lokanir.cjs'));
 const tmp = (n) => fs.mkdtempSync(path.join(os.tmpdir(), 'uppf-' + n + '-'));
 const lesa = (p) => fs.readFileSync(p, 'utf8');
-// Skrár í git-vinnutré: Windows-vél með core.autocrlf skilar CRLF við útskrift — efnið er borið saman án þess.
-const efni = (p) => lesa(p).replace(/\r\n/g, '\n');
 const g = (cwd, ...arg) => execFileSync('git', ['-c', 'user.name=Prof', '-c', 'user.email=prof@example.invalid', '-c', 'commit.gpgsign=false', '-c', 'core.autocrlf=false', ...arg],
   { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
 
-/* origin (bert repó) + „höfundur“ sem ýtir + „vél“ sem er klónuð á main. Skilar líka fallinu yta(skra, efni). */
+/* origin (bert repó) + „höfundur“ sem ýtir + „vél“ sem er klónuð á main. yta(skra, efni) bætir commiti við origin. */
 function umhverfi() {
   const rot = tmp('git');
   const origin = path.join(rot, 'origin.git'), hof = path.join(rot, 'hofundur'), vel = path.join(rot, 'vel'), heima = path.join(rot, 'heima');
@@ -37,144 +38,150 @@ function umhverfi() {
   fs.writeFileSync(path.join(hof, 'hook.txt'), 'utgafa 1\n');
   g(hof, 'add', '-A'); g(hof, 'commit', '--quiet', '-m', 'fyrsta'); g(hof, 'push', '--quiet', 'origin', 'main');
   g(rot, 'clone', '--quiet', origin, vel);
-  const yta = (skra, efni) => { fs.writeFileSync(path.join(hof, skra), efni); g(hof, 'add', '-A'); g(hof, 'commit', '--quiet', '-m', 'breyting ' + skra); g(hof, 'push', '--quiet', 'origin', 'main'); };
-  return { rot, origin, hof, vel, heima, yta, haus: () => g(vel, 'rev-parse', 'HEAD') };
+  const yta = (skra, efni) => { fs.writeFileSync(path.join(hof, skra), efni); g(hof, 'add', '-A'); g(hof, 'commit', '--quiet', '-m', 'breyting ' + skra); g(hof, 'push', '--quiet', 'origin', 'main'); return g(hof, 'rev-parse', 'HEAD'); };
+  // „fingrafar“ vinnutrésins og .git: ef athugunin skrifar nokkuð í repóið breytist það
+  const fingrafar = () => [g(vel, 'rev-parse', 'HEAD'), g(vel, 'status', '--porcelain'), g(vel, 'for-each-ref'), fs.existsSync(path.join(vel, '.git', 'FETCH_HEAD')), lesa(path.join(vel, 'hook.txt'))].join('|');
+  return { rot, origin, hof, vel, heima, yta, fingrafar };
 }
 const stada = (heima) => JSON.parse(lesa(path.join(heima, 'lotukerfi-uppfaersla.json')));
+const T = 1700000000000;
 
-test('á main og hreint → nýjasta útgáfa sótt (hraðspólun) og staðan skráð; önnur keyrsla: ekkert að sækja', () => {
+test('vél með nýjustu útgáfu → „nyjast“ og engin lína; origin fær nýtt commit → „a_eftir“ og lotan fær línuna', async () => {
   const u = umhverfi();
-  u.yta('hook.txt', 'utgafa 2\n'); u.yta('nytt.txt', 'ny skra\n');
-  const r = UPP.uppfaera({ repo: u.vel, heima: u.heima, nu: 1000 });
-  assert.equal(r.stada, 'uppfaert'); assert.equal(r.sott, 2); assert.equal(r.a_eftir, 0); assert.equal(r.grein, 'main');
-  assert.equal(efni(path.join(u.vel, 'hook.txt')), 'utgafa 2\n');
-  assert.ok(fs.existsSync(path.join(u.vel, 'nytt.txt')));
-  assert.equal(u.haus(), g(u.hof, 'rev-parse', 'HEAD'));
+  let r = await UPP.athuga({ repo: u.vel, heima: u.heima, nu: T });
+  assert.equal(r.stada, 'nyjast'); assert.equal(r.sha, g(u.vel, 'rev-parse', 'HEAD'));
   assert.deepEqual(stada(u.heima), r);
-  assert.equal(UPP.uppfaera({ repo: u.vel, heima: u.heima }).stada, 'nyjast');
-  assert.equal(UPP.lina({ heima: u.heima }), '', 'engin lína þegar vélin er með nýjustu útgáfu');
-});
+  assert.equal(UPP.lina({ heima: u.heima }), '');
 
-test('óvistaðar breytingar í rakinni skrá → EKKERT snert; línan segir lotunni frá, Agnar er ekki spurður', () => {
-  const u = umhverfi(), fyrir = u.haus();
-  fs.writeFileSync(path.join(u.vel, 'hook.txt'), 'vinna annarrar lotu\n');
-  u.yta('hook.txt', 'utgafa 2\n');
-  const r = UPP.uppfaera({ repo: u.vel, heima: u.heima });
-  assert.equal(r.stada, 'a_eftir'); assert.equal(r.a_eftir, 1); assert.match(r.astaeda, /óvistaðar breytingar/);
-  assert.equal(efni(path.join(u.vel, 'hook.txt')), 'vinna annarrar lotu\n', 'óvistuð vinna stendur óbreytt');
-  assert.equal(u.haus(), fyrir);
+  const nytt = u.yta('hook.txt', 'utgafa 2\n');
+  const fyrir = u.fingrafar();
+  r = await UPP.athuga({ repo: u.vel, heima: u.heima, nu: T + UPP.BIL_MS + 1 });
+  assert.equal(r.stada, 'a_eftir'); assert.equal(r.sha, nytt);
+  assert.equal(u.fingrafar(), fyrir, 'athugunin skrifaði EKKERT í repóið: sama HEAD, sömu tilvísanir, ekkert FETCH_HEAD, sama skrá');
+
   const l = UPP.lina({ heima: u.heima });
-  assert.match(l, /er 1 commit á eftir origin\/main \(óvistaðar breytingar í vinnutrénu\)/);
-  assert.ok(l.includes('git -C "' + u.vel + '" pull --ff-only'));
-  assert.match(l, /Annars láttu það vera/); assert.match(l, /Spurðu Agnar ekki/);
-  assert.ok(!/stash|reset|checkout|force/.test(l), 'línan má aldrei stinga upp á að henda eða fela vinnu');
+  assert.match(l, /^Lotukerfið á þessari vél er á eftir origin\/main/);
+  assert.ok(l.includes('git -C "' + u.vel + '" status -sb') && l.includes('git -C "' + u.vel + '" pull --ff-only'));
+  assert.match(l, /Sýni það aðra grein eða breyttar skrár er önnur lota að vinna þar: snertu ekkert/);
+  assert.match(l, /Spurðu Agnar ekki/);
+  assert.ok(!/stash|reset|checkout|force|clean/.test(l), 'línan má aldrei stinga upp á að henda eða fela vinnu');
+  assert.equal(u.fingrafar(), fyrir, 'lina() les aðeins');
 });
 
-test('á grein, á lausu commiti, með staðbundið commit eða órakta skrá í veginum → ekkert snert, ástæðan skráð', () => {
-  // grein
-  let u = umhverfi(); g(u.vel, 'checkout', '--quiet', '-b', 'vinna'); let fyrir = u.haus(); u.yta('hook.txt', 'utgafa 2\n');
-  let r = UPP.uppfaera({ repo: u.vel, heima: u.heima });
-  assert.deepEqual([r.stada, r.grein, r.a_eftir], ['a_eftir', 'vinna', 1]); assert.match(r.astaeda, /greininni vinna/);
-  assert.equal(u.haus(), fyrir); assert.equal(g(u.vel, 'rev-parse', '--abbrev-ref', 'HEAD'), 'vinna');
-  // laust commit (detached HEAD)
-  u = umhverfi(); g(u.vel, 'checkout', '--quiet', '--detach'); fyrir = u.haus(); u.yta('hook.txt', 'utgafa 2\n');
-  r = UPP.uppfaera({ repo: u.vel, heima: u.heima });
-  assert.equal(r.stada, 'a_eftir'); assert.match(r.astaeda, /lausu commiti/); assert.equal(u.haus(), fyrir);
-  // staðbundið commit á main (sundurleitt) — engin samruna-commit verður til
-  u = umhverfi(); fs.writeFileSync(path.join(u.vel, 'stadbundid.txt'), 'x\n'); g(u.vel, 'add', '-A'); g(u.vel, 'commit', '--quiet', '-m', 'stadbundid'); fyrir = u.haus();
+test('línan hverfur um leið og lota hefur sótt — án nets og án þess að bíða næstu athugunar', async () => {
+  const u = umhverfi();
   u.yta('hook.txt', 'utgafa 2\n');
-  r = UPP.uppfaera({ repo: u.vel, heima: u.heima });
-  assert.equal(r.stada, 'a_eftir'); assert.match(r.astaeda, /hraðspólun gekk ekki/);
-  assert.equal(u.haus(), fyrir); assert.equal(efni(path.join(u.vel, 'hook.txt')), 'utgafa 1\n');
-  // órakin skrá sem nýja útgáfan myndi yfirskrifa
-  u = umhverfi(); fs.writeFileSync(path.join(u.vel, 'nytt.txt'), 'mitt eigið\n'); fyrir = u.haus(); u.yta('nytt.txt', 'fra origin\n');
-  r = UPP.uppfaera({ repo: u.vel, heima: u.heima });
-  assert.equal(r.stada, 'a_eftir'); assert.equal(u.haus(), fyrir);
-  assert.equal(efni(path.join(u.vel, 'nytt.txt')), 'mitt eigið\n', 'órakin skrá er aldrei yfirskrifuð');
+  await UPP.athuga({ repo: u.vel, heima: u.heima, nu: T });
+  assert.ok(UPP.lina({ heima: u.heima }));
+  g(u.vel, 'pull', '--quiet', '--ff-only');                                        // lotan gerir það sem línan segir
+  g(u.vel, 'remote', 'set-url', 'origin', path.join(u.rot, 'horfid.git'));         // og netið er farið
+  assert.equal(UPP.lina({ heima: u.heima }), '');
+  assert.equal(stada(u.heima).stada, 'nyjast', 'staðan leiðrétt á staðnum');
+  // Vinnutré á grein sem inniheldur EKKI nýjasta main telst á eftir (hookarnir þar eru gamlir) — línan segir þá „snertu ekkert“.
+  const v = umhverfi(); g(v.vel, 'checkout', '--quiet', '-b', 'vinna'); v.yta('hook.txt', 'utgafa 2\n');
+  assert.equal((await UPP.athuga({ repo: v.vel, heima: v.heima, nu: T })).stada, 'a_eftir');
+  assert.match(UPP.lina({ heima: v.heima }), /aðra grein/);
 });
 
-test('worktree (.git er skrá) → sleppt og ekkert ræst; origin næst ekki → villa, ekkert kast, ekkert snert', () => {
+test('mest ein athugun á 3 klst. á vél: innan bilsins er ekkert spurt og ekkert skráð', async () => {
+  const u = umhverfi();
+  assert.ok(await UPP.athuga({ repo: u.vel, heima: u.heima, nu: T }));
+  const skrad = lesa(path.join(u.heima, 'lotukerfi-uppfaersla.json'));
+  u.yta('hook.txt', 'utgafa 2\n');
+  assert.equal(await UPP.athuga({ repo: u.vel, heima: u.heima, nu: T + UPP.BIL_MS - 1 }), null, 'innan 3 klst.: ekki aftur');
+  assert.equal(lesa(path.join(u.heima, 'lotukerfi-uppfaersla.json')), skrad);
+  assert.equal((await UPP.athuga({ repo: u.vel, heima: u.heima, nu: T + UPP.BIL_MS })).stada, 'a_eftir', 'eftir 3 klst.: aftur');
+});
+
+test('origin næst ekki → engu kastað, fyrri niðurstaða stendur (vél sem var á eftir er það enn) og reynt fyrr aftur', async () => {
+  const u = umhverfi();
+  u.yta('hook.txt', 'utgafa 2\n');
+  const r1 = await UPP.athuga({ repo: u.vel, heima: u.heima, nu: T });
+  assert.equal(r1.stada, 'a_eftir');
+  g(u.vel, 'remote', 'set-url', 'origin', path.join(u.rot, 'horfid.git'));
+  const t2 = T + UPP.BIL_MS + 5;
+  const r2 = await UPP.athuga({ repo: u.vel, heima: u.heima, nu: t2 });
+  assert.equal(r2.stada, 'a_eftir', 'fyrri niðurstaða stendur'); assert.equal(r2.sha, r1.sha); assert.ok(r2.villa);
+  assert.equal(r2.naest, t2 + UPP.BIL_VILLA_MS, 'reynt aftur eftir hálftíma, ekki þrjá');
+  assert.ok(UPP.lina({ heima: u.heima }), 'línan helst');
+  // Vél sem hefur aldrei náð í origin: engin fullyrðing, engin lína.
+  const v = umhverfi(); g(v.vel, 'remote', 'set-url', 'origin', path.join(v.rot, 'horfid.git'));
+  const r3 = await UPP.athuga({ repo: v.vel, heima: v.heima, nu: T });
+  assert.ok(r3.villa && !r3.stada);
+  assert.equal(UPP.lina({ heima: v.heima }), '');
+  // Tímaþak: git sem svarar ekki innan frests → villa skráð, ekkert kast.
+  const w = umhverfi();
+  const r4 = await UPP.athuga({ repo: w.vel, heima: w.heima, nu: T, frestur: 1 });
+  assert.ok(r4 && (r4.villa || r4.stada), 'skilar alltaf einhverju');
+});
+
+test('ekkert athugað: worktree (.git er skrá), LOTUKERFI_UPPFAERSLA=0, ekki repó, heimamappa sem er skrá', async () => {
   const u = umhverfi();
   const wt = path.join(u.rot, 'wt'); g(u.vel, 'worktree', 'add', '--quiet', '-b', 'onnur', wt);
   assert.equal(UPP.erAdaltre(u.vel), true); assert.equal(UPP.erAdaltre(wt), false); assert.equal(UPP.erAdaltre(path.join(u.rot, 'ekki-til')), false);
-  assert.equal(UPP.uppfaera({ repo: wt, heima: u.heima }).stada, 'sleppt');
-  let raest = 0;
-  assert.equal(UPP.raesa({ repo: wt, heima: u.heima, raesir: () => { raest++; return { unref() {} }; } }), false);
-  assert.equal(raest, 0);
-  // origin horfið
-  const fyrir = u.haus();
-  g(u.vel, 'remote', 'set-url', 'origin', path.join(u.rot, 'horfid.git'));
-  const r = UPP.uppfaera({ repo: u.vel, heima: u.heima });
-  assert.equal(r.stada, 'villa'); assert.ok(r.astaeda); assert.equal(u.haus(), fyrir);
-  assert.equal(UPP.lina({ heima: u.heima }), '', 'bilun í neti er ekki mál lotunnar — engin lína');
-});
-
-test('raesa: aðskilið ferli, mest einu sinni á 3 klst.; slökkt með LOTUKERFI_UPPFAERSLA=0; bilun fellir ekkert', () => {
-  const u = umhverfi(), kall = [];
-  const raesir = (...a) => { kall.push(a); return { unref() {}, on() {} }; };
-  const T = 1700000000000;
-  assert.equal(UPP.raesa({ repo: u.vel, heima: u.heima, nu: T, raesir }), true);
-  assert.equal(kall.length, 1);
-  const [exe, arg, opt] = kall[0];
-  assert.equal(exe, process.execPath);
-  assert.deepEqual(arg, [path.join(ROT, 'tools', '_uppfaera.cjs'), '--keyra', u.vel, u.heima]);
-  assert.deepEqual([opt.detached, opt.stdio, opt.windowsHide], [true, 'ignore', true], 'aðskilið, hljótt og gluggalaust');
-  assert.equal(stada(u.heima).reynt, T, 'tímastimpill skrifaður ÁÐUR en ferlið er ræst');
-  assert.equal(UPP.raesa({ repo: u.vel, heima: u.heima, nu: T + UPP.BIL_MS - 1, raesir }), false, 'innan 3 klst.: ekki aftur');
-  assert.equal(UPP.raesa({ repo: u.vel, heima: u.heima, nu: T + UPP.BIL_MS + 1, raesir }), true, 'eftir 3 klst.: aftur');
-  assert.equal(kall.length, 2);
-  // slökkt
+  assert.equal(await UPP.athuga({ repo: wt, heima: u.heima, nu: T }), null);
+  assert.equal(await UPP.athuga({ repo: path.join(u.rot, 'ekki-til'), heima: u.heima, nu: T }), null);
   const adur = process.env.LOTUKERFI_UPPFAERSLA;
   process.env.LOTUKERFI_UPPFAERSLA = '0';
-  try { assert.equal(UPP.raesa({ repo: u.vel, heima: path.join(u.rot, 'h2'), raesir }), false); } finally { if (adur === undefined) delete process.env.LOTUKERFI_UPPFAERSLA; else process.env.LOTUKERFI_UPPFAERSLA = adur; }
-  assert.equal(kall.length, 2);
-  // ræsirinn kastar / heimamappa er skrá → false, ekkert kast
-  assert.equal(UPP.raesa({ repo: u.vel, heima: path.join(u.rot, 'h3'), raesir: () => { throw new Error('spawn brást'); } }), false);
+  try { assert.equal(await UPP.athuga({ repo: u.vel, heima: u.heima, nu: T }), null); }
+  finally { if (adur === undefined) delete process.env.LOTUKERFI_UPPFAERSLA; else process.env.LOTUKERFI_UPPFAERSLA = adur; }
+  assert.ok(!fs.existsSync(path.join(u.heima, 'lotukerfi-uppfaersla.json')), 'ekkert skráð í neinu þessara tilvika');
   const skra = path.join(u.rot, 'er-skra'); fs.writeFileSync(skra, 'x');
-  assert.equal(UPP.raesa({ repo: u.vel, heima: skra, raesir }), false);
+  assert.equal(await UPP.athuga({ repo: u.vel, heima: skra, nu: T }), null, 'heimamappa sem er skrá: ekkert kast');
 });
 
-test('lina: aðeins þegar vélin er á eftir og kerfið gat ekki lagað það sjálft', () => {
+test('lina: þegir nema staðan sé „a_eftir“ með auðkenni; skemmd skrá og horfið repó fella ekkert', () => {
   const heima = tmp('lina');
-  const setja = (j) => fs.writeFileSync(path.join(heima, 'lotukerfi-uppfaersla.json'), JSON.stringify(j));
+  const setja = (j) => fs.writeFileSync(path.join(heima, 'lotukerfi-uppfaersla.json'), typeof j === 'string' ? j : JSON.stringify(j));
   assert.equal(UPP.lina({ heima }), '', 'engin staða enn');
-  for (const j of [{ stada: 'nyjast', a_eftir: 0 }, { stada: 'uppfaert', a_eftir: 0, sott: 3 }, { stada: 'villa', a_eftir: null }, { stada: 'sleppt' }, { stada: 'a_eftir', a_eftir: 0 }, { reynt: 1 }]) {
+  for (const j of [{ stada: 'nyjast', sha: 'a'.repeat(40), repo: 'X:\\v' }, { villa: 'ekkert net' }, { stada: 'a_eftir' }, { stada: 'a_eftir', sha: 'a'.repeat(40) }, { reynt: 1 }, '{skemmt', '[]']) {
     setja(j); assert.equal(UPP.lina({ heima }), '', JSON.stringify(j));
   }
-  setja({ stada: 'a_eftir', a_eftir: 7, repo: 'X:\\verk\\brunaholf', astaeda: 'vinnutréð er á greininni vinna' });
-  assert.match(UPP.lina({ heima }), /^Lotukerfið á þessari vél er 7 commit á eftir origin\/main \(vinnutréð er á greininni vinna\)/);
-  fs.writeFileSync(path.join(heima, 'lotukerfi-uppfaersla.json'), '{skemmt');
-  assert.equal(UPP.lina({ heima }), '', 'skemmd skrá fellir ekkert');
+  setja({ stada: 'a_eftir', sha: 'a'.repeat(40), repo: path.join(heima, 'repo-sem-er-horfid') });
+  assert.equal(UPP.lina({ heima }), '', 'repóið finnst ekki → þegja frekar en að fullyrða');
 });
 
-test('ENDA Í ENDA: raesa ræsir raunverulegt aðskilið ferli sem sækir nýjustu útgáfu án þess að kallandinn bíði', async () => {
-  const u = umhverfi();
-  u.yta('hook.txt', 'utgafa 2\n');
+/* ── Í gegnum raunverulega hookinn ─────────────────────────────────────────────────────────────── */
+function byrjun(u, auka = {}) {
+  const cwd = tmp('cwd'), tom = tmp('tomt');
   const t0 = Date.now();
-  assert.equal(UPP.raesa({ repo: u.vel, heima: u.heima }), true);
-  assert.ok(Date.now() - t0 < 1500, 'raesa snýr strax við (' + (Date.now() - t0) + ' ms)');
-  let s = {};
-  for (let i = 0; i < 150 && s.stada !== 'uppfaert'; i++) { await new Promise((r) => setTimeout(r, 200)); try { s = stada(u.heima); } catch (_) {} }
-  assert.equal(s.stada, 'uppfaert', 'aðskilda ferlið kláraði: ' + JSON.stringify(s));
-  assert.equal(efni(path.join(u.vel, 'hook.txt')), 'utgafa 2\n');
+  const r = spawnSync(process.execPath, [path.join(ROT, 'tools', 'lotu-byrjun.cjs')], {
+    input: JSON.stringify({ session_id: 's-' + t0, cwd }), encoding: 'utf8', timeout: 20000,
+    env: Object.assign({}, process.env, { USERPROFILE: u.heimili, HOME: u.heimili, SL_REPO: tom, SUPABASE_URL: '', SUPABASE_ANON_KEY: '', SUPABASE_KEY: '',
+      LOTUKERFI_VINNUSKJOL: path.join(tom, '_vinnuskjol') }, auka),
+  });
+  assert.equal(r.status, 0, r.stderr);
+  return { ctx: JSON.parse(r.stdout).hookSpecificOutput.additionalContext, ms: Date.now() - t0 };
+}
+
+test('ENDA Í ENDA: byrjun lotu á vél sem er á eftir → línan kemur í SÖMU byrjun, innan tímamarka hooksins (5 s)', () => {
+  // BH_REPO bendir hookunum á prófvélina (aðalvinnutré á main, einu commiti á eftir „origin“ á diski).
+  const u = umhverfi(); u.heimili = tmp('heim');
+  u.yta('hook.txt', 'utgafa 2\n');
+  const fyrir = u.fingrafar();
+  const b = byrjun(u, { BH_REPO: u.vel, LOTUKERFI_UPPFAERSLA: '' });
+  assert.match(b.ctx, /^Keflið/);
+  assert.match(b.ctx, /Lotukerfið á þessari vél er á eftir origin\/main/);
+  assert.ok(b.ctx.includes('git -C "' + u.vel + '" pull --ff-only'));
+  assert.ok(b.ms < 5000, 'hookurinn kláraðist á ' + b.ms + ' ms');
+  assert.equal(u.fingrafar(), fyrir, 'hookurinn skrifaði ekkert í repóið');
+  assert.equal(stada(path.join(u.heimili, '.claude')).stada, 'a_eftir');
+  // Lotan sækir → næsta byrjun (innan 3 klst., engin ný athugun) ber enga línu.
+  g(u.vel, 'pull', '--quiet', '--ff-only');
+  assert.ok(!/Lotukerfið á þessari vél/.test(byrjun(u, { BH_REPO: u.vel, LOTUKERFI_UPPFAERSLA: '' }).ctx));
 });
 
-test('lotu-byrjun: línan um gamla útgáfu fylgir í byrjun lotu þegar vélin er á eftir — annars ekki', () => {
-  const heima = tmp('hook'), cwd = tmp('cwd'), tom = tmp('tomt');
-  const keyra = () => {
-    const r = spawnSync(process.execPath, [path.join(ROT, 'tools', 'lotu-byrjun.cjs')], {
-      input: JSON.stringify({ session_id: 's1', cwd }), encoding: 'utf8', timeout: 20000,
-      env: Object.assign({}, process.env, { USERPROFILE: heima, HOME: heima, SL_REPO: tom, SUPABASE_URL: '', SUPABASE_ANON_KEY: '', SUPABASE_KEY: '', LOTUKERFI_UPPFAERSLA: '0' }),
-    });
-    assert.equal(r.status, 0);
-    return JSON.parse(r.stdout).hookSpecificOutput.additionalContext;
-  };
-  assert.ok(!/Lotukerfið á þessari vél/.test(keyra()));
-  assert.ok(!fs.existsSync(path.join(heima, '.claude', 'lotukerfi-uppfaersla.json')), 'LOTUKERFI_UPPFAERSLA=0: ekkert ræst og ekkert skráð');
-  fs.writeFileSync(path.join(heima, '.claude', 'lotukerfi-uppfaersla.json'), JSON.stringify({ stada: 'a_eftir', a_eftir: 4, repo: 'X:\\verk\\brunaholf', astaeda: 'óvistaðar breytingar í vinnutrénu' }));
-  const ctx = keyra();
-  assert.match(ctx, /Lotukerfið á þessari vél er 4 commit á eftir/);
-  assert.ok(ctx.indexOf('Lokanir (Agnar') < ctx.indexOf('Lotukerfið á þessari vél'), 'á eftir lokanakaflanum');
+test('lotu-byrjun: slökkt (LOTUKERFI_UPPFAERSLA=0) → ekkert athugað, ekkert skráð, engin lína — og --texti athugar aldrei', () => {
+  const u = umhverfi(); u.heimili = tmp('heim');
+  u.yta('hook.txt', 'utgafa 2\n');
+  const b = byrjun(u, { BH_REPO: u.vel, LOTUKERFI_UPPFAERSLA: '0' });
+  assert.ok(!/Lotukerfið á þessari vél/.test(b.ctx));
+  assert.ok(!fs.existsSync(path.join(u.heimili, '.claude', 'lotukerfi-uppfaersla.json')));
+  const nytt = tmp('heim2');   // ný heimamappa: --texti (skoðunarhamur) má ekkert skilja eftir sig, þótt kveikt sé á athuguninni
+  const r = spawnSync(process.execPath, [path.join(ROT, 'tools', 'lotu-byrjun.cjs'), '--texti'], { input: '{}', encoding: 'utf8', timeout: 20000,
+    env: Object.assign({}, process.env, { USERPROFILE: nytt, HOME: nytt, SL_REPO: tmp('tomt'), SUPABASE_URL: '', SUPABASE_ANON_KEY: '', SUPABASE_KEY: '', BH_REPO: u.vel, LOTUKERFI_UPPFAERSLA: '' }) });
+  assert.equal(r.status, 0);
+  assert.ok(!fs.existsSync(path.join(nytt, '.claude')), '--texti skrifar ekkert og spyr origin einskis');
 });
 
 /* ── Lásinn á ~/.claude/CLAUDE.md ─────────────────────────────────────────────────────────────── */

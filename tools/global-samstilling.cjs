@@ -8,7 +8,9 @@
  *   heimaskrár agenta (AGENTAR hér að neðan)      → ~/.claude/agents/<nafn>.md
  *   hookarnir fimm (HOOKAR hér að neðan)          → ~/.claude/settings.json (aðeins BÆTT VIÐ því sem vantar)
  *
- * Keyrt úr lotu-byrjun.cjs við upphaf hverrar lotu (hljóðlaust nema eitthvað breytist). Aldrei eytt: skrá sem er yfirskrifuð
+ * Keyrt HANDVIRKT á vélinni (ótengt hookunum síðan 11.11.2026). Undantekning: kaflarnir milli „lotukerfi:… byrjar/endar“
+ * merkjanna í claude-global/CLAUDE.md berast sjálfkrafa í ~/.claude/CLAUDE.md í byrjun hverrar lotu (tools/_lokanir.cjs,
+ * 18.11.2026) — sama frumrit, svo verkfærin tvö eru sammála um þá. Aldrei eytt: skrá sem er yfirskrifuð
  * fer fyrst í ~/.claude/backups/global-samstilling/<tími>/. settings.json er aðeins snert ef hún þáttast sem JSON, og
  * aðeins til að bæta við hook sem vantar (þekkt á skráarheitinu); hookar sem eru til eru látnir í friði.
  *

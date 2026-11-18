@@ -12,7 +12,6 @@
  *   --notandi   (í ~/.claude/settings.json) þegir ef verkefnið hefur hookinn sjálft */
 'use strict';
 const G = require('./_lotu-grunnur.cjs');
-const LOK = require('./_lokanir.cjs');
 
 /* Boðhlaupið: fyrsta línan í hverri lotu — keflið má aldrei falla (Agnar 04.11.2026). */
 const KEFLI = "Keflið (boðhlaup, Agnar 04.11.2026): jarvis heldur keflinu í byrjun lotu. Keflið fellur ALDREI á jörðina — sá sem heldur því vinnur verkið sé það á hans sviði, annars réttir hann það eiganda síðunnar/gagnanna (leiðarvísir, síðuvörður, data/sidukort.json, docs/AGENTASKRA.md) og segir hverjum; finnist enginn eigandi heldur jarvis því áfram og skráir gat. Lestu Charlize (skill charlize / docs/MINNISBOK.md) áður en þú byrjar.";
@@ -47,27 +46,26 @@ async function keyra(arg = process.argv.slice(2)) {
   try { inn = JSON.parse(await G.lesaStdin(1500) || '{}'); } catch (_) {}
   const cwd = inn.cwd || process.cwd();
   if (arg.includes('--notandi') && G.verkefniHefur(cwd, 'lotu-byrjun.cjs', 'lotu-hookar.cjs')) return G.ljuka('', 0);
+  const skoda = arg.includes('--texti');   // skoðunarhamur: ekkert skrifað á vélina og ekkert sótt af netinu
+  // Er vélin með nýjustu útgáfu lotukerfisins? Athugað mest á 3 klst. fresti, SAMHLIÐA lotuminninu hér að neðan (tefur
+  // því ekki), og les aðeins — sjá _uppfaera.cjs. require er inni í try: vanti skrá eða sé hún gölluð heldur lotan áfram.
+  let UPP = null, bid = null;
+  try { UPP = require('./_uppfaera.cjs'); if (!skoda) bid = UPP.athuga().catch(() => null); } catch (_) {}
   let texti;
   try { texti = await smida(cwd); } catch (e) { texti = 'Lotuminnið (charlize_sessions) svarar ekki — haldið áfram.'; }
   // 18.11.2026 (Agnar: „burt með þessar lokanir“): hver ný lota fær kaflann um innskráningu, falinn vafraglugga og skjöl
-  // sem mega ekki í repó — og notendaskráin er sett upp á vélinni ef kaflana vantar þar (hún var aðeins til á einni vél).
-  // --texti er skoðunarhamur: þá er ekkert skrifað á vélina. Bilun hér má aldrei fella lotuna.
+  // sem mega ekki í repó — og kaflarnir í ~/.claude/CLAUDE.md eru hafðir eins og frumritið (claude-global/CLAUDE.md), því
+  // notendaskráin var aðeins til á einni vél. Bilun hér má aldrei fella lotuna.
   let lokanir = '';
   try {
+    const LOK = require('./_lokanir.cjs');
     lokanir = LOK.texti() + '\n';
-    if (!arg.includes('--texti')) { LOK.tryggjaNotandaskra(); LOK.tryggjaVinnuskjol(); LOK.merkja(inn.session_id); }
+    if (!skoda) { LOK.tryggjaNotandaskra(); LOK.tryggjaVinnuskjol(); LOK.merkja(inn.session_id); }
   } catch (_) {}
-  // Lotukerfið sækir sjálft nýjustu útgáfu sína (mest á 3 klst. fresti, í aðskildu ferli — tefur lotuna ekki). Annars
-  // situr lagfæring eins og þessi á vélinni þar sem hún var skrifuð. Línan birtist aðeins ef vélin er á eftir og
-  // uppfærslan komst ekki í gegn sjálf.
-  try {
-    const UPP = require('./_uppfaera.cjs');
-    const l = UPP.lina();
-    if (l) lokanir += l + '\n';
-    if (!arg.includes('--texti')) UPP.raesa();
-  } catch (_) {}
+  // Sé vélin á eftir fær lotan eina línu um að sækja nýju útgáfuna (annars situr lagfæring á vélinni þar sem hún var skrifuð).
+  try { if (bid) await bid; const l = UPP ? UPP.lina() : ''; if (l) lokanir += l + '\n'; } catch (_) {}
   texti = KEFLI + '\n' + lokanir + texti;
-  if (arg.includes('--texti')) return G.ljuka(texti + '\n', 0);
+  if (skoda) return G.ljuka(texti + '\n', 0);
   return G.ljuka(JSON.stringify({ hookSpecificOutput: { hookEventName: 'SessionStart', additionalContext: texti } }) + '\n', 0);
 }
 
