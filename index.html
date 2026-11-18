@@ -1274,7 +1274,7 @@ body[data-tab="reikningatenglar"] #luna-fab{display:none !important}
 }
 .section-head .num{
   font-family:var(--font-display);font-style:italic;font-weight:600;
-  font-size:13px;color:var(--red);letter-spacing:.04em;
+  font-size:13px;color:#9f4419;letter-spacing:.04em; /* 18.11.2026: var(--red) #b5522a mældist 4,40:1 á rjómapappír — undir 4,5 */
   font-variation-settings:'opsz' 14;
 }
 .section-head .title{
@@ -25710,9 +25710,9 @@ function renderYfirlit(t){
         <h3>Kerfisstaða</h3>
         <div style="display:flex;flex-direction:column;gap:8px;font-size:13px">
           <div style="display:flex;justify-content:space-between"><span>Apps Script tenging</span>
-            <span style="color:${epWired?'var(--green)':'var(--gold)'};font-weight:700">${epWired?'✓ Tengt':'⚠ Ekki stillt'}</span></div>
+            <span style="color:${epWired?'var(--green)':'var(--gold-800)'};font-weight:700">${epWired?'✓ Tengt':'⚠ Ekki stillt'}</span></div>
           <div style="display:flex;justify-content:space-between"><span>Tímavera scraper</span><span id="yf-kerfis-cron" style="color:var(--muted);font-weight:700">? sæki…</span></div>
-          <div style="display:flex;justify-content:space-between"><span>Bokhald forwarding</span><span style="color:var(--gold);font-weight:700">⏳ Bíður lykilorðs</span></div>
+          <div style="display:flex;justify-content:space-between"><span>Bokhald forwarding</span><span style="color:var(--gold-800);font-weight:700">⏳ Bíður lykilorðs</span></div>
           <div style="display:flex;justify-content:space-between"><span>Mæting sheet</span><span style="color:var(--green);font-weight:700">✓ Live CSV</span></div>
         </div>
       </div>
