@@ -160,6 +160,12 @@
   to = "/.netlify/functions/timavera-maeting"
   status = 200
 
+# Rekstrarskyrsla dagsins (18.11.2026) — badi felog, 7 timabil. Gogn: /api/rekstrarskyrsla (adeins stjornandi).
+[[redirects]]
+  from = "/rekstur"
+  to = "/rekstrarskyrsla.html"
+  status = 200
+
 # Starfsmenn — dagur fyrir dag (maeting/lok/vidvera vs. afkost). Ser-sida, ekki flipi:
 # hun er spurning stjornanda, ekki daglegt verkfaeri, og a ekki heima i hub-flettunum.
 [[redirects]]

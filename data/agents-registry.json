@@ -1,5 +1,5 @@
 {
- "generated": "2026-11-17",
+ "generated": "2026-11-18",
  "agents": 50,
  "skills": 59,
  "a_odrum_velum": 4,
@@ -865,6 +865,12 @@
      "hlutverk": "undiragent"
     },
     {
+     "id": "rekstrarskyrsla",
+     "vefur": "brunaholf",
+     "titill": "Rekstrarskýrsla",
+     "hlutverk": "eigandi"
+    },
+    {
      "id": "fjarmalyfirlit",
      "vefur": "brunaholf",
      "titill": "Fjármála-yfirlit",
@@ -1481,7 +1487,7 @@
      "repo": "slokkvitaeki",
      "path": ".claude/agents/center-hotel.md",
      "uppfaert": "2026-11-17",
-     "linur": 150
+     "linur": 166
     },
     {
      "repo": "kjarni",
@@ -1830,6 +1836,12 @@
      "id": "verkstadapostur",
      "vefur": "brunaholf",
      "titill": "Frá verkstað",
+     "hlutverk": "undiragent"
+    },
+    {
+     "id": "rekstrarskyrsla",
+     "vefur": "brunaholf",
+     "titill": "Rekstrarskýrsla",
      "hlutverk": "undiragent"
     },
     {
@@ -2478,7 +2490,7 @@
      "repo": "slokkvitaeki",
      "path": ".claude/agents/heimaleiga.md",
      "uppfaert": "2026-11-17",
-     "linur": 210
+     "linur": 216
     },
     {
      "repo": "kjarni",
@@ -4146,7 +4158,7 @@
      "repo": "slokkvitaeki",
      "path": ".claude/agents/netvordur.md",
      "uppfaert": "2026-11-17",
-     "linur": 125
+     "linur": 129
     }
    ],
    "afbrigdi": [],
@@ -5080,6 +5092,12 @@
      "hlutverk": "eigandi"
     },
     {
+     "id": "rekstrarskyrsla",
+     "vefur": "brunaholf",
+     "titill": "Rekstrarskýrsla",
+     "hlutverk": "undiragent"
+    },
+    {
      "id": "fjarmalyfirlit",
      "vefur": "brunaholf",
      "titill": "Fjármála-yfirlit",
@@ -5307,7 +5325,7 @@
      "repo": "slokkvitaeki",
      "path": ".claude/agents/sala-reikningar.md",
      "uppfaert": "2026-11-17",
-     "linur": 1054
+     "linur": 1132
     }
    ],
    "afbrigdi": [],
@@ -9822,6 +9840,36 @@
    "stada": "✅",
    "astaeda": [],
    "eigandi_nafn": "rukkari",
+   "eigandi_utan": false
+  },
+  {
+   "vefur": "brunaholf",
+   "repo": "brunaholf",
+   "id": "rekstrarskyrsla",
+   "titill": "Rekstrarskýrsla",
+   "tegund": "flipi",
+   "leid": "/#rekstrarskyrsla",
+   "skilgreind": [
+    "index.html#renderRekstrarskyrsla",
+    "rekstrarskyrsla.html",
+    "netlify/functions/rekstrarskyrsla.js",
+    "netlify/functions/_rekstur.js"
+   ],
+   "yfir": null,
+   "eigandi": "bokari",
+   "undiragentar": [
+    "rukkari",
+    "framendi"
+   ],
+   "kveikjuord": [
+    "Rekstrarskýrsla",
+    "rekstur dagsins",
+    "dagsskýrsla"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": [],
+   "eigandi_nafn": "bokari",
    "eigandi_utan": false
   },
   {
@@ -17268,8 +17316,8 @@
    "repo": "brunaholf",
    "utgafa": 1,
    "vefagent": "framendi",
-   "alls": 103,
-   "med_eiganda": 103,
+   "alls": 104,
+   "med_eiganda": 104,
    "vidvorun": 0,
    "an_eiganda": 0,
    "hlutfall": 100

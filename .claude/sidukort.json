@@ -389,6 +389,30 @@
    "athugasemd": "ónotuð síðan 06.09.2026"
   },
   {
+   "id": "rekstrarskyrsla",
+   "titill": "Rekstrarskýrsla",
+   "tegund": "flipi",
+   "leid": "/#rekstrarskyrsla",
+   "skilgreind": [
+    "index.html#renderRekstrarskyrsla",
+    "rekstrarskyrsla.html",
+    "netlify/functions/rekstrarskyrsla.js",
+    "netlify/functions/_rekstur.js"
+   ],
+   "yfir": null,
+   "eigandi": "bokari",
+   "undiragentar": [
+    "rukkari",
+    "framendi"
+   ],
+   "kveikjuord": [
+    "Rekstrarskýrsla",
+    "rekstur dagsins",
+    "dagsskýrsla"
+   ],
+   "athugasemd": "18.11.2026 — tölur beggja félaga fyrir dag/viku/síðustu viku/mánuð + 3 heila mánuði; aðeins stjórnandi; reglur í _rekstur.js"
+  },
+  {
    "id": "fjarmalyfirlit",
    "titill": "Fjármála-yfirlit",
    "tegund": "flipi",
