@@ -1443,3 +1443,7 @@ mig gegnum mappið.“ Áður hafði hann sagt að nokkrar sjálfvirkar bláar l
 - **Óútskýrt:** rafmagn missir stað þegar sjálfvirku hurðalínurnar bætast í veggjamyndina (B 316 á brunavegg, D 296). Tilgáta, ÓMÆLD: lagnaleiðir
   liggja eftir göngum samsíða hurðalínum gangveggjanna og skörunin verður þá löng en ekki skurður.
 - **Næst:** tólið ætti að lesa línurnar af verkinu sjálft (nú er veggjamyndin gerð með einnota skriftu); 5H þegar Agnar hefur farið yfir hana.
+- **Sjálfvirku bláu línurnar voru of þunnar** (Agnar: „en þínar réttu bláu línur hurfu held ég líka“, „voru þínar kannski of þunnar“). Þær hurfu ekki:
+  273 af 340 standa á 6H og voru notaðar í keyrslunni, en á kortinu voru þær 1,6 px og sáust varla við hliðina á línum hans og rauðu veggjunum.
+  Nú 5 px á teikningunni í línuham (4 px annars), ljósari blár (#3b82f6) og án endapunkta; línur Agnars 6 px með endapunktum. Kjarni d827884 + 2a4122b,
+  skoðað á lifandi korti. LÆRDÓMUR: mynd sem sýnir aðeins hluta línanna (mín fyrri mynd teiknaði bara hans 40) lítur út eins og hinar séu horfnar.
