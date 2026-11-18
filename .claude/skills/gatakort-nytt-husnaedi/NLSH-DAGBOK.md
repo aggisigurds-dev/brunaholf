@@ -1425,3 +1425,21 @@ mig gegnum mappið.“ Áður hafði hann sagt að nokkrar sjálfvirkar bláar l
   `hurdalinur` af verkinu og mála í veggjamyndina, sleppa `hurdalinurFaldar`, og leyfa punkti að festast á `graenlinur` án þess að það teljist brunaskil.
   Staða þegar þetta var skrifað: 6H 38 bláar línur Agnars og 47 sjálfvirkar faldar; engin rauð eða græn enn.
 - Kóði: kjarni main 0cdd6c4 (tólið) og c3c2ad0 (vistun). Prófað á lifandi korti með öllum skrifum stöðvuðum (Playwright-route).
+
+### 18.11.2026 (kvöld): 6. hæð endurkeyrð með línum Agnars („try sixth floor now“)
+- **Staðan á kortinu þegar keyrt var:** 40 bláar línur Agnars á 6H, engin rauð eða græn, 67 af 340 sjálfvirkum hurðalínum faldar (273 standa eftir).
+  Af 40 línum hans voru 34 þar sem hvorki var E-merkt op né sjálfvirk lína fyrir. 15 E-merkt op lágu á línum sem hann fjarlægði.
+- **Fjórar veggjamyndir bornar við handfærslur hans** (`scratchpad/festa/agnar_linur.py`, afrit í `_vinnuskjol/nlsh-loftstaerdir-20261118/yf-agnar-6h-20261118`):
+  A = í gildi (rauðir veggir + E-merkt op) · B = A − op á földum línum + línur Agnars · C = það sem hann sér á kortinu (rauðir veggir + sjálfvirkar
+  línur sem standa eftir + línur hans) · D = B + C.
+  loft (164 handfærðir): innan 8 px A 70 → C 80, innan 15 px 114 → 119, á brunavegg 955 → 1.001, ófærðir 152 → 121. **Bati.**
+  úði (10 handfærðir): miðgildi 17,3 → 6,5 px, innan 8 px 3 → 6, ófærðir 127 → 91. **Bati, en úrtakið er 10.**
+  rafmagn (37): innan 8 px 20 → 20, innan 15 px 32 → 31, á brunavegg 304 → 296. Enginn bati; 35 misstu stað, 24 fundu. EKKI fært.
+  stál (23): 11 → 11 innan 8 px; plast (14): 10 → 10. Enginn mældur bati. EKKI fært.
+- **Valið: C** (ein heimild: það sem Agnar sér og lagar á kortinu). Skrifað með `--hopar loft,udi`: 94 nýjar færslur, 1.088 uppfærðar, 42 afturkallaðar.
+  Mælt á móti afriti `backup_20261118c_skr_faerslur` (9.090 raðir, RLS á): loft 43 nýjar, 17 horfnar, 118 færðust > 3 px; úði 51, 25, 65.
+  Handfærðir 0 snertir (248), rafmagn/plast/stál 0 hreyfðir.
+- **Pörun 6H endurkeyrð:** 2.006 pöruð (var 2.005), parad skrifað á 1.137 áætluð göt.
+- **Óútskýrt:** rafmagn missir stað þegar sjálfvirku hurðalínurnar bætast í veggjamyndina (B 316 á brunavegg, D 296). Tilgáta, ÓMÆLD: lagnaleiðir
+  liggja eftir göngum samsíða hurðalínum gangveggjanna og skörunin verður þá löng en ekki skurður.
+- **Næst:** tólið ætti að lesa línurnar af verkinu sjálft (nú er veggjamyndin gerð með einnota skriftu); 5H þegar Agnar hefur farið yfir hana.
