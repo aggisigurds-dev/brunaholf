@@ -1337,3 +1337,53 @@ layer, leiðslurnar sem cutta götin í rauðu og bláu veggina. Og mæla götin
   Aðeins stakir skurðir (enginn annar innan 1,45 m, svo færsla á rangan stokk er útilokuð): 6H 54 af 230 (23 %), 5H 62 af 200 (31 %).
   Langalgengast: skráð Ø125-160 þar sem teikningin segir ø200 eða ø250 (79 af 116). Listar: `rangar-loft.json` (200), `rangar-loft-stakir.json` (116).
 - **Óstaðfest:** engin ljósmynd skoðuð til að sannreyna stærð. Engum flokki breytt. Stærðarflokkur ræður útboðslið, svo leiðrétting snertir reikninga: Agnar ákveður.
+
+## 18.11.2026 — Skurðamæling 2: holufylling, op án blárrar línu, lágmarksskurður (lesaðeins)
+
+Agnar: „Það voru einhverjar hurðar og glerveggir sem þarf að setja bláa línu yfir“ · „rörateikningarnar eru að birta göt í sér. Þyrfti kannski að
+holufylla loftstokkayfirlitið fyrst“ · „taka annað loftlayer sem ekki er búið að skerpa svona mikið … láta það fylla upp í götin. Setja síðan minimum cut
+til að losna við þunnu hurðaskurðina“.
+
+- **Tól:** `scratchpad/gat/maela2.py <6H|5H>` + `prof.py <hæð> skurdir2` (afrit í `_vinnuskjol/nlsh-loftstaerdir-20261118`).
+- **Holufylling:** lokuð göt ≤ 4.000 px inni í stokkum fyllt (+3,0 % á 6H, +2,8 % á 5H). Óskerpta heildarmyndin (5790 px) bætti ENGU við (0 og 1.260 px):
+  hún ber sömu göt. Hugmyndin var prófuð og reyndist óþörf.
+- **Bláar línur:** aðeins þykkar (≥ 7 px) teljast lína yfir op. Þunnar bláar línur eru hurðarblöð og bogar; þær gáfu áður 117 falska „hurðaskurði“ á 6H.
+- **Op í rauðum veggjum án blárrar línu:** bil 0,5–5,1 m milli veggbúta í SÖMU línu. 6H 290 op, 29 með bláa línu, **261 án**; 5H 292, 31, **261**.
+  Lengd án línu á 6H: ≤ 1,2 m 48 · 1,2–2,5 m 140 · > 2,5 m 73. ÓSANNREYNT hvort hvert op er hurð/glerveggur í brunaskilum; sum við útvegg eru falsk.
+- **Lágmarksskurður:** breidd ≥ 11 px (≈ ø90) og þykkt þvert á vegg ≥ 7 px.
+- **Skurðir nú:** 6H 533 (veggur 394, blá lína 31, op án línu 108) · 5H 546 (407, 28, 111).
+- **Mæling á móti merkingu í beinni línu:** nákvæmlega sama staðalstærð 6H 72 % (var 61 %), 5H 69 % (var 63 %); sami flokkur 81 % og 76 %.
+  Í hreinum skurðum gegnum rauðan vegg: 81 % / 87 % á 6H og 78 % / 82 % á 5H.
+- Engu breytt í skráningum, lögum eða áætlun.
+
+## 18.11.2026 — Hurðaop dregin úr BLÁU hurðartáknunum (lesaðeins)
+
+Agnar: „Only blue filter, þá ættirðu að sjá bara hurðaopin með boganum og tengir á milli með blárri línu fjær boganum út í enda“ · „Já halda áfram“.
+
+- **Tól:** `scratchpad/gat/maela3.py <6H|5H>` (afrit í `_vinnuskjol/nlsh-loftstaerdir-20261118`). Blátt síað úr 4x grunnflísum; þykkt blátt (≥ 7 px) er lína
+  sem þegar liggur yfir opi eða ÞYKKT hurðarblað; þunnt blátt er boginn (og stundum blaðið).
+- **Táknið:** blað frá lömum H út í odd T, fjórðungsbogi frá T að lokaðri stöðu C á vegglínunni. Fyrsta útgáfa (tómt horn + blað eftir hlið) fann aðeins 55
+  á 6H því blaðið er oft þykkt og datt út. Rétta leiðin: **H er það horn umgjarðarinnar sem allir bogapunktar eru jafnlangt frá** (≥ 42 % punkta innan
+  ±14 % af L). Opið H–C er sú hlið frá H sem ber EKKERT blátt og á rautt við endana. Tvöföld hurð (hlutfall ~2:1) er klofin í tvennt.
+- **Fundið:** 6H 143 hurðartákn (124 við rauðan brunavegg), 5H 139 (110). Hafnað: 6H 329, 5H 351 blá form (bogar sem texti skyggir á, rennihurðir sem eru
+  langir mjóir kassar, lyftur „Lyfta 1a“). Þekjan er því ÓMÆLD: ekki er vitað hve margar hurðir vantar. Dæmi um ranga línu sést í nærmynd (tvöföld skápahurð).
+- **Skurðir með hurðaopum úr táknum:** 6H 481 (rauður veggur 396, hurðaop 50, blá lína sem var fyrir 35) · 5H 469 (408, 30, 31).
+  Mæling = merking: 70 % (6H) og 68 % (5H), sami flokkur 79 % og 75 %.
+- **Borið við bilaaðferðina** (bil milli rauðra veggbúta í sömu línu, 261 op án blárrar línu á hvorri hæð): aðeins 52 (6H) og 45 (5H) þeirra eiga
+  hurðartákn sem fannst; og 72 / 65 hurðaop úr táknum fann bilaaðferðin ekki. Hvorug aðferðin er tæmandi. Glerveggir eru ógreindir.
+- Engu breytt í grunni.
+
+## 18.11.2026 — Brunahurðir staðfestar með E-merkingum, hurðalína lengd í 2 × blaðbreidd (lesaðeins)
+
+Agnar: „E30 segja líka til um bláu hurðirnar“ · „2x falda breiddina á hurðinni. Þá kemstu kannski yfir í hinn endann“.
+
+- **Tól:** `scratchpad/gat/maela4.py <6H|5H>` (afrit í `_vinnuskjol/nlsh-loftstaerdir-20261118`). Les `hurdir-*.json` (maela3) og `op-*.json` (maela2).
+- **E-merkingar eru í textalagi brunayfirlitsins** (A286-31 / A285-31, `flisar_stilling.json` → grunnur-6h/5h; yfirlit_px = (pt − (230,265))·3):
+  6H 228 (E30-S 100, E30-CS 45, EI30-S 37, EI30-C 28, EI60-CS 16, EI30-CS 2) · 5H 235 (99, 50, 37, 30, 16, 3). Þetta er talan sem þekjan mælist við.
+- **Hurðalína lengd:** frá lömum í stefnu opsins, allt að 2,1 × blaðbreidd, stöðvuð við fyrsta rauða vegg handan 0,6 × blaðbreiddar. Náði í vegg hinum megin
+  í 20 tilvikum á 6H og 17 á 5H (tvöfaldar hurðir og hurð með hliðarstykki).
+- **Regla:** op telst brunahurð aðeins ef E-merking er innan 260 px (1,9 m) frá línunni. Merking án hurðartákns fær op úr bilaaðferðinni ef það er nærri.
+- **Þekja:** 6H 228 merkingar: 138 með hurðartákn, 64 aðeins með bil, **26 án ops**. 5H 235: 138, 71, **26**. Þ.e. 89 % merkinga eiga op á báðum hæðum.
+  Staðfest op: 6H 183 (123 úr tákni, 60 úr bili), 5H 187 (123, 64). Hurðartákn án merkingar (ekki brunahurð): 20 og 16.
+- **Skurðir:** 6H 509 (rauður veggur 393, brunahurðaop 81, blá lína sem var fyrir 35) · 5H 512 (405, 77, 30). Mæling = merking 70 % og 68 %.
+- **Ógert:** 26 merkingar á hvorri hæð án ops; glerveggir án hurðartákns; stefna línu röng í stöku tvöfaldri skápahurð. Engu breytt í grunni.
