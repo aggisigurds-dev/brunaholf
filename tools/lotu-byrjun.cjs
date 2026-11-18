@@ -60,10 +60,14 @@ async function keyra(arg = process.argv.slice(2)) {
   try {
     const LOK = require('./_lokanir.cjs');
     lokanir = LOK.texti() + '\n';
-    if (!skoda) { LOK.tryggjaNotandaskra(); LOK.tryggjaVinnuskjol(); LOK.merkja(inn.session_id); }
+    if (!skoda) {
+      const l = LOK.linaUmSkra(LOK.tryggjaNotandaskra());   // kafla skipt út í skrá eigandans → lotan er látin vita, með slóð á afritið
+      if (l) lokanir += l + '\n';
+      LOK.tryggjaVinnuskjol(); LOK.merkja(inn.session_id);
+    }
   } catch (_) {}
   // Sé vélin á eftir fær lotan eina línu um að sækja nýju útgáfuna (annars situr lagfæring á vélinni þar sem hún var skrifuð).
-  try { if (bid) await bid; const l = UPP ? UPP.lina() : ''; if (l) lokanir += l + '\n'; } catch (_) {}
+  try { const ferskt = bid ? await bid : null; const l = UPP ? UPP.lina({ ferskt }) : ''; if (l) lokanir += l + '\n'; } catch (_) {}
   texti = KEFLI + '\n' + lokanir + texti;
   if (skoda) return G.ljuka(texti + '\n', 0);
   return G.ljuka(JSON.stringify({ hookSpecificOutput: { hookEventName: 'SessionStart', additionalContext: texti } }) + '\n', 0);

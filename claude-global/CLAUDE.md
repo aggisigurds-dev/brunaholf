@@ -1,4 +1,4 @@
-<!-- FRUMRITIÐ er brunaholf/claude-global/CLAUDE.md (git). Skráin í ~/.claude/CLAUDE.md er AFRIT. Breyttu frumritinu, ekki afritinu. Tvennt heldur afritinu við: (1) kaflarnir milli „lotukerfi:… byrjar/endar“ merkjanna hér að neðan berast SJÁLFKRAFA á hverja vél í byrjun lotu (tools/_lokanir.cjs: bætir við kafla sem vantar og uppfærir kafla sem er frábrugðinn frumritinu; annað efni afritsins er ósnert). (2) Allt hitt berst aðeins þegar tools/global-samstilling.cjs er keyrt handvirkt á vélinni; það yfirskrifar afritið í heild (gamla eintakið fer í ~/.claude/backups/global-samstilling/). -->
+<!-- FRUMRITIÐ er brunaholf/claude-global/CLAUDE.md (git). Skráin í ~/.claude/CLAUDE.md er AFRIT. Breyttu frumritinu, ekki afritinu. Tvennt heldur afritinu við: (1) kaflarnir milli „lotukerfi:… byrjar/endar“ merkjanna hér að neðan berast SJÁLFKRAFA á hverja vél í byrjun lotu (tools/_lokanir.cjs: bætir við kafla sem vantar og uppfærir kafla þegar útgáfunúmerið í byrjunarmerkinu hér er hærra en á vélinni — HÆKKAÐU ÞAÐ því þegar þú breytir kafla; annað efni afritsins er ósnert). (2) Allt hitt berst aðeins þegar tools/global-samstilling.cjs er keyrt handvirkt á vélinni; það yfirskrifar afritið í heild (gamla eintakið fer í ~/.claude/backups/global-samstilling/). -->
 
 # graphify
 - **graphify** (`~/.claude/skills/graphify/SKILL.md`) - any input to knowledge graph. Trigger: `/graphify`
@@ -12,7 +12,7 @@ When the user types `/graphify`, use the installed graphify skill or instruction
 3. Ekki mæla aftur nema Agnar biðji um það eða ný skýrsla/reikningur hafi bæst við eftir dagsetninguna.
 4. Náist ekki í grunninn í lotunni: segðu það hreint út, ekki giska.
 
-<!-- lotukerfi:innskraning byrjar — afrit af brunaholf/claude-global/CLAUDE.md. Efnið milli merkjanna uppfærist sjálft á hverri vél; breyttu frumritinu, ekki hér. -->
+<!-- lotukerfi:innskraning byrjar · útgáfa 1 — afrit af brunaholf/claude-global/CLAUDE.md (aðalvinnutré á main). Kaflinn uppfærist sjálfur á hverri vél þegar útgáfunúmerið í frumritinu hækkar; breyttu frumritinu og hækkaðu númerið, ekki hér. -->
 # Innskráning í Slökkvitæki / Brunahólf — lotan skráir sig inn SJÁLF (18.11.2026)
 
 **Biddu Agnar ALDREI um að skrá sig inn í vafra lotunnar**, og bjóddu honum ekki val á borð við „Búinn að skrá inn“ /
@@ -64,7 +64,7 @@ Mappan `Downloads\slokkvitaeki-source` er **ekki** repó, þótt lotur séu oft 
 innskráninguna er í `CLAUDE.md` beggja repóa („Innskráning lotunnar“).
 <!-- lotukerfi:innskraning endar -->
 
-<!-- lotukerfi:lokanir byrjar — afrit af brunaholf/claude-global/CLAUDE.md. Efnið milli merkjanna uppfærist sjálft á hverri vél; breyttu frumritinu, ekki hér. -->
+<!-- lotukerfi:lokanir byrjar · útgáfa 1 — afrit af brunaholf/claude-global/CLAUDE.md (aðalvinnutré á main). Kaflinn uppfærist sjálfur á hverri vél þegar útgáfunúmerið í frumritinu hækkar; breyttu frumritinu og hækkaðu númerið, ekki hér. -->
 # Lokanir sem stöðva lotu ALDREI (18.11.2026)
 
 Agnar 18.11.2026, eftir að þrjár lotur stöðvuðust sama dag á innskráningu, földum vafraglugga og skjali sem komst ekki

@@ -19,6 +19,7 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 const { spawnSync } = require('node:child_process');
+const crypto = require('node:crypto');
 
 const ROT = path.join(__dirname, '..');
 const LOK = require(path.join(ROT, 'tools', '_lokanir.cjs'));
@@ -27,6 +28,10 @@ const lesa = (p) => fs.readFileSync(p, 'utf8');
 const fjoldi = (t, m) => t.split(m).length - 1;
 const A = '<!-- lotukerfi:innskraning byrjar', B = '<!-- lotukerfi:lokanir byrjar';
 const A_END = '<!-- lotukerfi:innskraning endar -->', B_END = '<!-- lotukerfi:lokanir endar -->';
+const FRUM = path.join(ROT, 'claude-global', 'CLAUDE.md');   // frumritið í ÞESSU vinnutré, gefið beint (sjálfgefna leiðin les aðeins aðalvinnutré á main)
+const tryggja = (o) => LOK.tryggjaNotandaskra(Object.assign({ snid: FRUM }, o));
+const sk = (r) => ({ stada: r.stada, kaflar: r.kaflar });   // skilagildið án afritsslóðar
+const K = () => LOK.lesaSnid(FRUM);
 const afrit = (heima) => { const m = path.join(heima, 'backups', 'lotukerfi'); return fs.existsSync(m) ? fs.readdirSync(m).map((d) => path.join(m, d, 'CLAUDE.md')) : []; };
 
 test('kaflinn í byrjun lotu: stuttur, nefnir lokanirnar þrjár, allt sem Agnar á sjálfur og hvar skjöl eiga heima', () => {
@@ -60,8 +65,8 @@ test('vinnuskjalamappan er við hlið AÐALvinnutrésins — líka úr worktree 
 });
 
 test('frumritið (claude-global/CLAUDE.md): báðir kaflar með merkjum; hvergi myntun á uid 1, kaka né lykill', () => {
-  assert.equal(LOK.SNID, path.join(ROT, 'claude-global', 'CLAUDE.md'), 'eitt frumrit — það sama og global-samstilling notar');
-  const k = LOK.lesaSnid();
+  const k = Object.fromEntries(Object.entries(K()).map(([n, v]) => [n, v.texti]));
+  for (const v of Object.values(K())) assert.ok(v.utgafa >= 1, 'hver kafli frumritsins ber útgáfunúmer');
   assert.deepEqual(Object.keys(k).sort(), ['innskraning', 'lokanir']);
   for (const n of ['innskraning', 'lokanir']) {
     assert.ok(k[n].startsWith('<!-- lotukerfi:' + n + ' byrjar'), n);
@@ -87,10 +92,10 @@ function lf(s) { return s.replace(/\r\n/g, '\n'); }
 
 test('notendaskrá vantar → búin til með báðum köflum; önnur keyrsla breytir engu', () => {
   const heima = tmp('ny');
-  assert.deepEqual(LOK.tryggjaNotandaskra({ heima }), { stada: 'buin_til', kaflar: ['innskraning', 'lokanir'] });
+  assert.deepEqual(sk(tryggja({ heima })), { stada: 'buin_til', kaflar: ['innskraning', 'lokanir'] });
   const t = lesa(path.join(heima, 'CLAUDE.md'));
   assert.equal(fjoldi(t, A), 1); assert.equal(fjoldi(t, B), 1);
-  assert.deepEqual(LOK.tryggjaNotandaskra({ heima }), { stada: 'til', kaflar: [] });
+  assert.deepEqual(sk(tryggja({ heima })), { stada: 'til', kaflar: [] });
   assert.equal(lesa(path.join(heima, 'CLAUDE.md')), t, 'engin breyting í annarri keyrslu');
   assert.deepEqual(afrit(heima), [], 'ný skrá: ekkert að afrita');
 });
@@ -99,14 +104,14 @@ test('notendaskrá með ÖÐRU efni → kaflarnir bætast aftast; það sem fyri
   const heima = tmp('annad'), skra = path.join(heima, 'CLAUDE.md');
   const fyrir = '# Mínar reglur\r\n\r\nAlltaf svara á íslensku.\r\nEkki nota töflur.';   // CRLF og enginn línuendi aftast
   fs.writeFileSync(skra, fyrir, 'utf8');
-  assert.deepEqual(LOK.tryggjaNotandaskra({ heima }), { stada: 'baett_vid', kaflar: ['innskraning', 'lokanir'] });
+  assert.deepEqual(sk(tryggja({ heima })), { stada: 'baett_vid', kaflar: ['innskraning', 'lokanir'] });
   const t = lesa(skra);
   assert.ok(t.startsWith(fyrir + '\n\n' + A), 'eldra efni fremst, óbreytt, og autt bil á undan kaflanum');
   assert.equal(fjoldi(t, A), 1); assert.equal(fjoldi(t, B), 1);
   const a = afrit(heima); assert.equal(a.length, 1); assert.equal(lesa(a[0]), fyrir, 'eldra eintak geymt óbreytt');
   // tóm skrá: kaflarnir fara inn án auðra lína fremst
   const h2 = tmp('tom'); fs.writeFileSync(path.join(h2, 'CLAUDE.md'), '');
-  assert.equal(LOK.tryggjaNotandaskra({ heima: h2 }).stada, 'baett_vid');
+  assert.equal(tryggja({ heima: h2 }).stada, 'baett_vid');
   assert.ok(lesa(path.join(h2, 'CLAUDE.md')).startsWith(A));
 });
 
@@ -114,7 +119,7 @@ test('vélin þar sem innskráningarkaflinn var handskrifaður (án merkja) fær
   const heima = tmp('eldri'), skra = path.join(heima, 'CLAUDE.md');
   const fyrir = '# Leiðbeiningar Agnars\n\n## Innskráning í Slökkvitæki / Brunahólf — lotan skráir sig inn SJÁLF (18.11.2026)\n\ntexti\n';
   fs.writeFileSync(skra, fyrir, 'utf8');
-  assert.deepEqual(LOK.tryggjaNotandaskra({ heima }), { stada: 'baett_vid', kaflar: ['lokanir'] });
+  assert.deepEqual(sk(tryggja({ heima })), { stada: 'baett_vid', kaflar: ['lokanir'] });
   const t = lesa(skra);
   assert.ok(t.startsWith(fyrir) && t.includes(B) && !t.includes(A));
   assert.equal(fjoldi(t, 'lotan skráir sig inn SJÁLF'), 1, 'innskráningarkaflinn er ekki tvítekinn');
@@ -123,19 +128,19 @@ test('vélin þar sem innskráningarkaflinn var handskrifaður (án merkja) fær
 test('LEIÐRÉTTING BERST: kafli með báðum merkjum en gömlu efni (t.d. „myntaðu uid 1“) er uppfærður á sínum stað', () => {
   const heima = tmp('gamalt'), skra = path.join(heima, 'CLAUDE.md');
   const fyrir = '# Mitt efni fremst\n\n' + A + ' -->\nGömul útgáfa: select * from innri.lotu_koku(1, 12);\n' + A_END + '\n\n# Mitt efni á milli\n\n'
-    + LOK.lesaSnid().lokanir + '\n\n# Mitt efni aftast\n';
+    + K().lokanir.texti + '\n\n# Mitt efni aftast\n';
   fs.writeFileSync(skra, fyrir, 'utf8');
-  assert.deepEqual(LOK.tryggjaNotandaskra({ heima }), { stada: 'uppfaert', kaflar: ['innskraning'] });
+  assert.deepEqual(sk(tryggja({ heima })), { stada: 'uppfaert', kaflar: ['innskraning'] });
   const t = lesa(skra);
   assert.ok(!t.includes('lotu_koku(1, 12)'), 'gamla, hættulega útgáfan er farin');
-  assert.ok(t.includes(LOK.lesaSnid().innskraning), 'kaflinn er nú eins og frumritið');
+  assert.ok(t.includes(K().innskraning.texti), 'kaflinn er nú eins og frumritið');
   assert.ok(t.startsWith('# Mitt efni fremst\n\n' + A), 'efni fyrir framan ósnert');
   assert.ok(t.includes(A_END + '\n\n# Mitt efni á milli\n\n' + B), 'efni á milli kafla ósnert');
   assert.ok(t.endsWith(B_END + '\n\n# Mitt efni aftast\n'), 'efni fyrir aftan ósnert');
   assert.equal(fjoldi(t, A), 1); assert.equal(fjoldi(t, B), 1);
   const a = afrit(heima); assert.equal(a.length, 1); assert.equal(lesa(a[0]), fyrir, 'eldra eintak afritað áður en skrifað var');
   assert.deepEqual(fs.readdirSync(heima).filter((f) => /\.tmp$|-las$/.test(f)), [], 'hvorki bráðabirgðaskrá né lás skilin eftir');
-  assert.deepEqual(LOK.tryggjaNotandaskra({ heima }), { stada: 'til', kaflar: [] }, 'önnur keyrsla breytir engu');
+  assert.deepEqual(sk(tryggja({ heima })), { stada: 'til', kaflar: [] }, 'önnur keyrsla breytir engu');
   assert.equal(afrit(heima).length, 1, 'ekkert nýtt afrit þegar ekkert breytist');
 });
 
@@ -144,13 +149,13 @@ test('ósnert: kafli sem eigandinn tók yfir (endamerki fjarlægt), og skrá sem
   const heima = tmp('yfirtekid'), skra = path.join(heima, 'CLAUDE.md');
   const mitt = A + ' -->\n(mín eigin útgáfa, engin endamerki)\n\n' + B + ' -->\nLíka mín.\n';
   fs.writeFileSync(skra, mitt, 'utf8');
-  assert.deepEqual(LOK.tryggjaNotandaskra({ heima }), { stada: 'til', kaflar: [] });
+  assert.deepEqual(sk(tryggja({ heima })), { stada: 'til', kaflar: [] });
   assert.equal(lesa(skra), mitt);
   // sama efni með CRLF (t.d. opnað og vistað í Notepad) telst EKKI breyting → engin endurskrif í hverri lotu
   const h2 = tmp('crlf'), s2 = path.join(h2, 'CLAUDE.md');
-  LOK.tryggjaNotandaskra({ heima: h2 });
+  tryggja({ heima: h2 });
   const crlf = lesa(s2).replace(/\n/g, '\r\n'); fs.writeFileSync(s2, crlf, 'utf8');
-  assert.deepEqual(LOK.tryggjaNotandaskra({ heima: h2 }), { stada: 'til', kaflar: [] });
+  assert.deepEqual(sk(tryggja({ heima: h2 })), { stada: 'til', kaflar: [] });
   assert.equal(lesa(s2), crlf);
 });
 
@@ -159,14 +164,14 @@ test('skrá sem er ekki UTF-8 (UTF-16 úr Notepad, skemmd bæti) er EKKI snert �
   for (const [heiti, baeti] of daemi) {
     const heima = tmp(heiti), skra = path.join(heima, 'CLAUDE.md');
     fs.writeFileSync(skra, baeti);
-    const r = LOK.tryggjaNotandaskra({ heima });
+    const r = tryggja({ heima });
     assert.equal(r.stada, 'sleppt', heiti); assert.deepEqual(r.kaflar, []);
     assert.ok(fs.readFileSync(skra).equals(baeti), heiti + ': bætin óbreytt');
   }
   // UTF-8 með BOM er í lagi og BOM-ið helst fremst
   const heima = tmp('bom'), skra = path.join(heima, 'CLAUDE.md');
   fs.writeFileSync(skra, Buffer.concat([Buffer.from([0xEF, 0xBB, 0xBF]), Buffer.from('# Mitt\n', 'utf8')]));
-  assert.equal(LOK.tryggjaNotandaskra({ heima }).stada, 'baett_vid');
+  assert.equal(tryggja({ heima }).stada, 'baett_vid');
   const b = fs.readFileSync(skra);
   assert.deepEqual([...b.subarray(0, 3)], [0xEF, 0xBB, 0xBF]); assert.ok(b.toString('utf8').includes(A));
 });
@@ -180,13 +185,13 @@ test('handvirka samstillingin og hookurinn eru sammála: hvorugt þurrkar út ve
   };
   const samstilla = () => keyra('const r=require("./tools/global-samstilling.cjs").samstilla();process.stdout.write(JSON.stringify({breytt:r.breytt,villur:r.villur}))');
   // 1. hookurinn fyrst (ný vél) → handvirk samstilling yfirskrifar með öllu frumritinu → hookurinn hefur ekkert að gera
-  assert.equal(LOK.tryggjaNotandaskra({ heima }).stada, 'buin_til');
+  assert.equal(tryggja({ heima }).stada, 'buin_til');
   const s1 = samstilla();
   assert.deepEqual(s1.villur, []); assert.ok(s1.breytt.includes('CLAUDE.md'), 'samstillingin setti allt frumritið inn: ' + s1.breytt.join(','));
   const eftir = fs.readFileSync(path.join(heima, 'CLAUDE.md'));
-  assert.ok(eftir.equals(fs.readFileSync(LOK.SNID)), 'afritið er nú frumritið í heild');
+  assert.ok(eftir.equals(fs.readFileSync(FRUM)), 'afritið er nú frumritið í heild');
   assert.ok(eftir.includes(A) && eftir.includes(B), 'kaflarnir lifðu samstillinguna af — þeir ERU í frumritinu');
-  assert.deepEqual(LOK.tryggjaNotandaskra({ heima }), { stada: 'til', kaflar: [] });
+  assert.deepEqual(sk(tryggja({ heima })), { stada: 'til', kaflar: [] });
   // 2. og öfugt: eftir hookinn sér samstillingin engan mun á CLAUDE.md
   assert.ok(!samstilla().breytt.includes('CLAUDE.md'), 'engin víxlverkun: önnur samstilling breytir engu');
   assert.ok(fs.readFileSync(path.join(heima, 'CLAUDE.md')).equals(eftir));
@@ -200,11 +205,11 @@ test('bilun fellir aldrei neitt: frumrit vantar, hálfur kafli í frumriti, heim
   // Frumrit þar sem endamerki annars kaflans vantar: sá kafli fer EKKI inn (aldrei hálfur kafli), hinn fer.
   const snid = path.join(heima, 'snid.md');
   fs.writeFileSync(snid, A + ' -->\nA-texti\n' + A_END + '\n\n' + B + ' -->\nB-texti án endamerkis\n', 'utf8');
-  assert.deepEqual(LOK.tryggjaNotandaskra({ heima, snid }), { stada: 'buin_til', kaflar: ['innskraning'] });
+  assert.deepEqual(sk(LOK.tryggjaNotandaskra({ heima, snid })), { stada: 'buin_til', kaflar: ['innskraning'] });
   assert.ok(!lesa(path.join(heima, 'CLAUDE.md')).includes('B-texti'));
   // „Heimamappa“ sem er skrá → villa, ekkert kast.
   const skra = path.join(heima, 'er-skra'); fs.writeFileSync(skra, 'x');
-  assert.equal(LOK.tryggjaNotandaskra({ heima: skra }).stada, 'villa');
+  assert.equal(tryggja({ heima: skra }).stada, 'villa');
 });
 
 test('einuSinni: satt í fyrsta sinn fyrir hverja lotu, aldrei aftur; án lotunúmers aldrei; skemmd skrá fellir ekkert', () => {
@@ -230,6 +235,109 @@ test('einuSinni: satt í fyrsta sinn fyrir hverja lotu, aldrei aftur; án lotun�
   assert.equal(LOK.einuSinni('lota-e', { heima: skra }), false);
 });
 
+/* ── Reglurnar úr seinni rýni (18.11.2026): eitt frumrit á main, aldrei til baka, ekkert tvírætt snert ───── */
+
+test('útgáfuvörður: breytist kafli í frumritinu VERÐUR útgáfunúmerið að hækka — annars berst breytingin ekki á vélarnar', () => {
+  // Skráð ástand. Þegar þú breytir kafla í claude-global/CLAUDE.md: hækkaðu „útgáfa N“ í byrjunarmerkinu og skráðu nýja parið hér.
+  const SKRAD = { innskraning: { utgafa: 1, sha: '7174fd3eb8773ec8' }, lokanir: { utgafa: 1, sha: '3f5a579d3627a531' } };
+  for (const [n, v] of Object.entries(K())) {
+    const nuna = { utgafa: v.utgafa, sha: crypto.createHash('sha256').update(v.texti).digest('hex').slice(0, 16) };
+    assert.deepEqual(nuna, SKRAD[n], n + ': kaflinn breyttist. Hækkaðu útgáfunúmerið í byrjunarmerkinu og skráðu hér: ' + JSON.stringify(nuna));
+  }
+});
+
+test('frumritið er AÐEINS lesið úr aðalvinnutré á main: worktree notar frumrit aðaltrésins; grein eða laust commit → ekkert', () => {
+  const rot = tmp('frum'), adal = path.join(rot, 'bh'), wt = path.join(rot, 'bh-grein');
+  fs.mkdirSync(path.join(adal, '.git', 'worktrees', 'g'), { recursive: true }); fs.mkdirSync(wt);
+  fs.writeFileSync(path.join(wt, '.git'), 'gitdir: ' + path.join(adal, '.git', 'worktrees', 'g').replace(/\\/g, '/') + '\n');
+  const haus = (s) => fs.writeFileSync(path.join(adal, '.git', 'HEAD'), s);
+  const vaent = path.join(adal, 'claude-global', 'CLAUDE.md');
+  const adur = process.env.LOTUKERFI_FRUMRIT; delete process.env.LOTUKERFI_FRUMRIT;
+  try {
+    haus('ref: refs/heads/main\n');
+    assert.equal(LOK.frumrit({ bh: adal }), vaent);
+    assert.equal(LOK.frumrit({ bh: wt }), vaent, 'worktree les frumrit AÐALtrésins, ekki sitt eigið');
+    haus('ref: refs/heads/vinna\n');
+    assert.equal(LOK.frumrit({ bh: adal }), null, 'aðaltré á grein: órýnt efni má ekki verða að leiðbeiningum');
+    assert.equal(LOK.frumrit({ bh: wt }), null);
+    haus('0123456789abcdef0123456789abcdef01234567\n');
+    assert.equal(LOK.frumrit({ bh: adal }), null, 'laust commit');
+    assert.equal(LOK.frumrit({ bh: path.join(rot, 'ekki-repo') }), null, 'ekkert .git');
+    const heima = tmp('h');   // ekkert frumrit → ekkert skrifað
+    assert.equal(LOK.tryggjaNotandaskra({ heima, snid: null }).stada, 'sleppt');
+    assert.ok(!fs.existsSync(path.join(heima, 'CLAUDE.md')));
+  } finally { if (adur !== undefined) process.env.LOTUKERFI_FRUMRIT = adur; }
+});
+
+test('tvö eintök, ein notendaskrá: eldra frumrit dregur skrána ALDREI til baka og ekkert flöktir', () => {
+  // „nytt“ = aðaltré eftir leiðréttingu (útgáfa 2); „gamalt“ = annað klón eða eldri útgáfa sem ber enn útgáfu 1.
+  const rot = tmp('tvo'), heima = path.join(rot, 'heima'), nytt = path.join(rot, 'nytt.md'), gamalt = path.join(rot, 'gamalt.md');
+  const frum = lesa(FRUM);
+  fs.writeFileSync(gamalt, frum);
+  fs.writeFileSync(nytt, frum.replace('lotukerfi:innskraning byrjar · útgáfa 1', 'lotukerfi:innskraning byrjar · útgáfa 2').replace('Fallið hafnar uid 1 síðan 18.11.2026.', 'Fallið hafnar uid 1 síðan 18.11.2026. (LEIÐRÉTT)'));
+  assert.ok(lesa(nytt).includes('útgáfa 2') && lesa(nytt).includes('(LEIÐRÉTT)'), 'prófið breytti frumritinu í raun');
+  assert.equal(LOK.tryggjaNotandaskra({ heima, snid: gamalt }).stada, 'buin_til');
+  assert.equal(LOK.tryggjaNotandaskra({ heima, snid: nytt }).stada, 'uppfaert');
+  const eftir = lesa(path.join(heima, 'CLAUDE.md'));
+  assert.ok(eftir.includes('(LEIÐRÉTT)') && eftir.includes('útgáfa 2'));
+  for (let i = 0; i < 6; i++) {   // til skiptis, eins og lotur sem keyra nýja og gamla útgáfu á sömu vél
+    assert.deepEqual(sk(LOK.tryggjaNotandaskra({ heima, snid: i % 2 ? nytt : gamalt })), { stada: 'til', kaflar: [] }, 'ræsing ' + i);
+  }
+  assert.equal(lesa(path.join(heima, 'CLAUDE.md')), eftir, 'skráin stendur í nýju útgáfunni');
+  assert.equal(afrit(heima).length, 1, 'eitt afrit (við uppfærsluna), ekki eitt á hverja ræsingu');
+});
+
+test('efni eigandans UTAN kaflans hverfur aldrei: umtal í lausu máli, merki í kóðablokk, yfirtekinn kafli + annað eintak', () => {
+  const k = K();
+  const gamall = (n) => k[n].texti.replace(' · útgáfa 1', '').replace(/\n/, '\n(GÖMUL ÚTGÁFA)\n');   // heill kafli án útgáfunúmers → á að uppfærast
+  // 1. umtal um merkið í lausu máli Á UNDAN kaflanum (ekki fremst í línu): aðeins raunverulegu kaflarnir eru uppfærðir
+  let heima = tmp('umtal'), skra = path.join(heima, 'CLAUDE.md');
+  const haus1 = '# Mitt\n\nSjá kaflann sem byrjar á `<!-- lotukerfi:lokanir byrjar` hér neðar.\n\nMikilvæg regla eigandans.\n\n';
+  fs.writeFileSync(skra, haus1 + gamall('innskraning') + '\n\nMilliefni eigandans.\n\n' + gamall('lokanir') + '\n\nLokaorð.\n');
+  assert.deepEqual(sk(tryggja({ heima })), { stada: 'uppfaert', kaflar: ['innskraning', 'lokanir'] });
+  assert.equal(lesa(skra), haus1 + k.innskraning.texti + '\n\nMilliefni eigandans.\n\n' + k.lokanir.texti + '\n\nLokaorð.\n');
+  // 2. sýnidæmi í kóðablokk með báðum merkjum, og raunverulegur kafli aftar: kóðablokkin er ósnert
+  heima = tmp('kodi'); skra = path.join(heima, 'CLAUDE.md');
+  const blokk = '```\n<!-- lotukerfi:lokanir byrjar -->\nsýnidæmi eigandans\n<!-- lotukerfi:lokanir endar -->\n```\n';
+  fs.writeFileSync(skra, '# Mitt\n\n' + blokk + '\n' + k.innskraning.texti + '\n\n' + gamall('lokanir') + '\n');
+  assert.deepEqual(sk(tryggja({ heima })), { stada: 'uppfaert', kaflar: ['lokanir'] });
+  assert.equal(lesa(skra), '# Mitt\n\n' + blokk + '\n' + k.innskraning.texti + '\n\n' + k.lokanir.texti + '\n');
+  // 3. yfirtekinn kafli (endamerki eytt) og ANNAÐ eintak með báðum merkjum aftar → tvírætt → skráin ósnert, staf fyrir staf
+  heima = tmp('yfir'); skra = path.join(heima, 'CLAUDE.md');
+  let fyrir = '<!-- lotukerfi:lokanir byrjar -->\nMín eigin útgáfa, endamerki eytt.\n\nReglur sem ég vil halda.\n\n' + gamall('lokanir') + '\n\n' + k.innskraning.texti + '\n';
+  fs.writeFileSync(skra, fyrir);
+  assert.deepEqual(sk(tryggja({ heima })), { stada: 'til', kaflar: [] });
+  assert.equal(lesa(skra), fyrir);
+  // 4. annað merki á milli byrjunar- og endamerkis (kafli inni í kafla) → ósnert
+  heima = tmp('inni'); skra = path.join(heima, 'CLAUDE.md');
+  fyrir = '<!-- lotukerfi:innskraning byrjar -->\nmitt\n' + k.lokanir.texti + '\n<!-- lotukerfi:innskraning endar -->\n';
+  fs.writeFileSync(skra, fyrir);
+  assert.deepEqual(sk(tryggja({ heima })), { stada: 'til', kaflar: [] });
+  assert.equal(lesa(skra), fyrir);
+  assert.deepEqual(afrit(heima), [], 'ekkert skrifað → ekkert afrit');
+});
+
+test('breyting eigandans INNI í kafla stendur þar til útgáfa frumritsins hækkar — og þá er lotan látin vita með slóð á afritið', () => {
+  const heima = tmp('eigin'), skra = path.join(heima, 'CLAUDE.md');
+  tryggja({ heima });
+  const breytt = lesa(skra).replace('# Lokanir sem stöðva lotu ALDREI (18.11.2026)', '# Lokanir sem stöðva lotu ALDREI (18.11.2026)\n\n- Mín eigin viðbót við kaflann.');
+  assert.ok(breytt.includes('Mín eigin viðbót'));
+  fs.writeFileSync(skra, breytt);
+  for (let i = 0; i < 3; i++) assert.deepEqual(sk(tryggja({ heima })), { stada: 'til', kaflar: [] }, 'sama útgáfa: ósnert');
+  assert.equal(lesa(skra), breytt);
+  assert.equal(LOK.linaUmSkra(tryggja({ heima })), '', 'engin lína þegar ekkert breytist');
+  // frumritið fær útgáfu 2 → kaflanum er skipt út, eldra eintak (með viðbótinni) er í afritinu og lotan fær línu
+  const nytt = path.join(heima, 'frumrit-v2.md');
+  fs.writeFileSync(nytt, lesa(FRUM).replace('lotukerfi:lokanir byrjar · útgáfa 1', 'lotukerfi:lokanir byrjar · útgáfa 2'));
+  const r = LOK.tryggjaNotandaskra({ heima, snid: nytt });
+  assert.deepEqual(sk(r), { stada: 'uppfaert', kaflar: ['lokanir'] });
+  assert.ok(!lesa(skra).includes('Mín eigin viðbót'));
+  assert.ok(lesa(path.join(r.afrit, 'CLAUDE.md')).includes('Mín eigin viðbót'), 'viðbótin er í afritinu');
+  const l = LOK.linaUmSkra(r);
+  assert.match(l, /voru uppfærðar úr frumritinu/); assert.ok(l.includes(r.afrit) && l.includes('lokanir'));
+  for (const x of [null, undefined, { stada: 'til' }, { stada: 'baett_vid', kaflar: ['lokanir'] }, { stada: 'villa' }]) assert.equal(LOK.linaUmSkra(x), '');
+});
+
 /* ── Hookarnir sjálfir, keyrðir sem ferli eins og Claude Code keyrir þá ───────────────────────────── */
 // Allt á prófgildum: heimamappa (USERPROFILE/HOME), vinnuskjalamappa (LOTUKERFI_VINNUSKJOL), tóm SL_REPO → enginn
 // Supabase-lykill → ekkert netkall, og LOTUKERFI_UPPFAERSLA=0 → ekkert spurt um origin (sjá lotukerfi-uppfaersla.test.js).
@@ -237,7 +345,7 @@ function hook(skra, stdin, heima, arg = []) {
   const tom = tmp('tomt'), vs = path.join(tmp('vs'), '_vinnuskjol');
   const r = spawnSync(process.execPath, [path.join(ROT, 'tools', skra), ...arg], {
     input: JSON.stringify(stdin), encoding: 'utf8', timeout: 20000,
-    env: Object.assign({}, process.env, { USERPROFILE: heima, HOME: heima, SL_REPO: tom, SUPABASE_URL: '', SUPABASE_ANON_KEY: '', SUPABASE_KEY: '', LOTUKERFI_UPPFAERSLA: '0', LOTUKERFI_VINNUSKJOL: vs }),
+    env: Object.assign({}, process.env, { USERPROFILE: heima, HOME: heima, SL_REPO: tom, SUPABASE_URL: '', SUPABASE_ANON_KEY: '', SUPABASE_KEY: '', LOTUKERFI_UPPFAERSLA: '0', LOTUKERFI_VINNUSKJOL: vs, LOTUKERFI_FRUMRIT: FRUM }),
   });
   let ctx = '';
   try { ctx = JSON.parse(r.stdout).hookSpecificOutput.additionalContext; } catch (_) { ctx = r.stdout || ''; }
@@ -287,6 +395,16 @@ test('skoðunarhamur og tvítekningarvörn óbreytt: --texti skrifar ekkert á v
   const n2 = hook('router.cjs', { session_id: 'y', cwd, prompt: 'hæ' }, heima, ['--notandi']);
   assert.deepEqual([n1.hratt, n2.hratt], ['', '']);
   assert.ok(!fs.existsSync(path.join(heima, '.claude', 'CLAUDE.md')));
+});
+
+test('lotu-byrjun: sé kafla skipt út í skrá eigandans fær lotan línu með slóð á afritið — aðeins í þeirri lotu', () => {
+  const heima = tmp('hook6'), cwd = tmp('cwd6');
+  fs.mkdirSync(path.join(heima, '.claude'));
+  fs.writeFileSync(path.join(heima, '.claude', 'CLAUDE.md'), K().innskraning.texti + '\n\n' + K().lokanir.texti.replace(' · útgáfa 1', '') + '\n');
+  const b = hook('lotu-byrjun.cjs', { session_id: 'u', cwd }, heima);
+  assert.match(b.ctx, /Leiðbeiningar í ~\/\.claude\/CLAUDE\.md á þessari vél voru uppfærðar úr frumritinu/);
+  assert.ok(b.ctx.includes(path.join(heima, '.claude', 'backups', 'lotukerfi')), 'slóðin á afritið fylgir');
+  assert.ok(!/voru uppfærðar/.test(hook('lotu-byrjun.cjs', { session_id: 'u2', cwd }, heima).ctx), 'næsta lota fær hana ekki');
 });
 
 test('hookurinn lifir af bilun: heimamappa sem ekki er hægt að skrifa í → lotan fær samt gilt úttak', () => {

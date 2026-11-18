@@ -406,7 +406,15 @@ async function keyra(arg = process.argv.slice(2)) {
   // næsta skeyti (lotu-byrjun merkir nýjar lotur, svo þær fá hann ekki tvisvar). Loturnar sem spurðu um innskráningu
   // keyrðu á öðrum vélum og voru í miðju verki — SessionStart nær þeim ekki. Bilun hér má aldrei fella leiðarvísinn.
   let lok = '';
-  try { const LOK = require('./_lokanir.cjs'); if (LOK.einuSinni(inn.session_id)) { lok = LOK.texti(); LOK.tryggjaNotandaskra(); LOK.tryggjaVinnuskjol(); } } catch (_) {}
+  try {
+    const LOK = require('./_lokanir.cjs');
+    if (LOK.einuSinni(inn.session_id)) {
+      lok = LOK.texti();
+      const l = LOK.linaUmSkra(LOK.tryggjaNotandaskra());
+      if (l) lok += '\n' + l;
+      LOK.tryggjaVinnuskjol();
+    }
+  } catch (_) {}
   const ut = [lok, ctx].filter(Boolean).join('\n');
   if (!ut) return G.ljuka('', 0);
   return G.ljuka(JSON.stringify({ hookSpecificOutput: { hookEventName: 'UserPromptSubmit', additionalContext: ut } }), 0);

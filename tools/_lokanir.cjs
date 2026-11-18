@@ -8,12 +8,18 @@
  *
  *   texti()               stuttur kafli sem lotu-byrjun.cjs setur í byrjun hverrar nýrrar lotu (SessionStart) og router.cjs
  *                         EINU SINNI í lotu sem var þegar í gangi (UserPromptSubmit) — einuSinni() heldur utan um það.
- *   tryggjaNotandaskra()  heldur köflunum milli <!-- lotukerfi:<nafn> byrjar/endar --> í ~/.claude/CLAUDE.md eins og í
- *                         FRUMRITINU, claude-global/CLAUDE.md: bætir við kafla sem vantar og uppfærir kafla sem er
- *                         frábrugðinn (svo leiðrétting á frumritinu berist á allar vélar). Efni UTAN merkjanna er aldrei
- *                         snert, og eldra eintak skrárinnar fer í ~/.claude/backups/lotukerfi/ áður en henni er breytt.
- *                         tools/global-samstilling.cjs (handvirkt) yfirskrifar alla skrána með sama frumriti, svo þessi
- *                         tvö verkfæri eru alltaf sammála um kaflana.
+ *   tryggjaNotandaskra()  heldur köflunum milli <!-- lotukerfi:<nafn> byrjar · útgáfa N … --> og <!-- lotukerfi:<nafn> endar -->
+ *                         í ~/.claude/CLAUDE.md í takt við FRUMRITIÐ, claude-global/CLAUDE.md. Reglurnar (rýni 18.11.2026):
+ *                           · frumritið er AÐEINS lesið úr aðalvinnutré repósins og AÐEINS þegar það er á main — worktree á
+ *                             eldri eða órýndri grein má hvorki draga skrána til baka né setja órýnt efni í hana;
+ *                           · kafla sem vantar er bætt við aftast; kafli sem er til er uppfærður AÐEINS þegar útgáfunúmer
+ *                             frumritsins er hærra en á vélinni (aldrei niður, og breyting eigandans stendur þar til þá);
+ *                           · merki gilda aðeins fremst í línu og utan kóðablokka; sé eitthvað tvírætt (tvö byrjunarmerki,
+ *                             endamerki vantar, annað merki á milli) er kaflinn látinn ALVEG ósnertur;
+ *                           · efni utan merkjanna er aldrei snert, eldra eintak skrárinnar fer í ~/.claude/backups/lotukerfi/
+ *                             áður en henni er breytt, og lotan fær eina línu um það.
+ *                         tools/global-samstilling.cjs (handvirkt) yfirskrifar alla skrána með sama frumriti, svo verkfærin
+ *                         tvö eru sammála um kaflana.
  *
  * Ekkert hér má nokkurn tíma fella lotu: allt er í try/catch, engin netköll, samstillt og fáeinar ms. */
 'use strict';
@@ -21,13 +27,11 @@ const fs = require('fs');
 const path = require('path');
 const G = require('./_lotu-grunnur.cjs');
 
-const SNID = path.join(G.BH, 'claude-global', 'CLAUDE.md');
 const KAFLAR = [
   // eldri = texti sem sannar að kaflinn sé þegar í skránni ÁN merkja (handskrifaður á vél 18.11.2026) → ekki tvítekinn
   { nafn: 'innskraning', eldri: /lotan skráir sig inn SJÁLF/ },
   { nafn: 'lokanir', eldri: null },
 ];
-const byrjar = (n) => '<!-- lotukerfi:' + n + ' byrjar';
 const endar = (n) => '<!-- lotukerfi:' + n + ' endar -->';
 const lf = (s) => s.replace(/\r\n/g, '\n');
 
@@ -44,6 +48,16 @@ function adalRepo(bh = G.BH) {
     }
   } catch (_) {}
   return bh;
+}
+/* Frumritið: ALLTAF úr aðalvinnutrénu og AÐEINS þegar það er á main. Annars null → ekkert er skrifað í notendaskrána.
+ * (Hookur í worktree keyrir eigin tools/ — en hann má ekki nota eigið, hugsanlega eldra eða órýnt, frumrit.) */
+function frumrit({ bh = G.BH } = {}) {
+  if (process.env.LOTUKERFI_FRUMRIT) return path.resolve(process.env.LOTUKERFI_FRUMRIT);   // aðeins fyrir prófin
+  try {
+    const adal = adalRepo(bh);
+    if (fs.readFileSync(path.join(adal, '.git', 'HEAD'), 'utf8').trim() !== 'ref: refs/heads/main') return null;
+    return path.join(adal, 'claude-global', 'CLAUDE.md');
+  } catch (_) { return null; }
 }
 /* Vinnuskjalamappan: við hlið AÐALvinnutrésins, aldrei inni í repói. Reiknuð frá aðaltrénu svo worktree undir
  * <repo>/.claude/worktrees/ setji hana ekki inn í opinbera tréð. (Hún er líka í .gitignore, til vara.) */
@@ -63,51 +77,79 @@ function texti({ mappa = vinnuskjol() } = {}) {
   ].join('\n');
 }
 
-/* Kaflar frumritsins: { nafn → texti með merkjum }. Vanti annað merkið er kaflanum sleppt (aldrei hálfur kafli). */
-function lesaSnid(snid = SNID) {
+/* Öll lotukerfis-merki í texta, í röð. Merki gildir AÐEINS fremst í línu og utan kóðablokka (``` / ~~~): umtal í lausu
+ * máli eða sýnidæmi í kóðablokk er ekki merki. a = stafastaða línubyrjunar. */
+function merki(t) {
+  const ut = [];
+  let pos = 0, iKoda = false;
+  for (const hra of t.split('\n')) {
+    const l = hra.replace(/\r$/, '');
+    if (/^ {0,3}(```|~~~)/.test(l)) iKoda = !iKoda;
+    else if (!iKoda) {
+      let m = /^<!-- lotukerfi:([a-z]+) byrjar(?![a-z])/.exec(l);
+      if (m) ut.push({ teg: 'byrjar', nafn: m[1], a: pos, utgafa: Number((/útgáfa (\d+)/.exec(l) || [])[1]) || 0 });
+      else if ((m = /^<!-- lotukerfi:([a-z]+) endar -->/.exec(l))) ut.push({ teg: 'endar', nafn: m[1], a: pos });
+    }
+    pos += hra.length + 1;
+  }
+  return ut;
+}
+/* Hvar er kaflinn?  null = hvergi (ekkert byrjunarmerki) · { osnert } = til, en tvírætt eða yfirtekið af eigandanum →
+ * EKKI snert · { a, b, utgafa } = heill kafli (stafastöður með báðum merkjum) og útgáfunúmer hans (0 ef ekkert). */
+function stadsetja(t, nafn, M = merki(t)) {
+  const byr = M.filter((m) => m.teg === 'byrjar' && m.nafn === nafn);
+  if (!byr.length) return null;
+  if (byr.length > 1) return { osnert: 'fleiri en eitt byrjunarmerki' };
+  const naest = M[M.indexOf(byr[0]) + 1];
+  if (!naest || naest.teg !== 'endar' || naest.nafn !== nafn) return { osnert: 'endamerki vantar eða annað merki er á milli' };
+  return { a: byr[0].a, b: naest.a + endar(nafn).length, utgafa: byr[0].utgafa };
+}
+
+/* Kaflar frumritsins: { nafn → { texti (með merkjum), utgafa } }. Kafli sem er ekki heill í frumritinu er ekki með. */
+function lesaSnid(snid) {
   const t = lf(fs.readFileSync(snid, 'utf8'));
-  const ut = {};
+  const M = merki(t), ut = {};
   for (const { nafn } of KAFLAR) {
-    const a = t.indexOf(byrjar(nafn)), b = t.indexOf(endar(nafn), a);
-    if (a >= 0 && b > a) ut[nafn] = t.slice(a, b + endar(nafn).length);
+    const s = stadsetja(t, nafn, M);
+    if (s && !s.osnert) ut[nafn] = { texti: t.slice(s.a, s.b), utgafa: s.utgafa };
   }
   return ut;
 }
 
-/* Hvað vantar og hvað er frábrugðið frumritinu?  nu = núverandi efni skrárinnar (null = skráin er ekki til).
- *   vantar  kaflinn er hvergi í skránni (hvorki með merki né sem eldri handskrifuð útgáfa) → bætt við aftast
- *   breytt  kaflinn er þar með BÁÐUM merkjum en efnið er annað en í frumritinu → skipt út á sínum stað
- *   Byrjunarmerki án endamerkis = eigandinn hefur tekið kaflann yfir → látinn alveg ósnertur. */
+/* nu = núverandi efni skrárinnar (null = skráin er ekki til).
+ *   vantar  kaflinn er hvergi (hvorki með merki né sem eldri handskrifuð útgáfa) → bætt við aftast
+ *   breytt  heill kafli með LÆGRA útgáfunúmer en frumritið → skipt út á sínum stað */
 function greina(nu, kaflar) {
   const vantar = [], breytt = [];
+  const M = nu == null ? [] : merki(nu);
   for (const { nafn, eldri } of KAFLAR) {
-    if (!kaflar[nafn]) continue;
+    const k = kaflar[nafn];
+    if (!k) continue;
     if (nu == null) { vantar.push(nafn); continue; }
-    const a = nu.indexOf(byrjar(nafn));
-    if (a < 0) { if (!(eldri && eldri.test(nu))) vantar.push(nafn); continue; }
-    const b = nu.indexOf(endar(nafn), a);
-    if (b < 0) continue;
-    if (lf(nu.slice(a, b + endar(nafn).length)) !== kaflar[nafn]) breytt.push(nafn);   // línuendar einir teljast ekki breyting
+    const s = stadsetja(nu, nafn, M);
+    if (!s) { if (!(eldri && eldri.test(nu))) vantar.push(nafn); continue; }
+    if (s.osnert) continue;
+    if (k.utgafa > s.utgafa) breytt.push(nafn);
   }
   return { vantar, breytt };
 }
 function beita(nu, kaflar, { vantar, breytt }) {
   let t = nu == null ? '' : nu;
-  for (const nafn of breytt) {
-    const a = t.indexOf(byrjar(nafn)), b = t.indexOf(endar(nafn), a);
-    t = t.slice(0, a) + kaflar[nafn] + t.slice(b + endar(nafn).length);
-  }
+  const skipti = breytt.map((nafn) => Object.assign({ nafn }, stadsetja(t, nafn))).sort((x, y) => y.a - x.a);   // aftast fyrst: stöðurnar framar haldast
+  for (const s of skipti) t = t.slice(0, s.a) + kaflar[s.nafn].texti + t.slice(s.b);
   if (vantar.length) {
-    const vidbot = vantar.map((n) => kaflar[n]).join('\n\n') + '\n';
+    const vidbot = vantar.map((n) => kaflar[n].texti).join('\n\n') + '\n';
     t = !t.trim() ? vidbot : t + (t.endsWith('\n') ? '\n' : '\n\n') + vidbot;
   }
   return t;
 }
 
-/* Skilar { stada, kaflar }:  til (ekkert að gera) · buin_til · baett_vid · uppfaert (kafla skipt út; e.t.v. líka bætt við)
- *   upptekid (önnur lota er að skrifa núna) · sleppt (skráin er ekki UTF-8 — ekki snert) · villa (ekkert kast). */
-function tryggjaNotandaskra({ heima = G.HEIMA, snid = SNID } = {}) {
+/* Skilar { stada, kaflar, afrit? }:  til (ekkert að gera) · buin_til · baett_vid · uppfaert (kafla skipt út; e.t.v. líka
+ *   bætt við) · upptekid (önnur lota er að skrifa núna) · sleppt (frumrit ekki tiltækt, eða skráin er ekki UTF-8) · villa. */
+function tryggjaNotandaskra({ heima = G.HEIMA, snid } = {}) {
   try {
+    if (snid === undefined) snid = frumrit();
+    if (!snid) return { stada: 'sleppt', kaflar: [], villa: 'frumritið er aðeins lesið úr aðalvinnutré á main' };
     const kaflar = lesaSnid(snid);
     const skra = path.join(heima, 'CLAUDE.md');
     const lesa = () => {
@@ -136,28 +178,36 @@ function tryggjaNotandaskra({ heima = G.HEIMA, snid = SNID } = {}) {
       const g = greina(nu, kaflar);
       if (!g.vantar.length && !g.breytt.length) return { stada: 'til', kaflar: [] };
       const nytt = beita(nu, kaflar, g);
+      const ut = { stada: nu == null ? 'buin_til' : g.breytt.length ? 'uppfaert' : 'baett_vid',
+        kaflar: KAFLAR.map((k) => k.nafn).filter((n) => g.vantar.includes(n) || g.breytt.includes(n)) };
       if (nu == null) fs.writeFileSync(skra, nytt, 'utf8');
       else {
-        const afrit = path.join(heima, 'backups', 'lotukerfi', new Date().toISOString().replace(/[:.]/g, '-') + '-' + process.pid);
-        fs.mkdirSync(afrit, { recursive: true });
-        fs.writeFileSync(path.join(afrit, 'CLAUDE.md'), nu, 'utf8');
+        ut.afrit = path.join(heima, 'backups', 'lotukerfi', new Date().toISOString().replace(/[:.]/g, '-') + '-' + process.pid);
+        fs.mkdirSync(ut.afrit, { recursive: true });
+        fs.writeFileSync(path.join(ut.afrit, 'CLAUDE.md'), nu, 'utf8');
         skrifaHeilt(skra, nytt);
       }
-      return { stada: nu == null ? 'buin_til' : g.breytt.length ? 'uppfaert' : 'baett_vid',
-        kaflar: KAFLAR.map((k) => k.nafn).filter((n) => g.vantar.includes(n) || g.breytt.includes(n)) };
+      return ut;
     });
     return r || { stada: 'upptekid', kaflar: [] };   // önnur lota er að skrifa núna — hún klárar verkið
   } catch (e) {
     return { stada: 'villa', kaflar: [], villa: String((e && e.message) || e).slice(0, 160) };
   }
 }
+/* Lína handa lotunni þegar kafla var SKIPT ÚT — svo breyting á leiðbeiningaskrá eigandans fari aldrei þegjandi fram. */
+function linaUmSkra(r) {
+  if (!r || r.stada !== 'uppfaert') return '';
+  return 'Leiðbeiningar í ~/.claude/CLAUDE.md á þessari vél voru uppfærðar úr frumritinu (brunaholf/claude-global/CLAUDE.md, kafli: '
+    + r.kaflar.join(', ') + '). Eldra eintak skrárinnar er í ' + r.afrit + '.';
+}
 
 /* Bráðabirgðaskrá + endurnefning: enginn les hálfskrifaða skrá. Sé skráin tákntengill er skrifað í skrána sem hann
  * bendir á, svo tengillinn haldist. Á Windows bregst endurnefning (EPERM) á meðan annað ferli hefur skrána opna til
- * lestrar — mælt 18.11.2026 með átta lotum í einu — svo reynt er aftur í nokkrar ms, og að lokum skrifað beint í skrána. */
+ * lestrar — mælt 18.11.2026 með átta lotum í einu — svo reynt er aftur í nokkrar ms. varaleid: dugi það ekki er skrifað
+ * beint í skrána (aðeins fyrir CLAUDE.md, þar sem afrit er þegar til; lesandi gæti séð hálfa skrá í andartak). */
 const UPPTEKIN = ['EPERM', 'EBUSY', 'EACCES'];
 function bida(ms) { try { Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms); } catch (_) {} }
-function skrifaHeilt(skra, efni) {
+function skrifaHeilt(skra, efni, { varaleid = true } = {}) {
   let mark = skra;
   try { if (fs.lstatSync(skra).isSymbolicLink()) mark = fs.realpathSync(skra); } catch (_) {}
   const t = mark + '.' + process.pid + '.tmp';
@@ -169,8 +219,8 @@ function skrifaHeilt(skra, efni) {
     }
   } catch (e) {
     try { fs.unlinkSync(t); } catch (_) {}
-    if (!UPPTEKIN.includes(e.code)) throw e;
-    fs.writeFileSync(mark, efni, 'utf8');   // lesandi heldur skránni enn: beint í hana (afrit er þegar til)
+    if (!varaleid || !UPPTEKIN.includes(e.code)) throw e;
+    fs.writeFileSync(mark, efni, 'utf8');
   }
 }
 
@@ -208,7 +258,7 @@ function merkja(id, { heima = G.HEIMA, nu = Date.now() } = {}) {
     s[String(id)] = nu;
     const ny = Object.fromEntries(Object.entries(s).sort((a, b) => b[1] - a[1]).slice(0, 300));
     fs.mkdirSync(heima, { recursive: true });
-    skrifaHeilt(SED(heima), JSON.stringify(ny));
+    skrifaHeilt(SED(heima), JSON.stringify(ny), { varaleid: false });   // aldrei hálf skrá: lesandi læsi hana sem tóma
     return true;
   } catch (_) { return false; }
 }
@@ -219,4 +269,4 @@ function einuSinni(id, opt = {}) {
   return merkja(id, opt);
 }
 
-module.exports = { texti, tryggjaNotandaskra, tryggjaVinnuskjol, vinnuskjol, adalRepo, einuSinni, merkja, lesaSnid, medLas, skrifaHeilt, KAFLAR, SNID };
+module.exports = { texti, tryggjaNotandaskra, linaUmSkra, tryggjaVinnuskjol, vinnuskjol, adalRepo, frumrit, einuSinni, merkja, lesaSnid, merki, stadsetja, medLas, skrifaHeilt, KAFLAR };

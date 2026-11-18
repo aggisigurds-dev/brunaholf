@@ -61,11 +61,17 @@ function gitA(repo, arg, ms) {
     execFile('git', arg, { cwd: repo, encoding: 'utf8', timeout: ms, windowsHide: true, env: umhverfi() }, (e, ut) => (e ? rej(e) : res(String(ut || ''))));
   });
 }
-/* Er commitið þegar í HEAD? `merge-base --is-ancestor`: 0 = já; 1 = nei; 128 = commitið er ekki til á vélinni (= nei).
- * Annað (git vantar, tímaþak) er BILUN og kastar — þá er engu haldið fram. Les aðeins; skrifar ekkert í repóið. */
+/* Er commitið þegar í HEAD? Tvö skref, bæði lesa aðeins:
+ *   1. `rev-parse --verify --quiet <sha>^{commit}`  0 = commitið er til á vélinni; 1 = ekki til (→ vélin er á eftir)
+ *   2. `merge-base --is-ancestor <sha> HEAD`        0 = já; 1 = nei
+ * Allt annað (git vantar, repóið ólæsilegt = 128, tímaþak) er BILUN og kastar — þá er engu haldið fram um vélina.
+ * Tímaþakið er stutt: hookurinn hefur 5 s alls og þetta er samstillt. */
 function inniheldur(repo, sha) {
-  try { execFileSync('git', ['merge-base', '--is-ancestor', sha, 'HEAD'], { cwd: repo, timeout: 4000, windowsHide: true, stdio: 'ignore', env: umhverfi() }); return true; }
-  catch (e) { if (e && (e.status === 1 || e.status === 128)) return false; throw e; }
+  const keyra = (arg) => {
+    try { execFileSync('git', arg, { cwd: repo, timeout: 1500, windowsHide: true, stdio: 'ignore', env: umhverfi() }); return true; }
+    catch (e) { if (e && e.status === 1) return false; throw e; }
+  };
+  return keyra(['rev-parse', '--verify', '--quiet', sha + '^{commit}']) && keyra(['merge-base', '--is-ancestor', sha, 'HEAD']);
 }
 
 /* Úr lotu-byrjun. Skilar stöðunni sem var skráð, eða null ef ekkert var athugað (of stutt síðan, worktree, slökkt).
@@ -98,11 +104,13 @@ async function athuga({ repo = G.BH, heima = G.HEIMA, nu = Date.now(), grein = G
 
 /* Lína í byrjun lotu — aðeins þegar vélin er á eftir. Sannreynt á staðnum í hvert sinn (les aðeins), svo línan hverfi
  * um leið og einhver lota hefur sótt nýju útgáfuna, án þess að bíða næstu athugunar. */
-function lina({ heima = G.HEIMA } = {}) {
+function lina({ heima = G.HEIMA, ferskt = null } = {}) {
   try {
     const s = lesa(heima);
     if (s.stada !== 'a_eftir' || !s.sha || !s.repo) return '';
-    if (inniheldur(s.repo, s.sha)) { try { skrifa(heima, Object.assign({}, s, { stada: 'nyjast' })); } catch (_) {} return ''; }
+    // ferskt = niðurstaða athuga() í ÞESSARI keyrslu: þá var þetta mælt rétt í þessu og óþarfi að kalla á git aftur.
+    const nymaelt = ferskt && ferskt.stada === 'a_eftir' && ferskt.sha === s.sha && !ferskt.villa;
+    if (!nymaelt && inniheldur(s.repo, s.sha)) { try { skrifa(heima, Object.assign({}, s, { stada: 'nyjast' })); } catch (_) {} return ''; }
     return 'Lotukerfið á þessari vél er á eftir origin/' + GREIN + ', svo hookar og leiðbeiningar hér eru gamlar. Fyrsta verk, áður en annað: '
       + '`git -C "' + s.repo + '" status -sb`. Sýni það `## ' + GREIN + '...` og engar breyttar skrár: `git -C "' + s.repo + '" pull --ff-only`. '
       + 'Sýni það aðra grein eða breyttar skrár er önnur lota að vinna þar: snertu ekkert og nefndu það í einni línu í svarinu. Spurðu Agnar ekki.';

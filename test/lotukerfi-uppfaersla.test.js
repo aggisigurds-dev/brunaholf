@@ -139,6 +139,15 @@ test('lina: þegir nema staðan sé „a_eftir“ með auðkenni; skemmd skrá o
   }
   setja({ stada: 'a_eftir', sha: 'a'.repeat(40), repo: path.join(heima, 'repo-sem-er-horfid') });
   assert.equal(UPP.lina({ heima }), '', 'repóið finnst ekki → þegja frekar en að fullyrða');
+  // Mappa sem git getur ekki lesið sem repó (kóði 128) er BILUN, ekki „á eftir“ — engin lína (rýni 18.11.2026).
+  const ekkiRepo = tmp('ekki-repo');
+  setja({ stada: 'a_eftir', sha: 'a'.repeat(40), repo: ekkiRepo });
+  assert.equal(UPP.lina({ heima }), '', 'git les ekki repóið → engu haldið fram');
+  assert.throws(() => UPP.inniheldur(ekkiRepo, 'a'.repeat(40)));
+  // Í raunverulegu repói: commit sem er ekki til á vélinni = á eftir (false), HEAD sjálft = inni (true).
+  const u = umhverfi();
+  assert.equal(UPP.inniheldur(u.vel, 'a'.repeat(40)), false);
+  assert.equal(UPP.inniheldur(u.vel, g(u.vel, 'rev-parse', 'HEAD')), true);
 });
 
 /* ── Í gegnum raunverulega hookinn ─────────────────────────────────────────────────────────────── */
@@ -187,14 +196,15 @@ test('lotu-byrjun: slökkt (LOTUKERFI_UPPFAERSLA=0) → ekkert athugað, ekkert 
 /* ── Lásinn á ~/.claude/CLAUDE.md ─────────────────────────────────────────────────────────────── */
 const A = '<!-- lotukerfi:innskraning byrjar', B = '<!-- lotukerfi:lokanir byrjar';
 const fjoldi = (t, m) => t.split(m).length - 1;
+const FRUM = path.join(ROT, 'claude-global', 'CLAUDE.md');   // frumritið gefið beint (sjálfgefna leiðin les aðeins aðalvinnutré á main)
 
 test('lás: önnur lota að skrifa → „upptekid“ og ekkert skrifað; gamall lás (dautt ferli) er tekinn yfir og fjarlægður', () => {
   const heima = tmp('las'), skra = path.join(heima, 'CLAUDE.md'), las = skra + '.lotukerfi-las';
   fs.writeFileSync(las, '');
-  assert.deepEqual(LOK.tryggjaNotandaskra({ heima }), { stada: 'upptekid', kaflar: [] });
+  assert.deepEqual(LOK.tryggjaNotandaskra({ heima, snid: FRUM }), { stada: 'upptekid', kaflar: [] });
   assert.ok(!fs.existsSync(skra));
   const gamalt = new Date(Date.now() - 60000); fs.utimesSync(las, gamalt, gamalt);
-  assert.equal(LOK.tryggjaNotandaskra({ heima }).stada, 'buin_til');
+  assert.equal(LOK.tryggjaNotandaskra({ heima, snid: FRUM }).stada, 'buin_til');
   assert.ok(!fs.existsSync(las), 'lásinn fjarlægður eftir skrif');
   const t = lesa(skra); assert.equal(fjoldi(t, A), 1); assert.equal(fjoldi(t, B), 1);
 });
@@ -202,9 +212,9 @@ test('lás: önnur lota að skrifa → „upptekid“ og ekkert skrifað; gamall
 test('átta lotur byrja í sömu andrá → hvor kafli fer inn NÁKVÆMLEGA einu sinni og eldra efni stendur', async () => {
   const heima = tmp('samtimis'), skra = path.join(heima, 'CLAUDE.md');
   fs.writeFileSync(skra, '# Mitt\n');
-  const kodi = 'const L=require(process.argv[1]);const r=L.tryggjaNotandaskra({heima:process.argv[2]});process.stdout.write(r.stada)';
+  const kodi = 'const L=require(process.argv[1]);const r=L.tryggjaNotandaskra({heima:process.argv[2],snid:process.argv[3]});process.stdout.write(r.stada)';
   const ut = await Promise.all(Array.from({ length: 8 }, () => new Promise((res) => {
-    const b = spawn(process.execPath, ['-e', kodi, path.join(ROT, 'tools', '_lokanir.cjs'), heima], { stdio: ['ignore', 'pipe', 'ignore'] });
+    const b = spawn(process.execPath, ['-e', kodi, path.join(ROT, 'tools', '_lokanir.cjs'), heima, FRUM], { stdio: ['ignore', 'pipe', 'ignore'] });
     let o = ''; b.stdout.on('data', (d) => { o += d; }); b.on('close', () => res(o));
   })));
   assert.ok(ut.every((s) => ['baett_vid', 'til', 'upptekid'].includes(s)), ut.join(','));
