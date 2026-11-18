@@ -1387,3 +1387,20 @@ Agnar: „E30 segja líka til um bláu hurðirnar“ · „2x falda breiddina á
   Staðfest op: 6H 183 (123 úr tákni, 60 úr bili), 5H 187 (123, 64). Hurðartákn án merkingar (ekki brunahurð): 20 og 16.
 - **Skurðir:** 6H 509 (rauður veggur 393, brunahurðaop 81, blá lína sem var fyrir 35) · 5H 512 (405, 77, 30). Mæling = merking 70 % og 68 %.
 - **Ógert:** 26 merkingar á hvorri hæð án ops; glerveggir án hurðartákns; stefna línu röng í stöku tvöfaldri skápahurð. Engu breytt í grunni.
+
+## 18.11.2026 — Loft og rafmagn fært með BRUNAHURÐAOPUM sem vegg (skrifað)
+
+Agnar: „Já prófaðu“ (spurt hvort nota ætti hurðaopin í sjálfvirku færslunni). Síðar: „Ég get teiknað síðustu línurnar ef þér vantar“.
+
+- **Veggjamynd með hurðaopum:** staðfest brunahurðaop (`gat/grimur4-<hæð>.npz`, E-merkt, 6H 183 og 5H 187) máluð rauð á yfirlitsmyndina:
+  `_vinnuskjol/nlsh-loftstaerdir-20261118/yf-hurdir/yfirlit-6h.jpg` og `-5h.jpg`. Gefin skr-festa sem `--yfirlit`.
+- **Þurrkeyrsla á móti handfærslum Agnars (6H), án → með hurðaopum** (`festa/prof_hurdir.py`):
+  rafmagn: á brunavegg 253 → 304, ófærðir 237 → 204, tól→Agnar miðgildi 10,7 → 7,4 px, innan 8 px 10 → 20 af 37. **Skýr bati.**
+  loft: á brunavegg 905 → 955, á innvegglínu 81 → 48, innan 15 px 110 → 114 af 164. Lítill bati.
+  plast, stál, úði: innan skekkjumarka (stál 12 → 11 af 22 innan 8 px). Þeir hópar voru því EKKI færðir.
+- **Skrifað með `--hopar loft,rafmagn`** (nýr rofi, kjarni main): 6H 71 nýjar, 980 uppfærðar, 31 afturkölluð; 5H 32, 620, 24.
+  Mælt á móti afriti `backup_20261118b_skr_faerslur`: 6H loft 107 og rafmagn 94 færðust meira en 3 px; 5H loft 74, rafmagn 49.
+  Plast/stál/úði 0 hreyfðir, milliloft 0, handfærðir 0 snertir.
+- **Pörun endurkeyrð:** 6H 2.005 pöruð, 5H 785 (óbreytt).
+- **Hurðalínur Agnars:** kortið á þegar tólið „Lína“ (`linuHamur`), vistar í `skr_verk.stillingar.hurdalinur[teikning_id]` sem flatt [x1,y1,x2,y2,…] í
+  yfirlitspixlum. Tómt 18.11. Þegar Agnar teiknar þær 26 brunahurðir á hæð sem vantar og glerveggina: lesa þaðan, mála í veggjamyndina og endurkeyra.
