@@ -70,7 +70,24 @@ function vafid(st) {
   return { h, kallad };
 }
 const ev = (o = {}) => ({ httpMethod: 'GET', headers: {}, queryStringParameters: {}, ...o });
-const fyrir = (t) => test(t[0], async () => { nytt(); V._endurstilla(); await t[1](); });
+// ROFINN (18.11.2026): vörðurinn er slökktur í loftinu síðan 17.11.2026 (V.SLOKKT í _vord.js, að beiðni Agnars). Hegðunarprófin
+// hér lýsa KVEIKTUM verði og féllu því á hverri ýtingu — og almenna prófið neðst keyrði þá öll 155 föllin í alvöru og hékk.
+// Meðan rofinn er á er þeim SLEPPT (sýnilega, með ástæðu); þegar honum er snúið vakna þau sjálf og verða að standast.
+const SLEPPA = V.SLOKKT ? 'vörðurinn er slökktur (_vord.js: SLOKKT = true) — prófið vaknar þegar honum er snúið á' : false;
+const fyrir = (t) => test(t[0], { skip: SLEPPA }, async () => { nytt(); V._endurstilla(); await t[1](); });
+// Próf sem eru ÓHÁÐ rofanum keyra alltaf: forspurn appsins (plástur 514 treystir á hana) og tókinn í innri köllum.
+const alltaf = (t) => test(t[0], async () => { nytt(); V._endurstilla(); await t[1](); });
+
+test('rofinn: hliðið og prófin fylgja SLOKKT — slökkt hleypir öllu í gegn, kveikt hafnar óinnskráðum', async () => {
+  nytt(); V._endurstilla();
+  assert.equal(typeof V.SLOKKT, 'boolean');
+  const r = await V.hlid(ev(), { fall: 'prufufall' });
+  if (V.SLOKKT) assert.equal(r, null, 'slökkt: ekkert er stöðvað');
+  else assert.equal(r && r.statusCode, 401, 'kveikt: óinnskráð beiðni fær 401');
+  // Forspurn appsins er svarað í báðum stöðum (plástur 514 í Slökkvitækis-appinu treystir á það).
+  assert.equal(typeof V.hafnad, 'function');
+  assert.equal(V.hafnad(401, ev()).statusCode, 401);
+});
 
 fyrir(['án innskráningar → 401 og fallið keyrir ekki (HUB_STAFF_PASSWORD ósett)', async () => {
   const { h, kallad } = vafid();
@@ -202,7 +219,7 @@ fyrir(['stjornandi: starfsmaður → 403, Admin-kaka → inn, tóki (starfsmanns
   assert.equal((await h(ev({ headers: { cookie: kaka(1) } }))).statusCode, 200);
   assert.equal((await h(ev({ headers: { 'x-hub-toki': toki() } }))).statusCode, 403, 'tóki veitir ekki stjórnandaréttindi');
 }]);
-fyrir(['forspurn appsins með x-hub-toki fær 204 frá verðinum; annar uppruni/aðrir hausar → fallið svarar sjálft', async () => {
+alltaf(['forspurn appsins með x-hub-toki fær 204 frá verðinum; annar uppruni/aðrir hausar → fallið svarar sjálft', async () => {
   const { h, kallad } = vafid();
   const APP = 'https://slokkvitaeki.netlify.app';
   const r = await h(ev({ httpMethod: 'OPTIONS', headers: { origin: APP, 'access-control-request-headers': 'content-type, x-hub-toki' } }));
@@ -235,7 +252,7 @@ fyrir(['401 til Slökkvitækis-appsins ber CORS-haus svo appið sjái villuna; a
   assert.equal((await h(ev({ headers: { origin: 'https://slokkvitaeki.netlify.app' } }))).headers['Access-Control-Allow-Origin'], 'https://slokkvitaeki.netlify.app');
   assert.equal((await h(ev({ headers: { origin: 'https://illt.example' } }))).headers['Access-Control-Allow-Origin'], undefined);
 }]);
-fyrir(['innri köll: fetch á eigin /api/ og /.netlify/functions/ fær tókann; önnur hýsing ALDREI', async () => {
+alltaf(['innri köll: fetch á eigin /api/ og /.netlify/functions/ fær tókann; önnur hýsing ALDREI', async () => {
   await fetch('https://brunaholf.netlify.app/api/worksites?x=1');
   await fetch('https://brunaholf.netlify.app/.netlify/functions/debtors', { method: 'POST', headers: { 'content-type': 'application/json' } });
   await fetch('https://illt.example/api/worksites');
@@ -250,7 +267,7 @@ fyrir(['innri köll: fetch á eigin /api/ og /.netlify/functions/ fær tókann; 
 const DIR = path.join(__dirname, '..', 'netlify', 'functions');
 const vafin = fs.readdirSync(DIR).filter(f => f.endsWith('.js') && !f.startsWith('_'))
   .filter(f => /require\('\.\/_vord'\)/.test(fs.readFileSync(path.join(DIR, f), 'utf8')));
-test(`öll vafin föll (${vafin.length}) svara 401 óinnskráð og flytja út óvarinn _innra`, async () => {
+test(`öll vafin föll (${vafin.length}) svara 401 óinnskráð og flytja út óvarinn _innra`, { skip: SLEPPA }, async () => {
   nytt(); V._endurstilla();
   const ekkiHladid = [], opin = [];
   for (const f of vafin) {
@@ -291,7 +308,7 @@ test('ekkert fall kallar beint á vafinn handler (aðeins um _innra)', () => {
   }
   assert.deepEqual(brot, []);
 });
-test('ESM-fallið timavera-maeting er vafið og svarar 401 óinnskráð', async () => {
+test('ESM-fallið timavera-maeting er vafið og svarar 401 óinnskráð', { skip: SLEPPA }, async () => {
   nytt(); V._endurstilla();
   const m = await import(require('node:url').pathToFileURL(path.join(DIR, 'timavera-maeting.js')).href);
   assert.equal(m.handler._vord, 'timavera-maeting');

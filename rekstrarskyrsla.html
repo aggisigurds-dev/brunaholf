@@ -268,9 +268,9 @@
   var idagIso = function () { return new Date().toISOString().slice(0, 10); };
 
   // ---- val ----
-  var VAL_KEY = 'rekstrarskyrsla:val';
+  // Valið er EKKI geymt í vafranum: síðan opnast alltaf á „Í dag“. Regla Agnars 15.10.2026 — engar stillingar sem búa
+  // aðeins á einni tölvu (vörðurinn audit-vafrastada í slokkvitaeki telur vafra-lykla og var rauður 18.11.2026 út af þessum).
   var val = 'idag', valinDagur = null;
-  try { var v0 = localStorage.getItem(VAL_KEY); if (/^(idag|gaer|vika|svika)$/.test(v0 || '')) val = v0; } catch (e) {}
   var skyndi = {};
   function dagurFyrirVal() { if (val === 'velja' && valinDagur) return valinDagur; if (val === 'gaer') return plusDagar(idagIso(), -1); return idagIso(); }
   function dalkur() { return val === 'vika' ? 1 : val === 'svika' ? 2 : 0; }
@@ -493,7 +493,7 @@
 
   // ---- atburðir ----
   document.querySelectorAll('#tvol button').forEach(function (b) {
-    b.addEventListener('click', function () { val = b.dataset.v; try { localStorage.setItem(VAL_KEY, val); } catch (e) {} saekja(false); });
+    b.addEventListener('click', function () { val = b.dataset.v; saekja(false); });
   });
   var dagInntak = $('velja-dag');
   dagInntak.max = idagIso();

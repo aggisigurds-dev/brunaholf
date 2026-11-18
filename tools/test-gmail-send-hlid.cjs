@@ -81,6 +81,18 @@ const SEND = { account: 'eldklar@eldklar.is', to: ['prof@example.invalid'], subj
   ok(d.statusCode === 200 && JSON.parse(d.body).sent === true && sent === 3, 'daily-health heilsuvakt kemst í gegn (tóki)');
   const an = await DH.handler({ httpMethod: 'GET', queryStringParameters: { send: '1', force: '1' }, headers: { host: 'brunaholf.netlify.app' } });
   ok(an.statusCode === 401 && sent === 3, 'daily-health um HTTP án innskráningar → 401 (vörðurinn), ekkert sent');
+  // 18.11.2026: sendingin krefst innskráningar eða tóka ÓHÁÐ rofa varðarins (_vord.js: SLOKKT), og athugunin situr utan við
+  // vafninginn — svo gildur tóki í slóð (?_hubtoki=) kemst í gegn og forspurn (OPTIONS) fær ekki 401.
+  const VV = require(path.join(FN, '_vord.js'));
+  const tk = await VV.myntaToki();
+  const medToka = await DH.handler({ httpMethod: 'GET', queryStringParameters: { send: '1', force: '1', [VV.TOKI_QS]: tk }, headers: { host: 'brunaholf.netlify.app' } });
+  ok(!!tk && medToka.statusCode === 200 && sent === 4, 'daily-health um HTTP með gildum tóka í slóð → sent');
+  const rangt = await DH.handler({ httpMethod: 'GET', queryStringParameters: { send: '1', force: '1', [VV.TOKI_QS]: '1.rangur' }, headers: { host: 'brunaholf.netlify.app' } });
+  ok(rangt.statusCode === 401 && sent === 4, 'daily-health um HTTP með röngum tóka → 401, ekkert sent');
+  const fors = await DH.handler({ httpMethod: 'OPTIONS', queryStringParameters: { send: '1' }, headers: { host: 'brunaholf.netlify.app' } });
+  ok((!fors || fors.statusCode !== 401) && sent === 4, 'forspurn (OPTIONS) á daily-health?send=1 fær ekki 401 og sendir ekkert');
+  const lestur = await DH.handler({ httpMethod: 'GET', queryStringParameters: {}, headers: { host: 'brunaholf.netlify.app' } });
+  ok(lestur.statusCode !== 401 && sent === 4, 'lestur án send er óbreyttur (enginn póstur, engin krafa um innskráningu meðan vörðurinn er slökktur)');
   const BG = require(path.join(FN, 'daily-health-background.js'));
   const b = await BG.handler();
   const bb = JSON.parse(b.body || '{}');

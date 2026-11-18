@@ -299,4 +299,24 @@ function json(s, p) { return resp(s, JSON.stringify(p), { 'content-type': 'appli
 function resp(statusCode, body, headers) { return { statusCode, headers, body }; }
 
 // ── Vörður (Powerplan lota 13, 17.11.2026): innskráning (hub_user) eða tóki (x-hub-toki / _hubtoki) — sjá _vord.js ──
-{ const _V = require('./_vord'); exports._innra = exports.handler; exports.handler = _V.vafinn(exports.handler, { fall: 'daily-health' }); }
+{
+  const _V = require('./_vord');
+  exports._innra = exports.handler;
+  // 18.11.2026: ?send=1 sendir póst á eigandann. Vörðurinn er slökktur síðan 17.11 (_vord.js: SLOKKT) og hleypti þá óinnskráðu
+  // HTTP-kalli í gegn — hver sem er gat látið kerfið senda honum heilsupóst (repóið er opinbert, slóðin finnanleg).
+  // SENDING krefst því ALLTAF innskráningar eða tóka, óháð rofanum. Áætlaða vaktin (daily-health-background) kallar á
+  // _innra og er ósnert; lestur án send er óbreyttur.
+  // Athugunin situr UTAN við vafninginn: vafinn() fjarlægir ?_hubtoki= áður en fallið keyrir, svo inni í honum sæist gildur
+  // tóki í slóð ekki. Forspurn (OPTIONS) er látin fara beint í vörðinn, sem svarar henni eins og áður.
+  const vafid = _V.vafinn(exports._innra, { fall: 'daily-health' });
+  const ytri = async (event, context) => {
+    const qs = (event && event.queryStringParameters) || {};
+    if (event && event.httpMethod !== 'OPTIONS' && (qs.send === '1' || qs.send === 'true')) {
+      const h = await _V.hver(event);
+      if (h.villa) return _V.hafnad(h.villa, event);
+    }
+    return vafid(event, context);
+  };
+  ytri._vord = vafid._vord;   // merkið sem segir að fallið sé vafið (test/vord.test.js les það)
+  exports.handler = ytri;
+}

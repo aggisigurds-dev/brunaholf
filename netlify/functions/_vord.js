@@ -249,6 +249,11 @@ function forspurnApps(event) {
     'Access-Control-Allow-Methods': 'GET, POST, PATCH, PUT, DELETE, OPTIONS',
     'Access-Control-Allow-Headers': bed.slice(0, 300), 'Access-Control-Max-Age': '600' }, body: '' };
 }
+// ROFINN (18.11.2026). true = hliðið hleypir öllu í gegn; ástæðan stendur í hlid() hér að neðan. Prófin í
+// test/vord.test.js lesa rofann og sleppa hegðunarprófum varðarins á meðan hann er slökktur, í stað
+// þess að falla á hverri ýtingu: CI á main var rautt frá 17.11.2026 kl. 16:47 og eigandinn fékk „Run failed“ póst frá
+// GitHub við hverja ýtingu. Þegar vörðurinn er endurvakinn: settu false — þá vakna prófin sjálf og verða að standast.
+const SLOKKT = true;
 async function hlid(event, { fall, stjornandi = false, opidEf = null } = {}) {
   if (!event) return null;
   if (event.httpMethod === 'OPTIONS') return forspurnApps(event);
@@ -262,8 +267,8 @@ async function hlid(event, { fall, stjornandi = false, opidEf = null } = {}) {
   // kerfisheilsa, krofu-greidslur, nlsh-dashboard — öll á opin-lista eða í skráningarham.
   // Hliðið hleypir því öllu í gegn (eins og fyrir 06:42 í dag) þar til það er endurhannað FAIL-OPEN.
   // Forspurn appsins fyrir x-hub-toki (plástur 514) er svarað áfram, línan hér að ofan.
-  // AFTURKALLA: git revert á þessu commiti + birta.
-  return null;
+  // AFTURKALLA: setja SLOKKT = false (efst við hlid) + birta — eftir að hliðið er orðið fail-OPEN.
+  if (SLOKKT) return null;
   // ─────────────────────────────────────────────────────────────────────────────────────────────
   if (typeof opidEf === 'function') { try { if (await opidEf(event)) return null; } catch (_) {} }
   const hamur = await hamurFyrir(fall);
@@ -342,6 +347,6 @@ if (typeof fetchUpphaflegt === 'function' && !globalThis.__vordFetch) {
   };
 }
 
-module.exports = { vafinn, hlid, hver, myntaToki, erGildurToki, erGildurSkjalToki, hamurFyrir, eiginFall, TOKI_HAUS, TOKI_QS, HAMUR_KV,
+module.exports = { vafinn, hlid, hver, hafnad, SLOKKT, myntaToki, erGildurToki, erGildurSkjalToki, hamurFyrir, eiginFall, TOKI_HAUS, TOKI_QS, HAMUR_KV,
   _endurstilla() { _st = null; _stT = 0; _ham = null; _hamT = 0; _skrad.clear(); _notendur.clear(); _vidvT = {}; },
   _rennaUt() { _hamT = 0; }, _gleymaStillingu() { _st = null; _stT = 0; }, FRESTUR_MS };
