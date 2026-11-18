@@ -223,7 +223,7 @@ Bæði slökkvitæki og brunahólf lesa sama Supabase `osfdzskyvisifcwyjkuk`.
 <!-- SIDUKORT:BEGIN -->
 ## Síðukort — hver á hverja síðu (búið til af `node tools/build-agents-registry.cjs`)
 
-Byggt 2026-11-17 úr `brunaholf/.claude/sidukort.json`, `slokkvitaeki/.claude/sidukort.json`, `kjarni/.claude/sidukort.json`. Staða: ✅ eigandi til · ⚠️ eigandi ekki í registry eða skilgreind-skrá finnst ekki · ❌ enginn eigandi. Breyttu síðukortinu, ekki hér.
+Byggt 2026-11-18 úr `brunaholf/.claude/sidukort.json`, `slokkvitaeki/.claude/sidukort.json`, `kjarni/.claude/sidukort.json`. Staða: ✅ eigandi til · ⚠️ eigandi ekki í registry eða skilgreind-skrá finnst ekki · ❌ enginn eigandi. Breyttu síðukortinu, ekki hér.
 
 | Vefur | Síða | Leið | Skilgreind | Eigandi | Undiragentar | Staða |
 |---|---|---|---|---|---|---|
@@ -247,6 +247,7 @@ Byggt 2026-11-17 úr `brunaholf/.claude/sidukort.json`, `slokkvitaeki/.claude/si
 | brunaholf | Afköst | `/#afkost` | `index.html#renderAfkost` | `jarvis` | `bokari` | ✅ |
 | brunaholf | Kröfu yfirlit | `/#krofuyfirlit` | `index.html#renderKrofuyfirlit` | `rukkari` | `bokari` · `sala-reikningar` | ✅ |
 | brunaholf | Drög-stöð | `/#drogstod` | `index.html#renderDrogstod` | `rukkari` | — | ✅ |
+| brunaholf | Rekstrarskýrsla | `/#rekstrarskyrsla` | `index.html#renderRekstrarskyrsla` · `rekstrarskyrsla.html` · `netlify/functions/rekstrarskyrsla.js` · `netlify/functions/_rekstur.js` | `bokari` | `rukkari` · `framendi` | ✅ |
 | brunaholf | Fjármála-yfirlit | `/#fjarmalyfirlit` | `index.html#renderFjarmalyfirlit` · `fjarmalyfirlit.html` | `bokari` | `rukkari` | ✅ |
 | brunaholf | Viðskiptavinir | `/#vidskiptavinir` | `index.html#renderVidskiptavinir` · `vidskiptavinir.html` | `kunnaskra` | `bokari` | ✅ |
 | brunaholf | Kröfur & Tekjur | `/#krofur` | `index.html#renderKrofur` | `rukkari` | `bokari` | ✅ |
@@ -558,7 +559,7 @@ Byggt 2026-11-17 úr `brunaholf/.claude/sidukort.json`, `slokkvitaeki/.claude/si
 | kjarni | Marks — kjarni bookmarks | `/marks` | `apps/web/src/app/marks/page.tsx` | `kjarni-vefur` | — | ✅ |
 | kjarni | Ljósastýring Langamýri 22 (Hue Remote API) | `/ljos` | `apps/slokkvitaeki/app/ljos/page.tsx` · `apps/slokkvitaeki/app/api/ljos/route.ts` | `kjarni-vefur` | `oryggi` | ✅ |
 
-**Samantekt:** brunaholf 103/103 með eiganda (100%), 0 ⚠️, 0 ❌ · slokkvitaeki 121/124 með eiganda (98%), 0 ⚠️, 3 ❌ · kjarni 103/103 með eiganda (100%), 0 ⚠️, 0 ❌
+**Samantekt:** brunaholf 104/104 með eiganda (100%), 0 ⚠️, 0 ❌ · slokkvitaeki 121/124 með eiganda (98%), 0 ⚠️, 3 ❌ · kjarni 103/103 með eiganda (100%), 0 ⚠️, 0 ❌
 
 ### Síður án eiganda
 
