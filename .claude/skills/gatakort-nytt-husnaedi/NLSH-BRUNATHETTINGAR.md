@@ -83,6 +83,9 @@ Orð Agnars, sögð með kortið opið. Nota þegar punktar eru færðir, parað
 - **Úði (Stál 40-50 og 75-110)**: „Vatnsúðakerfi hlutablöð passa mun betur“ (M315/M316) en yfirlitsmyndin M395/M396, „og passa vel við
   sprinklerpunktana úr 40-50 mm og 75-110 mm stál … samt hluti af 40-50 mm er í vatnsrörunum“ (þ.e. ekki allt Stál 40-50 er úði).
 - **Loft (Ø125-160, 200-315, 400-630)**: „loftræstiteikningin passar vel fyrir loftið“ (Loftræsikerfi M215/M216), þar sem stokkur fer gegnum brunavegg.
+- **Stál 110-160 (regnvatnsniðurföll af þaki)**: Agnar bar þau við gataplanið (ø250) og hafnaði tengingunni sama dag: „fleiri teikningamerkingar en rörin
+  sjálf eru … ekki nægilega marktæk … sleppa þeirri tengingu“. EKKI nota gataplanið til að staðsetja eða áætla þau. „Held þessi regnfallsrör séu bara
+  á 6. hæð og ekkert það mörg.“
 - **Lög sem hjálpa ekki** (falin 18.11): lágspenna, smáspenna, brunaviðvörun, lyfjaloft (bæði), þrifa-, hita- og kælikerfi (M195/M196),
   vatnsúðakerfi yfirlitsmynd (M395/M396; `skr_log` id 1 og 4).
 
