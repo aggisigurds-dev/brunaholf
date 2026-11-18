@@ -54,11 +54,16 @@ function adalRepo(bh = G.BH) {
 function frumrit({ bh = G.BH } = {}) {
   if (process.env.LOTUKERFI_FRUMRIT) return path.resolve(process.env.LOTUKERFI_FRUMRIT);   // aðeins fyrir prófin
   try {
-    const adal = adalRepo(bh);
-    if (fs.readFileSync(path.join(adal, '.git', 'HEAD'), 'utf8').trim() !== 'ref: refs/heads/main') return null;
+    const adal = adalRepo(bh), gd = path.join(adal, '.git');
+    if (fs.readFileSync(path.join(gd, 'HEAD'), 'utf8').trim() !== 'ref: refs/heads/main') return null;
+    // Sameining, rebase, cherry-pick eða revert í gangi: HEAD er enn main en skrárnar geta borið árekstrarmerki og órýnt efni.
+    for (const f of I_GANGI) if (fs.existsSync(path.join(gd, f))) return null;
     return path.join(adal, 'claude-global', 'CLAUDE.md');
   } catch (_) { return null; }
 }
+const I_GANGI = ['MERGE_HEAD', 'CHERRY_PICK_HEAD', 'REVERT_HEAD', 'BISECT_LOG', 'rebase-merge', 'rebase-apply'];
+/* Árekstrarmerki git fremst í línu. Kafli sem ber þau er aldrei tekinn gildur (til vara, þótt frumrit() loki fyrir það). */
+const AREKSTUR = /^(<{7}( |$)|={7}$|>{7}( |$))/m;
 /* Vinnuskjalamappan: við hlið AÐALvinnutrésins, aldrei inni í repói. Reiknuð frá aðaltrénu svo worktree undir
  * <repo>/.claude/worktrees/ setji hana ekki inn í opinbera tréð. (Hún er líka í .gitignore, til vara.) */
 function vinnuskjol({ bh = G.BH } = {}) {
@@ -81,14 +86,19 @@ function texti({ mappa = vinnuskjol() } = {}) {
  * máli eða sýnidæmi í kóðablokk er ekki merki. a = stafastaða línubyrjunar. */
 function merki(t) {
   const ut = [];
-  let pos = 0, iKoda = false;
+  let pos = 0, gird = null;   // gird = opin kóðagirðing { st: '`' | '~', n: lengd }; lokast aðeins með sama tákni, jafnlangri eða lengri, án texta
   for (const hra of t.split('\n')) {
-    const l = hra.replace(/\r$/, '');
-    if (/^ {0,3}(```|~~~)/.test(l)) iKoda = !iKoda;
-    else if (!iKoda) {
+    // BOM fremst í skránni (Notepad) er ekki hluti af fyrstu línunni: merki í línu 1 gildir samt, og BOM-ið stendur á sínum stað.
+    const bom = pos === 0 && hra.charCodeAt(0) === 0xFEFF ? 1 : 0;
+    const l = hra.slice(bom).replace(/\r$/, '');
+    const g = /^ {0,3}(`{3,}|~{3,})(.*)$/.exec(l);
+    if (g) {
+      if (!gird) gird = { st: g[1][0], n: g[1].length };
+      else if (g[1][0] === gird.st && g[1].length >= gird.n && !g[2].trim()) gird = null;
+    } else if (!gird) {
       let m = /^<!-- lotukerfi:([a-z]+) byrjar(?![a-z])/.exec(l);
-      if (m) ut.push({ teg: 'byrjar', nafn: m[1], a: pos, utgafa: Number((/útgáfa (\d+)/.exec(l) || [])[1]) || 0 });
-      else if ((m = /^<!-- lotukerfi:([a-z]+) endar -->/.exec(l))) ut.push({ teg: 'endar', nafn: m[1], a: pos });
+      if (m) ut.push({ teg: 'byrjar', nafn: m[1], a: pos + bom, utgafa: Number((/útgáfa (\d+)/.exec(l) || [])[1]) || 0 });
+      else if ((m = /^<!-- lotukerfi:([a-z]+) endar -->/.exec(l))) ut.push({ teg: 'endar', nafn: m[1], a: pos + bom });
     }
     pos += hra.length + 1;
   }
@@ -111,7 +121,10 @@ function lesaSnid(snid) {
   const M = merki(t), ut = {};
   for (const { nafn } of KAFLAR) {
     const s = stadsetja(t, nafn, M);
-    if (s && !s.osnert) ut[nafn] = { texti: t.slice(s.a, s.b), utgafa: s.utgafa };
+    if (!s || s.osnert) continue;
+    const texti = t.slice(s.a, s.b);
+    if (AREKSTUR.test(texti)) continue;   // óleystur árekstur í frumritinu → kaflinn er ekki tekinn gildur
+    ut[nafn] = { texti, utgafa: s.utgafa };
   }
   return ut;
 }
@@ -127,7 +140,13 @@ function greina(nu, kaflar) {
     if (!k) continue;
     if (nu == null) { vantar.push(nafn); continue; }
     const s = stadsetja(nu, nafn, M);
-    if (!s) { if (!(eldri && eldri.test(nu))) vantar.push(nafn); continue; }
+    if (!s) {
+      // Byrjunarmerki fremst í línu sem telst ekki merki (inni í kóðablokk eða á eftir girðingu sem aldrei lokast): EKKI
+      // bæta við. Annars sæist viðbótin ekki heldur næst (hún lenti inni í sömu ólokuðu girðingu) og skráin yxi í hverri lotu.
+      const nefnt = new RegExp('^<!-- lotukerfi:' + nafn + ' byrjar(?![a-z])', 'm').test(nu);
+      if (!nefnt && !(eldri && eldri.test(nu))) vantar.push(nafn);
+      continue;
+    }
     if (s.osnert) continue;
     if (k.utgafa > s.utgafa) breytt.push(nafn);
   }
