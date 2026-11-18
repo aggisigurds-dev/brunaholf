@@ -174,16 +174,18 @@ async function reikna(month) {
   const fra = `${month}-01`;
   const til = new Date(Date.UTC(y, m, 1)).toISOString().slice(0, 10);   // fyrsti dagur næsta mánaðar
 
-  let groups, manRows, lokRows, raufRows = [], raufYfir = [], drogRows = [];
+  let groups, manRows, lokRows, raufRows = [], raufYfir = [], drogRows = [], tvRows = [];
   {
     const nofn = `project_name=in.(${NLSH_NAMES.map(n => `"${n}"`).join(',')})`;
-    const [g, mr, lr, rr, ry, dr] = await Promise.all([
+    const [g, mr, lr, rr, ry, dr, tv] = await Promise.all([
       fetch(`${SUPABASE_URL}/rest/v1/rpc/nlsh_stada`, { method: 'POST', headers: H(), body: JSON.stringify({ p_names: NLSH_NAMES, p_fra: fra, p_til: til }) }),
       fetch(`${SUPABASE_URL}/rest/v1/rpc/nlsh_stada_manudir`, { method: 'POST', headers: H(), body: JSON.stringify({ p_names: NLSH_NAMES, p_til: til }) }),
       fetch(`${SUPABASE_URL}/rest/v1/nlsh_manadarlok?select=month,verk_nr,lokatala,athugasemd,updated_at,stakar_man,heilar_man,upphaed_man,fryst_at,fryst_heimild,teknar_fram&order=month`, { headers: H() }),
       fetch(`${SUPABASE_URL}/rest/v1/ajour_registrations?select=serial_number,registration_status,checked_date,execution_date,subject&${nofn}&category_group=ilike.Raufar*&limit=5000`, { headers: H() }),
       fetch(`${SUPABASE_URL}/rest/v1/nlsh_raufar_metrar?select=serial_number,metrar,athugasemd,updated_at&limit=5000`, { headers: H() }),
       fetch(`${SUPABASE_URL}/rest/v1/invoice_drafts?worksite_name=ilike.*landssp*&select=id,work_month,status,payday_invoice_id,total_m_vsk,materials_jsonb`, { headers: H() }),
+      // Kort-merkt tvítök (skr_skraningar.ajour_gogn.tvitak_af) — innlestrar-tvítök sem mega ekki teljast í sjálfvirku raufa-tillögunni (16.11 innlestrargalli). Endurheimsóknir/lagfæringar án tvitak_af haldast.
+      fetch(`${SUPABASE_URL}/rest/v1/skr_skraningar?verk_id=eq.4&ajour_gogn->>tvitak_af=not.is.null&eytt=not.is.true&ajour_serial=not.is.null&select=ajour_serial&limit=5000`, { headers: H() }),
     ]);
     for (const [r, n] of [[g, 'nlsh_stada'], [mr, 'nlsh_stada_manudir'], [lr, 'lokatölur']]) {
       if (!r.ok) throw new Error(`${n}: ${r.status} ${(await r.text()).slice(0, 200)}`);
@@ -192,7 +194,9 @@ async function reikna(month) {
     if (rr.ok) raufRows = await rr.json();
     if (ry.ok) raufYfir = await ry.json();   // taflan getur vantað í eldra umhverfi — þá bara Description
     if (dr.ok) drogRows = await dr.json();
+    if (tv.ok) tvRows = await tv.json();      // tekst ekki að lesa → tómt (telur allt, eins og áður)
   }
+  const tvitak = new Set(tvRows.map(r => String(r.ajour_serial)));
 
   // ── 2.11: metrar per skráningu og mánuð (fyrsta Done-dagsetning, sama og nlsh_stada_manudir) ──
   const yfir = new Map(raufYfir.map(r => [String(r.serial_number), r]));
@@ -210,10 +214,11 @@ async function reikna(month) {
     const lesid = raufMetrar(e.subject), y = yfir.get(e.serial_number);
     const metrar = y ? Number(y.metrar) : (lesid ? lesid.metrar : null);
     return { serial_number: e.serial_number, done: e.done, dags: e.dags, man: e.dags ? String(e.dags).slice(0, 7) : null,
-      lysing: e.subject, lesid, yfirskrift: y ? Number(y.metrar) : null, athugasemd: y ? y.athugasemd : null, metrar };
+      lysing: e.subject, lesid, yfirskrift: y ? Number(y.metrar) : null, athugasemd: y ? y.athugasemd : null, metrar,
+      tvitak: tvitak.has(e.serial_number) };
   }).sort((a, b) => String(b.dags || '').localeCompare(String(a.dags || '')) || (+b.serial_number - +a.serial_number));
-  const raufMan = new Map();   // month → metrar (Done)
-  for (const r of raufar) if (r.done && r.man && r.metrar != null) raufMan.set(r.man, (raufMan.get(r.man) || 0) + r.metrar);
+  const raufMan = new Map();   // month → metrar (Done) — tvítök (tvitak_af) teljast ekki
+  for (const r of raufar) if (r.done && r.man && r.metrar != null && !r.tvitak) raufMan.set(r.man, (raufMan.get(r.man) || 0) + r.metrar);
 
   const verkAf = (group) => { const i = VERK.findIndex(v => v.test.test(group)); return i < 0 ? null : VERK[i].verk_nr; };
 
@@ -339,6 +344,7 @@ async function reikna(month) {
       rows: raufar,
       per_man: Object.fromEntries([...raufMan.entries()].sort().map(([k, v]) => [k, Math.round(v * 100) / 100])),
       olesin: raufar.filter(r => r.done && r.metrar == null).length,
+      tvitok: raufar.filter(r => r.tvitak).length,   // sleppt úr sjálfvirku tillögunni
     },
   };
 }
