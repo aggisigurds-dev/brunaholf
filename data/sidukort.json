@@ -1,5 +1,5 @@
 {
- "generated": "2026-11-17",
+ "generated": "2026-11-18",
  "_athugasemd": "GENERATED af tools/build-agents-registry.cjs úr <repo>/.claude/sidukort.json — breyttu síðukortunum, ekki hér.",
  "vefir": [
   {
@@ -7,8 +7,8 @@
    "repo": "brunaholf",
    "utgafa": 1,
    "vefagent": "framendi",
-   "alls": 103,
-   "med_eiganda": 103,
+   "alls": 104,
+   "med_eiganda": 104,
    "vidvorun": 0,
    "an_eiganda": 0,
    "hlutfall": 100
@@ -551,6 +551,36 @@
    "stada": "✅",
    "astaeda": [],
    "eigandi_nafn": "rukkari",
+   "eigandi_utan": false
+  },
+  {
+   "vefur": "brunaholf",
+   "repo": "brunaholf",
+   "id": "rekstrarskyrsla",
+   "titill": "Rekstrarskýrsla",
+   "tegund": "flipi",
+   "leid": "/#rekstrarskyrsla",
+   "skilgreind": [
+    "index.html#renderRekstrarskyrsla",
+    "rekstrarskyrsla.html",
+    "netlify/functions/rekstrarskyrsla.js",
+    "netlify/functions/_rekstur.js"
+   ],
+   "yfir": null,
+   "eigandi": "bokari",
+   "undiragentar": [
+    "rukkari",
+    "framendi"
+   ],
+   "kveikjuord": [
+    "Rekstrarskýrsla",
+    "rekstur dagsins",
+    "dagsskýrsla"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": [],
+   "eigandi_nafn": "bokari",
    "eigandi_utan": false
   },
   {

@@ -1,0 +1,516 @@
+<!doctype html>
+<html lang="is">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Rekstrarskýrsla · Slökkvitæki og Brunahólf</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="/vefur/ds/tokens.css">
+<!-- Rekstrarskýrsla dagsins (Agnar 18.11.2026). Útlit: Brunahólf V2 (hönnunarstrigi claude.ai/artifact/3Er4XPT2azxNg82vwh3adR).
+     Gögn: /api/rekstrarskyrsla (aðeins stjórnandi). Reglurnar búa í netlify/functions/_rekstur.js — síðan reiknar ekkert sjálf
+     nema hlutföll og samanburð úr tölunum sem fallið skilar. -->
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  body { margin: 0; background: var(--page); color: var(--ink); font-family: var(--font-sans); font-size: 14px; line-height: 1.5; }
+  button, input { font-family: inherit; }
+  button:focus-visible, input:focus-visible { outline: 3px solid var(--orange); outline-offset: 2px; }
+  .wrap { max-width: 1480px; margin: 0 auto; padding: 0 24px; }
+  [hidden] { display: none !important; }
+  .num { font-variant-numeric: tabular-nums; }
+
+  /* hetja */
+  .hetja { background: linear-gradient(180deg, var(--navy-950) 0%, var(--navy-900) 100%); color: var(--on-navy); padding: 28px 0 84px; }
+  .hetja .wrap { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 20px; }
+  .eyebrow { font-size: 12px; font-weight: 600; letter-spacing: .18em; color: var(--orange-hi); }
+  h1 { margin: 4px 0; font-size: 44px; font-weight: 700; line-height: 1.1; letter-spacing: -.02em; }
+  .undir { font-size: 15px; color: var(--on-navy-muted); }
+  .stjorn { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+  .seg { display: flex; flex-wrap: wrap; gap: 4px; padding: 4px; background: rgba(255,255,255,.07); border: 1px solid var(--nav-line); border-radius: 10px; }
+  .seg button, .seg label { height: 36px; padding: 0 14px; border: 0; border-radius: 8px; background: transparent; color: var(--on-navy-muted); font-weight: 600; font-size: 14px; cursor: pointer; white-space: nowrap; display: flex; align-items: center; gap: 8px; transition: background .18s cubic-bezier(.23,1,.32,1); }
+  .seg button:hover, .seg label:hover { background: var(--nav-hover); }
+  .seg label:focus-within { outline: 3px solid var(--orange); outline-offset: 2px; }
+  .seg button[aria-pressed="true"], .seg label.on { background: linear-gradient(180deg, var(--orange-hi), var(--orange-lo)); color: var(--on-orange); box-shadow: var(--shadow-glow); }
+  .seg button:active { transform: scale(.97); }
+  .dagval { position: relative; }
+  .dagval input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; }
+  .takki-n { height: 44px; padding: 0 16px; border: 1px solid var(--nav-line); border-radius: 10px; background: transparent; color: var(--on-navy); font-weight: 600; font-size: 14px; display: flex; align-items: center; gap: 8px; cursor: pointer; }
+  .takki-n:hover { background: var(--nav-hover); }
+  .sott { font-size: 12.5px; color: var(--on-navy-muted); }
+
+  main.wrap { margin-top: -56px; display: flex; flex-direction: column; gap: 20px; padding-bottom: 40px; }
+  .stada { background: var(--surface); border-radius: 14px; box-shadow: var(--shadow-card); padding: 16px 20px; font-size: 14px; }
+  .stada.villa { background: var(--bad-tint); color: var(--bad-ink); }
+
+  /* lykilspjöld */
+  .kort { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; }
+  .kort article { background: linear-gradient(145deg, var(--navy-700) 0%, var(--navy-950) 100%); color: var(--on-navy); border-radius: 14px; padding: 20px; box-shadow: var(--shadow-raised); display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+  .kort .hd { display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 500; color: var(--on-navy-muted); }
+  .ikon { width: 34px; height: 34px; border-radius: 10px; background: rgba(255,138,31,.16); color: var(--orange-hi); display: flex; align-items: center; justify-content: center; flex: none; }
+  .kort .gildi { font-size: 32px; font-weight: 700; line-height: 1.1; }
+  .delta { align-self: flex-start; display: flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px; font-size: 12.5px; font-weight: 600; }
+  .delta.upp { background: rgba(22,163,74,.18); color: #86efac; }
+  .delta.nidur { background: rgba(220,38,38,.2); color: #fca5a5; }
+  .kort .smatt { font-size: 12px; color: var(--on-navy-muted); }
+  .kort svg.spark { width: 100%; height: 44px; display: block; }
+  .sundur { display: flex; flex-direction: column; gap: 6px; }
+  .sundur div { display: flex; justify-content: space-between; gap: 12px; font-size: 13px; }
+  .sundur span:first-child { color: var(--on-navy-muted); }
+  .sundur span:last-child { font-weight: 600; }
+  .kort .fotur { font-size: 12px; color: var(--on-navy-muted); border-top: 1px solid var(--nav-line); padding-top: 8px; }
+
+  /* spjöld */
+  .spjald { background: var(--surface); border-radius: 14px; box-shadow: var(--shadow-card); }
+  .spjald.pad { padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+  .spjald h2 { margin: 0; font-size: 16px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+  .spjald .lysing { font-size: 12.5px; color: var(--muted); }
+  .hausrod { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 12px; }
+  .pilla { display: inline-flex; align-items: center; gap: 6px; padding: 2px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+  .pilla.warn { background: var(--warn-tint); color: var(--warn-ink); }
+  .pilla.ok { background: var(--ok-tint); color: var(--ok-ink); }
+  .pilla .p { width: 7px; height: 7px; border-radius: 999px; }
+
+  /* tekjuskipting */
+  .skipting { display: flex; flex-wrap: wrap; gap: 28px; align-items: stretch; }
+  .graf { flex: 2 1 420px; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+  .sulur { height: 250px; display: flex; align-items: flex-end; gap: 10px; border-bottom: 1px solid var(--line); }
+  .sula { flex: 1; min-width: 0; height: 100%; display: flex; flex-direction: column; gap: 6px; }
+  .sula .tot, .merki .n { font-size: 12px; font-weight: 600; color: var(--ink-2); text-align: center; white-space: nowrap; }
+  .sula .stafli { flex: 1; display: flex; flex-direction: column; border-radius: 6px 6px 0 0; overflow: hidden; background: var(--surface-2); }
+  .sula.valin .stafli { outline: 2px solid var(--orange); outline-offset: 2px; }
+  .sula.valin .tot, .merki .valin .n { color: var(--orange-ink); }
+  .merki { display: flex; gap: 10px; }
+  .merki > div { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; }
+  .merki .s { font-size: 11px; color: var(--muted); white-space: nowrap; }
+  .merki .s.warn { color: var(--warn-ink); }
+  .skyring { flex: 1 1 260px; min-width: 0; display: flex; flex-direction: column; gap: 10px; padding: 16px; border-radius: 10px; background: var(--surface-2); }
+  .skyring .titill { font-size: 11px; font-weight: 600; letter-spacing: .08em; color: var(--ink-2); }
+  .skyring .lina { display: flex; align-items: center; gap: 10px; font-size: 13px; padding: 6px 0; border-bottom: 1px solid var(--line-soft); }
+  .skyring .lina .ferningur { width: 12px; height: 12px; border-radius: 3px; flex: none; }
+  .skyring .lina .nafn { flex: 1; min-width: 0; color: var(--ink-2); }
+  .skyring .lina .upph { font-weight: 600; white-space: nowrap; }
+  .skyring .lina .pct { width: 44px; text-align: right; color: var(--muted); }
+  .skyring .samtals { display: flex; gap: 10px; font-size: 14px; font-weight: 700; padding-top: 2px; }
+  .skyring .samtals span:first-child { flex: 1; }
+  .skyring .samtals span:last-child { width: 44px; }
+
+  /* töflur */
+  .tafla-haus { min-height: 44px; padding: 0 16px; background: linear-gradient(180deg, var(--navy-800), var(--navy-900)); color: var(--on-navy); display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 12px; border-radius: 14px 14px 0 0; }
+  .tafla-haus h2 { padding: 10px 0; gap: 10px; }
+  .tafla-haus .lysing { color: var(--on-navy-muted); }
+  .skrun { overflow-x: auto; }
+  .tafla { min-width: 1090px; }
+  .rod { display: grid; grid-template-columns: minmax(230px, 1.7fr) repeat(7, minmax(112px, 1fr)); }
+  .rod.haus { background: var(--surface-2); border-bottom: 1px solid var(--line); }
+  .rod.haus > div { padding: 10px 14px; display: flex; flex-direction: column; align-items: flex-end; gap: 1px; }
+  .rod.haus > div:first-child { padding-left: 16px; align-items: flex-start; justify-content: flex-end; }
+  .rod.haus .n, .hopur .n { font-size: 11px; font-weight: 600; letter-spacing: .08em; color: var(--ink-2); }
+  .rod.haus .s { font-size: 11.5px; color: var(--muted); }
+  .rod .val { background: rgba(255,103,2,.07); }
+  .rod.haus .val .n { color: var(--orange-ink); }
+  .rod.lina { border-top: 1px solid var(--line-soft); min-height: 54px; }
+  .rod.lina:hover { background: var(--row-hover); }
+  .rod.alls { border-top: 1px solid var(--line); background: var(--surface-2); }
+  .rod .heiti { padding: 9px 16px; display: flex; flex-direction: column; justify-content: center; min-width: 0; }
+  .rod .heiti b { font-size: 14px; font-weight: 600; }
+  .rod.alls .heiti b { font-size: 15px; font-weight: 700; }
+  .rod .heiti span { font-size: 12px; color: var(--muted); }
+  .reitur { position: relative; padding: 8px 14px; display: flex; flex-direction: column; align-items: flex-end; justify-content: center; gap: 1px; }
+  /* smá-súla undir tölunni: ber saman mánuðina fjóra í sömu línu (lengsta = 100 %) */
+  .reitur .sulubak { position: absolute; bottom: 7px; left: 14px; right: 14px; height: 4px; border-radius: 999px; background: var(--line-soft); pointer-events: none; display: flex; justify-content: flex-end; }
+  .reitur .sulubak i { display: block; height: 100%; background: var(--navy-700); opacity: .35; border-radius: 999px; }
+  .reitur.val .sulubak i { background: var(--orange); opacity: .7; }
+  .reitur .t { position: relative; font-size: 14px; white-space: nowrap; }
+  .rod.alls .reitur .t { font-size: 15px; font-weight: 700; }
+  .reitur.val .t { font-weight: 600; }
+  .reitur .t.daufur { color: var(--pending); }
+  .reitur .u { position: relative; font-size: 11.5px; color: var(--muted); white-space: nowrap; }
+  .reitur .u.warn { color: var(--warn-ink); }
+  .hopur { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 16px 16px 6px; border-top: 1px solid var(--line-soft); }
+  .hopur .n { color: var(--orange-ink); }
+
+  /* heimildir */
+  .heimildir { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 10px; }
+  .heimild { display: flex; flex-direction: column; gap: 4px; padding: 12px 14px; border-radius: 10px; background: var(--surface-2); }
+  .heimild .efst { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-weight: 600; }
+  .heimild .hv { font-size: 12.5px; color: var(--muted); }
+  .skyringar { display: flex; flex-direction: column; gap: 6px; font-size: 12.5px; color: var(--ink-2); border-top: 1px solid var(--line-soft); padding-top: 12px; }
+
+  /* innskráning */
+  .inn form { display: flex; flex-wrap: wrap; gap: 10px; }
+  .inn input { height: 40px; padding: 0 12px; border: 1px solid var(--line); border-radius: 10px; font-size: 14px; min-width: 200px; }
+  .inn button { height: 40px; padding: 0 18px; border: 0; border-radius: 10px; background: linear-gradient(180deg, var(--orange-hi), var(--orange-lo)); color: var(--on-orange); font-weight: 600; cursor: pointer; }
+
+  .bida { opacity: .55; transition: opacity .18s; }
+  @media (max-width: 640px) { .wrap { padding: 0 16px; } h1 { font-size: 30px; } }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<header class="hetja">
+  <div class="wrap">
+    <div>
+      <div class="eyebrow">SLÖKKVITÆKI · BRUNAHÓLF</div>
+      <h1>Rekstrarskýrsla</h1>
+      <div class="undir"><span id="dagsetning">Sæki tölur…</span> · allar fjárhæðir í kr. án vsk</div>
+    </div>
+    <div class="stjorn">
+      <div class="seg" role="group" aria-label="Velja tímabil" id="tvol">
+        <button type="button" data-v="idag">Í dag</button>
+        <button type="button" data-v="gaer">Í gær</button>
+        <button type="button" data-v="vika">Þessi vika</button>
+        <button type="button" data-v="svika">Síðasta vika</button>
+        <label class="dagval" id="velja-takki">
+          <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          <span id="velja-texti">Velja dag</span>
+          <input type="date" id="velja-dag" aria-label="Velja dag" min="2026-05-01">
+        </label>
+      </div>
+      <button type="button" class="takki-n" id="uppfaera">
+        <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>
+        Uppfæra
+      </button>
+      <span class="sott" id="sott" role="status" aria-live="polite"></span>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="stada" id="stada" role="status" aria-live="polite">Sæki tölur…</div>
+
+  <section class="spjald pad inn" id="innskraning" hidden aria-labelledby="inn-h">
+    <h2 id="inn-h">Innskráning</h2>
+    <span class="lysing">Rekstrarskýrslan sýnir tekjur beggja félaga og er aðeins opin stjórnanda.</span>
+    <form id="inn-form">
+      <input id="inn-nn" autocomplete="username" placeholder="Notandanafn" aria-label="Notandanafn" required>
+      <input id="inn-pw" type="password" autocomplete="current-password" placeholder="Lykilorð" aria-label="Lykilorð" required>
+      <button type="submit">Skrá inn</button>
+    </form>
+  </section>
+
+  <div id="efni" hidden>
+    <section class="kort" id="kort" aria-label="Lykiltölur tímabilsins"></section>
+
+    <section class="spjald pad" aria-labelledby="sk-h" style="margin-top:20px">
+      <div class="hausrod">
+        <div>
+          <h2 id="sk-h"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--orange-ink)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>Tekjuskipting</h2>
+          <span class="lysing">Hlutur hvers tekjustofns á hverju tímabili · heildin efst á súlu</span>
+        </div>
+        <span class="pilla warn" id="ajour-pilla" hidden></span>
+      </div>
+      <div class="skipting">
+        <div class="graf">
+          <div class="sulur" id="sulur" role="img"></div>
+          <div class="merki" id="merki" aria-hidden="true"></div>
+        </div>
+        <div class="skyring" id="skyring"></div>
+      </div>
+    </section>
+
+    <div id="toflur" style="display:flex;flex-direction:column;gap:20px;margin-top:20px"></div>
+
+    <section class="spjald pad" aria-labelledby="hm-h" style="margin-top:20px">
+      <h2 id="hm-h"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--orange-ink)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5V19A9 3 0 0 0 21 19V5"/><path d="M3 12A9 3 0 0 0 21 12"/></svg>Heimildir og ferskleiki</h2>
+      <div class="heimildir" id="heimildir"></div>
+      <div class="skyringar">
+        <span><b>Tekjur Slökkvitækis:</b> lokaðar sölur án vsk eftir stofndegi, kreditnótur dregnar frá, ógildar sölur úti (sama regla og Tekjur í beinni).</span>
+        <span><b>Áunnið virði Brunahólfs:</b> rukkanlegir Tímaveru-tímar × dagvinnutaxti verkstaðar í Verðskrá (annars 9.951 kr.) + kláruð göt × samningstaxti (Landspítalinn, Heklureitur). Áætlun, ekki reikningur; Landspítalinn fyrir 5 % geymslufé; yfirvinna ekki reiknuð.</span>
+        <span><b>Greitt til okkar:</b> verslun (kort og reiðufé eftir greiðsludegi) + greiddar kröfur í Payday beggja félaga.</span>
+        <span><b>Tímavera</b> sýnir aðeins vaktir sem búið er að stimpla út; <b>Ajour</b> berst í lotum, svo nýjustu dagar geta verið ófullir.</span>
+      </div>
+    </section>
+  </div>
+</main>
+
+<script>
+(function () {
+  'use strict';
+  var $ = function (id) { return document.getElementById(id); };
+  var VIKUDAGAR = ['sunnudagur', 'mánudagur', 'þriðjudagur', 'miðvikudagur', 'fimmtudagur', 'föstudagur', 'laugardagur'];
+  var MAN = ['janúar', 'febrúar', 'mars', 'apríl', 'maí', 'júní', 'júlí', 'ágúst', 'september', 'október', 'nóvember', 'desember'];
+  var LITIR = { sl: '#ff6702', tim: '#0b2d5f', lsh: '#2f6fe4', hek: '#9cb9f2' };
+  var SVG = {
+    tot: '<polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/>',
+    sl: '<path d="M15 6.5V3a1 1 0 0 0-1-1h-2a1 1 0 0 0-1 1v3.5"/><path d="M9 18h8"/><path d="M18 3h-3"/><path d="M11 3a6 6 0 0 0-6 6v11"/><path d="M5 13h4"/><path d="M17 10a4 4 0 0 0-8 0v10a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2Z"/>',
+    bh: '<path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>',
+    inn: '<rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/>',
+    badir: '<path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/>',
+    upp: '<path d="m5 12 7-7 7 7"/><path d="M12 19V5"/>',
+    nidur: '<path d="M12 5v14"/><path d="m19 12-7 7-7-7"/>',
+    vidv: '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>'
+  };
+  function svg(nafn, st, litur, breidd) {
+    return '<svg aria-hidden="true" width="' + (st || 18) + '" height="' + (st || 18) + '" viewBox="0 0 24 24" fill="none" stroke="' + (litur || 'currentColor') + '" stroke-width="' + (breidd || 2) + '" stroke-linecap="round" stroke-linejoin="round">' + SVG[nafn] + '</svg>';
+  }
+  // el('div', {class:'x'}, [börn]) — texti fer alltaf inn sem textContent (aldrei innerHTML úr gögnum)
+  function el(tag, a, born) {
+    var e = document.createElement(tag);
+    if (a) Object.keys(a).forEach(function (k) {
+      if (k === 'text') e.textContent = a[k];
+      else if (k === 'html') e.innerHTML = a[k]; // aðeins fastir SVG-strengir úr SVG hér að ofan
+      else if (k === 'style') e.setAttribute('style', a[k]);
+      else e.setAttribute(k, a[k]);
+    });
+    (born || []).forEach(function (b) { if (b) e.appendChild(typeof b === 'string' ? document.createTextNode(b) : b); });
+    return e;
+  }
+  var kr = function (n) { return n == null ? '–' : String(Math.round(n)).replace(/-/, '−').replace(/\B(?=(\d{3})+(?!\d))/g, '.'); };
+  var dec = function (n) { return n == null ? '–' : Number(n).toFixed(1).replace('.', ','); };
+  var mkr = function (n) { return n >= 1e6 ? (n / 1e6).toFixed(1).replace('.', ',') + ' m' : n >= 1000 ? Math.round(n / 1000) + ' þ.' : kr(n); };
+  var pl = function (n, eitt, fleiri) { return n + ' ' + (n % 10 === 1 && n % 100 !== 11 ? eitt : fleiri); };
+  var ddmm = function (s) { return s ? s.slice(8, 10) + '.' + s.slice(5, 7) : '–'; };
+  var dagsTexti = function (s) { var d = new Date(s + 'T00:00:00Z'); return d.getUTCDate() + '. ' + MAN[d.getUTCMonth()] + ' ' + d.getUTCFullYear(); };
+  var klukka = function (iso) { if (!iso) return '–'; var d = new Date(iso); return ddmm(iso.slice(0, 10)) + ' kl. ' + String(d.getUTCHours()).padStart(2, '0') + ':' + String(d.getUTCMinutes()).padStart(2, '0'); };
+  var plusDagar = function (s, n) { var d = new Date(s + 'T00:00:00Z'); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); };
+  var idagIso = function () { return new Date().toISOString().slice(0, 10); };
+
+  // ---- val ----
+  var VAL_KEY = 'rekstrarskyrsla:val';
+  var val = 'idag', valinDagur = null;
+  try { var v0 = localStorage.getItem(VAL_KEY); if (/^(idag|gaer|vika|svika)$/.test(v0 || '')) val = v0; } catch (e) {}
+  var skyndi = {};
+  function dagurFyrirVal() { if (val === 'velja' && valinDagur) return valinDagur; if (val === 'gaer') return plusDagar(idagIso(), -1); return idagIso(); }
+  function dalkur() { return val === 'vika' ? 1 : val === 'svika' ? 2 : 0; }
+
+  function stada(texti, villa) { var s = $('stada'); s.hidden = !texti; s.textContent = texti || ''; s.className = 'stada' + (villa ? ' villa' : ''); }
+
+  function saekja(endurnyja) {
+    var d = dagurFyrirVal();
+    document.querySelectorAll('#tvol button').forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.v === val)); });
+    $('velja-takki').classList.toggle('on', val === 'velja');
+    $('velja-texti').textContent = val === 'velja' && valinDagur ? ddmm(valinDagur) : 'Velja dag';
+    if (!endurnyja && skyndi[d]) { teikna(skyndi[d]); return; }
+    $('efni').classList.add('bida');
+    $('sott').textContent = 'Sæki…';
+    fetch('/api/rekstrarskyrsla?dagur=' + encodeURIComponent(d), { credentials: 'same-origin', cache: 'no-store' })
+      .then(function (r) {
+        if (r.status === 401) { $('efni').hidden = true; $('innskraning').hidden = false; stada(''); $('sott').textContent = ''; $('dagsetning').textContent = 'Innskráning þarf'; return null; }
+        return r.json().then(function (j) { if (!r.ok) throw new Error(j && j.villa || ('Villa ' + r.status)); return j; });
+      })
+      .then(function (j) { if (!j) return; skyndi[d] = j; teikna(j); })
+      .catch(function (e) { stada('Tölurnar náðust ekki: ' + e.message, true); $('sott').textContent = ''; })
+      .then(function () { $('efni').classList.remove('bida'); });
+  }
+
+  // ---- teikning ----
+  function teikna(g) {
+    var hi = dalkur();
+    var erIdag = g.dagur === g.idag;
+    $('innskraning').hidden = true; $('efni').hidden = false; stada('');
+    $('sott').textContent = 'Sótt ' + klukka(g.sott);
+    var t = g.timabil;
+    var dagsHeiti = { vika: 'Þessi vika', svika: 'Síðasta vika' }[val];
+    var dd = new Date(g.dagur + 'T00:00:00Z');
+    $('dagsetning').textContent = dagsHeiti
+      ? dagsHeiti + ' · ' + ddmm(t[hi].fra) + '–' + ddmm(t[hi].til)
+      : VIKUDAGAR[dd.getUTCDay()].charAt(0).toUpperCase() + VIKUDAGAR[dd.getUTCDay()].slice(1) + ' ' + dagsTexti(g.dagur);
+    var ajourTil = g.ferskleiki && g.ferskleiki.ajour && g.ferskleiki.ajour.nyjast;
+    var ofullt = t.map(function (p) { return !!ajourTil && p.til > ajourTil; });
+    teiknaKort(g, hi, erIdag, ofullt, ajourTil);
+    teiknaSkiptingu(g, hi, ofullt, ajourTil);
+    teiknaToflur(g, hi, ofullt, ajourTil, erIdag);
+    teiknaHeimildir(g);
+  }
+
+  function spark(gildi) {
+    var max = Math.max.apply(null, gildi) || 1;
+    var pts = gildi.map(function (v, i) { return (i * 120 / Math.max(gildi.length - 1, 1)).toFixed(1) + ',' + (34 - v / max * 30).toFixed(1); });
+    return '<svg class="spark" viewBox="0 0 120 36" preserveAspectRatio="none" aria-hidden="true"><polygon points="0,36 ' + pts.join(' ') + ' 120,36" fill="rgba(255,138,31,0.14)"/><polyline points="' + pts.join(' ') + '" fill="none" stroke="#ff8a1f" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round"/></svg>';
+  }
+  function delta(nu, fyrr, merki) {
+    if (!fyrr) return null;
+    var p = Math.round((nu / fyrr - 1) * 100), upp = p >= 0;
+    return el('span', { class: 'delta ' + (upp ? 'upp' : 'nidur'), html: svg(upp ? 'upp' : 'nidur', 13, 'currentColor', 2.5) }, [Math.abs(p) + ' % ' + (upp ? 'hærra' : 'lægra') + ' en ' + merki]);
+  }
+  function teiknaKort(g, hi, erIdag, ofullt, ajourTil) {
+    var k = $('kort'); k.textContent = '';
+    var sb = g.samanburdur[['dag', 'vika', 'svika'][hi]];
+    var hlaupandi = erIdag && hi === 0; // dagurinn stendur enn — ekki borið saman við heilan dag
+    var rod = g.rod || [];
+    var spjald = function (ikon, heiti, gildi, d, sparkGildi, smatt) {
+      var a = el('article');
+      a.appendChild(el('div', { class: 'hd' }, [el('span', { class: 'ikon', html: svg(ikon) }), heiti]));
+      a.appendChild(el('span', { class: 'gildi num', text: kr(gildi) + ' kr.' }));
+      if (d) a.appendChild(d);
+      if (sparkGildi) a.appendChild(el('div', { html: spark(sparkGildi) }));
+      a.appendChild(el('span', { class: 'smatt', text: smatt }));
+      return a;
+    };
+    var nu = function (x) { return sb ? sb.nu[x] : 0; }, fyrr = function (x) { return sb ? sb.fyrr[x] : 0; };
+    var dT = hlaupandi ? null : delta(nu('sl') + nu('bh'), fyrr('sl') + fyrr('bh'), sb.merki);
+    var dS = hlaupandi ? null : delta(nu('sl'), fyrr('sl'), sb.merki);
+    var dB = hlaupandi ? null : delta(nu('bh'), fyrr('bh'), sb.merki);
+    k.appendChild(spjald('tot', 'Heildartekjur beggja', g.badir.tekjur[hi], dT, rod.map(function (r) { return r.sl + r.bh; }),
+      hlaupandi ? 'Dagurinn stendur enn · línan sýnir síðustu 30 daga' : 'Síðustu 30 dagar · Slökkvitæki + Brunahólf'));
+    k.appendChild(spjald('sl', 'Slökkvitæki · tekjur', g.sl.tekjur[hi], dS, rod.map(function (r) { return r.sl; }),
+      'Þar af ' + kr(g.sl.krafa[hi]) + ' kr. sett í kröfu · ' + kr(g.sl.ny[hi]) + ' ný tæki seld'));
+    k.appendChild(spjald('bh', 'Brunahólf · áunnið virði', g.bh.virdi[hi], dB, rod.map(function (r) { return r.bh; }),
+      dec(g.bh.klst[hi]) + ' rukkanlegar klst.' + (ofullt[hi] ? ' · göt ófull (Ajour til ' + ddmm(ajourTil) + ')' : '')));
+    var a = el('article');
+    a.appendChild(el('div', { class: 'hd' }, [el('span', { class: 'ikon', html: svg('inn') }), 'Greitt til okkar · bæði félög']));
+    a.appendChild(el('span', { class: 'gildi num', text: kr(g.badir.inn[hi]) + ' kr.' }));
+    a.appendChild(el('div', { class: 'sundur' }, [
+      el('div', null, [el('span', { text: 'Verslun · kort og reiðufé' }), el('span', { class: 'num', text: kr(g.sl.verslun[hi]) })]),
+      el('div', null, [el('span', { text: 'Kröfur Slökkvitækis' }), el('span', { class: 'num', text: kr(g.sl.greitt[hi]) })]),
+      el('div', null, [el('span', { text: 'Kröfur Brunahólfs' }), el('span', { class: 'num', text: kr(g.bh.greitt[hi]) })])
+    ]));
+    var m = g.timabil[3];
+    a.appendChild(el('span', { class: 'fotur', text: MAN[new Date(m.fra + 'T00:00:00Z').getUTCMonth()].replace(/^./, function (c) { return c.toUpperCase(); }) + ' til þessa: ' + kr(g.badir.inn[3]) + ' kr.' }));
+    k.appendChild(a);
+  }
+
+  function teiknaSkiptingu(g, hi, ofullt, ajourTil) {
+    var STOFNAR = [['Slökkvitæki · sala', g.sl.tekjur, LITIR.sl], ['Brunahólf · tímar', g.bh.tima, LITIR.tim], ['Landspítalinn · göt', g.bh.lshV, LITIR.lsh], ['Heklureitur · göt', g.bh.hekV, LITIR.hek]];
+    var heiti = g.timabil.map(function (p, i) { return i === 0 ? p.heiti.n : ['', 'Vikan', 'Síð. vika', p.heiti.n.slice(0, 3).charAt(0) + p.heiti.n.slice(1, 3).toLowerCase() + '.'][Math.min(i, 3)]; });
+    var sulur = $('sulur'), merki = $('merki'); sulur.textContent = ''; merki.textContent = '';
+    var lysing = [];
+    g.timabil.forEach(function (p, i) {
+      var tot = STOFNAR.reduce(function (a, s) { return a + Math.max(s[1][i], 0); }, 0);
+      var stafli = el('div', { class: 'stafli' });
+      STOFNAR.slice().reverse().forEach(function (s) { stafli.appendChild(el('div', { style: 'height:' + (tot > 0 ? (Math.max(s[1][i], 0) / tot * 100).toFixed(2) : 0) + '%;background:' + s[2] })); });
+      sulur.appendChild(el('div', { class: 'sula' + (i === hi ? ' valin' : ''), title: heiti[i] + ' · ' + STOFNAR.map(function (s) { return s[0] + ' ' + kr(s[1][i]) + ' kr.'; }).join(' · ') },
+        [el('span', { class: 'tot num', text: tot > 0 ? mkr(tot) : '0' }), stafli]));
+      merki.appendChild(el('div', { class: i === hi ? 'valin' : '' }, [el('span', { class: 'n', text: heiti[i] }), el('span', { class: 's' + (ofullt[i] ? ' warn' : ''), text: ofullt[i] ? 'ófullt' : '' })]));
+      lysing.push(heiti[i] + ' ' + kr(tot) + ' kr.');
+    });
+    sulur.setAttribute('aria-label', 'Tekjuskipting eftir tímabilum: ' + lysing.join(', '));
+    var pilla = $('ajour-pilla');
+    pilla.hidden = !ofullt.some(Boolean);
+    pilla.innerHTML = svg('vidv', 13, 'var(--warn)', 2.5);
+    pilla.appendChild(document.createTextNode('Göt úr Ajour ná til ' + ddmm(ajourTil)));
+    var sk = $('skyring'); sk.textContent = '';
+    var p = g.timabil[hi];
+    var selTot = STOFNAR.reduce(function (a, s) { return a + s[1][hi]; }, 0);
+    sk.appendChild(el('span', { class: 'titill', text: (['', 'ÞESSI VIKA', 'SÍÐASTA VIKA'][hi] || (g.dagur === g.idag ? 'Í DAG' : 'DAGURINN')) + ' · ' + (p.fra === p.til ? ddmm(p.fra) : ddmm(p.fra) + '–' + ddmm(p.til)) }));
+    STOFNAR.forEach(function (s) {
+      sk.appendChild(el('div', { class: 'lina' }, [el('span', { class: 'ferningur', style: 'background:' + s[2] }), el('span', { class: 'nafn', text: s[0] }),
+        el('span', { class: 'upph num', text: kr(s[1][hi]) + ' kr.' }), el('span', { class: 'pct num', text: selTot > 0 ? Math.round(s[1][hi] / selTot * 100) + ' %' : '–' })]));
+    });
+    sk.appendChild(el('div', { class: 'samtals' }, [el('span', { text: 'Samtals' }), el('span', { class: 'num', text: kr(selTot) + ' kr.' }), el('span')]));
+  }
+
+  function teiknaToflur(g, hi, ofullt, ajourTil, erIdag) {
+    var MAN_DALKAR = [3, 4, 5, 6];
+    var fjoldi = function (arr, e, f) { return arr.map(function (n) { return n ? pl(n, e, f) : ''; }); };
+    var rod = function (heiti, undir, gildi, o) {
+      o = o || {};
+      var f = o.snid || kr;
+      var max = Math.max.apply(null, MAN_DALKAR.map(function (i) { return gildi[i] || 0; }));
+      var r = el('div', { class: 'rod ' + (o.alls ? 'alls' : 'lina'), role: 'row' });
+      r.appendChild(el('div', { class: 'heiti', role: 'rowheader' }, [el('b', { text: heiti }), el('span', { text: undir })]));
+      gildi.forEach(function (v, i) {
+        var hluti = o.ajour && ofullt[i];
+        var u = o.nu ? (i === 0 ? o.nuUndir : '') : ((o.undir && o.undir[i]) || (hluti ? 'ófullt' : ''));
+        var c = el('div', { class: 'reitur' + (i === hi ? ' val' : ''), role: 'cell' });
+        var breidd = (!o.nu && MAN_DALKAR.indexOf(i) >= 0 && max > 0 && v > 0) ? Math.round(v / max * 100) : 0;
+        if (breidd) c.appendChild(el('span', { class: 'sulubak', 'aria-hidden': 'true' }, [el('i', { style: 'width:' + breidd + '%' })]));
+        c.appendChild(el('span', { class: 't num' + (o.nu && i > 0 ? ' daufur' : ''), text: o.nu ? (i === 0 ? String(v) : '–') : f(v) }));
+        if (u) c.appendChild(el('span', { class: 'u' + (hluti && !(o.undir && o.undir[i]) ? ' warn' : ''), text: u }));
+        r.appendChild(c);
+      });
+      return r;
+    };
+    var hopur = function (heiti, athugasemd) {
+      var h = el('div', { class: 'hopur', role: 'row' }, [el('span', { class: 'n', role: 'rowheader', text: heiti })]);
+      if (athugasemd) { var p = el('span', { class: 'pilla warn', html: svg('vidv', 13, 'var(--warn)', 2.5) }); p.appendChild(document.createTextNode(athugasemd)); h.appendChild(p); }
+      return h;
+    };
+    var haus = function () {
+      var r = el('div', { class: 'rod haus', role: 'row' }, [el('div', { role: 'columnheader' }, [el('span', { class: 'n', text: 'MÆLIKVARÐI' })])]);
+      g.timabil.forEach(function (p, i) {
+        var s = i === 0 ? (erIdag ? 'í dag' : p.heiti.s) : p.heiti.s;
+        r.appendChild(el('div', { role: 'columnheader', class: i === hi ? 'val' : '' }, [el('span', { class: 'n', text: p.heiti.n }), el('span', { class: 's', text: s })]));
+      });
+      return r;
+    };
+    var tafla = function (ikon, titill, lysing, radir) {
+      var s = el('section', { class: 'spjald', 'aria-label': titill });
+      s.appendChild(el('div', { class: 'tafla-haus' }, [el('h2', { html: svg(ikon, 18, 'var(--orange-hi)') }, [titill]), el('span', { class: 'lysing', text: lysing })]));
+      var t = el('div', { class: 'tafla', role: 'table', 'aria-label': titill }, [haus()].concat(radir));
+      s.appendChild(el('div', { class: 'skrun' }, [t]));
+      return s;
+    };
+    var ajourMerki = ofullt.some(Boolean) ? 'Skráningar ná til ' + ddmm(ajourTil) + ' · nýrri dagar vantar' : '';
+    var golfOfull = ofullt.map(function (x) { return x ? 'göt ófull' : ''; });
+    var w = $('toflur'); w.textContent = '';
+    w.appendChild(tafla('badir', 'Bæði félög', 'Fjárhæðir í kr. án vsk · súlur bera saman mánuði', [
+      rod('Heildartekjur beggja', 'Slökkvitæki + Brunahólf', g.badir.tekjur, { alls: true, undir: golfOfull }),
+      rod('Slökkvitæki · tekjur', 'lokaðar sölur', g.sl.tekjur),
+      rod('Brunahólf · áunnið virði', 'tímar + göt', g.bh.virdi, { ajour: true }),
+      rod('Greitt til okkar', 'verslun + greiddar kröfur', g.badir.inn)
+    ]));
+    w.appendChild(tafla('sl', 'Slökkvitæki', 'Fjárhæðir í kr. án vsk', [
+      hopur('SALA'),
+      rod('Greitt í verslun', 'kort og reiðufé', g.sl.verslun),
+      rod('Sett í kröfu', 'sölur á reikning', g.sl.krafa, { undir: fjoldi(g.sl.reikn, 'reikningur', 'reikningar') }),
+      rod('Ný slökkvitæki seld', 'stk.', g.sl.ny),
+      rod('Úttektarskýrslur gerðar', 'fjöldi', g.sl.uttekt),
+      hopur('VERKSTÆÐI'),
+      rod('Á verkstæði núna', 'móttekin og í vinnslu', [g.sl.verkstaedi.nu, 0, 0, 0, 0, 0, 0], { nu: true, nuUndir: g.sl.verkstaedi.bida + ' bíða afhendingar' }),
+      rod('Skráð inn úr búð', 'tæki', g.sl.inn),
+      rod('Afhent út', 'tæki', g.sl.ut),
+      hopur('KRÖFUR'),
+      rod('Kröfur sendar út', 'Payday', g.sl.sent, { undir: fjoldi(g.sl.sentN, 'krafa', 'kröfur') }),
+      rod('Kröfur greiddar til okkar', 'Payday', g.sl.greitt, { undir: fjoldi(g.sl.greittN, 'greiðsla', 'greiðslur') }),
+      rod('Heildartekjur Slökkvitækis', 'tekjuregla', g.sl.tekjur, { alls: true })
+    ]));
+    w.appendChild(tafla('bh', 'Brunahólf', 'Fjárhæðir í kr. án vsk', [
+      hopur('VINNA'),
+      rod('Rukkanlegir tímar', 'klst. úr Tímaveru', g.bh.klst, { snid: dec }),
+      rod('Virði tíma', 'klst. × taxti', g.bh.tima),
+      hopur('AJOUR · GÖT', ajourMerki),
+      rod('Göt kláruð · öll verk', 'fjöldi', g.bh.got, { ajour: true }),
+      rod('Landspítalinn · göt', 'stakar', g.bh.lshG, { ajour: true }),
+      rod('Landspítalinn · virði', 'samningstaxti', g.bh.lshV, { ajour: true }),
+      rod('Heklureitur · göt', 'fjöldi', g.bh.hekG, { ajour: true }),
+      rod('Heklureitur · virði', 'verð eftir stærð', g.bh.hekV, { ajour: true }),
+      hopur('KRÖFUR'),
+      rod('Sendar til bókunar', 'Kröfu yfirlit', g.bh.bokun, { undir: fjoldi(g.bh.bokunN, 'krafa', 'kröfur') }),
+      rod('Greitt til okkar', 'Payday', g.bh.greitt, { undir: fjoldi(g.bh.greittN, 'greiðsla', 'greiðslur') }),
+      rod('Áunnið virði Brunahólfs', 'tímar + göt', g.bh.virdi, { alls: true, ajour: true })
+    ]));
+  }
+
+  function teiknaHeimildir(g) {
+    var f = g.ferskleiki || {};
+    var gamalt = function (dags, dagar) { return !dags || dags < plusDagar(g.idag, -dagar); };
+    var h = $('heimildir'); h.textContent = '';
+    var lina = function (nafn, hv, ok) {
+      var p = el('span', { class: 'pilla ' + (ok ? 'ok' : 'warn') }, [el('span', { class: 'p', style: 'background:var(--' + (ok ? 'ok' : 'warn') + ')' }), ok ? 'Í lagi' : 'Á eftir']);
+      h.appendChild(el('div', { class: 'heimild' }, [el('div', { class: 'efst' }, [el('span', { text: nafn }), p]), el('span', { class: 'hv', text: hv })]));
+    };
+    var tv = f.timavera || {}, aj = f.ajour || {}, ps = f.payday_sl || {}, pb = f.payday_bh || {};
+    lina('Sölur Slökkvitækis', 'Rauntími · sölur, verkbeiðnir og úttektir', true);
+    lina('Payday · Slökkvitæki', 'Síðast samstillt ' + klukka(ps.samstillt), !gamalt(ps.samstillt && ps.samstillt.slice(0, 10), 1));
+    lina('Payday · Brunahólf', 'Nýjasta greiðsla ' + ddmm(pb.nyjasta_greidsla), true);
+    lina('Tímavera', 'Nýjasti dagur ' + ddmm(tv.nyjast) + ' · sótt ' + klukka(tv.innlestur), !gamalt(tv.nyjast, 3));
+    lina('Ajour', 'Nýjasta skráning ' + ddmm(aj.nyjast) + ' · innlestur ' + klukka(aj.innlestur), !gamalt(aj.nyjast, 2));
+    lina('Kröfu yfirlit · bókun', 'Rauntími · sent til bókunar', true);
+  }
+
+  // ---- atburðir ----
+  document.querySelectorAll('#tvol button').forEach(function (b) {
+    b.addEventListener('click', function () { val = b.dataset.v; try { localStorage.setItem(VAL_KEY, val); } catch (e) {} saekja(false); });
+  });
+  var dagInntak = $('velja-dag');
+  dagInntak.max = idagIso();
+  dagInntak.addEventListener('change', function () { if (!dagInntak.value) return; valinDagur = dagInntak.value; val = 'velja'; saekja(false); });
+  dagInntak.addEventListener('click', function () { try { dagInntak.showPicker(); } catch (e) {} });
+  $('uppfaera').addEventListener('click', function () { saekja(true); });
+  $('inn-form').addEventListener('submit', function (ev) {
+    ev.preventDefault();
+    stada('Skrái inn…');
+    fetch('/api/hub-adgangar', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'login', nn: $('inn-nn').value.trim(), password: $('inn-pw').value }) })
+      .then(function (r) { return r.json().then(function (j) { if (!r.ok || j.ok === false) throw new Error(j && (j.villa || j.error) || 'Innskráning tókst ekki'); }); })
+      .then(function () { $('inn-pw').value = ''; stada(''); saekja(true); })
+      .catch(function (e) { stada(e.message, true); });
+  });
+  saekja(false);
+})();
+</script>
+</body>
+</html>
