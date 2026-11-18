@@ -70,6 +70,22 @@ Notkun: þegar spurt er „hvernig á að þétta X“ eða „er Y í verkinu�
 - Ø160 (liður 1.2) í baðherbergjum/við vaska; **Ø220 = liður 1.3** (24 göt ≈ útboð 25) undir hreinlætistæki í skoti við lagnastokk;
   Ø250 í ljósgörðum/garði/við gler = líklega niðurföll út (ekki talin).
 
+## 10. Af verkstað: hvar hver flokkur situr á teikningunni (Agnar 18.11.2026)
+Orð Agnars, sögð með kortið opið. Nota þegar punktar eru færðir, paraðir eða áætlaðir.
+- **Plast Ø20-34** (neysluvatn, PEX rör í rör): „tengjast t.d. alltaf í vaskana utan frá inn í vegginn, niður vegginn að vaskinum“. Gatið er þar sem
+  rauða og bláa lögnin (heitt og kalt, lagið Vatnslagnir í lit) fer inn í vegginn við vask. Tvær lagnir saman = par.
+- **Milliloft (Gólf)**: sitja á HRINGTÁKNUM grænu frárennslislagnanna (þar sem lögnin fer í gegnum gólfið); „passa akkúrat við fjöldann“.
+  Líka hringir á miðri lögn og í hornum, ekki bara á enda.
+- **Rafmagnsraufar**: „Raflagnaleiðir passa langbest“ (lagið R1150/R1160), þar sem leiðin fer gegnum brunavegg.
+- **Stál 15-35 / 40-50**: „vatnslagnirnar passa vel hér“ (Vatnslagnir í lit, M115/M116), við brunavegg.
+- **Svört rafmagnsrör (~20 mm) á 6H S1/S2**: um 300 gerð fyrir mistök haustið 2025, skráð í „Raflagnaþéttingar, göt og raufar“; þarf ekki að staðsetja
+  nákvæmlega og eru EKKI fyrirmynd annarra deilda, en geta ruglað talningu á vírabúntum.
+- **Úði (Stál 40-50 og 75-110)**: „Vatnsúðakerfi hlutablöð passa mun betur“ (M315/M316) en yfirlitsmyndin M395/M396, „og passa vel við
+  sprinklerpunktana úr 40-50 mm og 75-110 mm stál … samt hluti af 40-50 mm er í vatnsrörunum“ (þ.e. ekki allt Stál 40-50 er úði).
+- **Loft (Ø125-160, 200-315, 400-630)**: „loftræstiteikningin passar vel fyrir loftið“ (Loftræsikerfi M215/M216), þar sem stokkur fer gegnum brunavegg.
+- **Lög sem hjálpa ekki** (falin 18.11): lágspenna, smáspenna, brunaviðvörun, lyfjaloft (bæði), þrifa-, hita- og kælikerfi (M195/M196),
+  vatnsúðakerfi yfirlitsmynd (M395/M396; `skr_log` id 1 og 4).
+
 ## Opið / ómælt
 - Hvort plastlögn **minni en Ø35** gegnum VEGG fær kraga eða borða (deilið sýnir aðeins gólfplötu).
 - Hvort lagnaveggurinn við klósettkassana (IV-2.24, án EI) sé settur framan við EI60-vegg (þá er þéttingin í EI60-veggnum).

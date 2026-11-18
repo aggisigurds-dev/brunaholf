@@ -1238,3 +1238,34 @@ fyrir allar hinar deildarnar, þær eru bara í S1 og S2 6H“ · „mátt alveg
 - **REGLA:** fyrirmyndaraðferðin má aðeins nota skráningar sem eiga við hinar deildirnar. Áður en húshluti er notaður sem fyrirmynd: spyrja Agnar hvort
   eitthvað hafi verið gert þar sem ekki verður endurtekið. Og sama sía verður að ganga yfir ÖLL hús, ekki bara það sem unnið er í þá stundina.
 - Pörun (para.cjs) ekki endurkeyrð; stöðuskýrslan og kortið lesa `eytt = false` beint, svo tölurnar þar breyttust strax.
+
+## 18.11.2026 — Milliloft fært á HRINGTÁKN frárennslis (M115) · 12 lög falin
+
+Agnar: „Vatnslagnirnar fyrir milliloftaþéttingarnar eru algjörlega spot on, þessar grænu línur, passa akkúrat við fjöldann á milliloftaþéttingunum …
+er bara búinn að rétt færa til á 5H 1S“ · „Já, færa rest“. Hann handfærði 86 af 119 milliloftspunktum á 5H S1 (og 4 á S2) kl. 17:00–17:12.
+
+- **Skotmarkið er hringtáknið, ekki lagnaendinn.** Lokaðir hringir á grænu (og dökkgrænu) frárennslislögnunum = þar sem lögnin fer í gegnum gólfið.
+  Handfærslurnar enda að miðgildi 1,6 px frá næsta hring; 83 af 90 innan 10 px. Hann setur líka punkta á hringi á miðri lögn og í hornum, svo
+  armafjöldi hrings (endi / gatnamót) er EKKI nothæf sía. Beinagrind og endar á 5790 px myndinni dugðu ekki; það þarf 4x flísarnar.
+- **Tól:** kjarni `apps/slokkvitaeki/tools/skraning-gatakort-milliloft/` (gogn.py → hringir4.py → para.py → faera.py, LESTU.md). 601 hringur fannst
+  (S1 162, S2 201, S4 121, S5 115).
+- **Prófun á handfærslunum:** blind pörun (einn punktur á hring, næsti hringur) velur sama hring og Agnar í aðeins 65–70 af 79. Með öryggisreglu
+  (hringurinn er næsti hringur, færsla 1–30 px, næsti hringur sem er ekki tvíburi ≥ 15 px fjær): **45 af 46**. Aðeins sú regla var skrifuð.
+- **Skrifað:** 158 færslur í `skr_faerslur`, uppruni `sjalfvirkt` (5H S1 11, S2 61, S4 22, S5 28; 4H S4 21, S5 15), miðgildi 0,24 m, mest 0,84 m.
+  Handfærðir punktar ósnertir. Ófært eftir: 5H S1 22, S2 85, S4 84, S5 71; 4H S1 85, S2 115, S4 76, S5 61 — tvírætt val eða enginn hringur.
+  Afturkalla: `update skr_faerslur set eytt = true where uppruni = 'sjalfvirkt' and created_at::date = '2026-11-18' and skraning_id in (select id from
+  skr_skraningar where flokkur_id in (select id from skr_flokkar where heiti ilike 'Gólf%'))`.
+- **GAT Í LAGINU:** grænar frárennslislagnir vantar í M115-lagið á stórum svæðum í hægra húsi (aðeins rautt/blátt vatn teiknað). 47 punktar í 5H S4 og
+  34 í S5 eiga engan hring innan 60 px af þeim sökum. Ólagað. Húsin eru afrit (dx 3.640), svo spegla mætti hringina úr vinstra húsi, en það er óprófað.
+- **4H S1/S2 sleppt:** skannaða blaðið (teikning 10) varpast of ónákvæmt (miðgildi 1,15 m í hreinlætistæki).
+- **Fyrirvari:** milliloft á 5H er gólf 6. hæðar, svo rétta lagið væri strangt til tekið M116. Agnar bar saman við M115 á 5H-blaðinu og hæðirnar eru eins.
+- **skr-festa lagað (kjarni 6eac95a):** `--afturkalla` og úrelding við endurkeyrslu ná nú aðeins til sjálfvirkra færslna í hópum tólsins (loft, rör, rafmagn).
+  Áður hefði endurkeyrsla á 5H afturkallað milliloftsfærslurnar.
+- **Lög falin (Agnar: „næstum óþarfi sem layers“, „óþarfi í bili“):** `skr_log.eytt = true` á 12 lögum: Lágspenna 14/15, Smáspenna 16/17,
+  Brunaviðvörun 18/19, Lyfjaloft 3/6, Lyfjaloft hlutablöð 26/27, Þrifa-, hita- og kælikerfi 2/5. Eftir standa Vatnslagnir í lit (Agnar: „passa vel“),
+  Raflagnaleiðir, Loftræsikerfi, Vatnsúðakerfi (bæði), Gataplan. Til baka: `update skr_log set eytt = false where id in (2,3,5,6,14,15,16,17,18,19,26,27)`.
+  Síðar sama dag (Agnar: „mátt því taka út layer af sprinkler, vatnsúðakerfið, aukamyndina“): yfirlitsmyndin Vatnsúðakerfi M395/M396 (id 1 og 4) líka falin;
+  hlutablöðin M315/M316 standa. Úðapunktar voru síðast færðir sjálfvirkt 12.11 (5H 537 af 937, 6H 335 af 550), ÁÐUR en hlutablöðin komu inn 15.11,
+  þ.e. eftir yfirlitsmyndinni sem passar verr. Endurfærsla eftir hlutablöðum ógerð.
+- **Orð Agnars um rafmagn:** „Raflagnaleiðir passa líka langbest fyrir rafmagnsraufarnar, en hin svörtu plaströrin þarf í raun ekkert að staðsetja nákvæmlega,
+  en kannski rugla svolítið talninguna á hinum vírabúntunum.“ Svörtu rörin (284, sjá færsluna á undan) eru í sama hópi og raufarnar á kortinu. Óaðskilið enn.
