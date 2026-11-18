@@ -13,6 +13,8 @@
  *   RAUTT  = hvorugt, þótt lotan hafi unnið (>= 6 verkfærakall)
  * Hún sér ekki: hvað undiragentar lásu í eigin afritum, skill sem hook kveikti sjálfkrafa, hvort gögnin voru rétt notuð.
  * Á síðuna fara: titill lotu (annars fyrstu 60 stafir fyrstu beiðni) og tölur — aldrei texti svara. Skrárnar eru einkamál (OneDrive), ekki birtar opinberlega.
+ * lotur-stada.json ber að auki stöðu hverrar lotu fyrir lotugluggann (mod lotustjornur, 18.11.2026): stada (bidur/buid),
+ * spurning (síðasta spurning lotunnar til Agnars) og samantekt (síðasta wrap_up-samantekt eða fyrsta lína síðasta svars).
  * Skyndiminni per skrá (stærð+mtime) svo 10 mínútna keyrsla kostar nánast ekkert.
  */
 const fs = require('fs'), path = require('path'), readline = require('readline');
@@ -47,8 +49,34 @@ function grunnur(tool, input) {
   return null;
 }
 
+// Texti notandaskeytis; tómt fyrir verkfærasvör, kerfisáminningar og tilkynningar sem lotan fær sjálf.
+const skeytiTexti = c => typeof c === 'string' ? c : (Array.isArray(c) ? c.filter(x => x.type === 'text').map(x => x.text || '').join(' ') : '');
+function alvoruSkeyti(o) {
+  if (o.type !== 'user' || !o.message || o.message.role !== 'user' || o.isMeta || o.isSidechain) return false;
+  const c = o.message.content;
+  if (Array.isArray(c) && c.every(x => x.type === 'tool_result')) return false;
+  const t = skeytiTexti(c).trim();
+  return !!t && !/^(<system-reminder>|<task-notification>|\[SYSTEM|<local-command|Caveat:|<command-name>|\[Request interrupted)/.test(t);
+}
+const stutt = (s, n) => { s = String(s || '').replace(/\s+/g, ' ').trim(); return s.length > n ? s.slice(0, n - 1) + '…' : s; };
+
+// Staða lotu fyrir lotugluggann (mod lotustjornur): bíður hún eftir Agnari, og hvað sagði hún síðast?
+// Heimild 1: síðasta wrap_up (recap + ask) ef ekkert alvöru skeyti kom á eftir. Heimild 2: síðasti texti lotunnar.
+function stadaLotu(r) {
+  if (r.wrap && r.eftirWrap === 0) {
+    return r.wrap.ask ? { stada: 'bidur', spurning: stutt(r.wrap.ask, 160), samantekt: stutt(r.wrap.recap, 200) }
+      : { stada: 'buid', spurning: '', samantekt: stutt(r.wrap.recap, 200) };
+  }
+  if (r.sidastaSvar && r.eftirSvar === 0 && /\?\s*$/.test(r.sidastaSvar)) {
+    const linur = r.sidastaSvar.split(/\n+/).map(l => l.trim()).filter(Boolean);
+    return { stada: 'bidur', spurning: stutt(linur[linur.length - 1], 160), samantekt: '' };
+  }
+  return { stada: 'buid', spurning: '', samantekt: stutt((r.sidastaSvar || '').split(/\n+/)[0], 200) };
+}
+
 async function greina(p) {
-  const r = { titill: '', fyrstaBeidni: '', verkfaeri: 0, sql: 0, skill: {}, agent: {}, ownAgent: {}, grunn: {}, fyrsta: 0, sidast: 0 };
+  const r = { titill: '', fyrstaBeidni: '', verkfaeri: 0, sql: 0, skill: {}, agent: {}, ownAgent: {}, grunn: {}, fyrsta: 0, sidast: 0,
+    wrap: null, eftirWrap: 0, sidastaSvar: '', eftirSvar: 0, sidastSkeyti: 0 };
   const rl = readline.createInterface({ input: fs.createReadStream(p, { encoding: 'utf8' }), crlfDelay: Infinity });
   for await (const line of rl) {
     if (!line) continue;
@@ -61,9 +89,16 @@ async function greina(p) {
       const clean = t.replace(/<[^>]+>[\s\S]*?<\/[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
       if (clean && !/^\[?(SYSTEM|Request interrupted)/.test(clean)) r.fyrstaBeidni = clean.slice(0, 60);
     }
+    const ts = o.timestamp ? Date.parse(o.timestamp) : 0;
+    if (alvoruSkeyti(o)) { r.eftirWrap++; r.eftirSvar++; if (ts) r.sidastSkeyti = ts; }
     const m = o.message;
     if (!m || m.role !== 'assistant' || !Array.isArray(m.content)) continue;
+    if (!o.isSidechain && ts) r.sidastSkeyti = ts;
     for (const c of m.content) {
+      if (!o.isSidechain && c.type === 'text' && c.text && c.text.trim()) { r.sidastaSvar = c.text.trim().slice(-1200); r.eftirSvar = 0; }
+      if (!o.isSidechain && c.type === 'tool_use' && /wrap_up$/.test(c.name || '')) {
+        r.wrap = { recap: String((c.input || {}).recap || ''), ask: String((c.input || {}).ask || '') }; r.eftirWrap = 0;
+      }
       if (c.type !== 'tool_use') continue;
       r.verkfaeri++;
       const n = c.name || '', i = c.input || {};
@@ -91,16 +126,18 @@ async function greina(p) {
   const raðir = [];
   for (const x of skrar) {
     const lykill = x.p; const c = cache[lykill];
-    const r = (c && c.size === x.size && c.mtime === x.mtime) ? c.r : await greina(x.p);
-    nyCache[lykill] = { size: x.size, mtime: x.mtime, r };
+    // v: útgáfa greiningarinnar — hækkuð þegar greina() safnar nýjum reitum, svo gamalt skyndiminni sé lesið aftur.
+    const r = (c && c.v === 2 && c.size === x.size && c.mtime === x.mtime) ? c.r : await greina(x.p);
+    nyCache[lykill] = { v: 2, size: x.size, mtime: x.mtime, r };
     if (r.verkfaeri < 3) continue;
     const eigSk = Object.keys(r.skill).filter(eiginSk), eigAg = Object.keys(r.agent).filter(a => EIGIN_AG.has(a));
     const grunn = Object.keys(r.grunn);
     const eigin = eigSk.length + eigAg.length > 0;
     const lit = (eigin && grunn.length) ? 'graent' : (eigin || grunn.length) ? 'gult' : (r.verkfaeri >= ROD_EFTIR ? 'rautt' : 'gra');
     raðir.push({
-      id: x.f.slice(0, 8), titill: r.titill || r.fyrstaBeidni || '(án titils)', sidast: x.mtime, fyrsta: r.fyrsta || null,
-      nuna: nu - x.mtime < 90e3, verkfaeri: r.verkfaeri, sql: r.sql, lit,
+      // sidast = síðasta skeyti lotunnar eða Agnars; mtime skráarinnar hreyfist líka við endurnefningu.
+      id: x.f.slice(0, 8), titill: r.titill || r.fyrstaBeidni || '(án titils)', sidast: r.sidastSkeyti || x.mtime, fyrsta: r.fyrsta || null,
+      nuna: nu - x.mtime < 90e3, verkfaeri: r.verkfaeri, sql: r.sql, lit, ...stadaLotu(r),
       skill: eigSk.map(k => [k, r.skill[k]]), agent: eigAg.map(k => [k, r.agent[k]]),
       almenn: Object.entries(r.agent).filter(([k]) => !EIGIN_AG.has(k)).reduce((a, [, v]) => a + v, 0),
       grunn: Object.entries(r.grunn),
@@ -110,7 +147,8 @@ async function greina(p) {
   fs.writeFileSync(cachePath, JSON.stringify(nyCache));
   const gogn = { bunad: new Date(nu).toISOString(), dagar: DAGAR, lotur: raðir };
   fs.writeFileSync(path.join(OUT, 'lotur-stada.json'), JSON.stringify(gogn));
-  fs.writeFileSync(path.join(OUT, 'lotur.html'), sida(gogn));
+  // Síðan sýnir aldrei texta úr lotum (sjá haus): spurning og samantekt fara aðeins í lotur-stada.json.
+  fs.writeFileSync(path.join(OUT, 'lotur.html'), sida({ ...gogn, lotur: raðir.map(({ spurning, samantekt, stada, ...rest }) => rest) }));
   const t = { graent: 0, gult: 0, rautt: 0, gra: 0 }; raðir.forEach(r => t[r.lit]++);
   console.log(`Lotuyfirlit: ${raðir.length} lotur (${DAGAR} d) · grænt ${t.graent} · gult ${t.gult} · rautt ${t.rautt} → ${OUT}/lotur.html`);
 })();
