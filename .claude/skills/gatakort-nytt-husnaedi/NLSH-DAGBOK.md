@@ -1291,3 +1291,32 @@ mun betri niðurstöður“.
   Nánast óbreytt frá 16.11 (2.005 og 776); áætluðu stöku verkunum fækkaði vegna rafmagnsyfirferðarinnar fyrr í dag.
 - **Hafnað:** Stál 110-160 (regnvatnsniðurföll af þaki) á móti gataplani ø250. Agnar: „ekki nægilega marktæk … sleppa þeirri tengingu“.
 - Ekki skoðað í vafra; tölur lesnar úr grunni.
+
+## 18.11.2026 — Skráningarvillur starfsfólks mældar (lesaðeins, engu breytt)
+
+Agnar: „Hef reyndar séð helling af villum í skráningu hjá starfsfólkinu. Sá í 110-160 stál fullt af 110-160 loftstokkum t.d., ennþá rafmagn í metrum
+loftferköntuðum stokkum. Loftstokkar með sitt hvorar stærðir sitt hvorum megin við vegginn. Sem er að hindra match pair.“
+
+- **Loft, ólík stærð hvorum megin:** loftskráning sem á engan nágranna í SAMA stærðarflokki innan 20 px (0,6 m) en á nágranna í ÖÐRUM loftflokki:
+  6H 148 (Ø125-160: 50, Ø200-315: 70, Ø400-630: 28) · 5H 100 (33, 47, 20). Alls 248 skráningar, um 124 pör. Efri mörk: tveir ólíkir stokkar hlið við hlið teljast með.
+- **Stál Ø110-160 (300: 6H 177, 5H 123) á móti lögum** (`scratchpad/villur/stal110.py`, skurðpunktar skr-festa): aðeins við loftstokk eða loftstokkur nær:
+  6H 45, 5H 26 = 71 · við lögn: 99 · óljóst (bæði jafn nálægt eða hvorugt): 130.
+- **Ljósmyndir af 32 þeirra skoðaðar:** 1 augljós spíralstokkur (#6523), um 10 álvafin rör eða stokkar sem ekki verða greind af mynd, hin eru lagnir.
+  Álvafið rör með BRÚNUM örvamiða er regnvatn/frárennsli (#9340 ber miðann „REGNVATN“; líka #190, #509, #351, #8886).
+- **KERFISVILLA HJÁ MÉR, ekki starfsfólki:** rauðbrún rör með stálklemmum (#5692, #3981, #6025, #5299, #11277 …) eru múffulaus steypujárnsrör (frárennsli/regnvatn),
+  ekki úði. `skr_kerfi` merkir þau `udi` af rauða litnum: 108 af 123 Stál Ø110-160 á 5H. Þau fylgja því nú úðablöðunum í sjálfvirku færslunni, sem er rangt.
+  Líklega á Stál Ø110-160 aldrei að vera `udi`. Ólagað.
+- **Rafmagn í „Raufar. (Metrer) LV“:** 76 skráningar eftir í flokknum (6H 64, 5H 9, viðbót 3), engin lengur á rafmagnsblöðunum. Þær 18 sem greindar voru af
+  mynd (`RAUFAR_RAFMAGN`) eru enn í loftflokknum í Ajour og í metraskrá 2.11.
+
+## 18.11.2026 — Stærðir loftstokka lesnar úr textalagi M215/M216 (lesaðeins)
+
+Agnar: „Síðan á loftstokkateikningunni standa allar stærðirnar en í mjög litlum stöfum.“ Þær eru í TEXTALAGI PDF-blaðanna, svo ekki þarf að rýna í letrið:
+`scratchpad/villur/staerdir.py` (pymupdf `get_text('words')`, varpað með `flisar_stilling.json`: base_pt = q·blað_pt + (dx,dy); yfirlit_px = (base_pt − (230,265))·3).
+
+- **Merkingar:** 5H (M215) 1.493: 874 sívalar (ø100 29, ø125 23, ø160 168, ø200 185, ø250 232, ø315 116, ø400 91, ø500 18, ø630 11), 517 greinar („250/ø160“),
+  102 kantaðir („400x100“). 6H (M216) 1.724: 1.042 sívalar, 530 greinar, 152 kantaðir. Vistað í `villur/merkingar.json`.
+- **Fyrsta pörun (næsta ø-merking við skráningu) dugar EKKI:** á samstæðum pörum (sami flokkur báðum megin) er næsta merking sammála flokknum í
+  75–79 % tilvika á 6H og 63–73 % á 5H. Merkingin á oft við næsta stokk við hliðina. Engu breytt og engin leiðrétting lögð til út frá þessu.
+- **Næsta skref (ógert):** mæla BREIDD stokksins í laginu þar sem hann fer gegnum vegginn (ø160 ≈ 22 px í 4x flísum, ø250 ≈ 34, ø315 ≈ 43) og tengja
+  merkingu við stokkinn sem hún liggur á, ekki þann næsta í loftlínu.

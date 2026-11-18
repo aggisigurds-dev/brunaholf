@@ -86,6 +86,9 @@ Orð Agnars, sögð með kortið opið. Nota þegar punktar eru færðir, parað
 - **Stál 110-160 (regnvatnsniðurföll af þaki)**: Agnar bar þau við gataplanið (ø250) og hafnaði tengingunni sama dag: „fleiri teikningamerkingar en rörin
   sjálf eru … ekki nægilega marktæk … sleppa þeirri tengingu“. EKKI nota gataplanið til að staðsetja eða áætla þau. „Held þessi regnfallsrör séu bara
   á 6. hæð og ekkert það mörg.“
+- **Að þekkja rör af ljósmynd:** „Brúni miðinn þýðir regnvatn. 110-160 stál.“ (Agnar 18.11.2026). Álvafið rör með brúnum örvamiða = regnvatn, rétt
+  flokkað sem Stál Ø110-160. Rauðbrúnt rör með stálklemmum = múffulaust steypujárnsrör (frárennsli/regnvatn), EKKI úði. Galvaniseraður spíralsaumur
+  = loftstokkur. Álvafið ÁN miða: ósvarað hvort það er loftstokkur eða regnvatn.
 - **Lög sem hjálpa ekki** (falin 18.11): lágspenna, smáspenna, brunaviðvörun, lyfjaloft (bæði), þrifa-, hita- og kælikerfi (M195/M196),
   vatnsúðakerfi yfirlitsmynd (M395/M396; `skr_log` id 1 og 4).
 
