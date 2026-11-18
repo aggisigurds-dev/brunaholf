@@ -249,6 +249,46 @@ skrif á Netlify-föll með service-role eða taka upp innskráningu — hönnun
 ein skipun. Mál **#1536** á Þjónustuborðinu, eigandi `oryggi`. **Aðeins Agnar ákveður.**
 
 
+## Innskráning lotunnar — notaðu aðganginn „Lota (Claude)“, uid 10 (18.11.2026)
+
+**Standandi heimild frá Agnari — þú þarft ekki að spyrja hann aftur.** Hans orð 18.11.2026: „já ég
+vill að claude geti unnið við kerfið sem það er að byggja … annars er þetta bara blind bygging og
+bara 100 % líkur á mistökum og tjóni.“ Og 17.11: „ef ég er að vinna gegnum símann, þá kemst ég ekkert
+inn á browserinn hjá sessions.“ **Biddu hann ALDREI að skrá sig inn í vafra lotunnar.**
+
+Hver Claude-lota hefur sinn eigin vafra og sínar eigin kökur, svo lotan skráir sig inn SJÁLF. Til þess
+er sérstakur aðgangur: **uid 10, „Lota (Claude)“, hlutverk Starfsmaður** — ekki manneskja, ekki Agnar,
+og hann má slökkva hvenær sem er með `update hub_adgangar set virkur=false where id=10`.
+
+```sql
+select kaka, notandi, rola, rennur_ut from innri.lotu_koku(10, 2);   -- uid 10 = Lota (Claude), 2 klst.
+```
+
+**ALDREI mynta uid 1.** Það er Agnar sjálfur: lota sem ber þá köku kemur fram sem hann, aðgerðir
+skrást á hans nafn og hún fær Admin-réttindi sem hún á ekki að hafa. Notaðu uid 10, 1–2 klst.
+
+**Sama kaka gildir á BÁÐUM vefjum** — brunaholf og slokkvitaeki staðfesta hana bæði gegn
+`hub_adgangar_stilling.session_secret`.
+
+Í vafra lotunnar: opnaðu fyrst slóð á réttu léni, settu svo kökuna og endurhlaðið:
+
+```js
+document.cookie = 'hub_user=<kaka>; path=/; max-age=7200; samesite=lax';
+location.replace('/');
+```
+
+Úr skel eða `fetch`: hausinn `Cookie: hub_user=<kaka>`.
+
+**ALDREI** skrifa kökuna eða `session_secret` í skrá, commit, annál, skjáskot eða svar til Agnars.
+Myntaðu nýja í stað þess að geyma hana. Skemað `innri` er ekki opið PostgREST, svo fallið næst hvorki
+með publishable-lykli né RPC.
+
+**Mælt 18.11.2026 kl. 09:30 með uid-10 kökunni:** `/api/odin` svarar 401 án hennar og **200** með;
+`/api/krofu-yfirlit-bru` svarar 200 í báðum tilvikum (opið). Slökkvitækis-megin opnast `/api/bh-toki`
+(401 → 200), en `/api/afgreidsla` og `/api/tekjur-beint` svara **403 „Aðeins fyrir stjórnanda“** —
+þau eru Admin-only og eiga að vera það. Þurfi próf óhjákvæmilega Admin-fall, segðu Agnari hvaða fall
+og hvers vegna; ekki mynta uid 1.
+
 ## Verkefnalisti (Claude task board) — vinnureglur
 
 `verkefnalisti.html` + `/api/verkefnalisti` (tafla `verkefnalisti`, myndir í
