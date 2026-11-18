@@ -1214,3 +1214,27 @@ færist á (checked_date ræður), (3) athuga hvort hún var þegar rukkuð í f
   Næsta viðbótarverk á 4H: setja `parad.vidbot = '<lykill>'` á áætlaða gatið og það kemur sjálft í spjaldið.
   Týpuprófun: 38 villur, allar gamla ImageZoom-hástafavillan á Windows (TS1192/TS1149), engin í skraning/.
   Birt og lesið af lifandi síðu (kjarni.vercel.app/kjarni/skraning/skyrsla, Vercel dpl_2erUwZU3… READY): sömu tölur, 13 af 41 = 32 %.
+
+## 18.11.2026 — Rafmagnsáætlun yfirfarin: svört rör eru EKKI fyrirmynd, krossar samræmdir milli húsa
+
+Agnar: „við gerðum mistök á 6. hæð S1 og S2 og gerðum um 300 svört rafmagnsrör, 20 mm sirka, sem þeir létu okkur síðan hætta að gera, en fáum samt
+greitt fyrir þau, en settum þau með í rafmagnsgöt og raufar … þau ættu ekki að endurspegla restina af deildunum“ · „mátt taka þær burtu úr áætlun
+fyrir allar hinar deildarnar, þær eru bara í S1 og S2 6H“ · „mátt alveg endilega fara yfir þessar áætlanir hjá þér“.
+
+- **Svörtu rörin í gögnunum:** flokkur 34 „Raflagnaþéttingar, göt og raufar“ á 6H, lýsing tóm, framkvæmt fyrir 01.12.2025: **284 skráningar**
+  (S1 36, S2 248). Greint af fjölda, tíma og flokki; EKKI sannreynt af myndum. Raunveruleg rafmagnsvinna á 6H án þeirra: **S1 115, S2 132** skráningar
+  (flokkar 34, 44, 45), nálægt RAF_MARK 104.
+- **Þrjár villur í áætluninni frá 15.–16.11 (uppruni `spegill:6H-vinstra` og `teikning:R11x0-kross`):**
+  1. Spegluð merki með eingöngu svört rör að fyrirmynd (innan 40 px, óparuð): **228 falin** (5H S1 8, S2 70, S4 7, S5 68; 6H S4 7, S5 68).
+  2. Krossar í hægra húsi voru aldrei síaðir á móti fyrirmynd eins og vinstra húsið 16.11: **185 faldir** þar sem engin raunveruleg
+     rafmagnsskráning er innan 60 px á samsvarandi stað á 6H S1/S2 (5H S2 2, S4 50, S5 48; 6H S4 42, S5 43).
+  3. 16.11 voru ALLIR krossar í vinstra húsi 5H faldir, líka þeir sem áttu fyrirmynd: **46 settir aftur inn** (S1 39, S2 7) þar sem raunveruleg
+     skráning er innan 60 px á 6H og hvorki áætlað gat (45 px) né 5H-skráning (60 px) kom í staðinn.
+  Auk þess **30 blönduð spegluð merki**: fjoldi lækkaður í fjölda raunverulegra fyrirmyndarskráninga.
+- **Útkoma (stök verk áætluð, rafmagn):** 5H 913 → **470** (S1 53 → 113, S2 217 → 79, S4 233 → 117, S5 410 → 161); 6H S4 218 → 118, S5 407 → 165.
+  Að viðbættum skráningum sem þegar eru til: 5H S1 ~125 og S2 ~129 á móti 115 og 132 á 6H. S4 stemmir (117/118 á móti 115).
+  **S5 er enn ~25 % yfir fyrirmynd** (161/165 á móti 132): kross og speglað merki 45–60 px hvort frá öðru telja líklega sömu skráningu. Ólagað.
+- **Afrit:** `backup_20261118_skr_aaetlud_raf` (962 raðir, RLS á). Allt gert með `eytt` og `fjoldi`; engu eytt. Hver röð ber „Yfirferð 18.11.2026“ í athugasemd.
+- **REGLA:** fyrirmyndaraðferðin má aðeins nota skráningar sem eiga við hinar deildirnar. Áður en húshluti er notaður sem fyrirmynd: spyrja Agnar hvort
+  eitthvað hafi verið gert þar sem ekki verður endurtekið. Og sama sía verður að ganga yfir ÖLL hús, ekki bara það sem unnið er í þá stundina.
+- Pörun (para.cjs) ekki endurkeyrð; stöðuskýrslan og kortið lesa `eytt = false` beint, svo tölurnar þar breyttust strax.
