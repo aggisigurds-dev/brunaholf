@@ -1451,3 +1451,15 @@ mig gegnum mappið.“ Áður hafði hann sagt að nokkrar sjálfvirkar bláar l
   Rauðu veggirnir mældir á yfirlitinu: miðgildi 6 px, 75 % 8 px, 90 % 10 px (6H og 5H eins). Bláar og rauðar línur á kortinu eru nú 8 px (`LINU_THYKKT`),
   grænar 6 px. Kjarni 9b7a524 + 6e469d8. GILDRA: `VEGG_THYKKT = 5.6` var þegar til í skránni; fyrri commit lýsti því aftur og braut tegundaprófun
   (lagað í næsta commit). Ýta aðeins þegar villutalan er 0, ekki bara prenta hana.
+
+### 18.11.2026 (seint): 6. hæð endurkeyrð aftur eftir breytingar Agnars á línunum
+- **Línur þá:** 63 bláar (23 nýjar), 82 sjálfvirkar faldar (15 nýjar), engin rauð eða græn. 258 sjálfvirkar standa.
+- **Línuþykkt í veggjamyndinni skiptir máli fyrir rafmagn:** 5 px → 308 á brunavegg, 7 px → 282 (loft og úði eins í báðum). Notað 5 px.
+  Ekki mála línur þykkari en 5 px í veggjamynd fyrir skr-festa, þótt þær séu 8 px á kortinu.
+- **Handfærslusamræmi, útgáfa C (5 px):** loft innan 8 px 77 af 164 (var 80 með fyrri línum, 70 án lína hans), á brunavegg 1.016 (var 1.001).
+  Munurinn 80 → 77 er 9 punktar á einu svæði (x 1660–1850, y 2310–2630): 5 betri, 4 verri; flestir > 100 px frá breyttri línu.
+  úði 6 af 10 (óbreytt), ófærðir 91 → 82. rafmagn 21 af 37 og 308 á brunavegg (A: 20 og 304): hlutlaust, EKKI fært. Stál og plast ekki færð (Agnar: nei).
+- **Skrifað `--hopar loft,udi`:** 17 nýjar, 1.172 uppfærðar, 3 afturkallaðar. Á móti afriti `backup_20261118d_skr_faerslur` (9.193 raðir, RLS á):
+  loft 8 nýjar, 1 horfin, 18 færðust > 3 px; úði 9, 2, 6. Handfærðir 264 ósnertir (Agnar hafði fært 16 í viðbót), aðrir hópar 0.
+- **Pörun 6H:** 2.005 pöruð, parad á 1.133 áætluð göt.
+- Veggjamyndin sem notuð var: `_vinnuskjol/nlsh-loftstaerdir-20261118/yf-agnar-6h-20261118/yfirlit-6h.jpg` (+ `agnar_linur.py`, `thykkt.py`, `munur.py`).
