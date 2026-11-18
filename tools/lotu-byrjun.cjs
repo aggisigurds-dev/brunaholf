@@ -12,6 +12,7 @@
  *   --notandi   (í ~/.claude/settings.json) þegir ef verkefnið hefur hookinn sjálft */
 'use strict';
 const G = require('./_lotu-grunnur.cjs');
+const LOK = require('./_lokanir.cjs');
 
 /* Boðhlaupið: fyrsta línan í hverri lotu — keflið má aldrei falla (Agnar 04.11.2026). */
 const KEFLI = "Keflið (boðhlaup, Agnar 04.11.2026): jarvis heldur keflinu í byrjun lotu. Keflið fellur ALDREI á jörðina — sá sem heldur því vinnur verkið sé það á hans sviði, annars réttir hann það eiganda síðunnar/gagnanna (leiðarvísir, síðuvörður, data/sidukort.json, docs/AGENTASKRA.md) og segir hverjum; finnist enginn eigandi heldur jarvis því áfram og skráir gat. Lestu Charlize (skill charlize / docs/MINNISBOK.md) áður en þú byrjar.";
@@ -48,7 +49,24 @@ async function keyra(arg = process.argv.slice(2)) {
   if (arg.includes('--notandi') && G.verkefniHefur(cwd, 'lotu-byrjun.cjs', 'lotu-hookar.cjs')) return G.ljuka('', 0);
   let texti;
   try { texti = await smida(cwd); } catch (e) { texti = 'Lotuminnið (charlize_sessions) svarar ekki — haldið áfram.'; }
-  texti = KEFLI + '\n' + texti;
+  // 18.11.2026 (Agnar: „burt með þessar lokanir“): hver ný lota fær kaflann um innskráningu, falinn vafraglugga og skjöl
+  // sem mega ekki í repó — og notendaskráin er sett upp á vélinni ef kaflana vantar þar (hún var aðeins til á einni vél).
+  // --texti er skoðunarhamur: þá er ekkert skrifað á vélina. Bilun hér má aldrei fella lotuna.
+  let lokanir = '';
+  try {
+    lokanir = LOK.texti() + '\n';
+    if (!arg.includes('--texti')) { LOK.tryggjaNotandaskra(); LOK.tryggjaVinnuskjol(); LOK.merkja(inn.session_id); }
+  } catch (_) {}
+  // Lotukerfið sækir sjálft nýjustu útgáfu sína (mest á 3 klst. fresti, í aðskildu ferli — tefur lotuna ekki). Annars
+  // situr lagfæring eins og þessi á vélinni þar sem hún var skrifuð. Línan birtist aðeins ef vélin er á eftir og
+  // uppfærslan komst ekki í gegn sjálf.
+  try {
+    const UPP = require('./_uppfaera.cjs');
+    const l = UPP.lina();
+    if (l) lokanir += l + '\n';
+    if (!arg.includes('--texti')) UPP.raesa();
+  } catch (_) {}
+  texti = KEFLI + '\n' + lokanir + texti;
   if (arg.includes('--texti')) return G.ljuka(texti + '\n', 0);
   return G.ljuka(JSON.stringify({ hookSpecificOutput: { hookEventName: 'SessionStart', additionalContext: texti } }) + '\n', 0);
 }

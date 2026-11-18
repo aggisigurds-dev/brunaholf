@@ -402,8 +402,14 @@ async function keyra(arg = process.argv.slice(2)) {
       }) + '\n');
     } catch (_) {}
   }
-  if (!ctx) return G.ljuka('', 0);
-  return G.ljuka(JSON.stringify({ hookSpecificOutput: { hookEventName: 'UserPromptSubmit', additionalContext: ctx } }), 0);
+  // 18.11.2026 (Agnar: „burt með þessar lokanir“): lota sem var ÞEGAR í gangi þegar kaflinn kom fær hann EINU SINNI með
+  // næsta skeyti (lotu-byrjun merkir nýjar lotur, svo þær fá hann ekki tvisvar). Loturnar sem spurðu um innskráningu
+  // keyrðu á öðrum vélum og voru í miðju verki — SessionStart nær þeim ekki. Bilun hér má aldrei fella leiðarvísinn.
+  let lok = '';
+  try { const LOK = require('./_lokanir.cjs'); if (LOK.einuSinni(inn.session_id)) { lok = LOK.texti(); LOK.tryggjaNotandaskra(); LOK.tryggjaVinnuskjol(); } } catch (_) {}
+  const ut = [lok, ctx].filter(Boolean).join('\n');
+  if (!ut) return G.ljuka('', 0);
+  return G.ljuka(JSON.stringify({ hookSpecificOutput: { hookEventName: 'UserPromptSubmit', additionalContext: ut } }), 0);
 }
 
 module.exports = { keyra, greina, smida, ord, stofn };
