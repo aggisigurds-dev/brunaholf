@@ -1269,3 +1269,25 @@ er bara búinn að rétt færa til á 5H 1S“ · „Já, færa rest“. Hann ha
   þ.e. eftir yfirlitsmyndinni sem passar verr. Endurfærsla eftir hlutablöðum ógerð.
 - **Orð Agnars um rafmagn:** „Raflagnaleiðir passa líka langbest fyrir rafmagnsraufarnar, en hin svörtu plaströrin þarf í raun ekkert að staðsetja nákvæmlega,
   en kannski rugla svolítið talninguna á hinum vírabúntunum.“ Svörtu rörin (284, sjá færsluna á undan) eru í sama hópi og raufarnar á kortinu. Óaðskilið enn.
+
+## 18.11.2026 — Sjálfvirk færsla endurkeyrð: hver flokkur fylgir SÍNU lagi (kjarni 68e5247)
+
+Agnar, með kortið opið og eitt lag í einu: „Raflagnaleiðir passa líka langbest fyrir rafmagnsraufarnar“ · „Sprinkler vatnsúðakerfi hlutablöð passa mun
+betur“ · „vatnslagnirnar passa vel hér“ · „loftræstiteikningin passar vel fyrir loftið“ · „ef þú notar bara þessi 5 layers, þá ættirðu að geta fengið
+mun betri niðurstöður“.
+
+- **Lagaskipan skr-festa (LAGSKRAR):** loft → Loftræsikerfi · plast og stál (vatn) → Vatnslagnir í lit · úði → Vatnsúðakerfi HLUTABLÖÐ (M315/M316) ·
+  rafmagn → Raflagnaleiðir. Áður: rör = vatn-litur + M195 + M395 + M795 saman; úði = yfirlitsmyndin M395/M396. Plast er nú eigin hópur.
+  Lagamyndir sóttar úr geymslu eftir `skr_log.mynd_path` í `scratchpad/festa/log-nytt`.
+- **Prófað á handfærslum Agnars (6H) áður en skrifað var** (fjarlægð frá þeim stað sem tólið velur að þeim stað sem hann valdi):
+  plast miðgildi 10,5 → 5,9 px (innan 8 px: 5 → 10 af 14) · stál 8,8 → 7,4 px (9 → 11 af 19) · loft og rafmagn óbreytt (sömu lög).
+  **Úði er ÓSANNAÐUR:** 11,4 → 20,0 px á aðeins 10 handfærslum (5H: 2). Hann finnur þó mun oftar skurðpunkt (6H 354 → 415, 5H 582 → 755).
+  Úðinn var færður að orði Agnars um hlutablöðin, ekki af því að mælingin sýndi bata.
+- **Skrifað (--write, báðar hæðir):** 6H 589 nýjar, 3.415 uppfærðar, 388 afturkallaðar → 4.004 sjálfvirkar (voru 3.803); 1.268 færðust meira en 3 px.
+  5H 644 nýjar, 2.632 uppfærðar, 314 afturkallaðar → 3.276 (+ 122 milliloft); 1.073 færðust meira en 3 px. Handfærðir punktar: 0 snertir (mælt).
+  Ófærðir eftir: 6H loft 135, plast 36, úði 125, stál 258, rafmagn 224 · 5H loft 91, plast 27, úði 180, stál 133, rafmagn 22.
+- **Afrit:** `backup_20261118_skr_faerslur` (7.753 raðir, RLS á) geymir stöðuna fyrir endurkeyrslu.
+- **Pörun endurkeyrð** (para.cjs --write): 6H 2.004 af 2.670 stökum (fullt 774, hluti 76, vantar 287) · 5H 785 af 1.807 (fullt 458, hluti 51, vantar 486).
+  Nánast óbreytt frá 16.11 (2.005 og 776); áætluðu stöku verkunum fækkaði vegna rafmagnsyfirferðarinnar fyrr í dag.
+- **Hafnað:** Stál 110-160 (regnvatnsniðurföll af þaki) á móti gataplani ø250. Agnar: „ekki nægilega marktæk … sleppa þeirri tengingu“.
+- Ekki skoðað í vafra; tölur lesnar úr grunni.
