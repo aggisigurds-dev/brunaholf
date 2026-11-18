@@ -182,6 +182,16 @@ test('audlindLykill: brúnirnar', () => {
   const { _audlindLykill: L } = require(path.join(ROT, 'netlify', 'functions', 'villur.js'));
   assert.equal(L(DAUD('001')), 'https://skjalasafn.reykjavik.is/fotoweb/cache/…');
   assert.equal(L('https://fonts.gstatic.com/s/inter.woff2'), 'https://fonts.gstatic.com/s/inter.woff2');
+  // Aðeins skjalasafnið safnast á tvo liði. Okkar eigin Supabase-geymsla heldur allri slóðinni: annars yrðu allar
+  // myndir þaðan að einni röð og ekki sæist hvaða skrá vantar (rýni 18.11.2026).
+  const SB = 'https://osfdzskyvisifcwyjkuk.supabase.co/storage/v1/object/public/';
+  assert.equal(L(SB + 'verkstadir/a.jpg?t=1'), SB + 'verkstadir/a.jpg');
+  assert.equal(L(SB + 'samningar/b.pdf'), SB + 'samningar/b.pdf');
+  assert.notEqual(L(SB + 'verkstadir/a.jpg'), L(SB + 'samningar/b.pdf'));
+  assert.equal(L('https://annar.vefur.is/a/b/c/d.png?x=1#y'), 'https://annar.vefur.is/a/b/c/d.png');
+  // Innihald data:/blob: fer aldrei í fingrafar.
+  assert.equal(L('data:image/png;base64,iVBORw0KGgoAAAANSUhEUg'), 'data:');
+  assert.equal(L('blob:https://brunaholf.netlify.app/1b2c3d'), 'blob:');
   assert.equal(L('https://brunaholf.netlify.app/css/theme.css?v=3#x'), 'https://brunaholf.netlify.app/css/theme.css');
   assert.equal(L('https://slokkvitaeki.netlify.app/js/_bundle-1.4bf996ad8d.js'), 'https://slokkvitaeki.netlify.app/js/_bundle-1.*.js');
   assert.equal(L('ekki-slod?x=1'), 'ekki-slod');

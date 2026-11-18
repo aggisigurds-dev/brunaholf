@@ -108,15 +108,22 @@ function klippa(v, n) { return v == null ? null : String(v).slice(0, n); }
 // af „28 ólíkum villum í vikunni"; 11.11 urðu 12 teikn-mynd?url=… köll að 12 röðum; og hver birting býr til nýjar raðir
 // fyrir „_bundle-N.<tætigildi>.js" sem gamall flipi biður um. Þetta er ein villa í hverju tilviki. Lykillinn er því:
 //   · fyrirspurn (?…) og #… aldrei með — sama fall eða skrá er sama villan hver sem færibreytan er;
-//   · ANNAR hýsill en okkar eigin vefir: hýsill + fyrstu tveir slóðarliðir (https://skjalasafn.reykjavik.is/fotoweb/cache/…);
+//   · hýsill sem SKIPTIR UM SLÓÐIR (skjalasafn Reykjavíkur: lykillinn í cache-slóðinni rennur út á 1–2 dögum): hýsill +
+//     fyrstu tveir slóðarliðir (https://skjalasafn.reykjavik.is/fotoweb/cache/…) — þar er hver slóð sama villan;
+//   · aðrir ytri hýslar (t.d. Supabase-geymslan okkar): slóðin öll án fyrirspurnar. Rýni 18.11.2026: tveggja liða
+//     reglan hefði slegið ÖLLUM Supabase-myndum saman í eina röð (…/storage/v1/…) og þá sæist ekki hvaða skrá vantar;
+//   · data:/blob: og annað sem er ekki http(s): aðeins kerfið („data:“), aldrei innihaldið;
 //   · eigin vefir: slóðin öll (þar skiptir máli HVAÐA skrá vantar), nema tætigildi birtingar í skráarheiti verður „*".
 // Röðin geymir áfram heila slóð í `skra` (nýjasta dæmið) og `fjoldi` telur tilvikin.
 const EIGIN_HYSLAR = /(^|\.)(brunaholf|slokkvitaeki)\.netlify\.app$|^localhost$|^127\.0\.0\.1$/i;
+const SKIPTIR_UM_SLODIR = /(^|\.)skjalasafn\.reykjavik\.is$/i;
 function audlindLykill(skra) {
   if (skra == null || skra === '') return skra;
   let u;
   try { u = new URL(String(skra)); } catch (_) { return String(skra).split(/[?#]/)[0]; }
   if (EIGIN_HYSLAR.test(u.hostname)) return u.origin + u.pathname.replace(/\.[0-9a-f]{8,16}(?=\.(?:js|css)$)/i, '.*');
+  if (u.protocol !== 'http:' && u.protocol !== 'https:') return u.protocol;
+  if (!SKIPTIR_UM_SLODIR.test(u.hostname)) return u.origin + u.pathname;
   const lidir = u.pathname.split('/').filter(Boolean);
   return u.origin + '/' + lidir.slice(0, 2).join('/') + (lidir.length > 2 ? '/…' : '');
 }
