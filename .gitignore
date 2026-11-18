@@ -23,3 +23,6 @@ _responsive-preview.html
 
 # Netlify Edge Functions bootstrap lockfile (staðbundið build-artefakt)
 deno.lock
+
+# Vinnuskjöl lotna (kúnnagögn, póstur, tölur) — ALDREI í git; mappan á heima við hlið repósins, ekki inni í því
+_vinnuskjol/

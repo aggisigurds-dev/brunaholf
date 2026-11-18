@@ -46,10 +46,30 @@ async function keyra(arg = process.argv.slice(2)) {
   try { inn = JSON.parse(await G.lesaStdin(1500) || '{}'); } catch (_) {}
   const cwd = inn.cwd || process.cwd();
   if (arg.includes('--notandi') && G.verkefniHefur(cwd, 'lotu-byrjun.cjs', 'lotu-hookar.cjs')) return G.ljuka('', 0);
+  const skoda = arg.includes('--texti');   // skoðunarhamur: ekkert skrifað á vélina og ekkert sótt af netinu
+  // Er vélin með nýjustu útgáfu lotukerfisins? Athugað mest á 3 klst. fresti, SAMHLIÐA lotuminninu hér að neðan (tefur
+  // því ekki), og les aðeins — sjá _uppfaera.cjs. require er inni í try: vanti skrá eða sé hún gölluð heldur lotan áfram.
+  let UPP = null, bid = null;
+  try { UPP = require('./_uppfaera.cjs'); if (!skoda) bid = UPP.athuga().catch(() => null); } catch (_) {}
   let texti;
   try { texti = await smida(cwd); } catch (e) { texti = 'Lotuminnið (charlize_sessions) svarar ekki — haldið áfram.'; }
-  texti = KEFLI + '\n' + texti;
-  if (arg.includes('--texti')) return G.ljuka(texti + '\n', 0);
+  // 18.11.2026 (Agnar: „burt með þessar lokanir“): hver ný lota fær kaflann um innskráningu, falinn vafraglugga og skjöl
+  // sem mega ekki í repó — og kaflarnir í ~/.claude/CLAUDE.md eru hafðir eins og frumritið (claude-global/CLAUDE.md), því
+  // notendaskráin var aðeins til á einni vél. Bilun hér má aldrei fella lotuna.
+  let lokanir = '';
+  try {
+    const LOK = require('./_lokanir.cjs');
+    lokanir = LOK.texti() + '\n';
+    if (!skoda) {
+      const l = LOK.linaUmSkra(LOK.tryggjaNotandaskra());   // kafla skipt út í skrá eigandans → lotan er látin vita, með slóð á afritið
+      if (l) lokanir += l + '\n';
+      LOK.tryggjaVinnuskjol(); LOK.merkja(inn.session_id);
+    }
+  } catch (_) {}
+  // Sé vélin á eftir fær lotan eina línu um að sækja nýju útgáfuna (annars situr lagfæring á vélinni þar sem hún var skrifuð).
+  try { const ferskt = bid ? await bid : null; const l = UPP ? UPP.lina({ ferskt }) : ''; if (l) lokanir += l + '\n'; } catch (_) {}
+  texti = KEFLI + '\n' + lokanir + texti;
+  if (skoda) return G.ljuka(texti + '\n', 0);
   return G.ljuka(JSON.stringify({ hookSpecificOutput: { hookEventName: 'SessionStart', additionalContext: texti } }) + '\n', 0);
 }
 
