@@ -225,6 +225,14 @@ sjálfum · heimilisfang draga sem stangast á við Payday. Reglan er `N.greidan
 - **Greiðandi sem er ekki í Payday** (16.11.: Systur og makar, Nesdekk, Istanbul Market) stofnast þar við fyrstu sendingu;
   þá þurfa nafn, kt, heimilisfang og netfang að vera rétt Á DRÖGUNUM.
 - Staðan 16.11. og hvað stendur opið: `kunnaskra.md` (sama dagsetning) og kúnnaminnið per kennitölu.
+- **Drög sem fóru út í dag teljast enn ósend (18.11.2026).** Payday samstillist kl. 07:01; reikningur sem Agnar sendir eftir
+  það (Tindasel, Payday 389, kl. 09:03) sést ekki fyrr en næsta morgun. Áður en þú segir „ósent": leitaðu að pósti frá
+  Payday í bokhald@ frá deginum og keyrðu `GET /api/payday-pull?since=<mánaðarbyrjun>` (`?dry=1` forskoðar, skrifar ekkert).
+- **Efni vantar á drög? Athugaðu stafsetningu verksins á Redder-reikningunum.** `redder_invoices.worksite_match` verður að
+  vera nákvæmlega heiti verksins („Síðumíli 21" ≠ „Sidumuli 21"; fjórir reikningar sátu ótengdir 18.11.). Tenging:
+  `POST /api/redder-invoices {action:'rename_worksite', from, to, learn_alias:true}`; almenn heiti („Síðumúli") fá ekki alias.
+  Ómerktan reikning (`worksite_match` tómt) tengir þú aðeins eftir að Agnar staðfestir verkið. Kreditreikningur (skil) dregst
+  frá efni verksins síðan 18.11. (`virkUpphaed`).
 
 ## Ósent og Ajour-verkefnin — gat sem sést hvergi (07.10.2026)
 
