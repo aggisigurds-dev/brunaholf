@@ -1320,3 +1320,20 @@ Agnar: „Síðan á loftstokkateikningunni standa allar stærðirnar en í mjö
   75–79 % tilvika á 6H og 63–73 % á 5H. Merkingin á oft við næsta stokk við hliðina. Engu breytt og engin leiðrétting lögð til út frá þessu.
 - **Næsta skref (ógert):** mæla BREIDD stokksins í laginu þar sem hann fer gegnum vegginn (ø160 ≈ 22 px í 4x flísum, ø250 ≈ 34, ø315 ≈ 43) og tengja
   merkingu við stokkinn sem hún liggur á, ekki þann næsta í loftlínu.
+
+## 18.11.2026 — Aðferð Agnars: stokkalagið SKER veggina, skurðurinn er mældur (lesaðeins)
+
+Agnar: „Gætirðu kannski bara gert bláa línu hjá öllum hurðaopum, síðan erum við með rauðu veggina … lagt layer af rörunum yfir. Þannig séð subtract
+layer, leiðslurnar sem cutta götin í rauðu og bláu veggina. Og mæla götin … eða rauði veggurinn nemi mælinguna sem er næst honum í beinni línu.“
+
+- **Tól:** `scratchpad/gat/maela.py <6H|5H>` (afrit í `_vinnuskjol/nlsh-loftstaerdir-20261118`). 4x flísar grunnmyndar og Loftræsikerfis.
+  Veggur = rautt (≥ 9 px þykkt, svo hurðarbogar detta út) + bláar hurðalínur (aðeins beinar láréttar/lóðréttar ≥ 41 px). Stokkagríma lokuð 7×7 (miðlínur og
+  textagöt klufu skurðinn annars í tvennt). Skurður = samhangandi hluti stokks ∩ veggjar; breidd mæld EFTIR vegglínunni; 7,25 mm á px.
+- **Skurðir:** 6H 563 (92 í hurðaopi), 5H 531 (86). Mæld breidd er kerfisbundið 0,91 × merkt stærð (kvarðað með miðgildinu).
+- **Merking „í beinni línu“** (`prof.py`): ø-merking innan hliðrunar ±(breidd/2 + 4 px) og ≤ 150 px eftir stokknum. 6H 414 skurðir með merkingu, 5H 382.
+  Mæling og merking gefa NÁKVÆMLEGA sömu staðalstærð í 61 % (6H) og 63 % (5H); sama flokk í 69 % og 71 %. Hvor aðferð ein sér er því ekki nóg,
+  en þar sem þær eru sammála (6H 252, 5H 241 skurður) er stærðin traust.
+- **Skráningar við trausta skurði** (`villur.py`, innan 14 px): 6H 462, þar af 106 í ÖÐRUM stærðarflokki en teikningin (23 %); 5H 338, þar af 94 (28 %).
+  Aðeins stakir skurðir (enginn annar innan 1,45 m, svo færsla á rangan stokk er útilokuð): 6H 54 af 230 (23 %), 5H 62 af 200 (31 %).
+  Langalgengast: skráð Ø125-160 þar sem teikningin segir ø200 eða ø250 (79 af 116). Listar: `rangar-loft.json` (200), `rangar-loft-stakir.json` (116).
+- **Óstaðfest:** engin ljósmynd skoðuð til að sannreyna stærð. Engum flokki breytt. Stærðarflokkur ræður útboðslið, svo leiðrétting snertir reikninga: Agnar ákveður.
