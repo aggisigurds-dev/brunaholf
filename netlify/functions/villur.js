@@ -65,13 +65,15 @@ exports.handler = async (event) => {
     if (!skilabod) return json(400, { error: 'skilabod vantar' });
 
     const skra = klippa(b.skra, MAX.skra);
+    const tegund = klippa(b.tegund, 40) || 'onerror';
     // Fingrafarið ræður samsöfnun. Skilaboð + skrá (EKKI slóð eða tími) — sama
     // villa á tveimur síðum er sama villan og á að telja saman, ekki tvöfaldast.
-    const fingrafar = `${uppruni}|${skilabod}|${skra}`.slice(0, 900);
+    // Auðlindavillur (img/script/link) fá lykil í stað heillar slóðar — sjá audlindLykill.
+    const fingrafar = `${uppruni}|${skilabod}|${tegund === 'audlind' ? audlindLykill(skra) : skra}`.slice(0, 900);
 
     const nuna = new Date().toISOString();
     const rod = {
-      uppruni, tegund: klippa(b.tegund, 40) || 'onerror', skilabod,
+      uppruni, tegund, skilabod,
       slod: klippa(b.slod, MAX.slod), skra, stafli: klippa(b.stafli, MAX.stafli),
       vafri: klippa(b.vafri, MAX.vafri), notandi: klippa(b.notandi, MAX.notandi),
       fingrafar, fjoldi: 1, fyrst_at: nuna, sidast_at: nuna,
@@ -86,6 +88,8 @@ exports.handler = async (event) => {
         await sbPatch(`villur?id=eq.${til.id}`, {
           fjoldi: (til.fjoldi || 1) + 1, sidast_at: nuna, leyst_at: null,
           slod: rod.slod, stafli: rod.stafli,
+          // Auðlindavillur safnast á lykil, ekki slóð → röðin sýnir NÝJASTA dæmið (heila slóð sem hægt er að prófa).
+          ...(tegund === 'audlind' ? { skra: rod.skra } : {}),
         });
         return json(200, { ok: true, endurtekin: true });
       }
@@ -98,6 +102,32 @@ exports.handler = async (event) => {
 };
 
 function klippa(v, n) { return v == null ? null : String(v).slice(0, n); }
+
+// AUÐLINDALYKILL (18.11.2026). Fingrafarið bar áður ALLA slóð auðlindarinnar, svo ein bilun varð ein röð per skrá:
+// 16.11.2026 skiluðu 24 smámyndir úr skjalasafni Reykjavíkur 404 (útrunninn FotoWeb-lykill í slóðinni) og urðu 24 raðir
+// af „28 ólíkum villum í vikunni"; 11.11 urðu 12 teikn-mynd?url=… köll að 12 röðum; og hver birting býr til nýjar raðir
+// fyrir „_bundle-N.<tætigildi>.js" sem gamall flipi biður um. Þetta er ein villa í hverju tilviki. Lykillinn er því:
+//   · fyrirspurn (?…) og #… aldrei með — sama fall eða skrá er sama villan hver sem færibreytan er;
+//   · hýsill sem SKIPTIR UM SLÓÐIR (skjalasafn Reykjavíkur: lykillinn í cache-slóðinni rennur út á 1–2 dögum): hýsill +
+//     fyrstu tveir slóðarliðir (https://skjalasafn.reykjavik.is/fotoweb/cache/…) — þar er hver slóð sama villan;
+//   · aðrir ytri hýslar (t.d. Supabase-geymslan okkar): slóðin öll án fyrirspurnar. Rýni 18.11.2026: tveggja liða
+//     reglan hefði slegið ÖLLUM Supabase-myndum saman í eina röð (…/storage/v1/…) og þá sæist ekki hvaða skrá vantar;
+//   · data:/blob: og annað sem er ekki http(s): aðeins kerfið („data:“), aldrei innihaldið;
+//   · eigin vefir: slóðin öll (þar skiptir máli HVAÐA skrá vantar), nema tætigildi birtingar í skráarheiti verður „*".
+// Röðin geymir áfram heila slóð í `skra` (nýjasta dæmið) og `fjoldi` telur tilvikin.
+const EIGIN_HYSLAR = /(^|\.)(brunaholf|slokkvitaeki)\.netlify\.app$|^localhost$|^127\.0\.0\.1$/i;
+const SKIPTIR_UM_SLODIR = /(^|\.)skjalasafn\.reykjavik\.is$/i;
+function audlindLykill(skra) {
+  if (skra == null || skra === '') return skra;
+  let u;
+  try { u = new URL(String(skra)); } catch (_) { return String(skra).split(/[?#]/)[0]; }
+  if (EIGIN_HYSLAR.test(u.hostname)) return u.origin + u.pathname.replace(/\.[0-9a-f]{8,16}(?=\.(?:js|css)$)/i, '.*');
+  if (u.protocol !== 'http:' && u.protocol !== 'https:') return u.protocol;
+  if (!SKIPTIR_UM_SLODIR.test(u.hostname)) return u.origin + u.pathname;
+  const lidir = u.pathname.split('/').filter(Boolean);
+  return u.origin + '/' + lidir.slice(0, 2).join('/') + (lidir.length > 2 ? '/…' : '');
+}
+exports._audlindLykill = audlindLykill;
 
 async function sbGet(path) {
   const r = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
