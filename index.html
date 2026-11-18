@@ -17245,7 +17245,7 @@ async function renderKrofur(t){
       .kf-cl{font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:2px;color:var(--muted)}
       .kf-cv{font-family:var(--font-display);font-size:22px;font-weight:600;font-variant-numeric:tabular-nums;margin-top:6px;color:var(--ink)}
       .kf-cx{font-size:11px;color:var(--muted);margin-top:3px}  /* --muted-2 er fyrir placeholders, ekki gögn */
-      .kf-cv.red{color:var(--red)}.kf-cv.green{color:var(--green)}.kf-cv.amber{color:var(--warn)}.kf-cv.blue{color:var(--blue)}
+      .kf-cv.red{color:var(--red)}.kf-cv.green{color:var(--green)}.kf-cv.amber{color:var(--warn)}.kf-cv.blue{color:var(--blue-deep)}  /* 18.11.2026: --blue mældist 4,15:1 á hvítu */
       .kf-card .kf-exp{position:absolute;top:10px;right:12px;font-size:11px;color:var(--blue-deep)}  /* 18.11.2026: var(--blue-bg) er BAKGRUNNSlitur (#eef4fb) og var hér notaður sem letur á hvítu spjaldi — mældist 1,11:1, þ.e. ósýnilegt */
       .kf-detail{background:var(--card-bg,#fff);border:1px solid var(--border,var(--line));border-radius:12px;margin-top:12px;padding:6px 4px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
       /* Mockup 08: mánaðar-TAFLA í stað spjalda — flex-raðir með klofinni súlu */
@@ -17292,7 +17292,7 @@ async function renderKrofur(t){
       .kf-listctrl{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
       .kf-chips{display:flex;gap:6px;flex-wrap:wrap}
       .kf-chip{font-size:12px;font-weight:600;padding:5px 11px;border-radius:20px;border:1px solid var(--border,var(--edge));background:var(--card-bg,#fff);color:var(--text-dim,var(--muted));cursor:pointer}
-      .kf-chip.on{background:var(--accent,var(--blue));color:#fff;border-color:var(--accent,var(--blue))}
+      .kf-chip.on{background:var(--accent,var(--blue));color:#1e1502;border-color:var(--accent,var(--blue))}  /* 18.11.2026: hvítt á gulli mældist 3,16:1 — dökkt letur eins og á .boss-perotag */
       .kf-row{display:grid;grid-template-columns:1fr auto auto auto auto;gap:12px;align-items:center;background:var(--card-bg,#fff);border:1px solid var(--border,var(--line));border-radius:9px;margin-bottom:6px;padding:9px 13px}
       .kf-row.hidden-r{opacity:.5}
       .kf-rn{font-weight:700;font-size:13.5px;color:var(--text,var(--ink))}
