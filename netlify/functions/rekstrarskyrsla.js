@@ -91,7 +91,7 @@ async function saekja(d) {
   const fra = R.fyrstiDagur(d);
   const fraTs = `${fra}T00:00:00Z`;
   const ajourSia = `registration_status=eq.Done&project_name=neq.${encodeURIComponent(R.NLSH_AFRIT)}`
-    + `&or=(execution_date.gte.${fra},and(execution_date.is.null,checked_date.gte.${fra}))`;
+    + `&or=(execution_date.gte.${fra},checked_date.gte.${fra})`;
   const [solur, voidRadir, vorur, verkbeidnir, verklidur, uttektir, paydaySl, timavera, pricing, ajour, holeRates, sentMeta, drog, paydayBh,
     tvNyjast, tvInnlestur, ajNyjast, ajInnlestur, pdSlNyjast] = await Promise.all([
     allt('solur', `select=id,status,is_credit,credit_of,greitt_med,upphaed_an_vsk,created_at,paid_at,krafa_sent_at,linur&or=(created_at.gte.${fraTs},paid_at.gte.${fraTs},krafa_sent_at.gte.${fraTs})&order=id.asc`),
@@ -135,13 +135,17 @@ exports._saekja = saekja; // fyrir staðbundna sannprófun gegn SQL (netlify dev
 exports.handler = async (event) => {
   if (event.httpMethod !== 'GET') return svar(405, { villa: 'Aðeins GET' });
   if (!SUPABASE_URL || !SUPABASE_KEY) return svar(500, { villa: 'Supabase vantar' });
-  const n = await notandi(event);
+  let n;
+  try { n = await notandi(event); } catch (e) { return hafnad(502); }
   if (n.villa) return hafnad(n.villa);
   if (!n.stjornandi) return hafnad(403);
 
   const qs = event.queryStringParameters || {};
   const idag = new Date().toISOString().slice(0, 10);
   const d = /^\d{4}-\d{2}-\d{2}$/.test(String(qs.dagur || '')) ? qs.dagur : idag;
+  // ómögulegur dagur (t.d. 2026-06-31) fær ekki að reikna bull-tímabil
+  const t = new Date(d + 'T00:00:00Z');
+  if (Number.isNaN(t.getTime()) || t.toISOString().slice(0, 10) !== d) return svar(400, { villa: 'Ógild dagsetning' });
   if (d > idag || d < '2026-05-01') return svar(400, { villa: 'Dagur utan bils (01.05.2026 til dagsins í dag)' });
 
   try {

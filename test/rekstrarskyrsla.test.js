@@ -184,4 +184,30 @@ test('fallið: aðeins GET og dagur innan bils', async () => {
   assert.equal(r.statusCode, 405);
   assert.equal((await kalla(ev(toki(1), { dagur: '2099-01-01' }))).status, 400);
   assert.equal((await kalla(ev(toki(1), { dagur: '2026-04-30' }))).status, 400);
+  assert.equal((await kalla(ev(toki(1), { dagur: '2026-06-31' }))).status, 400, 'ómögulegur dagur');
+  assert.equal((await kalla(ev(toki(1), { dagur: '2026-13-01' }))).status, 400, 'ómögulegur mánuður');
+});
+
+test('rýni 18.11: kredit án is_credit á ógilda sölu, NLSH eftir checked_date, tóm serial', () => {
+  const p = R.timabil('2026-11-17');
+  const s = R.slokkvitaeki(p, {
+    voidIds: [100],
+    solur: [
+      { id: 1, status: 'final', greitt_med: 'reikningur', upphaed_an_vsk: 5000, created_at: '2026-11-17T11:00:00Z' },
+      { id: 2, status: 'final', credit_of: 100, greitt_med: 'reikningur', upphaed_an_vsk: -700, created_at: '2026-11-17T12:00:00Z' },
+    ],
+  });
+  assert.equal(s.tekjur[0], 5000, 'röð sem vísar á ógilda sölu er úti þótt is_credit vanti (_tekjur.cjs)');
+  const nl = (serial_number, category_group, execution_date, checked_date) =>
+    ({ project_name: 'NLSH 5-6. hæð', serial_number, category_group, execution_date, checked_date, registration_status: 'Done' });
+  const b = R.brunaholf(p, {
+    ajour: [
+      nl('A1', 'Plast Ø20-34', '2026-10-30', '2026-11-03'), // framkvæmt í okt., yfirfarið í nóv. → nóvember
+      nl('A2', ' Plast Ø20-34 ', '2026-11-03', null),        // ekkert checked_date → execution_date; flokkur snyrtur
+      nl('', 'Plast Ø20-34', '2026-11-03', null),            // tómt serial → ekki talið
+    ],
+  });
+  assert.equal(b.lshG[3], 2, 'nóvember: A1 (eftir checked_date) og A2');
+  assert.equal(b.lshG[4], 0, 'október: ekkert');
+  assert.equal(Math.round(b.lshV[3]), Math.round(2 * 0.5 * 7166 / 1.24));
 });
