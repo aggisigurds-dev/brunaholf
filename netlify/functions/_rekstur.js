@@ -13,7 +13,10 @@
 //    verkstaðar í Verðskrá (pricing_guide), annars 9.951 (sjálfgefni taxti drog-timar.js). Yfirvinna ekki reiknuð.
 //  • Landspítalinn = nlsh-uppgjor.js (VERK, studull): stakir SerialNumber per category_group, × taxti m. vsk, ÷ 1,24.
 //    „NLSH 5-6. hæð · gatakort" er AFRIT sömu gata í skr_hub_skraningar (mælt 18.11: 2.203 vs 2.188 Done-raðir) → sleppt.
+//    Dagsett eftir checked_date (annars execution_date), sama og uppgjörssíðan.
 //  • Heklureitur = gata-uppgjor.js: Gat*-raðir eftir execution_date × hole_size_rates (heklureitur → generic, miðja bils).
+//  • Dalvegur 30 er líka gataverk (K.GATA: tímar hans ekki rukkanlegir) en göt hans eru EKKI verðlögð hér — ekkert
+//    Done-gat síðan 03.07.2026 og engir tímar frá ágúst (mælt 18.11). Fari verkið aftur af stað þarf að bæta því við.
 //  • Greitt Brunahólfi = Payday PAID eftir greidsla_date (hofudstoll); Slökkvitæki = payday_invoices_slokk PAID (amount_ex).
 // Allar fjárhæðir án vsk.
 
@@ -109,7 +112,8 @@ function slokkvitaeki(per, g) {
       if (q) iTimabilum(per, dagur(s.created_at), (i) => { ut.ny[i] += q; });
     }
     const kredit = s.is_credit === true;
-    if (kredit && s.credit_of != null && voidIds.has(Number(s.credit_of))) continue; // tekjuregla: kredit á ógilda sölu úti
+    // tekjuregla (_tekjur.cjs slokkvitaekiGildar): röð sem vísar á ógilda sölu (credit_of) er úti, hvort sem is_credit er sett eða ekki
+    if (s.credit_of != null && voidIds.has(Number(s.credit_of))) continue;
     iTimabilum(per, dagur(s.created_at), (i) => { ut.tekjur[i] += upph; });
     if (s.greitt_med === 'kort' || s.greitt_med === 'reidufe') iTimabilum(per, dagur(s.paid_at || s.created_at), (i) => { ut.verslun[i] += upph; });
     if (s.greitt_med === 'reikningur' && !kredit) iTimabilum(per, dagur(s.created_at), (i) => { ut.krafa[i] += upph; ut.reikn[i]++; });
@@ -178,14 +182,17 @@ function heklaTaxtar(rates) {
 function nlshVirdi(radir) {
   const hopar = new Map();
   for (const r of radir) {
-    const k = `${r.category_group}|${r.dd.slice(0, 7)}`;
-    if (!hopar.has(k)) hopar.set(k, { g: r.category_group, man: r.dd.slice(0, 7), s: new Set() });
+    // eins og nlsh-uppgjor.js: tómur flokkur eða serial ekki talinn, flokkur snyrtur
+    const g = String(r.category_group || '').trim();
+    if (!g || !r.serial_number) continue;
+    const k = `${g}|${r.dd.slice(0, 7)}`;
+    if (!hopar.has(k)) hopar.set(k, { g, man: r.dd.slice(0, 7), s: new Set() });
     hopar.get(k).s.add(r.serial_number);
   }
   let mvsk = 0, stakar = 0;
   for (const h of hopar.values()) {
     stakar += h.s.size;
-    const v = VERK.find((x) => x.test.test(String(h.g || '').trim()));
+    const v = VERK.find((x) => x.test.test(h.g));
     if (!v) continue;
     mvsk += h.s.size * studull(v, h.man) * v.rate;
   }
@@ -202,12 +209,14 @@ function brunaholf(per, g) {
     const rate = tx.get(String(e.project || '').trim().toLowerCase()) || SJALFGEFINN_TAXTI;
     iTimabilum(per, dagur(e.date), (i) => { ut.klst[i] += h; ut.tima[i] += h * rate; });
   }
-  // Ajour: lokin göt (Done), afritið af NLSH úti
+  // Ajour: lokin göt (Done), afritið af NLSH úti. Dagsetning eftir uppgjörsreglu verksins svo talan stemmi við
+  // uppgjörssíðuna: Landspítalinn = checked_date, annars execution_date (nlsh-uppgjor.js); önnur verk = execution_date
+  // (gata-uppgjor.js), annars checked_date.
   const nlshNofn = new Set(NLSH_NAMES);
   const done = [];
   for (const r of g.ajour || []) {
     if (r.registration_status !== 'Done' || r.project_name === NLSH_AFRIT) continue;
-    const dd = dagur(r.execution_date || r.checked_date);
+    const dd = dagur(nlshNofn.has(r.project_name) ? (r.checked_date || r.execution_date) : (r.execution_date || r.checked_date));
     if (!dd) continue;
     done.push({ ...r, dd });
   }
