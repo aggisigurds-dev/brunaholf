@@ -1447,3 +1447,7 @@ mig gegnum mappið.“ Áður hafði hann sagt að nokkrar sjálfvirkar bláar l
   273 af 340 standa á 6H og voru notaðar í keyrslunni, en á kortinu voru þær 1,6 px og sáust varla við hliðina á línum hans og rauðu veggjunum.
   Nú 5 px á teikningunni í línuham (4 px annars), ljósari blár (#3b82f6) og án endapunkta; línur Agnars 6 px með endapunktum. Kjarni d827884 + 2a4122b,
   skoðað á lifandi korti. LÆRDÓMUR: mynd sem sýnir aðeins hluta línanna (mín fyrri mynd teiknaði bara hans 40) lítur út eins og hinar séu horfnar.
+- **Línur jafnþykkar rauðu veggjunum** (Agnar: „þurfa örugglega að vera jafnþykkar rauðu línunum svo hægt sé að blokka á bláu þunnu hurðalínurnar“).
+  Rauðu veggirnir mældir á yfirlitinu: miðgildi 6 px, 75 % 8 px, 90 % 10 px (6H og 5H eins). Bláar og rauðar línur á kortinu eru nú 8 px (`LINU_THYKKT`),
+  grænar 6 px. Kjarni 9b7a524 + 6e469d8. GILDRA: `VEGG_THYKKT = 5.6` var þegar til í skránni; fyrri commit lýsti því aftur og braut tegundaprófun
+  (lagað í næsta commit). Ýta aðeins þegar villutalan er 0, ekki bara prenta hana.
