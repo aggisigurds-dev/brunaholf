@@ -11905,9 +11905,10 @@ async function rgOpenEfniEditor(worksite, month){
         const j = await r.json().catch(()=>({})); if(!r.ok || j.error) throw new Error(j.error || ('HTTP '+r.status));
         if(li) li.excluded = want; if(tr) tr.classList.toggle('efni-excl-row', want);
         if(inv && inv.recharge_amount == null){
-          const an = Number(inv.an_vsk)||0, mv = Number(inv.m_vsk)||0, factor = an>0 ? mv/an : 1.24;
+          const an = Number(inv.an_vsk)||0, mv = Number(inv.m_vsk)||0, factor = an!==0 ? mv/an : 1.24;
           const exAn = (inv.redder_line_items||[]).filter(l=>l.excluded).reduce((a,l)=>a+(Number(l.upphaed)||0),0);
-          const eff = Math.max(0, Math.round(mv - exAn*factor)); inv.effective_m_vsk = eff;
+          // 18.11.2026: kreditreikningur (skilað efni) heldur mínustölunni — sama regla og virkUpphaed í redder-invoices.js
+          const net = Math.round(mv - exAn*factor); const eff = mv < 0 ? Math.min(0, net) : Math.max(0, net); inv.effective_m_vsk = eff;
           const inp = document.querySelector('[data-efni-id="'+inv.id+'"]');
           if(inp){ inp.value = eff; inp.dataset.efniOrig = String(eff); inp.dispatchEvent(new Event('input')); }
         }

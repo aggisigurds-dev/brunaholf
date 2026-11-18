@@ -7,6 +7,16 @@
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
+// Raunveruleg endurkrafa eins reiknings (með vsk). 18.11.2026: kreditreikningur (skilað efni, m_vsk < 0)
+// heldur mínustölunni sinni. Áður var allt klippt við 0, svo skil drógust aldrei frá efni verksins
+// (Sidumuli 21, nóv. 2026: 137.233 í stað 91.498 án vsk).
+function virkUpphaed(mv, excludedMvsk, recharge) {
+  if (recharge != null) return Number(recharge);
+  const net = (Number(mv) || 0) - (Number(excludedMvsk) || 0);
+  return (Number(mv) || 0) < 0 ? Math.min(0, net) : Math.max(0, net);
+}
+exports.virkUpphaed = virkUpphaed;
+
 exports.handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') return resp(204, '', cors());
   if (!SUPABASE_URL || !SUPABASE_KEY) return json(500, { error: 'Supabase env missing' });
@@ -31,11 +41,11 @@ exports.handler = async (event) => {
     // = recharge_amount ef sett, annars m_vsk mínus undanskildar línur (upphaed er án vsk).
     for (const inv of rows) {
       const an = Number(inv.an_vsk) || 0, mv = Number(inv.m_vsk) || 0;
-      const factor = an > 0 ? mv / an : 1.24;
+      const factor = an !== 0 ? mv / an : 1.24;
       const exAn = (inv.redder_line_items || []).filter(li => li.excluded).reduce((a, li) => a + (Number(li.upphaed) || 0), 0);
       inv.excluded_an_vsk = Math.round(exAn);
       inv.excluded_m_vsk = Math.round(exAn * factor);
-      inv.effective_m_vsk = inv.recharge_amount != null ? Number(inv.recharge_amount) : Math.max(0, mv - inv.excluded_m_vsk);
+      inv.effective_m_vsk = virkUpphaed(mv, inv.excluded_m_vsk, inv.recharge_amount);
       inv.effective_an_vsk = Math.round(inv.effective_m_vsk / factor);
     }
     // Build summary by (worksite, month) — á RAUNVERULEGRI endurkröfu.
@@ -50,7 +60,7 @@ exports.handler = async (event) => {
       const month = String(inv.month_override || inv.dagsetning).slice(0, 7);
       const base = inv.worksite_match || '(óþekkt)';
       const an = Number(inv.an_vsk) || 0, mv = Number(inv.m_vsk) || 0;
-      const factor = an > 0 ? mv / an : 1.24;
+      const factor = an !== 0 ? mv / an : 1.24;
       const lines = inv.redder_line_items || [];
       const split = {};
       let linesAn = 0;
