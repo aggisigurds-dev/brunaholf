@@ -1497,3 +1497,21 @@ Tól `scratchpad/villur/samantekt.py`, afrit og listi í `_vinnuskjol/nlsh-rangu
 - **D, Stál Ø110-160 við loftstokk:** 71 af 300 (mæling 18.11); af 32 skoðuðum myndum 1 augljós stokkur.
 - **Tvær óháðar vísbendingar (B og C):** 45 skráningar. Ein: B 113, C 151, D 71.
 - **ÓMÆLT:** Stál á móti Plast, stærðarflokkar röra og rafmagns (7.808 skráningar, 76 %). Engin aðferð til.
+
+### 19.11.2026 (nótt): stöðuskýrslan sett saman fyrir skil til verkeftirlits 20.11
+Agnar: „Geymum þetta bara í bili. Geturðu reynt að koma skýrslunni saman.“ Skýrslan er `/kjarni/skraning/skyrsla` (Apex Ajour), ekki sérskjal.
+- **Það sem vantaði miðað við beiðni verkeftirlits (5 liðir):** inngangur og lokaorð voru tóm, enginn kafli um starfsmenn og þjálfun (liður 4) né gæðagögn (liður 5).
+- **Bætt við (kjarni 1b5e2d6, d92f860, a3b024f):** sjálfgefinn inngangur og lokaorð úr tölum skýrslunnar (þar til skrifað er yfir); kaflinn
+  „Starfsmenn og þjálfun“ (tafla úr skráningunum: kláruð stök verk, fyrsta og síðasta skráning; texti um námskeið) og „Gæði og eftirlit“ (texti + fjöldi
+  skráninga og ljósmynda). Textarnir þrír (Verkferli, þjálfun, gæði) eru merktir **Drög** þar til hakað er við Yfirfarið. Titill skarst af í prentun: lagað.
+- **Gögn uppfærð úr Ajour** (Agnar 18.11: „máttu sækja gögn og uppfæra miðað við stöðuna í dag“): `luna-bridge/ajour-export-allt.js --project NLSH --no-photos --no-pdf`
+  (aðeins lestur í Ajour) → `tools/skraning-gatakort-innflutningur.cjs --write`. 10.722 → 10.760 virkar skráningar, 10.471 → 10.500 kláraðar, nýjast 18.11.
+  Sannreynt eftir: línur Agnars (66 bláar, 82 faldar), 497 faldar skráningar, 12 varpanir og 7.908 færslur óbreyttar. Eldri útflutningur geymdur í scratchpad.
+  ÓGERT: ljósmyndir nýju 38 skráninganna eru ekki sóttar í okkar geymslu og þær eru ófærðar á kortinu.
+- **Staða skýrslu:** 82 % (10.327 af 12.619); 6H 91 %, 5H 74 %, gólf 5. hæðar 70 %. 23 starfsmenn. 27.148 ljósmyndir við 10.672 af 10.760 skráningum (99,1 %).
+- **Enginn vistaður skr_skyrslur-röð til fyrir verk 4:** allt er á sjálfgefnum gildum þar til Agnar ýtir á Vista. PDF-drög (18 síður) í
+  `_vinnuskjol/nlsh-skyrsla-20261119/`.
+- **Eftir hjá Agnari:** yfirfara textana þrjá og haka við (annars prentast „Drög“); vottorð (liður 2): skýrslan hefur aðeins tækniblöð Redder og eitt DoP
+  (FR Pipe Wrap), ETA/DoP hinna efnanna eru ekki í kerfinu; setningin um merkimiða á hverri þéttingu er dregin af ljósmyndum og þarf staðfestingu hans.
+- **Geymt (ekki í skýrslu):** leit að vanflokkuðum Ø400-630 stokkum (161 kandídat, myndadómar í `scratchpad/villur/domar-stor.csv` þegar þeir klárast) og
+  Stál Ø110-160 (71 skoðuð af mynd: 0 spíralstokkar, 43 rör, 27 álvafin þar af 9 með brúnum regnvatnsmiða, 1 óljós; `domar-stal.csv`).
