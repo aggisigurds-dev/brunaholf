@@ -1,6 +1,6 @@
 {
  "utgafa": 1,
- "nyjast": "2026-11-17",
+ "nyjast": "2026-11-18",
  "throskuldur": 6,
  "osnert_dagar": 30,
  "uppspretta": "slokkvitaeki/tools/audit-agentar.cjs --json",
@@ -30,7 +30,7 @@
    "sidast": "2026-11-17",
    "skrif": 5,
    "gaetir": 7,
-   "breytt": 1,
+   "breytt": 3,
    "daudir": [],
    "merki": "🟡",
    "lysing": "Indiana Jones 🤠 — les innkaupareikning eða póst og úrskurðar hvort kaupin eru (a) KOSTNAÐUR, (b) ENDURSÖLUVARA á lager → vorur/birgdir/innkaupapantanir, eða (c"
@@ -57,10 +57,10 @@
    "slod": ".claude/agents/bord-flettur.md",
    "hud": null,
    "emoji": null,
-   "sidast": "2026-11-17",
-   "skrif": 68,
+   "sidast": "2026-11-18",
+   "skrif": 71,
    "gaetir": 49,
-   "breytt": 3,
+   "breytt": 5,
    "daudir": [],
    "merki": "🟡",
    "lysing": "Flettur, borð og navigation í Slökkvitæki-appinu — Þjónustuborð (368) og undirborð, Bakendi, Bílstjóri, Aksturslisti, URL-routing (218), bakk (3 lög) og app-síð"
@@ -147,8 +147,8 @@
    "slod": ".claude/agents/heimaleiga.md",
    "hud": "Heimaleigu-agentinn (kúnna-agent, engin rödd)",
    "emoji": "🏘️",
-   "sidast": "2026-11-17",
-   "skrif": 8,
+   "sidast": "2026-11-18",
+   "skrif": 12,
    "gaetir": 1,
    "breytt": 0,
    "daudir": [],
@@ -210,7 +210,7 @@
    "sidast": "2026-11-17",
    "skrif": 7,
    "gaetir": 21,
-   "breytt": 2,
+   "breytt": 3,
    "daudir": [],
    "merki": "🟡",
    "lysing": "Kóðafræðingurinn (Lisbeth Salander) — gætir þess að RÉTTA aðferðin sé notuð í kóðavinnu í Slökkvitæki-appinu: patch-mynstrið (IIFE, wrap, ?v= cache-bump), engin"
@@ -285,9 +285,9 @@
    "sidast": "2026-11-17",
    "skrif": 17,
    "gaetir": 15,
-   "breytt": 0,
+   "breytt": 1,
    "daudir": [],
-   "merki": "🟢",
+   "merki": "🟡",
    "lysing": "Netvörður — gætir öryggisnetsins: kallaðu á hann ÁÐUR og EFTIR breytingu á vörðum leiðum (reikninga-OUT 10/233/254, kennitala 121/pos.js, payday-push, tilbúið 1"
   },
   {
@@ -330,7 +330,7 @@
    "sidast": "2026-11-17",
    "skrif": 12,
    "gaetir": 10,
-   "breytt": 2,
+   "breytt": 4,
    "daudir": [],
    "merki": "🟡",
    "lysing": "Meg Ryan ✉️ („You've Got Mail“) — póstvörðurinn. Les, flokkar og tengir tölvupóst beggja félaga (eldklar@, bokhald@eldklar, Brunaholf@, bokhald@brunaholf + brun"
@@ -375,9 +375,9 @@
    "sidast": "2026-11-17",
    "skrif": 48,
    "gaetir": 39,
-   "breytt": 0,
+   "breytt": 1,
    "daudir": [],
-   "merki": "🟢",
+   "merki": "🟡",
    "lysing": "EINI agentinn sem býr til, leiðréttir, kreditfærir og færir reikninga í Slökkvitæki-appinu — eftir verkferlinu efst í skránni (greiðandi fyrst, lokaathugun síða"
   },
   {
@@ -435,7 +435,7 @@
    "sidast": "2026-11-16",
    "skrif": 9,
    "gaetir": 7,
-   "breytt": 2,
+   "breytt": 3,
    "daudir": [],
    "merki": "🟡",
    "lysing": "theme.css hönnunarkerfið (Brunastál) og per-page skeletons — endursköpun og skinnun síðna. Þemað er FROSIÐ síðan 17.08.2026; byrjaðu ekki á samræmingu óumbeðið."
@@ -447,12 +447,12 @@
    "slod": ".claude/agents/thjonustugatt.md",
    "hud": "Heimdall",
    "emoji": "🛡️",
-   "sidast": "2026-11-16",
-   "skrif": 5,
+   "sidast": "2026-11-18",
+   "skrif": 7,
    "gaetir": 13,
-   "breytt": 4,
+   "breytt": 0,
    "daudir": [],
-   "merki": "🟡",
+   "merki": "🟢",
    "lysing": "Heimdall (Idris Elba) 🌈 gætir hliðsins að kúnnanum: Þjónustugáttin (/gatt, gatt-admin, Tilkynna-QR), opna ársskoðunarformið skoda.html, rýmingaráætlun, vefvers"
   },
   {
@@ -947,7 +947,7 @@
    "sidast": "2026-11-16",
    "skrif": 27,
    "gaetir": 15,
-   "breytt": 7,
+   "breytt": 8,
    "daudir": [],
    "merki": "🔴",
    "lysing": "Framendi og flipar Brunahólfs-hubbsins — hvaða síður eru til, hvað hver gerir, hvernig þær tengjast og hvar í index.html (2 MB, aldrei lesin í heilu) eitthvað b"
@@ -1175,12 +1175,12 @@
    "slod": ".claude/agents/rukkari.md",
    "hud": "Jóakim aðalönd",
    "emoji": "🦆",
-   "sidast": "2026-11-16",
-   "skrif": 28,
+   "sidast": "2026-11-18",
+   "skrif": 29,
    "gaetir": 12,
-   "breytt": 5,
+   "breytt": 0,
    "daudir": [],
-   "merki": "🟡",
+   "merki": "🟢",
    "lysing": "Rukkarinn — einn agent fyrir öll rukkunarmál beggja félaga (Brunahólf + Slökkvitæki): les REIKNINGALOTA-kynninguna, tengingar, Drög-stöð og Þjónustuborð sjálfur"
   },
   {
