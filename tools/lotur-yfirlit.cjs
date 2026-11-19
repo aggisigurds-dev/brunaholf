@@ -147,6 +147,10 @@ async function greina(p) {
   fs.writeFileSync(cachePath, JSON.stringify(nyCache));
   const gogn = { bunad: new Date(nu).toISOString(), dagar: DAGAR, lotur: raðir };
   fs.writeFileSync(path.join(OUT, 'lotur-stada.json'), JSON.stringify(gogn));
+  // Eintak vélarinnar sjálfrar handa lotuglugganum (mod lotustjornur): OneDrive-mappan er sameiginleg milli véla,
+  // en hver vél á sínar lotur, svo glugginn les þetta eintak og aldrei það sem önnur vél skrifaði.
+  const STADVAERT = H + '/.claude/lotuyfirlit';
+  try { fs.mkdirSync(STADVAERT, { recursive: true }); fs.writeFileSync(path.join(STADVAERT, 'lotur-stada.json'), JSON.stringify(gogn)); } catch {}
   // Síðan sýnir aldrei texta úr lotum (sjá haus): spurning og samantekt fara aðeins í lotur-stada.json.
   fs.writeFileSync(path.join(OUT, 'lotur.html'), sida({ ...gogn, lotur: raðir.map(({ spurning, samantekt, stada, ...rest }) => rest) }));
   const t = { graent: 0, gult: 0, rautt: 0, gra: 0 }; raðir.forEach(r => t[r.lit]++);
