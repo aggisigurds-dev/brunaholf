@@ -1555,3 +1555,10 @@ Agnar: „Geymum þetta bara í bili. Geturðu reynt að koma skýrslunni saman.
   í hausnum (talið upp að áætlun hvers hluta). Lagað í 3106203: reiturinn notar `kl` og Eftir reiknast af því, Opið bætt í heildarlínu flokka.
   Kaflarnir Efni, Verkferli, Starfsmenn, Gæði, Útboð og Framvinda voru ekki í PDF-inu (slökkt á rofum). Stillingar vistast aðeins við „Vista“
   (engin skr_skyrslur-röð fyrir verk 4 þá), svo rofarnir núllstillast við endurhleðslu.
+- **Verkferli með tilvísunum 19.11** (kjarni a83db6e + 3e99292, Efni.tsx SKREF + TILVISANIR): 9 skref. Vinnulagið eftir orðum Agnars:
+  „skrá punkt inn í Ajour, mæla gatið, setja inn rétta stærð, taka mynd, blása úr, gera þéttinguna, setja miða með nafn fyrirtækis,
+  hvaða efni var notað, dagsetningu og upphafsstafi starfsmanns, og sömu upplýsingar inn í kerfið og taka mynd í lokin, og stundum í
+  miðju verkinu ef það var í fleiri skrefum“. Miðinn staðfestir fullyrðinguna í Gæði og eftirlit. Vísað í DoP/ETA/leiðbeiningar í heild,
+  ekki greinar (ETA ekki lesin í smáatriðum; engar tölur um dýpt/bil/stærðarmörk). Kaflaval vistað í skr_skyrslur id 1 (texti, forsendur,
+  framvinda, aukaverk, utbod af). PDF prentað með `scratchpad/prenta_skyrslu.cjs <ut> 0.65 1400` (Playwright úr luna-bridge; kvarði
+  0,65 svo kort og deildartafla rúmist á einni síðu, stærðarrofi af, myndir eager).
