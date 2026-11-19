@@ -1463,3 +1463,14 @@ mig gegnum mappið.“ Áður hafði hann sagt að nokkrar sjálfvirkar bláar l
   loft 8 nýjar, 1 horfin, 18 færðust > 3 px; úði 9, 2, 6. Handfærðir 264 ósnertir (Agnar hafði fært 16 í viðbót), aðrir hópar 0.
 - **Pörun 6H:** 2.005 pöruð, parad á 1.133 áætluð göt.
 - Veggjamyndin sem notuð var: `_vinnuskjol/nlsh-loftstaerdir-20261118/yf-agnar-6h-20261118/yfirlit-6h.jpg` (+ `agnar_linur.py`, `thykkt.py`, `munur.py`).
+
+### 19.11.2026: talning loftstokka af teikningu á 6H (Agnar: „en nærðu að lesa réttan fjölda af t.d. loftstokkum“)
+- **Aðferð** (`scratchpad/gat/telja.py`, afrit í `_vinnuskjol/nlsh-loftstaerdir-20261118/talning-6h-20261119`, LESAÐEINS): holufyllt stokkagríma (4×) skorin við
+  rauða veggi + bláar línur eins og kortið sýnir þær (66 línur Agnars, 258 sjálfvirkar sem standa); lágmarksskurður 11 × 7 px. Skráðir staðir = loftskráningar
+  (Loft… og Raufar…) klasaðar innan 14 px eftir færslu.
+- **Heildin stemmir, staðirnir síður:** 548 skurðir á teikningu (383 í rauðum vegg, 165 í blárri línu) á móti 549 skráðum stöðum (1.155 skráningar).
+  Á sama stað (≤ 35 px ≈ 1 m): 411. Innan 1–3 m: 30 í viðbót. Skurðir án skráningar: 107. Skráðir staðir án skurðar: 108 (75 stakar skráningar, 33 með 2+).
+- **Per deild (skurðir / skráðir staðir):** S1 123 / 135 · S2 167 / 160 · S4 123 / 128 · S5 135 / 126. Innan ±10 %.
+- **Þriðja talan, Miro-áætlun Agnars (skr_aaetlud, loft, aðeins S1+S2):** 315 göt (134 + 181) á móti 290 skurðum og 295 skráðum stöðum.
+- **Ómælt:** hvers vegna 107 og 108 standa út af. Fjólubláu krossarnir (skráð, enginn skurður) hópast í röð við Móttöku/Vinnurými hjá lyftunum í báðum húsum:
+  tilgáta, ÓSTAÐFEST, að þar vanti vegg eða bláa línu á kortið. Talningin er því ekki sannreynd sem „rétt“, aðeins að hún stemmi við skráninguna í heild.
