@@ -1528,3 +1528,21 @@ Agnar: „Geymum þetta bara í bili. Geturðu reynt að koma skýrslunni saman.
 - **Myndadómar um loftstærð (geymt, `domar-stor.csv` í `_vinnuskjol/nlsh-rangur-flokkur-20261119`):** af 161 kandídat: STÓR 19 (aðeins 2 með háa vissu:
   #7009, #5261; 4 miðlungs: #7745, #531, #2253, #9193), MIÐLUNGS 107, ÓVÍST 16, LÍTILL 13, KANTAÐUR 6. 118 af 161 með lága vissu: myndir greina
   ekki Ø315 frá Ø400. Bláu endalokin bera upphleypt þvermál (#4800 les Ø315). Skráð Ø125-160 en sýnist 250–315: #3554, #10125, #10749, #7083, #5805.
+
+### 19.11.2026 (nótt, síðar): rauðir punktar faldir, milliloft 100 á deild, efnis-PDF, sýnin „Upprunalegt“
+- **Rauð áætluð göt** (Agnar: „taka út slatta af rauðu punktunum … þeir sem eru ekki að passa akkúrat við punktana sjálfa“): falin (`eytt=true`) öll áætluð
+  göt úr uppruna `spegill` og `teikning` sem engin skráning parast við (`parad.n = 0`): 723 göt, 1.380 stök verk. Afrit `backup_20261119_skr_aaetlud`
+  (2.783 raðir, RLS á). Eftir standa rauð: 6H 124 göt, 5H 57, 4H 16 (Miro-göt Agnars, hlutapöruð og viðbótarverk). Endurheimt:
+  `update skr_aaetlud a set eytt=false from backup_20261119_skr_aaetlud b where a.id=b.id and not b.eytt and a.eytt;`
+- **Milliloft** (Agnar: „um 100 per deild, um 800 samtals“): `GOLF_MARK` 110 → 100, fast á deild; ekkert álag, engar viðbætur (kjarni d3e9e0e).
+  Áætlun deildar fer þó aldrei undir skráð (klárað + opið). Skráð milliloft eru þegar 888, svo áætlunin varð 916 (91 %), ekki 800.
+- **Skýrslan eftir þetta:** 79 % (10.327 af 13.119); 6H 86 %, 5H 72 %, gólf 5. hæðar 82 %. Prósentan HÆKKAÐI frá 74 % því falin göt lækka áætlunina;
+  álagið (10 %) er óbreytt. PDF ekki endurgert (Playwright hékk 30 mín og Agnar stöðvaði það): prenta af síðunni, A4 liggjandi.
+- **Efnis-PDF** (Agnar: „sér pdf skjal fyrir efnin“, „sýndu myndirnar líka af vörunum“): `_vinnuskjol/nlsh-skyrsla-20261119/NLSH-brunathettiefni-20261119.pdf`,
+  2 síður, gert með pymupdf Story (`scratchpad/efni_pdf.py`), sami texti og „Efni og kerfi“ (Efni.tsx), 19 tenglar, vörumyndir af redder.is
+  (`scratchpad/redder-myndir`) settar inn með `insert_image` við fyrirsögn hverrar vöru. Notkunartaflan eftir tegund gegnumtaks er MÍN samantekt úr
+  „Ætlað fyrir“-línum og verkferlinu; Agnar á eftir að staðfesta hana.
+- **Sýnin „Upprunalegt“** á kortinu (Agnar: „sýn sem er bara orginal staðsetningarnar á punktunum, stökum punktum“; teiknaði rauðan kassa vinstra megin
+  við +): hnappur í `.gk-stjorn`, ríki `upprunaleg`. Hver sýnd skráning = einn lítill punktur á (x0, y0) úr Ajour; klárað í lit flokksins, opið hvítt
+  með rauðri útlínu. Áætluð göt og hurðalínur teiknast ekki (nema í línuham). Pikk velur punktinn sem sést. Kjarni 6c550d8 + 5abe59e, skoðað á lifandi korti.
+  GILDRA við prófun: orðið „Upprunalegt“ var þegar í búntinu (hnappur í spjaldi handbreytinga) og gaf falskt „komið“; leita að einkvæmum texta.
