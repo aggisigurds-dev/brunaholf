@@ -1515,3 +1515,16 @@ Agnar: „Geymum þetta bara í bili. Geturðu reynt að koma skýrslunni saman.
   (FR Pipe Wrap), ETA/DoP hinna efnanna eru ekki í kerfinu; setningin um merkimiða á hverri þéttingu er dregin af ljósmyndum og þarf staðfestingu hans.
 - **Geymt (ekki í skýrslu):** leit að vanflokkuðum Ø400-630 stokkum (161 kandídat, myndadómar í `scratchpad/villur/domar-stor.csv` þegar þeir klárast) og
   Stál Ø110-160 (71 skoðuð af mynd: 0 spíralstokkar, 43 rör, 27 álvafin þar af 9 með brúnum regnvatnsmiða, 1 óljós; `domar-stal.csv`).
+- **Tónn og prósenta (Agnar sömu nótt):** „Og ekkert minnast á neitt í skýrsluhlutanum að við vitum ekki nóg, erum að giska eða neitt neikvætt. Lítið af
+  útskýringum. Lækka áætluðu prósentuna, erum með of hátt.“ Gert (kjarni 15e2256, 3e5bfc4):
+  - **Stutt skýrsla er sjálfgefin** (`.sk-stutt`): „Um tölurnar“ með tveimur liðum (Gögnin, Einingar) í stað Forsendna og fyrirvara; allt smáa letrið
+    (`.sk-smatt` nema `.sk-halda`), sundurliðun stúta og „án dagsetningar“ falið. Rofinn „Ítarlegar skýringar og forsendur“ (`gogn.itarlegt`) sýnir allt.
+  - **Álag á áætlun** (`gogn.alag`, sjálfgefið `SJ_ALAG = 10` %, stillanlegt 0–50 í stillingum): margfaldar reiknaða áætlun deildar og hluta.
+    82 % → 74 % (10.327 af 13.881); 6H 91 → 82 %, 5H 74 → 68 %, gólf 5. hæðar 70 → 63 %. Viðmiðið fyrir 10 % er loftstokkatalningin (548 skurðir á móti
+    491 skráðum stað á brunaskilum). Innslegin áætlun (gogn.stada) fær EKKI álag.
+  - „Eftir (áætlað)“ = áætlað − klárað − opið (áður: talin áætluð göt), svo línurnar stemmi. Skýring korta: „eftir (áætlað)“.
+  - Drög-merkin eru aðeins á skjá ritstjórans (`sk-skjar`), aldrei í prentun eða kynningarham. Inngangur og lokaorð án fyrirvara.
+  - PDF með Playwright: A4 liggjandi, scale 0,95 (22 síður). Í standandi A4 skerast breiðustu töflurnar (útboð 1.061 px) af hjá `page.pdf`.
+- **Myndadómar um loftstærð (geymt, `domar-stor.csv` í `_vinnuskjol/nlsh-rangur-flokkur-20261119`):** af 161 kandídat: STÓR 19 (aðeins 2 með háa vissu:
+  #7009, #5261; 4 miðlungs: #7745, #531, #2253, #9193), MIÐLUNGS 107, ÓVÍST 16, LÍTILL 13, KANTAÐUR 6. 118 af 161 með lága vissu: myndir greina
+  ekki Ø315 frá Ø400. Bláu endalokin bera upphleypt þvermál (#4800 les Ø315). Skráð Ø125-160 en sýnist 250–315: #3554, #10125, #10749, #7083, #5805.
