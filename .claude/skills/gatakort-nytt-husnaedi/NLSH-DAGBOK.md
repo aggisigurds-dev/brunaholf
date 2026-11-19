@@ -1482,3 +1482,18 @@ mig gegnum mappið.“ Áður hafði hann sagt að nokkrar sjálfvirkar bláar l
 - **Rétt samanburðartala er því 548 skurðir á móti 491 skráðum stað Á brunaskilum** (S1 123/116, S2 167/145, S4 123/116, S5 135/114), ekki 548/549.
   Að heildin „stemmdi“ var að hluta tilviljun. LÆRDÓMUR: bera saman eftir stað áður en heildartölu er trúað.
 - Þessir veggir eru nákvæmlega það sem græna línan er fyrir (má festast, ekki nauðsynlegt að klára). Engin græn lína til enn.
+
+### 19.11.2026: hve margar skráningar eru í röngum flokki (Agnar: „nota það sem við höfum“, skýrslu skilað 20.11)
+Tól `scratchpad/villur/samantekt.py`, afrit og listi í `_vinnuskjol/nlsh-rangur-flokkur-20261119/` (`rangur-flokkur-20261119.csv`, 380 raðir). LESAÐEINS, engum flokki breytt.
+- **Grunnur:** 10.260 skráningar á 6H (5.530) og 5H (4.730): stál 5.665, loft 1.870, plast 1.533, rafmagn 610, gólf 478, raufar 73.
+- **A, ljósmynd dæmd (visbendingar.json, 189):** 0 stangast lengur á við flokk. Þær 47 raufar sem myndir sýndu kapla eru nú í rafmagnsflokki (leiðrétt í Ajour).
+  Raufar eftir: 73, þar af 20 dæmdar ferkantaður stokkur, 52 óskoðaðar.
+- **B, loft í ólíkum stærðarflokki á sama stað** (nákvæmlega tvær skráningar innan 14 px): 79 staðir (6H 51, 5H 28) af 465, 158 skráningar. Að minnsta kosti önnur röng → ≥ 79.
+- **C, loft á móti teikningu við trausta skurði** (mæld breidd = merking): 6H 103 af 450 (23 %), 5H 93 af 326 (29 %). Yfirfært: um 250 + 222 = 470 af 1.870.
+  Stefna: skráð Ø125-160 þar sem teikning segir Ø200-315: 117 · öfugt 49 · Ø400-630 → Ø200-315: 20.
+  KVÖRÐUN á pörum við traustan skurð (235): báðar eins og teikning 146 · ólíkar og teikningin sammála annarri 48 · ólíkar og hvorug 1 ·
+  báðar EINS en ekki eins og teikning 40. Teikningin sker því úr í ólíkum pörum (48 af 49), en 40 pör eru samhljóða sín á milli og ósammála teikningu:
+  þar er óvíst hvort skráningin eða teikningin/mælingin er röng. Óstaðfest af ljósmynd.
+- **D, Stál Ø110-160 við loftstokk:** 71 af 300 (mæling 18.11); af 32 skoðuðum myndum 1 augljós stokkur.
+- **Tvær óháðar vísbendingar (B og C):** 45 skráningar. Ein: B 113, C 151, D 71.
+- **ÓMÆLT:** Stál á móti Plast, stærðarflokkar röra og rafmagns (7.808 skráningar, 76 %). Engin aðferð til.
