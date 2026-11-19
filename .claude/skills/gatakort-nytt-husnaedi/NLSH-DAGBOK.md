@@ -1546,3 +1546,12 @@ Agnar: „Geymum þetta bara í bili. Geturðu reynt að koma skýrslunni saman.
   við +): hnappur í `.gk-stjorn`, ríki `upprunaleg`. Hver sýnd skráning = einn lítill punktur á (x0, y0) úr Ajour; klárað í lit flokksins, opið hvítt
   með rauðri útlínu. Áætluð göt og hurðalínur teiknast ekki (nema í línuham). Pikk velur punktinn sem sést. Kjarni 6c550d8 + 5abe59e, skoðað á lifandi korti.
   GILDRA við prófun: orðið „Upprunalegt“ var þegar í búntinu (hnappur í spjaldi handbreytinga) og gaf falskt „komið“; leita að einkvæmum texta.
+- **Vottorðapakki COWI** (Agnar: „sótt tæknihandbókina og ETA-skjölin, já mátt sækja og útbúa“): `_vinnuskjol/nlsh-skyrsla-20261119/vottord/` —
+  DoP fyrir 5 Protecta-vörur (PS-14010/14016/14013/14011/14015), ETA 22/0749 og 22/0752, 5 uppsetningarleiðbeiningar, tæknihandbók 2024.
+  Tvö zip (13,7 + 20,6 MB) svo hvort sé undir 30 MB í síma. Efni.tsx sýnir línu „Vottun“ (DoP nr/dags, ETA, vottorð) og tengla per vöru.
+  Póstur COWI (Arnar Ingi, 10.11) fannst í Thunderbird **Store**-prófílnum á skrifstofuvél (`…\Packages\MozillaThunderbird…\Profiles\xwr12njd.default-release\ImapMail\outlook.office365-1.com\INBOX`), ekki í myndum.
+- **Rofi „Framvinda eftir mánuðum“** í Köflum (Kjarni aa8219b): `synaFramvindu` á Haedir.
+- **Prentuð skýrsla Agnars yfirfarin 19.11** (8 síður, A4 langsnið): tölur á forsíðu stönguðust á — reitur Klárað 10.419 (hrátt) á móti 10.327
+  í hausnum (talið upp að áætlun hvers hluta). Lagað í 3106203: reiturinn notar `kl` og Eftir reiknast af því, Opið bætt í heildarlínu flokka.
+  Kaflarnir Efni, Verkferli, Starfsmenn, Gæði, Útboð og Framvinda voru ekki í PDF-inu (slökkt á rofum). Stillingar vistast aðeins við „Vista“
+  (engin skr_skyrslur-röð fyrir verk 4 þá), svo rofarnir núllstillast við endurhleðslu.
