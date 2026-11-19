@@ -1474,3 +1474,11 @@ mig gegnum mappið.“ Áður hafði hann sagt að nokkrar sjálfvirkar bláar l
 - **Þriðja talan, Miro-áætlun Agnars (skr_aaetlud, loft, aðeins S1+S2):** 315 göt (134 + 181) á móti 290 skurðum og 295 skráðum stöðum.
 - **Ómælt:** hvers vegna 107 og 108 standa út af. Fjólubláu krossarnir (skráð, enginn skurður) hópast í röð við Móttöku/Vinnurými hjá lyftunum í báðum húsum:
   tilgáta, ÓSTAÐFEST, að þar vanti vegg eða bláa línu á kortið. Talningin er því ekki sannreynd sem „rétt“, aðeins að hún stemmi við skráninguna í heild.
+- **LEIÐRÉTTING á talningunni (Agnar sama dag: „helling af fjólubláu krossunum eru ekki á brunaveggjum“).** Rétt hjá honum, mælt með `gat/fjarri.py`:
+  80 loftskráningar á 6H (7 %) á 58 stöðum eru lengra en 1 m frá næsta rauða vegg eða blárri línu. Allar kláraðar. 15 þeirra færði Agnar sjálfur þangað
+  (#573–582, 709, 1592, 3729, 4742, 4858, 7563, 11492), svo staðurinn er réttur og veggurinn er ekki brunaveggur á brunayfirlitinu.
+  Flokkur skekktur: Loft Ø200-315 er 50 af 80 (annars um 35 %). Dreifing: S1 19, S2 15, S4 12, S5 12 staðir.
+  Af 108 „skráð en enginn skurður“ eru 53 slíkir; hinir 55 eru við brunaskil en enginn stokkur á teikningunni þar.
+- **Rétt samanburðartala er því 548 skurðir á móti 491 skráðum stað Á brunaskilum** (S1 123/116, S2 167/145, S4 123/116, S5 135/114), ekki 548/549.
+  Að heildin „stemmdi“ var að hluta tilviljun. LÆRDÓMUR: bera saman eftir stað áður en heildartölu er trúað.
+- Þessir veggir eru nákvæmlega það sem græna línan er fyrir (má festast, ekki nauðsynlegt að klára). Engin græn lína til enn.
