@@ -21264,7 +21264,7 @@ async function renderKrofuyfirlit(t){
           }
           docs = [...sed.values()]; }
         docs = docs.slice().sort((a,b)=> (b.is_primary?1:0) - (a.is_primary?1:0));   // ⭐ aðalskjalið fremst
-        const sjalfgefid = 'Sæl(l),\n\nMeðfylgjandi Efnislisti/Tímaskýrsla fyrir '+(cust||ws||'')+(wm?' ('+wm+')':'')+' til skráningar í Payday.'
+        const sjalfgefid = 'Góðan daginn,\n\nMeðfylgjandi Efnislisti/Tímaskýrsla fyrir '+(cust||ws||'')+(wm?' ('+wm+')':'')+' til skráningar í Payday.'
           // 12.10.2026: kt + tilvísun af spjaldinu (✎ Greiðandi) svo bókarinn setji þau á reikninginn (LSH: 21727)
           + ((iv.kt || iv.tilvisun_reiknings) ? '\n\n' + (iv.kt ? 'Greiðandi: ' + (cust||'') + ', kt. ' + ktFmt(iv.kt) : '') + (iv.kt && iv.tilvisun_reiknings ? '\n' : '') + (iv.tilvisun_reiknings ? 'Tilvísun á reikninginn: ' + iv.tilvisun_reiknings : '') : '');
         const val = await bhSendaBokunDialog({ ws, wm, cust, to, kunni: kunnaNetfang, amount: iv.amount, docs, msg: sjalfgefid });
