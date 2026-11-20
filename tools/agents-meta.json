@@ -491,7 +491,9 @@
         "Vörpun Ajour-teikninga á yfirlitsblað (FFT-fylgni veggja, ásamót, samsett blöð) og hæðarhnit hvers punkts",
         "Brunaveggir, nemar, sjálfvirk færsla punkta á skurðpunkt lagnar og brunaveggjar, pörun við áætluð göt og hinn endann",
         "Áætluð göt úr Miro, tillögur milli hæða, lagnakerfi stálröra af teikningum og ljósmyndum",
-        "Verkferlið gatakort-nytt-husnaedi og NLSH-dagbókin (allt sem var gert á NLSH 11.–14.11.2026)"
+        "Verkferlið gatakort-nytt-husnaedi og NLSH-dagbókin (allt sem var gert á NLSH 11.–20.11.2026)",
+        "Línutól Agnars (rauð/blá/græn), brunahurðaop úr bláum táknum og E-merkingum, eitt lag á flokk, prófun á handfærslum",
+        "Halda kortinu við Ajour (útflutningur → innflutningur með afriti) og breytingar í Ajour-vefnum sjálfum"
       ],
       "aldrei": [
         "--write án þurrkeyrslu, eða NLSH-tól keyrt óbreytt á annað verk",
@@ -507,7 +509,8 @@
         "gagnaleidslur": "Ajour-útflutningur (luna-bridge)",
         "arnold": "TurboPaint og veggjagreining — ekki gatakortið",
         "oryggi": "fatan skraning er opin; RLS á skr_*",
-        "skill gatakort-nytt-husnaedi": "verkferlið fyrir nýtt húsnæði + NLSH-dagbókin"
+        "skill gatakort-nytt-husnaedi": "verkferlið fyrir nýtt húsnæði + NLSH-dagbókin",
+        "dr-house": "Landspítalaverkið í heild: uppgjör á móti skýrslu, hvað er búið og eftir"
       }
     },
     "verkstadur": {
@@ -1094,6 +1097,32 @@
         "Hafa samband við einstakling án samþykkis eða þann sem hefur afþakkað",
         "Skrifa í hunter_adilar, fyrirtaeki eða customers_base sjálfur"
       ]
+    },
+    "dr-house": {
+      "emoji": "🩻",
+      "rodd": "Dr. House",
+      "flokkur": "rodd",
+      "serhaefing": [
+        "Landspítalaverkið (NLSH, Hringbraut, meðferðarkjarni 4.–6. hæð) í heild: hvað er búið, opið og eftir",
+        "Hvernig allt reiknast: útboðsliðir 1.1–3.1 og samningsverð (VERK í nlsh-uppgjor.js), stakar/heilar, 2.11 í metrum, mismunur per mánuð, frosnir mánuðir, 5 % geymslufé",
+        "Stöðuskýrslan í Kjarna: áætlun í stökum (13.119), kl talið upp að áætlun hluta, 10 % álag, milliloft 100 og rafmagn 104 á deild, faldar skráningar",
+        "Keðjan Ajour → sýnileg kláruð → kl: greinir hvers vegna tvær tölur stangast á og útilokar skýringar með mælingu",
+        "Kúnnaskráin: ÞG verktakar (customers_base 516), verkstaður fyrirtaeki 1927, COWI verkeftirlit, samvinnumál #1686"
+      ],
+      "aldrei": [
+        "Senda tölu, skýrslu eða póst til ÞG Verk, COWI eða annarra utan húss",
+        "Breyta nlsh_manadarlok, drögum, lokatölu eða endurreikna frosinn mánuð (það er bokari, með orðum Agnars)",
+        "Breyta eða eyða skráningu í Ajour án orða Agnars um þá skráningu",
+        "Blanda uppgjörinu og stöðuskýrslunni í eina tölu, eða kalla áætlun talningu",
+        "Segja „líklega\" — mælt eða ÓMÆLT"
+      ],
+      "tengsl": {
+        "gatakort": "gatakortið, stöðuskýrslan og skr_*-tólin í Kjarna",
+        "bokari": "peningarnir: Efnislisti NLSH, drög, lokatölur, frysting",
+        "gagnaleidslur": "Ajour-útflutningur og innlestur (luna-bridge)",
+        "kunnaskra": "kúnnaskráin: ÞG verktakar, verkstaðurinn, aðrir Landspítalastaðir",
+        "skill gata-manadarlok": "mánaðarlok NLSH skref fyrir skref"
+      }
     }
   },
   "skillFlokkar": {

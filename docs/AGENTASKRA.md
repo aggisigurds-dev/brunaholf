@@ -223,7 +223,7 @@ Bæði slökkvitæki og brunahólf lesa sama Supabase `osfdzskyvisifcwyjkuk`.
 <!-- SIDUKORT:BEGIN -->
 ## Síðukort — hver á hverja síðu (búið til af `node tools/build-agents-registry.cjs`)
 
-Byggt 2026-11-18 úr `brunaholf/.claude/sidukort.json`, `slokkvitaeki/.claude/sidukort.json`, `kjarni/.claude/sidukort.json`. Staða: ✅ eigandi til · ⚠️ eigandi ekki í registry eða skilgreind-skrá finnst ekki · ❌ enginn eigandi. Breyttu síðukortinu, ekki hér.
+Byggt 2026-11-20 úr `brunaholf/.claude/sidukort.json`, `slokkvitaeki/.claude/sidukort.json`, `kjarni/.claude/sidukort.json`. Staða: ✅ eigandi til · ⚠️ eigandi ekki í registry eða skilgreind-skrá finnst ekki · ❌ enginn eigandi. Breyttu síðukortinu, ekki hér.
 
 | Vefur | Síða | Leið | Skilgreind | Eigandi | Undiragentar | Staða |
 |---|---|---|---|---|---|---|
@@ -252,7 +252,7 @@ Byggt 2026-11-18 úr `brunaholf/.claude/sidukort.json`, `slokkvitaeki/.claude/si
 | brunaholf | Viðskiptavinir | `/#vidskiptavinir` | `index.html#renderVidskiptavinir` · `vidskiptavinir.html` | `kunnaskra` | `bokari` | ✅ |
 | brunaholf | Kröfur & Tekjur | `/#krofur` | `index.html#renderKrofur` | `rukkari` | `bokari` | ✅ |
 | brunaholf | Hreyfingaryfirlit | `/#hreyfingaryfirlit` | `index.html` | `rukkari` | `bokari` | ✅ |
-| brunaholf | Landsspítalinn | `/#nlsh` | `index.html#renderNLSH` · `nlsh.html` | `bokari` | `gagnaleidslur` · `verkstadur` | ✅ |
+| brunaholf | Landsspítalinn | `/#nlsh` | `index.html#renderNLSH` · `nlsh.html` | `dr-house` | `bokari` · `gagnaleidslur` · `verkstadur` · `gatakort` | ✅ |
 | brunaholf | Ajour | `/#ajour` | `index.html#renderAjour` | `gagnaleidslur` | `bokari` | ✅ |
 | brunaholf | Mæting | `/#maeting` | `index.html#renderMaeting` · `maeting.html` | `verkstadur` | `gagnaleidslur` · `framendi` | ✅ |
 | brunaholf | Verkefnastaða | `/#verkefnastada` | `index.html` | `framendi` | — | ✅ |
@@ -522,6 +522,8 @@ Byggt 2026-11-18 úr `brunaholf/.claude/sidukort.json`, `slokkvitaeki/.claude/si
 | kjarni | Verkbók | `/kjarni/artcraft/vinnslur` | `apps/slokkvitaeki/app/kjarni/artcraft/vinnslur/page.tsx` | `artcraft` | — | ✅ |
 | kjarni | Kjarni — Stjórnstöð | `/kjarni` | `apps/slokkvitaeki/app/kjarni/page.tsx` | `kjarni-vefur` | `joker` · `thema` | ✅ |
 | kjarni | Skráning — flokkar, gátlisti og starfsmenn | `/kjarni/skraning/flokkar` | `apps/slokkvitaeki/app/kjarni/skraning/flokkar/page.tsx` | `skraning` | `gagnaleidslur` · `bokari` | ✅ |
+| kjarni | Skráning — stöðuskýrsla | `/kjarni/skraning/skyrsla` | `apps/slokkvitaeki/app/kjarni/skraning/skyrsla/page.tsx` | `bh:gatakort` | `skraning` | ✅ |
+| kjarni | Skráning — gatakort | `/kjarni/skraning/kort` | `apps/slokkvitaeki/app/kjarni/skraning/kort/page.tsx` | `bh:gatakort` | `skraning` | ✅ |
 | kjarni | Skráning — greining | `/kjarni/skraning/greining` | `apps/slokkvitaeki/app/kjarni/skraning/greining/page.tsx` | `skraning` | `gagnaleidslur` | ✅ |
 | kjarni | Skráning — Kjarni | `/kjarni/skraning` | `apps/slokkvitaeki/app/kjarni/skraning/page.tsx` | `skraning` | `gagnaleidslur` · `bokari` | ✅ |
 | kjarni | Skráning — prenta teikningu | `/kjarni/skraning/prenta` | `apps/slokkvitaeki/app/kjarni/skraning/prenta/page.tsx` | `skraning` | `gagnaleidslur` | ✅ |
@@ -549,17 +551,18 @@ Byggt 2026-11-18 úr `brunaholf/.claude/sidukort.json`, `slokkvitaeki/.claude/si
 | kjarni | About (sniðmát) | `/about` | `apps/web/src/app/(external-pages)/about/page.tsx` | `kjarni-vefur` | — | ✅ |
 | kjarni | City trips from Keflavík | `/borgarferdir` | `apps/web/src/app/(external-pages)/borgarferdir/page.tsx` | `kjarni-vefur` | — | ✅ |
 | kjarni | Nextbase-sniðmát | `/` | `apps/web/src/app/(external-pages)/page.tsx` | `kjarni-vefur` | — | ✅ |
-| kjarni | 3dwork — STL bench | `/3dwork` | `apps/web/src/app/3dwork/page.tsx` | `skill:3dJoker` | — | ✅ |
-| kjarni | 3dwork geometry | `/api/3dwork/github/geometry/[id]` | `apps/web/src/app/api/3dwork/github/geometry/[id]/route.ts` | `skill:3dJoker` | — | ✅ |
-| kjarni | 3dwork eitt verkefni | `/api/3dwork/github/projects/[id]` | `apps/web/src/app/api/3dwork/github/projects/[id]/route.ts` | `skill:3dJoker` | — | ✅ |
-| kjarni | 3dwork verkefni | `/api/3dwork/github/projects` | `apps/web/src/app/api/3dwork/github/projects/route.ts` | `skill:3dJoker` | — | ✅ |
-| kjarni | 3dwork GitHub-sync | `/api/3dwork/github` | `apps/web/src/app/api/3dwork/github/route.ts` | `skill:3dJoker` | — | ✅ |
+| kjarni | 3dwork — STL bench | `/3dwork` | `apps/web/src/app/3dwork/page.tsx` | `3dwork` | `skill:3dJoker` | ✅ |
+| kjarni | 3dwork geometry | `/api/3dwork/github/geometry/[id]` | `apps/web/src/app/api/3dwork/github/geometry/[id]/route.ts` | `3dwork` | `skill:3dJoker` | ✅ |
+| kjarni | 3dwork eitt verkefni | `/api/3dwork/github/projects/[id]` | `apps/web/src/app/api/3dwork/github/projects/[id]/route.ts` | `3dwork` | `skill:3dJoker` | ✅ |
+| kjarni | 3dwork verkefni | `/api/3dwork/github/projects` | `apps/web/src/app/api/3dwork/github/projects/route.ts` | `3dwork` | `skill:3dJoker` | ✅ |
+| kjarni | 3dwork GitHub-sync | `/api/3dwork/github` | `apps/web/src/app/api/3dwork/github/route.ts` | `3dwork` | `skill:3dJoker` | ✅ |
 | kjarni | Marks hlekkjaforskoðun | `/api/marks/preview` | `apps/web/src/app/api/marks/preview/route.ts` | `kjarni-vefur` | — | ✅ |
 | kjarni | Marks — site | `/marks/[boardId]` | `apps/web/src/app/marks/[boardId]/page.tsx` | `kjarni-vefur` | — | ✅ |
 | kjarni | Marks — kjarni bookmarks | `/marks` | `apps/web/src/app/marks/page.tsx` | `kjarni-vefur` | — | ✅ |
 | kjarni | Ljósastýring Langamýri 22 (Hue Remote API) | `/ljos` | `apps/slokkvitaeki/app/ljos/page.tsx` · `apps/slokkvitaeki/app/api/ljos/route.ts` | `kjarni-vefur` | `oryggi` | ✅ |
+| kjarni | Bíó — Plex-yfirlit: þættir sem fylgst er með, nýir þættir og nýjar myndir | `/bio` | `apps/slokkvitaeki/app/bio/page.tsx` · `apps/slokkvitaeki/app/bio/BioClient.tsx` · `apps/database/supabase/schemas/bio.sql` · `tools/bio-sync/sync.mjs` | `kjarni-vefur` | `oryggi` | ✅ |
 
-**Samantekt:** brunaholf 104/104 með eiganda (100%), 0 ⚠️, 0 ❌ · slokkvitaeki 121/124 með eiganda (98%), 0 ⚠️, 3 ❌ · kjarni 103/103 með eiganda (100%), 0 ⚠️, 0 ❌
+**Samantekt:** brunaholf 104/104 með eiganda (100%), 0 ⚠️, 0 ❌ · slokkvitaeki 121/124 með eiganda (98%), 0 ⚠️, 3 ❌ · kjarni 106/106 með eiganda (100%), 0 ⚠️, 0 ❌
 
 ### Síður án eiganda
 

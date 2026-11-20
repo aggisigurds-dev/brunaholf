@@ -1,8 +1,8 @@
 {
- "generated": "2026-11-18",
- "agents": 50,
+ "generated": "2026-11-20",
+ "agents": 55,
  "skills": 59,
- "a_odrum_velum": 4,
+ "a_odrum_velum": 8,
  "list": [
   {
    "id": "agent:3dwork",
@@ -89,8 +89,7 @@
      "titill": "3dwork GitHub-sync",
      "hlutverk": "eigandi"
     }
-   ],
-   "onnur_vel": true
+   ]
   },
   {
    "id": "agent:adstod",
@@ -803,12 +802,12 @@
     {
      "repo": "brunaholf",
      "path": ".claude/agents/bokari.md",
-     "uppfaert": "2026-11-16",
-     "linur": 790
+     "uppfaert": "2026-11-20",
+     "linur": 794
     }
    ],
    "afbrigdi": [],
-   "uppfaert": "2026-11-16",
+   "uppfaert": "2026-11-20",
    "sidur": [
     {
      "id": "yfirlit",
@@ -898,7 +897,7 @@
      "id": "nlsh",
      "vefur": "brunaholf",
      "titill": "Landsspítalinn",
-     "hlutverk": "eigandi"
+     "hlutverk": "undiragent"
     },
     {
      "id": "ajour",
@@ -1147,12 +1146,12 @@
     {
      "repo": "slokkvitaeki",
      "path": ".claude/agents/bord-flettur.md",
-     "uppfaert": "2026-11-17",
-     "linur": 842
+     "uppfaert": "2026-11-18",
+     "linur": 853
     }
    ],
    "afbrigdi": [],
-   "uppfaert": "2026-11-17",
+   "uppfaert": "2026-11-18",
    "sidur": [
     {
      "id": "field",
@@ -1479,8 +1478,7 @@
     "Edit"
    ],
    "heimili": [
-    "slokkvitaeki",
-    "kjarni"
+    "slokkvitaeki"
    ],
    "skrar": [
     {
@@ -1488,12 +1486,6 @@
      "path": ".claude/agents/center-hotel.md",
      "uppfaert": "2026-11-17",
      "linur": 166
-    },
-    {
-     "repo": "kjarni",
-     "path": ".claude/agents/center-hotel.md",
-     "uppfaert": "2026-11-05",
-     "linur": 150
     }
    ],
    "afbrigdi": [],
@@ -1510,6 +1502,135 @@
      "vefur": "slokkvitaeki",
      "titill": "Rekstrarfélög",
      "hlutverk": "undiragent"
+    }
+   ]
+  },
+  {
+   "id": "agent:dolph-lundgren",
+   "type": "agent",
+   "name": "dolph-lundgren",
+   "emoji": "🤖",
+   "rodd": null,
+   "flokkur": "len",
+   "svid": null,
+   "lysing": "Dolph Lundgren 🔫 (Gunnar Jensen) — sérfræðingur The Expendables í brunaviðvörunarkerfi: tilboð, verðlistar, skoðunaratriði og kúnnar í brunakerfi-þjónustu. Notaðu þegar gera á tilboð í brunakerfi, finna kúnna sem eru skráðir í brunaviðvörunarkerfi, yfirfara verðlista eða skoðunaratriði brunakerfa, eða þegar spurt er um EN 54 / ÍST EN 54.",
+   "serhaefing": [],
+   "kveikjuord": [
+    "brunaviðvörun",
+    "brunakerfi",
+    "brunatilboð",
+    "tilboð í brunakerfi",
+    "EN 54",
+    "brunaviðvörunarkerfi",
+    "stöðvar",
+    "handboðar",
+    "hljóðgjafar",
+    "brunakerfi-kúnnar",
+    "skoðunaratriði brunakerfa",
+    "brunakerfi-verð"
+   ],
+   "aldrei": [],
+   "tools": [
+    "Bash",
+    "Read",
+    "Grep",
+    "Glob",
+    "mcp__supabase__execute_sql"
+   ],
+   "heimili": [
+    "slokkvitaeki"
+   ],
+   "skrar": [
+    {
+     "repo": "slokkvitaeki",
+     "path": ".claude/agents/dolph-lundgren.md",
+     "uppfaert": "2026-11-20",
+     "linur": 79
+    }
+   ],
+   "afbrigdi": [],
+   "uppfaert": "2026-11-20",
+   "sidur": []
+  },
+  {
+   "id": "agent:dr-house",
+   "type": "agent",
+   "name": "dr-house",
+   "emoji": "🩻",
+   "rodd": "Dr. House",
+   "flokkur": "rodd",
+   "svid": null,
+   "lysing": "Dr. House 🩻 — sérfræðingurinn í Landspítalaverkinu (NLSH, nýi Landspítalinn Hringbraut, meðferðarkjarni 4.–6. hæð, brunaþéttingar Brunahólfs fyrir ÞG verktaka). Kann hvernig ALLT reiknast þar: útboðsliðirnir 1.1–3.1 og samningsverðin, stakar og heilar, metrarnir í 2.11, mánaðaruppgjörið sem mismunur, frosnir mánuðir, 5 % geymslufé, áætlunin í stöðuskýrslunni (13.119 stök), hvað er klárað, opið og eftir, og hvers vegna tölur Ajour, uppgjörsins og skýrslunnar eru ekki sama talan. Tengir verkið við kúnnaskrána (ÞG verktakar, verkstaðurinn, COWI, verkkaupi). Greinir mismun eins og House greinir sjúkling: útilokar skýringar með mælingu þar til ein stendur eftir. Kallaðu á hann þegar spurt er um stöðu, prósentu, hvað er eftir, hvað er rukkað, hvers vegna tvær tölur stangast á, eða áður en tala um Landspítalann fer út úr húsi.",
+   "serhaefing": [
+    "Landspítalaverkið (NLSH, Hringbraut, meðferðarkjarni 4.–6. hæð) í heild: hvað er búið, opið og eftir",
+    "Hvernig allt reiknast: útboðsliðir 1.1–3.1 og samningsverð (VERK í nlsh-uppgjor.js), stakar/heilar, 2.11 í metrum, mismunur per mánuð, frosnir mánuðir, 5 % geymslufé",
+    "Stöðuskýrslan í Kjarna: áætlun í stökum (13.119), kl talið upp að áætlun hluta, 10 % álag, milliloft 100 og rafmagn 104 á deild, faldar skráningar",
+    "Keðjan Ajour → sýnileg kláruð → kl: greinir hvers vegna tvær tölur stangast á og útilokar skýringar með mælingu",
+    "Kúnnaskráin: ÞG verktakar (customers_base 516), verkstaður fyrirtaeki 1927, COWI verkeftirlit, samvinnumál #1686"
+   ],
+   "kveikjuord": [
+    "Dr House",
+    "House",
+    "Landspítalinn",
+    "Landsspítalinn",
+    "NLSH",
+    "nýi Landspítalinn",
+    "meðferðarkjarni",
+    "ÞG verk",
+    "ÞG verktakar",
+    "COWI",
+    "Hilmir",
+    "verkeftirlit",
+    "útboðsliður",
+    "2.11",
+    "3.1",
+    "1.2",
+    "stakar",
+    "heilar",
+    "hvað er búið",
+    "hvað er eftir",
+    "hvað er klárað",
+    "prósenta búin",
+    "staðan á Landspítalanum",
+    "misræmi í tölum",
+    "stöðuskýrsla NLSH",
+    "mánaðarlok NLSH",
+    "samningsverð"
+   ],
+   "aldrei": [
+    "Senda tölu, skýrslu eða póst til ÞG Verk, COWI eða annarra utan húss",
+    "Breyta nlsh_manadarlok, drögum, lokatölu eða endurreikna frosinn mánuð (það er bokari, með orðum Agnars)",
+    "Breyta eða eyða skráningu í Ajour án orða Agnars um þá skráningu",
+    "Blanda uppgjörinu og stöðuskýrslunni í eina tölu, eða kalla áætlun talningu",
+    "Segja „líklega\" — mælt eða ÓMÆLT"
+   ],
+   "tools": [
+    "Bash",
+    "Read",
+    "Grep",
+    "Glob",
+    "Edit",
+    "Write"
+   ],
+   "heimili": [
+    "brunaholf"
+   ],
+   "skrar": [
+    {
+     "repo": "brunaholf",
+     "path": ".claude/agents/dr-house.md",
+     "uppfaert": "2026-11-20",
+     "linur": 144
+    }
+   ],
+   "afbrigdi": [],
+   "uppfaert": "2026-11-20",
+   "sidur": [
+    {
+     "id": "nlsh",
+     "vefur": "brunaholf",
+     "titill": "Landsspítalinn",
+     "hlutverk": "eigandi"
     }
    ]
   },
@@ -2087,12 +2208,12 @@
     {
      "repo": "brunaholf",
      "path": ".claude/agents/gagnaleidslur.md",
-     "uppfaert": "2026-11-16",
-     "linur": 512
+     "uppfaert": "2026-11-20",
+     "linur": 518
     }
    ],
    "afbrigdi": [],
-   "uppfaert": "2026-11-16",
+   "uppfaert": "2026-11-20",
    "sidur": [
     {
      "id": "dagurinn",
@@ -2273,7 +2394,9 @@
     "Vörpun Ajour-teikninga á yfirlitsblað (FFT-fylgni veggja, ásamót, samsett blöð) og hæðarhnit hvers punkts",
     "Brunaveggir, nemar, sjálfvirk færsla punkta á skurðpunkt lagnar og brunaveggjar, pörun við áætluð göt og hinn endann",
     "Áætluð göt úr Miro, tillögur milli hæða, lagnakerfi stálröra af teikningum og ljósmyndum",
-    "Verkferlið gatakort-nytt-husnaedi og NLSH-dagbókin (allt sem var gert á NLSH 11.–14.11.2026)"
+    "Verkferlið gatakort-nytt-husnaedi og NLSH-dagbókin (allt sem var gert á NLSH 11.–20.11.2026)",
+    "Línutól Agnars (rauð/blá/græn), brunahurðaop úr bláum táknum og E-merkingum, eitt lag á flokk, prófun á handfærslum",
+    "Halda kortinu við Ajour (útflutningur → innflutningur með afriti) og breytingar í Ajour-vefnum sjálfum"
    ],
    "kveikjuord": [
     "Apex",
@@ -2304,7 +2427,18 @@
     "útboðssamanburður",
     "skr_aaetlud",
     "skr_log",
-    "skr_faerslur"
+    "skr_faerslur",
+    "línutól",
+    "bláar línur",
+    "hurðaop",
+    "brunahurðir",
+    "E-merkingar",
+    "hringtákn",
+    "milliloft á lögn",
+    "stokkaskurður",
+    "stærðir af teikningu",
+    "uppfæra gatakort úr Ajour",
+    "breyta í Ajour"
    ],
    "aldrei": [
     "--write án þurrkeyrslu, eða NLSH-tól keyrt óbreytt á annað verk",
@@ -2329,13 +2463,32 @@
     {
      "repo": "brunaholf",
      "path": ".claude/agents/gatakort.md",
-     "uppfaert": "2026-11-14",
-     "linur": 152
+     "uppfaert": "2026-11-20",
+     "linur": 204
     }
    ],
    "afbrigdi": [],
-   "uppfaert": "2026-11-14",
-   "sidur": []
+   "uppfaert": "2026-11-20",
+   "sidur": [
+    {
+     "id": "nlsh",
+     "vefur": "brunaholf",
+     "titill": "Landsspítalinn",
+     "hlutverk": "undiragent"
+    },
+    {
+     "id": "slokkvitaeki:/kjarni/skraning/skyrsla",
+     "vefur": "kjarni",
+     "titill": "Skráning — stöðuskýrsla",
+     "hlutverk": "eigandi"
+    },
+    {
+     "id": "slokkvitaeki:/kjarni/skraning/kort",
+     "vefur": "kjarni",
+     "titill": "Skráning — gatakort",
+     "hlutverk": "eigandi"
+    }
+   ]
   },
   {
    "id": "agent:hawkeye",
@@ -2482,25 +2635,18 @@
     "Edit"
    ],
    "heimili": [
-    "slokkvitaeki",
-    "kjarni"
+    "slokkvitaeki"
    ],
    "skrar": [
     {
      "repo": "slokkvitaeki",
      "path": ".claude/agents/heimaleiga.md",
-     "uppfaert": "2026-11-17",
-     "linur": 216
-    },
-    {
-     "repo": "kjarni",
-     "path": ".claude/agents/heimaleiga.md",
-     "uppfaert": "2026-11-05",
-     "linur": 187
+     "uppfaert": "2026-11-20",
+     "linur": 270
     }
    ],
    "afbrigdi": [],
-   "uppfaert": "2026-11-17",
+   "uppfaert": "2026-11-20",
    "sidur": [
     {
      "id": "rekstrarfelog",
@@ -3408,6 +3554,12 @@
      "vefur": "kjarni",
      "titill": "Ljósastýring Langamýri 22 (Hue Remote API)",
      "hlutverk": "eigandi"
+    },
+    {
+     "id": "slokkvitaeki:/bio",
+     "vefur": "kjarni",
+     "titill": "Bíó — Plex-yfirlit: þættir sem fylgst er með, nýir þættir og nýjar myndir",
+     "hlutverk": "eigandi"
     }
    ]
   },
@@ -3665,8 +3817,8 @@
     {
      "repo": "brunaholf",
      "path": ".claude/agents/kunnaskra.md",
-     "uppfaert": "2026-11-16",
-     "linur": 390
+     "uppfaert": "2026-11-20",
+     "linur": 401
     },
     {
      "repo": "slokkvitaeki",
@@ -3702,7 +3854,7 @@
      ]
     }
    ],
-   "uppfaert": "2026-11-16",
+   "uppfaert": "2026-11-20",
    "sidur": [
     {
      "id": "verkkaupar",
@@ -4660,6 +4812,12 @@
      "vefur": "kjarni",
      "titill": "Ljósastýring Langamýri 22 (Hue Remote API)",
      "hlutverk": "undiragent"
+    },
+    {
+     "id": "slokkvitaeki:/bio",
+     "vefur": "kjarni",
+     "titill": "Bíó — Plex-yfirlit: þættir sem fylgst er með, nýir þættir og nýjar myndir",
+     "hlutverk": "undiragent"
     }
    ]
   },
@@ -4716,12 +4874,12 @@
     {
      "repo": "slokkvitaeki",
      "path": ".claude/agents/postur.md",
-     "uppfaert": "2026-11-17",
-     "linur": 221
+     "uppfaert": "2026-11-20",
+     "linur": 238
     }
    ],
    "afbrigdi": [],
-   "uppfaert": "2026-11-17",
+   "uppfaert": "2026-11-20",
    "sidur": [
     {
      "id": "dagurinn",
@@ -4963,6 +5121,52 @@
    ]
   },
   {
+   "id": "agent:randy-couture",
+   "type": "agent",
+   "name": "randy-couture",
+   "emoji": "🤖",
+   "rodd": null,
+   "flokkur": "len",
+   "svid": null,
+   "lysing": "Randy Couture 🤼 (Toll Road) — teikninga-túlkur The Expendables: les teikningar (TurboPaint, Ajour Apex, PDF/aðaluppdráttur) og greinir hvaða kerfi eru á þeim, ákveður hvern sérfræðing (Dolph/Terry/Wesley) á að kalla til og hvaða tækjaskrá er á staðnum. Brúin á milli teikningarinnar og tilboðsins. Notaðu þegar teikning berst og á að verða tilboð, þegar greina á búnað af teikningu og senda á rétt teymi, eða þegar á að meta hvaða kerfi vantar á stað.",
+   "serhaefing": [],
+   "kveikjuord": [
+    "teikning til tilboðs",
+    "búnaðargreining → tilboð",
+    "greina teikningu",
+    "hvaða kerfi vantar",
+    "tækifæri",
+    "v_stadur_kerfi",
+    "fjölkerfatilboð",
+    "sameina tilboð",
+    "heildar-tilboð",
+    "flokkar_krofur",
+    "hvaða kerfi er á staðnum"
+   ],
+   "aldrei": [],
+   "tools": [
+    "Bash",
+    "Read",
+    "Grep",
+    "Glob",
+    "mcp__supabase__execute_sql"
+   ],
+   "heimili": [
+    "slokkvitaeki"
+   ],
+   "skrar": [
+    {
+     "repo": "slokkvitaeki",
+     "path": ".claude/agents/randy-couture.md",
+     "uppfaert": "2026-11-20",
+     "linur": 106
+    }
+   ],
+   "afbrigdi": [],
+   "uppfaert": "2026-11-20",
+   "sidur": []
+  },
+  {
    "id": "agent:rukkari",
    "type": "agent",
    "name": "rukkari",
@@ -5018,8 +5222,8 @@
     {
      "repo": "brunaholf",
      "path": ".claude/agents/rukkari.md",
-     "uppfaert": "2026-11-16",
-     "linur": 363
+     "uppfaert": "2026-11-18",
+     "linur": 371
     },
     {
      "repo": "slokkvitaeki",
@@ -5047,7 +5251,7 @@
      ]
     }
    ],
-   "uppfaert": "2026-11-17",
+   "uppfaert": "2026-11-18",
    "sidur": [
     {
      "id": "yfirlit",
@@ -5324,12 +5528,12 @@
     {
      "repo": "slokkvitaeki",
      "path": ".claude/agents/sala-reikningar.md",
-     "uppfaert": "2026-11-17",
-     "linur": 1132
+     "uppfaert": "2026-11-20",
+     "linur": 1134
     }
    ],
    "afbrigdi": [],
-   "uppfaert": "2026-11-17",
+   "uppfaert": "2026-11-20",
    "sidur": [
     {
      "id": "krofuyfirlit",
@@ -6214,18 +6418,30 @@
     {
      "repo": "kjarni",
      "path": ".claude/agents/skraning.md",
-     "uppfaert": "2026-11-04",
-     "linur": 68
+     "uppfaert": "2026-11-14",
+     "linur": 81
     }
    ],
    "afbrigdi": [],
-   "uppfaert": "2026-11-04",
+   "uppfaert": "2026-11-14",
    "sidur": [
     {
      "id": "slokkvitaeki:/kjarni/skraning/flokkar",
      "vefur": "kjarni",
      "titill": "Skráning — flokkar, gátlisti og starfsmenn",
      "hlutverk": "eigandi"
+    },
+    {
+     "id": "slokkvitaeki:/kjarni/skraning/skyrsla",
+     "vefur": "kjarni",
+     "titill": "Skráning — stöðuskýrsla",
+     "hlutverk": "undiragent"
+    },
+    {
+     "id": "slokkvitaeki:/kjarni/skraning/kort",
+     "vefur": "kjarni",
+     "titill": "Skráning — gatakort",
+     "hlutverk": "undiragent"
     },
     {
      "id": "slokkvitaeki:/kjarni/skraning/greining",
@@ -6469,6 +6685,58 @@
    ]
   },
   {
+   "id": "agent:terry-crews",
+   "type": "agent",
+   "name": "terry-crews",
+   "emoji": "🤖",
+   "rodd": null,
+   "flokkur": "len",
+   "svid": null,
+   "lysing": "Terry Crews 💪 (Hale Caesar) — sérfræðingur The Expendables í vatnsúðakerfi / sprinkler: tilboð, þjónustusamningar, EN 12845, byggingavísitala og kúnnar í sprinkler-þjónustu. Stærsti vaxtargapinn í tilboðsgerð — verðlistinn þarf að fyllast. Notaðu þegar gera á tilboð í sprinklerkerfi, finna sprinkler-kúnna, yfirfara þjónustusamning, reikna byggingavísitölu, eða þegar spurt er um EN 12845 / vatnsúðakerfi.",
+   "serhaefing": [],
+   "kveikjuord": [
+    "sprinkler",
+    "vatnsúðakerfi",
+    "úðakerfi",
+    "sprinklertilboð",
+    "tilboð í sprinkler",
+    "EN 12845",
+    "dælur",
+    "vatnstankar",
+    "sprinkler-kúnnar",
+    "þjónustusamningur sprinkler",
+    "byggingavísitala",
+    "sprinklerkerfi",
+    "OH1",
+    "OH2",
+    "OH3",
+    "OH4",
+    "hættuflokkar"
+   ],
+   "aldrei": [],
+   "tools": [
+    "Bash",
+    "Read",
+    "Grep",
+    "Glob",
+    "mcp__supabase__execute_sql"
+   ],
+   "heimili": [
+    "slokkvitaeki"
+   ],
+   "skrar": [
+    {
+     "repo": "slokkvitaeki",
+     "path": ".claude/agents/terry-crews.md",
+     "uppfaert": "2026-11-20",
+     "linur": 99
+    }
+   ],
+   "afbrigdi": [],
+   "uppfaert": "2026-11-20",
+   "sidur": []
+  },
+  {
    "id": "agent:thema",
    "type": "agent",
    "name": "thema",
@@ -6582,12 +6850,12 @@
     {
      "repo": "slokkvitaeki",
      "path": ".claude/agents/thjonustugatt.md",
-     "uppfaert": "2026-11-16",
-     "linur": 99
+     "uppfaert": "2026-11-18",
+     "linur": 120
     }
    ],
    "afbrigdi": [],
-   "uppfaert": "2026-11-16",
+   "uppfaert": "2026-11-18",
    "sidur": [
     {
      "id": "br-thjonustugatt",
@@ -6945,6 +7213,54 @@
    ]
   },
   {
+   "id": "agent:wesley-snipes",
+   "type": "agent",
+   "name": "wesley-snipes",
+   "emoji": "🤖",
+   "rodd": null,
+   "flokkur": "len",
+   "svid": null,
+   "lysing": "Wesley Snipes 🗡️ (Doc) — sérfræðingur The Expendables í slökkvikerfi eldhús og kæfikerfi: tilboð, verðlistar, kúnnar í slökkvikerfi-þjónustu. Minnst þróaða svæðið — enginn reiknivél, enginn verðlisti enn. Notaðu þegar gera á tilboð í slökkvikerfi, finna kúnna sem eru skráðir í slökkvikerfi eldhús, eða þegar spurt er um EN 16282 / eldhúsháfa / kæfikerfi.",
+   "serhaefing": [],
+   "kveikjuord": [
+    "slökkvikerfi",
+    "slökkvikerfi eldhús",
+    "eldhúsháfar",
+    "kæfikerfi",
+    "Ansul",
+    "háfakerfi",
+    "gasslökkvi",
+    "eldhús-tilboð",
+    "tilboð í slökkvikerfi",
+    "EN 16282",
+    "slökkvikerfi-kúnnar",
+    "veitingastaður",
+    "mötuneytir"
+   ],
+   "aldrei": [],
+   "tools": [
+    "Bash",
+    "Read",
+    "Grep",
+    "Glob",
+    "mcp__supabase__execute_sql"
+   ],
+   "heimili": [
+    "slokkvitaeki"
+   ],
+   "skrar": [
+    {
+     "repo": "slokkvitaeki",
+     "path": ".claude/agents/wesley-snipes.md",
+     "uppfaert": "2026-11-20",
+     "linur": 90
+    }
+   ],
+   "afbrigdi": [],
+   "uppfaert": "2026-11-20",
+   "sidur": []
+  },
+  {
    "id": "skill:3dJoker",
    "type": "skill",
    "name": "3dJoker",
@@ -7037,7 +7353,8 @@
      "titill": "3dwork GitHub-sync",
      "hlutverk": "eigandi"
     }
-   ]
+   ],
+   "onnur_vel": true
   },
   {
    "id": "skill:add-feature",
@@ -7299,12 +7616,12 @@
     {
      "repo": "slokkvitaeki",
      "path": ".claude/skills/arnold/SKILL.md",
-     "uppfaert": "2026-11-16",
-     "linur": 336
+     "uppfaert": "2026-11-20",
+     "linur": 352
     }
    ],
    "afbrigdi": [],
-   "uppfaert": "2026-11-16",
+   "uppfaert": "2026-11-20",
    "sidur": [
     {
      "id": "turbopaint",
@@ -7400,7 +7717,8 @@
    ],
    "afbrigdi": [],
    "uppfaert": "2026-07-19",
-   "sidur": []
+   "sidur": [],
+   "onnur_vel": true
   },
   {
    "id": "skill:bh-pdf",
@@ -8087,7 +8405,11 @@
     "bæta við lagi",
     "setja fagteikningu yfir",
     "stilla af teikningu",
-    "nýtt húsnæði á gatakort"
+    "nýtt húsnæði á gatakort",
+    "hurðaop og línur",
+    "uppfæra gatakort úr Ajour",
+    "breyta í Ajour",
+    "skýrsla til eftirlits"
    ],
    "aldrei": [
     "Keyra NLSH-tól óbreytt á annað verk",
@@ -8102,12 +8424,12 @@
     {
      "repo": "brunaholf",
      "path": ".claude/skills/gatakort-nytt-husnaedi/SKILL.md",
-     "uppfaert": "2026-11-16",
-     "linur": 303
+     "uppfaert": "2026-11-20",
+     "linur": 367
     }
    ],
    "afbrigdi": [],
-   "uppfaert": "2026-11-16",
+   "uppfaert": "2026-11-20",
    "sidur": []
   },
   {
@@ -8208,8 +8530,7 @@
    ],
    "afbrigdi": [],
    "uppfaert": "2026-07-29",
-   "sidur": [],
-   "onnur_vel": true
+   "sidur": []
   },
   {
    "id": "skill:grill-me",
@@ -8428,7 +8749,8 @@
    ],
    "afbrigdi": [],
    "uppfaert": "2026-07-01",
-   "sidur": []
+   "sidur": [],
+   "onnur_vel": true
   },
   {
    "id": "skill:mobile-android-design",
@@ -8536,7 +8858,8 @@
    ],
    "afbrigdi": [],
    "uppfaert": "2026-09-16",
-   "sidur": []
+   "sidur": [],
+   "onnur_vel": true
   },
   {
    "id": "skill:profa-fyrir-birtingu",
@@ -8618,8 +8941,7 @@
    ],
    "afbrigdi": [],
    "uppfaert": "2026-11-11",
-   "sidur": [],
-   "onnur_vel": true
+   "sidur": []
   },
   {
    "id": "skill:reikningalota",
@@ -8723,8 +9045,7 @@
    ],
    "afbrigdi": [],
    "uppfaert": "2026-11-11",
-   "sidur": [],
-   "onnur_vel": true
+   "sidur": []
   },
   {
    "id": "skill:sannreyna-fyrirtaeki",
@@ -8983,7 +9304,8 @@
    ],
    "afbrigdi": [],
    "uppfaert": "2026-07-19",
-   "sidur": []
+   "sidur": [],
+   "onnur_vel": true
   },
   {
    "id": "skill:using-superpowers",
@@ -9011,7 +9333,8 @@
    ],
    "afbrigdi": [],
    "uppfaert": "2026-07-19",
-   "sidur": []
+   "sidur": [],
+   "onnur_vel": true
   },
   {
    "id": "skill:uttekt-audit",
@@ -9294,7 +9617,8 @@
    ],
    "afbrigdi": [],
    "uppfaert": "2026-06-23",
-   "sidur": []
+   "sidur": [],
+   "onnur_vel": true
   },
   {
    "id": "skill:webapp-testing",
@@ -9322,7 +9646,8 @@
    ],
    "afbrigdi": [],
    "uppfaert": "2026-07-19",
-   "sidur": []
+   "sidur": [],
+   "onnur_vel": true
   }
  ],
  "pages": [
@@ -9983,21 +10308,26 @@
     "nlsh.html"
    ],
    "yfir": null,
-   "eigandi": "bokari",
+   "eigandi": "dr-house",
    "undiragentar": [
+    "bokari",
     "gagnaleidslur",
-    "verkstadur"
+    "verkstadur",
+    "gatakort"
    ],
    "kveikjuord": [
     "NLSH",
     "Landsspítalinn",
     "öryggisfé",
-    "frosinn mánuður"
+    "frosinn mánuður",
+    "Dr House",
+    "NLSH stöðuskýrsla",
+    "hvað er eftir á Landspítalanum"
    ],
    "merki": null,
    "stada": "✅",
    "astaeda": [],
-   "eigandi_nafn": "bokari",
+   "eigandi_nafn": "dr-house",
    "eigandi_utan": false
   },
   {
@@ -16508,6 +16838,65 @@
   {
    "vefur": "kjarni",
    "repo": "kjarni",
+   "id": "slokkvitaeki:/kjarni/skraning/skyrsla",
+   "titill": "Skráning — stöðuskýrsla",
+   "tegund": "sida",
+   "leid": "/kjarni/skraning/skyrsla",
+   "skilgreind": [
+    "apps/slokkvitaeki/app/kjarni/skraning/skyrsla/page.tsx"
+   ],
+   "yfir": null,
+   "eigandi": "bh:gatakort",
+   "undiragentar": [
+    "skraning"
+   ],
+   "kveikjuord": [
+    "Stöðuskýrsla",
+    "skýrsla til Landspítalans",
+    "útboðsmagn",
+    "staða per deild",
+    "útboðssamanburður"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": [],
+   "eigandi_nafn": "gatakort",
+   "eigandi_utan": true
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "id": "slokkvitaeki:/kjarni/skraning/kort",
+   "titill": "Skráning — gatakort",
+   "tegund": "sida",
+   "leid": "/kjarni/skraning/kort",
+   "skilgreind": [
+    "apps/slokkvitaeki/app/kjarni/skraning/kort/page.tsx"
+   ],
+   "yfir": null,
+   "eigandi": "bh:gatakort",
+   "undiragentar": [
+    "skraning"
+   ],
+   "kveikjuord": [
+    "Gatakort",
+    "áætluð göt",
+    "lög á teikningu",
+    "brunayfirlit",
+    "kortleggja húsnæði",
+    "púsla saman teikningum",
+    "hinn endann vantar",
+    "nýja Ajour"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": [],
+   "eigandi_nafn": "gatakort",
+   "eigandi_utan": true
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
    "id": "slokkvitaeki:/kjarni/skraning/greining",
    "titill": "Skráning — greining",
    "tegund": "sida",
@@ -17123,8 +17512,10 @@
     "apps/web/src/app/3dwork/page.tsx"
    ],
    "yfir": null,
-   "eigandi": "skill:3dJoker",
-   "undiragentar": [],
+   "eigandi": "3dwork",
+   "undiragentar": [
+    "skill:3dJoker"
+   ],
    "kveikjuord": [
     "3dwork",
     "STL",
@@ -17133,8 +17524,8 @@
    "merki": null,
    "stada": "✅",
    "astaeda": [],
-   "eigandi_nafn": "3dJoker",
-   "eigandi_utan": true
+   "eigandi_nafn": "3dwork",
+   "eigandi_utan": false
   },
   {
    "vefur": "kjarni",
@@ -17147,14 +17538,16 @@
     "apps/web/src/app/api/3dwork/github/geometry/[id]/route.ts"
    ],
    "yfir": null,
-   "eigandi": "skill:3dJoker",
-   "undiragentar": [],
+   "eigandi": "3dwork",
+   "undiragentar": [
+    "skill:3dJoker"
+   ],
    "kveikjuord": [],
    "merki": null,
    "stada": "✅",
    "astaeda": [],
-   "eigandi_nafn": "3dJoker",
-   "eigandi_utan": true
+   "eigandi_nafn": "3dwork",
+   "eigandi_utan": false
   },
   {
    "vefur": "kjarni",
@@ -17167,14 +17560,16 @@
     "apps/web/src/app/api/3dwork/github/projects/[id]/route.ts"
    ],
    "yfir": null,
-   "eigandi": "skill:3dJoker",
-   "undiragentar": [],
+   "eigandi": "3dwork",
+   "undiragentar": [
+    "skill:3dJoker"
+   ],
    "kveikjuord": [],
    "merki": null,
    "stada": "✅",
    "astaeda": [],
-   "eigandi_nafn": "3dJoker",
-   "eigandi_utan": true
+   "eigandi_nafn": "3dwork",
+   "eigandi_utan": false
   },
   {
    "vefur": "kjarni",
@@ -17187,14 +17582,16 @@
     "apps/web/src/app/api/3dwork/github/projects/route.ts"
    ],
    "yfir": null,
-   "eigandi": "skill:3dJoker",
-   "undiragentar": [],
+   "eigandi": "3dwork",
+   "undiragentar": [
+    "skill:3dJoker"
+   ],
    "kveikjuord": [],
    "merki": null,
    "stada": "✅",
    "astaeda": [],
-   "eigandi_nafn": "3dJoker",
-   "eigandi_utan": true
+   "eigandi_nafn": "3dwork",
+   "eigandi_utan": false
   },
   {
    "vefur": "kjarni",
@@ -17207,14 +17604,16 @@
     "apps/web/src/app/api/3dwork/github/route.ts"
    ],
    "yfir": null,
-   "eigandi": "skill:3dJoker",
-   "undiragentar": [],
+   "eigandi": "3dwork",
+   "undiragentar": [
+    "skill:3dJoker"
+   ],
    "kveikjuord": [],
    "merki": null,
    "stada": "✅",
    "astaeda": [],
-   "eigandi_nafn": "3dJoker",
-   "eigandi_utan": true
+   "eigandi_nafn": "3dwork",
+   "eigandi_utan": false
   },
   {
    "vefur": "kjarni",
@@ -17308,6 +17707,36 @@
    "astaeda": [],
    "eigandi_nafn": "kjarni-vefur",
    "eigandi_utan": false
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "id": "slokkvitaeki:/bio",
+   "titill": "Bíó — Plex-yfirlit: þættir sem fylgst er með, nýir þættir og nýjar myndir",
+   "tegund": "sida",
+   "leid": "/bio",
+   "skilgreind": [
+    "apps/slokkvitaeki/app/bio/page.tsx",
+    "apps/slokkvitaeki/app/bio/BioClient.tsx",
+    "apps/database/supabase/schemas/bio.sql",
+    "tools/bio-sync/sync.mjs"
+   ],
+   "yfir": null,
+   "eigandi": "kjarni-vefur",
+   "undiragentar": [
+    "oryggi"
+   ],
+   "kveikjuord": [
+    "Bíó",
+    "Plex",
+    "þættir",
+    "nýjar myndir"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": [],
+   "eigandi_nafn": "kjarni-vefur",
+   "eigandi_utan": false
   }
  ],
  "thekja": [
@@ -17338,8 +17767,8 @@
    "repo": "kjarni",
    "utgafa": 1,
    "vefagent": "kjarni-vefur",
-   "alls": 103,
-   "med_eiganda": 103,
+   "alls": 106,
+   "med_eiganda": 106,
    "vidvorun": 0,
    "an_eiganda": 0,
    "hlutfall": 100
@@ -17348,13 +17777,19 @@
  "kjarni_afrit_sleppt": [
   "adstod.md",
   "birgdastjori.md",
+  "black-widow.md",
   "bokari.md",
   "bord-flettur.md",
+  "captain-america.md",
+  "center-hotel.md",
   "elon-musk.md",
   "endurskodandi.md",
   "framendi.md",
   "fyrirtaeki.md",
   "gagnaleidslur.md",
+  "gatakort.md",
+  "hawkeye.md",
+  "heimaleiga.md",
   "hradi.md",
   "innkaupabokari.md",
   "jarvis.md",
@@ -17378,9 +17813,11 @@
   "sara-coworker.md",
   "sara-organizer.md",
   "skjol.md",
+  "spider-man.md",
   "tengingar.md",
   "thema.md",
   "thjonustugatt.md",
+  "tony-stark.md",
   "utlitsserfraedingur.md",
   "verkstadur.md"
  ]

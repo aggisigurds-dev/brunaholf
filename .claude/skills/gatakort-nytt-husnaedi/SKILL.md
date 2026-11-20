@@ -9,7 +9,8 @@ description: >
   „stilla af teikningu" eða „gera gatakort fyrir <verk>". Eigandi: agentinn `gatakort` (Jackie Chan). Fyrirmyndin er NLSH
   (verk 4), skráð í NLSH-DAGBOK.md í sömu möppu. Kóðinn og tólin eru í Kjarna (apps/slokkvitaeki/tools/skraning-gatakort-*).
   Kveikjuorð: mappa upp húsnæði, kortleggja nýja hæð, gatakort fyrir nýtt verk, púsla saman teikningum, bæta við lagi,
-  setja fagteikningu yfir, stilla af teikningu, nýtt húsnæði á gatakort
+  setja fagteikningu yfir, stilla af teikningu, nýtt húsnæði á gatakort, hurðaop og línur, uppfæra gatakort úr Ajour,
+  breyta í Ajour, skýrsla til eftirlits
 ---
 
 # Gatakort fyrir nýtt húsnæði
@@ -226,6 +227,20 @@ Bættu skránum í `VEGGIR` og `NEMAR` í `KortClient.tsx`. Keyra aftur ef yfirl
 
 **Staðfest þegar:** `-veggir.py` prentar hlutfall miðlínu innan 1,5 px frá bút (96 % á NLSH; undir 90 %: skoða litamörkin, ekki halda áfram).
 
+### 6b. Hurðaop, glerveggir og línur Agnars (NLSH 18.11.2026)
+Rauðu veggirnir einir eru ekki brunaskilin: brunahurðir og glerveggir í brunaskilum eru op í rauðu línunni.
+1. **Brunahurðaop úr teikningu:** síaðu BLÁTT úr 4x flísum grunnmyndar. Lamir H = það horn umgjarðarinnar sem flestir bogapunktar eru
+   jafnlangt frá; opið er sú hlið frá H sem ber ekkert blátt og á rautt við endana. Staðfestu með E-merkingu (E30, EI30, EI60 …) í
+   TEXTALAGI brunayfirlitsins innan ~1,9 m, og lengdu línuna í allt að 2 × blaðbreidd (tvöfaldar hurðir ná í hinn vegginn).
+   Tól NLSH: `scratchpad/gat/maela3.py` + `maela4.py` (afrit í `_vinnuskjol/nlsh-loftstaerdir-20261118`). Þekja á NLSH: 89 % merkinga.
+2. **Línur Agnars:** hann teiknar á kortinu (Lína í stillingum gatakorts): rauð = brunaveggur, blá = hurðaop/glerveggur, græn = má
+   festast en telst ekki brunaskil, strokleður fjarlægir. Geymt í `skr_verk.stillingar` (`vegglinur`, `hurdalinur`, `graenlinur`,
+   `hurdalinurFaldar`). Biddu hann að teikna það sem tólið finnur ekki; giskaðu ekki á op.
+3. **Veggjamyndin fyrir skref 7:** rauðir veggir + staðfest hurðaop + sjálfvirkar bláar línur sem standa + línur Agnars, málaðar
+   **5 px** (ekki þykkari, þá missir rafmagn stað). Hún er gefin skr-festa sem `--yfirlit`.
+
+**Staðfest þegar:** fjöldi E-merkinga og hve margar eiga op er skráð í dagbók; veggjamyndin er vistuð með heiti sem segir hvaða línur eru í henni.
+
 ## Skref 7 — Færa punkta á skurðpunkt og para
 
 ```
@@ -237,8 +252,16 @@ Regla færslunnar: næsti skurðpunktur síns lags og RAUÐS brunaveggjar innan 
 fyrir þinn kvarða), annars svört vegglína innan 20 px. Punkturinn lendir SÍN megin við vegginn. Handvirkar færslur eru aldrei snertar.
 `--afturkalla --write` tekur allar sjálfvirkar færslur hæðar til baka.
 
+**Eitt lag á flokk** (LAGSKRAR í skr-festa, NLSH 18.11): hver flokkahópur festist við SITT lag (loft → loftræsing, plast/stál →
+vatnslagnir í lit, úði → úða-hlutablöð, rafmagn → lagnaleiðir). Milliloft festast á hringtákn frárennslis, sér tól
+(`tools/skraning-gatakort-milliloft/`). `--hopar a,b` takmarkar færsluna við valda hópa.
+
+**Prófaðu á handfærslum Agnars áður en þú skrifar:** fyrir hvern hóp, miðgildi fjarlægðar frá stað tólsins að stað sem Agnar valdi
+og fjöldi innan 8 px, með gömlu og nýju lagi/veggjamynd. Færðu aðeins hópa sem batna mælanlega. Taktu afrit af `skr_faerslur` fyrst
+(`backup_<dags>_skr_faerslur`). Handfærðir punktar eru aldrei snertir; mældu það eftir á.
+
 **Staðfest þegar:** deild breyttist hjá engri skráningu (teldu deild af stöðu fyrir og eftir; á NLSH: 0); miðgildi færslu er undir
-0,6 m (á NLSH 0,18–0,29 m, rafmagn 0,53–0,59 m); `-para.cjs` hefur verið keyrt EFTIR færsluna.
+0,6 m (á NLSH 0,18–0,29 m, rafmagn 0,53–0,59 m); `-para.cjs` hefur verið keyrt EFTIR færsluna; handfærðir 0 snertir.
 
 ## Skref 8 — Áætluð göt, tillögur og kerfi (eftir því sem gögn eru til)
 
@@ -262,7 +285,45 @@ ekki prósentu.
 
 **Staðfest þegar:** hver áætlunartala í skýrslunni á heimild í dagbókinni, og „Afstemming við Ajour" gengur upp á skráningu.
 
-## Skref 10 — Sannprófun og birting
+### 9b. Skýrslan til verkkaupa eða eftirlits (NLSH 19.–20.11.2026)
+- **Tónn:** engir fyrirvarar, ekkert „við vitum ekki", lítið af skýringum, varfærin prósenta (NLSH: 10 % álag á reiknaða áætlun).
+  Hreinskilnin fer í svarið til Agnars, ekki í skýrsluna.
+- **Ein tala á hlut:** samantektarreitir, töflur og texti nota sömu töluna (`kl` = klárað upp að áætlun hluta). Hrár done-fjöldi
+  og „utan áætlunar" sjást aðeins sem sundurliðun (starfsmannatafla: Alls = innan + utan).
+- **Metraliðir** (t.d. raufar meðfram köntuðum stokkum) hafa ekki áætlun í stökum: sýndu þá í metrum úr Lokið útboðsliðarins
+  (`gogn.utbod[nr].lokid`), helst sömu tölu og uppgjörið.
+- **Starfsmenn:** nöfn eins og á skírteinum (`gogn.starfsmenn_nofn`), þeir sem unnu ekki í verkinu faldir (`gogn.starfsmenn_fela`),
+  þjálfunartexti sem passar við skírteinalistann (`gogn.thjalfun`).
+- **Efni og verkferli** (`Efni.tsx`): hver vara með DoP og ETA frá framleiðanda (Protecta og FSi á NLSH), verkferlið í skrefum eftir
+  orðum Agnars með tilvísunum í heild (DoP, ETA, leiðbeiningar), ekki greinar sem ekki hafa verið lesnar.
+- **PDF:** `scratchpad/prenta_skyrslu.cjs <út.pdf> 0.65 1400` (Playwright úr luna-bridge). Útgáfur fara í samvinnumálið með -vN.
+- **Allt fer út í gegnum Agnar eða stjórnandann.** Þú sendir ekkert.
+
+## Skref 10 — Viðhald: uppfæra kortið úr Ajour
+
+Þegar Agnar spyr um stöðu, eða áður en skýrsla er prentuð:
+```
+node C:/Users/Slokkvitaeki/luna-bridge/ajour-export-allt.js --project <heiti> --no-photos --no-pdf   # aðeins lestur í Ajour
+node tools/skraning-gatakort-innflutningur[-<verk>].cjs                                            # þurrkeyrsla
+-- create table backup_<dags>_skr_skraningar as select * from skr_skraningar where verk_id=<id>;
+node tools/skraning-gatakort-innflutningur[-<verk>].cjs --write
+```
+Berðu saman við afritið per skráningu: staða, flokkur, `eytt`, hnit. Faldar raðir sem tólið hlífir (ofan frá, án teikningar) og
+handbreytt svið eiga að standa. Breyttust hnit: `-para.cjs` aftur. Lestu svo lifandi skýrsluna og segðu hvaða tölur breyttust.
+
+**Staðfest þegar:** fjöldi og done = Ajour; samanburður við afrit skráður (t.d. NLSH 20.11: 18 stöðubreytingar, 1 flokkabreyting, ekkert annað).
+
+## Skref 11 — Breytingar í Ajour sjálfu (aðeins með orðum Agnars)
+
+Vefurinn (`brunaholf.ajoursystem.net`) tekur breytingar; innskráning brúarinnar (`luna-bridge/ajour-state.json`) dugar til lesturs.
+- Kláruð skráning er læst fyrir flokkabreytingu. Leiðin: Done af → Change group → Done á. Það **þurrkar gátlistahökin** og færir
+  skráninguna í uppgjörsmánuðinn sem hún er endurhökuð í. Lestu og afritaðu hökin fyrst, prófaðu á EINNI, staðfestu PUT 200 og teljarana.
+- Athugaðu áður hvort skráningin var rukkuð í frosnum mánuði (bókari / Dr. House): þá kemur breytingin ekki fram í reikningi af sjálfu sér.
+- **Eyðing í Ajour:** aldrei sjálfur. Kláraðar skráningar eru í rukkuðum mánuðum; eyðing skapar misræmi við reikninga.
+
+**Staðfest þegar:** hver breytt skráning er talin upp í dagbók með hökum fyrir og eftir, og næsti útflutningur sýnir breytinguna.
+
+## Skref 12 — Sannprófun og birting
 
 1. `npx tsc --noEmit -p .` úr `apps/slokkvitaeki` (sía út artcraft/ImageZoom).
 2. Commit á `skraning-nlsh-kort` → ýta á main (skipunin er í agentaskránni). Aldrei `vercel --prod`.
@@ -299,4 +360,7 @@ ekki prósentu.
 - [ ] Skýrsla: heimild hverrar áætlunartölu; afstemming gengur upp.
 - [ ] tsc hreint; lifandi síða prófuð með skrif lokuð (hvaða hæðir, console-villur 0).
 - [ ] Ekki prófað / ÓMÆLT: listi (t.d. „ekki prófað á síma Agnars").
+- [ ] Hurðaop: fjöldi E-merkinga og hve margar eiga op; línur Agnars lesnar (fjöldi per lit) og hvaða veggjamynd var notuð.
+- [ ] Hver hópur í sjálfvirku færslunni prófaður á handfærslum Agnars (miðgildi og innan 8 px, fyrir/eftir); afrit `skr_faerslur` tekið.
+- [ ] Skýrsla út á við: sama tala í reitum, töflum og texta; metraliðir í metrum; engir fyrirvarar í skýrslunni sjálfri.
 - [ ] Dagbók verksins uppfærð í sama commit.

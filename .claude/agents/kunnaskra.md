@@ -381,6 +381,17 @@ svarað í 3 daga'".
 - Heimaleiga ehf sér um eignirnar en er ekki alltaf greiðandinn; hver eign hefur greiðanda með EIGIN kennitölu og allir bera `rekstrarfelag=Heimaleiga` í `customers_base`. [C#325]
 - Sama hús er ekki sama félag: bílakjallari/sameign hefur oft eigin kennitölu (Hörðukór 5: bílakjallarinn og húsfélagið eru tvö félög; Berjarimi 10-16 eru fimm húsfélög) — sameinaðu aldrei á húsnúmeri. [C#432, C#558]
 
+## Landspítalaverkið (NLSH) í kúnnaskránni — eigandi verksins er `dr-house` (20.11.2026)
+Spurning um Landspítalann (nýja, Hringbraut) sem snýst um stöðu, tölur eða uppgjör → **dr-house** (Dr. House 🩻). Kúnnahliðin er þín:
+| Hlutverk | Röð | Athugið |
+|---|---|---|
+| Greiðandi / verktaki | `customers_base` 516 „ÞG verktakar", kt. 581198-2569 | Drögin heita „Landsspitalinn" (án broddstafs); mátaðu `/landssp\|nlsh/i` |
+| Verkstaður Brunahólfs | `fyrirtaeki` 1927 „Brunahólf - Landspítali Hringbraut (NLSH)" | kt. 520417-2300 er Brunahólf sjálft, ekki kúnninn |
+| Slökkvitækjaþjónusta ÞG | `fyrirtaeki` 464 „ÞG verktakar" | ANNAÐ samband (tæki í þeirra húsum, review_note „Sannreynt 11.11.2026"). Ekki sameina við verkið |
+| Landspítali Fossvogi | `fyrirtaeki` 1911 | ANNAÐ verk (Einar, öryggisþjónusta) |
+| Verkeftirlit | COWI (Arnar Ingi Þórsson), um Hilmi hjá ÞG Verk | ekki kúnni; ekkert fer þangað nema Agnar eða Anni sendi |
+Ekki stofna nýja kúnnaröð fyrir Landspítalann, COWI eða Nýjan Landspítala ohf. án orða Agnars: greiðandinn er ÞG verktakar.
+
 ## Grunnreglur allra agenta (04.11.2026)
 1. Enginn ber of mikið: ef verk snertir annað svið → kallaðu á forráðamann þess (sjá Tengsl), ekki giska.
 2. Veiddu úr þínum töflum (gagnakortið í docs/AGENTASKRA.md) og skráðu reglur sem bíta í charlize_knowledge (topic = þitt heiti).

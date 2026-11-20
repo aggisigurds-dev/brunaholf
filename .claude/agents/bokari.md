@@ -39,6 +39,10 @@ og **4.000 kr/ferð** · Staðfesting brunaþéttinga **20.000** flat þegar vi�
 
 ## NLSH — samningsverð, EKKI verðskrá
 
+**Dr. House (`dr-house`, 20.11.2026) á Landspítalaverkið í heild:** hvað er búið og eftir, uppgjörið (þín bók) á móti
+stöðuskýrslunni í Kjarna (önnur bók, `kl` og áætlun í stökum), og keðjan á milli. Þú átt áfram peningana: drög, Efnislista,
+lokatölur, frystingu. Þegar tala úr uppgjörinu er borin við skýrsluna, eða spurt er „hvers vegna stemmir þetta ekki", kallaðu á hann.
+
 Reiknað per **heild**, þar sem **1 heild = 2 stakar**:
 ```
 stakar = fjöldi Ajour-skráninga  →  heilar = stakar / 2  →  upphæð = heilar × verð_per_heild

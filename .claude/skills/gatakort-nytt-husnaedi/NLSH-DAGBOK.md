@@ -1562,3 +1562,28 @@ Agnar: „Geymum þetta bara í bili. Geturðu reynt að koma skýrslunni saman.
   ekki greinar (ETA ekki lesin í smáatriðum; engar tölur um dýpt/bil/stærðarmörk). Kaflaval vistað í skr_skyrslur id 1 (texti, forsendur,
   framvinda, aukaverk, utbod af). PDF prentað með `scratchpad/prenta_skyrslu.cjs <ut> 0.65 1400` (Playwright úr luna-bridge; kvarði
   0,65 svo kort og deildartafla rúmist á einni síðu, stærðarrofi af, myndir eager).
+
+## 19.–20.11.2026 — skil til eftirlits, samvinna við stjórnanda, uppfærsla úr Ajour, raufar í metrum
+- **Skýrsluútgáfur v2–v4** (athugasemdir Anna í Þjónustuborðsmáli #1686, „já, allar sex"): Jón G. Jónsson falinn í starfsmannatöflu
+  (`gogn.starfsmenn_fela`; skráningin í Ajour óbreytt), nöfn eins og á skírteinum (`gogn.starfsmenn_nofn`, 7 nöfn), starfsmannatafla og
+  Gæði sýna Alls = innan áætlunar (`kl`) + utan, FSi (Pyrocoustic Sealant, PipeBloc EL) bætt við Efni og verkferli (Efni.tsx), ETA allra
+  vara í efnis-PDF, þjálfunartexti „19 þeirra" (þeir í töflunni sem eru á skírteinalista Anna). Kjarni 3106203, a83db6e, 3e99292, b439e88,
+  3557c91, 539d21a, 8ea9c13. PDF í `_vinnuskjol/nlsh-skyrsla-20261119/` og hengd við #1686 (-v2, -v3, -v4). Sending til ÞG/COWI er Agnars/Anna.
+- **Uppfært úr Ajour 20.11 (Agnar: „ef þú uppfærir Ajour hvað eru margar skráningar"):** 11.257 skráningar, engin ný síðan 18.11 13:45.
+  18 voru kláraðar í Ajour síðan síðast (17 Gólf Ø160-200 á 4H S1/S2, 1 á 5H S5 sem fékk líka nýjan flokk). Afrit
+  `backup_20261119e_skr_skraningar`; samanburður: 18 stöðubreytingar, 1 flokkabreyting, `eytt` og hnit óbreytt. Pörun ekki endurkeyrð (engin hnit).
+  Skýrslan: Klárað 10.327 → **10.345**, Opið 252 → 234, Eftir 2.540, Áætlað 13.119, 79 %; gólf 5. hæðar 82 → 86 %.
+- **Keðjan Ajour → skýrsla (mælt 20.11):** Done 10.571 − 22 faldar án teikningar − 31 milliloft ofan frá = 10.518 sýnileg − 173 utan
+  áætlunar (73 raufar, „Annað", umfram áætlun hluta, Jón 1) = 10.345 (`kl`). Faldar án teikningar: 470 (22 done), allar 22 í frosnum,
+  rukkuðum mánuðum (okt. 18, apr/jún/júl/sep 1 hver): eyðing í Ajour myndi aðeins skapa misræmi við reikninga. Gólf Ø160-200 í gólfi 6. hæðar:
+  476 skráðar, 469 kláraðar (5H-loftteikning S1 119, S2 148, S4 106, S5 99 + 4 á 6H-blöðum); 31 ofan frá faldar.
+- **Raufar í metrum (Agnar: „fínt að laga samt", kjarni f781d5e):** raufar við kantaða stokka hafa enga áætlun í stökum (`AN_MARKMIDS`).
+  Flokkataflan sýnir þær nú í metrum úr `gogn.utbod["2.11"].lokid` = **107,31 m** (214,62 m (1×) í NLSH-uppgjöri til loka október ÷ 2)
+  á móti 102 m útboðs = 100 %. Heildin í stökum óbreytt. Lesið af lifandi síðu: „Raufar við kantaða stokka 73 · 107,3 m · 102 m · 100 %".
+- **Blað Agnars „Copy of loftstokkar" (Google Sheets, verknúmeraröð):** 69 verknúmer = raufaskráningar í Ajour, allar done. 39 línur án
+  verknúmers (76,1 m á 6H2S: Center 13, Norður 6, Suður 20) eiga ENGA skráningu í Ajour, mælt yfir allan tímann í öllum flokkum á 6H.pdf
+  (leit að stærðum og „metrar" í lýsingu). 7 raufaskráningar í Ajour eru ekki á blaðinu (3788, 6580, 9966, 9967, 11086, 11679, 11765).
+  LÆRDÓMUR: ég ályktaði fyrst að línurnar lægju á tímabili (blaðið „í dagsetningaröð"); Agnar leiðrétti: verknúmeraröð. Ekki draga tíma af röð.
+- **Breyta í Ajour:** innskráning brúarinnar (`luna-bridge/ajour-state.json`) svarar 200 á `GetAllProjects` (50 verkefni) 20.11; vafri lotunnar
+  er útskráður úr Ajour-vefnum. Engu breytt í Ajour þessa daga.
+- **Dr. House stofnaður 20.11** (`brunaholf/.claude/agents/dr-house.md`): á Landspítalaverkið í heild, uppgjör (A) á móti skýrslu (B).

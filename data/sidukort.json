@@ -1,5 +1,5 @@
 {
- "generated": "2026-11-18",
+ "generated": "2026-11-20",
  "_athugasemd": "GENERATED af tools/build-agents-registry.cjs úr <repo>/.claude/sidukort.json — breyttu síðukortunum, ekki hér.",
  "vefir": [
   {
@@ -29,8 +29,8 @@
    "repo": "kjarni",
    "utgafa": 1,
    "vefagent": "kjarni-vefur",
-   "alls": 103,
-   "med_eiganda": 103,
+   "alls": 106,
+   "med_eiganda": 106,
    "vidvorun": 0,
    "an_eiganda": 0,
    "hlutfall": 100
@@ -694,21 +694,26 @@
     "nlsh.html"
    ],
    "yfir": null,
-   "eigandi": "bokari",
+   "eigandi": "dr-house",
    "undiragentar": [
+    "bokari",
     "gagnaleidslur",
-    "verkstadur"
+    "verkstadur",
+    "gatakort"
    ],
    "kveikjuord": [
     "NLSH",
     "Landsspítalinn",
     "öryggisfé",
-    "frosinn mánuður"
+    "frosinn mánuður",
+    "Dr House",
+    "NLSH stöðuskýrsla",
+    "hvað er eftir á Landspítalanum"
    ],
    "merki": null,
    "stada": "✅",
    "astaeda": [],
-   "eigandi_nafn": "bokari",
+   "eigandi_nafn": "dr-house",
    "eigandi_utan": false
   },
   {
@@ -7219,6 +7224,65 @@
   {
    "vefur": "kjarni",
    "repo": "kjarni",
+   "id": "slokkvitaeki:/kjarni/skraning/skyrsla",
+   "titill": "Skráning — stöðuskýrsla",
+   "tegund": "sida",
+   "leid": "/kjarni/skraning/skyrsla",
+   "skilgreind": [
+    "apps/slokkvitaeki/app/kjarni/skraning/skyrsla/page.tsx"
+   ],
+   "yfir": null,
+   "eigandi": "bh:gatakort",
+   "undiragentar": [
+    "skraning"
+   ],
+   "kveikjuord": [
+    "Stöðuskýrsla",
+    "skýrsla til Landspítalans",
+    "útboðsmagn",
+    "staða per deild",
+    "útboðssamanburður"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": [],
+   "eigandi_nafn": "gatakort",
+   "eigandi_utan": true
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "id": "slokkvitaeki:/kjarni/skraning/kort",
+   "titill": "Skráning — gatakort",
+   "tegund": "sida",
+   "leid": "/kjarni/skraning/kort",
+   "skilgreind": [
+    "apps/slokkvitaeki/app/kjarni/skraning/kort/page.tsx"
+   ],
+   "yfir": null,
+   "eigandi": "bh:gatakort",
+   "undiragentar": [
+    "skraning"
+   ],
+   "kveikjuord": [
+    "Gatakort",
+    "áætluð göt",
+    "lög á teikningu",
+    "brunayfirlit",
+    "kortleggja húsnæði",
+    "púsla saman teikningum",
+    "hinn endann vantar",
+    "nýja Ajour"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": [],
+   "eigandi_nafn": "gatakort",
+   "eigandi_utan": true
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
    "id": "slokkvitaeki:/kjarni/skraning/greining",
    "titill": "Skráning — greining",
    "tegund": "sida",
@@ -7834,8 +7898,10 @@
     "apps/web/src/app/3dwork/page.tsx"
    ],
    "yfir": null,
-   "eigandi": "skill:3dJoker",
-   "undiragentar": [],
+   "eigandi": "3dwork",
+   "undiragentar": [
+    "skill:3dJoker"
+   ],
    "kveikjuord": [
     "3dwork",
     "STL",
@@ -7844,8 +7910,8 @@
    "merki": null,
    "stada": "✅",
    "astaeda": [],
-   "eigandi_nafn": "3dJoker",
-   "eigandi_utan": true
+   "eigandi_nafn": "3dwork",
+   "eigandi_utan": false
   },
   {
    "vefur": "kjarni",
@@ -7858,14 +7924,16 @@
     "apps/web/src/app/api/3dwork/github/geometry/[id]/route.ts"
    ],
    "yfir": null,
-   "eigandi": "skill:3dJoker",
-   "undiragentar": [],
+   "eigandi": "3dwork",
+   "undiragentar": [
+    "skill:3dJoker"
+   ],
    "kveikjuord": [],
    "merki": null,
    "stada": "✅",
    "astaeda": [],
-   "eigandi_nafn": "3dJoker",
-   "eigandi_utan": true
+   "eigandi_nafn": "3dwork",
+   "eigandi_utan": false
   },
   {
    "vefur": "kjarni",
@@ -7878,14 +7946,16 @@
     "apps/web/src/app/api/3dwork/github/projects/[id]/route.ts"
    ],
    "yfir": null,
-   "eigandi": "skill:3dJoker",
-   "undiragentar": [],
+   "eigandi": "3dwork",
+   "undiragentar": [
+    "skill:3dJoker"
+   ],
    "kveikjuord": [],
    "merki": null,
    "stada": "✅",
    "astaeda": [],
-   "eigandi_nafn": "3dJoker",
-   "eigandi_utan": true
+   "eigandi_nafn": "3dwork",
+   "eigandi_utan": false
   },
   {
    "vefur": "kjarni",
@@ -7898,14 +7968,16 @@
     "apps/web/src/app/api/3dwork/github/projects/route.ts"
    ],
    "yfir": null,
-   "eigandi": "skill:3dJoker",
-   "undiragentar": [],
+   "eigandi": "3dwork",
+   "undiragentar": [
+    "skill:3dJoker"
+   ],
    "kveikjuord": [],
    "merki": null,
    "stada": "✅",
    "astaeda": [],
-   "eigandi_nafn": "3dJoker",
-   "eigandi_utan": true
+   "eigandi_nafn": "3dwork",
+   "eigandi_utan": false
   },
   {
    "vefur": "kjarni",
@@ -7918,14 +7990,16 @@
     "apps/web/src/app/api/3dwork/github/route.ts"
    ],
    "yfir": null,
-   "eigandi": "skill:3dJoker",
-   "undiragentar": [],
+   "eigandi": "3dwork",
+   "undiragentar": [
+    "skill:3dJoker"
+   ],
    "kveikjuord": [],
    "merki": null,
    "stada": "✅",
    "astaeda": [],
-   "eigandi_nafn": "3dJoker",
-   "eigandi_utan": true
+   "eigandi_nafn": "3dwork",
+   "eigandi_utan": false
   },
   {
    "vefur": "kjarni",
@@ -8013,6 +8087,36 @@
     "ljósastýring",
     "Langamýri",
     "Hue"
+   ],
+   "merki": null,
+   "stada": "✅",
+   "astaeda": [],
+   "eigandi_nafn": "kjarni-vefur",
+   "eigandi_utan": false
+  },
+  {
+   "vefur": "kjarni",
+   "repo": "kjarni",
+   "id": "slokkvitaeki:/bio",
+   "titill": "Bíó — Plex-yfirlit: þættir sem fylgst er með, nýir þættir og nýjar myndir",
+   "tegund": "sida",
+   "leid": "/bio",
+   "skilgreind": [
+    "apps/slokkvitaeki/app/bio/page.tsx",
+    "apps/slokkvitaeki/app/bio/BioClient.tsx",
+    "apps/database/supabase/schemas/bio.sql",
+    "tools/bio-sync/sync.mjs"
+   ],
+   "yfir": null,
+   "eigandi": "kjarni-vefur",
+   "undiragentar": [
+    "oryggi"
+   ],
+   "kveikjuord": [
+    "Bíó",
+    "Plex",
+    "þættir",
+    "nýjar myndir"
    ],
    "merki": null,
    "stada": "✅",
