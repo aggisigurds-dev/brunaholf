@@ -150,6 +150,7 @@ fært, orðrétt. Hver þeirra hleðst AÐEINS þegar hann er kallaður til.
 | Staðreyndayfirferð — kerfið segir eitt, gögnin annað (factcheck_bord) | `natalie` | 🌸 Natalie |
 | Rukkunarmál beggja félaga — reikningalota, hvað er tilbúið að senda, punktar, póstur, tengingar; stjórnar bokari / sala-reikningar (póstvörðurinn er kafli í rukkari.md) og les REIKNINGALOTA.md sjálfur | `rukkari` | 🦆 Jóakim aðalönd |
 | Gatakortið og stöðuskýrslan í nýja Ajour (Skráning í Kjarna): kortleggja húsnæði, púsla teikningum, lög, vörpun, finna og para punkta — kóðinn er í Kjarna, verkferlið er skill `gatakort-nytt-husnaedi` | `gatakort` | 🥋 Jackie Chan |
+| Landspítalaverkið (NLSH) í heild: hvernig allt reiknast (útboðsliðir, stakar/heilar, metrar 2.11, mánaðaruppgjör, frosnir mánuðir), uppgjörið á móti stöðuskýrslunni í Kjarna, hvað er búið og eftir, kúnnaskráin (ÞG verktakar, verkstaður, COWI) | `dr-house` | 🩻 Dr. House |
 
 **Notkun:** kallaðu á sérfræðinginn með Agent-tólinu (`subagent_type`), eða lestu skrána
 hans beint þegar þú þarft bara þekkinguna. **Ekki afrita innihald þeirra hingað** — ein
