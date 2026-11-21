@@ -1,6 +1,6 @@
 {
  "utgafa": 1,
- "nyjast": "2026-11-19",
+ "nyjast": "2026-11-20",
  "throskuldur": 6,
  "osnert_dagar": 30,
  "uppspretta": "slokkvitaeki/tools/audit-agentar.cjs --json",
@@ -19,6 +19,21 @@
    "daudir": [],
    "merki": "🟡",
    "lysing": "AI-aðstoðarmaðurinn í Slökkvitæki-appinu — Customer brief (237), 🤖 banner-spjald (238), Aðstoðarmiðstöð (239) og forsíðu-aðstoðarmaðurinn (344). Notaðu þegar u"
+  },
+  {
+   "nafn": "arnold",
+   "tegund": "agent",
+   "heim": "slokkvitaeki",
+   "slod": ".claude/agents/arnold.md",
+   "hud": null,
+   "emoji": null,
+   "sidast": "2026-11-20",
+   "skrif": 1,
+   "gaetir": 0,
+   "breytt": 0,
+   "daudir": [],
+   "merki": "🟢",
+   "lysing": "Arnold 💪 (Schwarzenegger) — yfirmaður The Expendables og sérfræðingur í staðsetningu og kröfum brunavarnabúnaðar: regluverkið (byggingarreglugerð, HMS, 165.BR1"
   },
   {
    "nafn": "birgdastjori",
@@ -57,12 +72,12 @@
    "slod": ".claude/agents/bord-flettur.md",
    "hud": null,
    "emoji": null,
-   "sidast": "2026-11-18",
-   "skrif": 71,
-   "gaetir": 49,
-   "breytt": 7,
+   "sidast": "2026-11-20",
+   "skrif": 72,
+   "gaetir": 50,
+   "breytt": 0,
    "daudir": [],
-   "merki": "🔴",
+   "merki": "🟢",
    "lysing": "Flettur, borð og navigation í Slökkvitæki-appinu — Þjónustuborð (368) og undirborð, Bakendi, Bílstjóri, Aksturslisti, URL-routing (218), bakk (3 lög) og app-síð"
   },
   {
@@ -96,6 +111,21 @@
    "lysing": "Center Hótel-agentinn 🏨 — ber alla söguna um Center Hotels (Miðbæjarhótel/Centerhotels ehf., kt 450905-1430, 11 hótel, Melissa) svo hún sé aldrei rannsökuð aft"
   },
   {
+   "nafn": "dolph-lundgren",
+   "tegund": "agent",
+   "heim": "slokkvitaeki",
+   "slod": ".claude/agents/dolph-lundgren.md",
+   "hud": null,
+   "emoji": null,
+   "sidast": "2026-11-20",
+   "skrif": 1,
+   "gaetir": 0,
+   "breytt": 0,
+   "daudir": [],
+   "merki": "🟢",
+   "lysing": "Dolph Lundgren 🔫 (Gunnar Jensen) — sérfræðingur The Expendables í brunaviðvörunarkerfi: tilboð, verðlistar, skoðunaratriði og kúnnar í brunakerfi-þjónustu. Not"
+  },
+  {
    "nafn": "elon-musk",
    "tegund": "agent",
    "heim": "slokkvitaeki",
@@ -120,7 +150,7 @@
    "sidast": "2026-11-16",
    "skrif": 9,
    "gaetir": 10,
-   "breytt": 3,
+   "breytt": 4,
    "daudir": [],
    "merki": "🟡",
    "lysing": "M (Judi Dench) 🕴️ — stjóri fyrirtækja í þjónustu. Opnar hvert mál um eitt fyrirtæki á charlize_yfirlit(kt) og kúnnaminni, vísar á sérfræðing (kunnaskra: kt/rek"
@@ -147,8 +177,8 @@
    "slod": ".claude/agents/heimaleiga.md",
    "hud": "Heimaleigu-agentinn (kúnna-agent, engin rödd)",
    "emoji": "🏘️",
-   "sidast": "2026-11-19",
-   "skrif": 13,
+   "sidast": "2026-11-20",
+   "skrif": 15,
    "gaetir": 1,
    "breytt": 0,
    "daudir": [],
@@ -180,7 +210,7 @@
    "sidast": "2026-11-17",
    "skrif": 24,
    "gaetir": 22,
-   "breytt": 3,
+   "breytt": 4,
    "daudir": [],
    "merki": "🟡",
    "lysing": "Hönnuðurinn — lagar útlit, farsímaskjái (mobile view) og hannar skjái/app-view í Slökkvitæki-appinu. Notaðu þegar síða eða flipi lítur illa út, brotnar eða er þ"
@@ -327,12 +357,12 @@
    "slod": ".claude/agents/postur.md",
    "hud": "Meg Ryan",
    "emoji": "✉️",
-   "sidast": "2026-11-17",
-   "skrif": 12,
+   "sidast": "2026-11-20",
+   "skrif": 13,
    "gaetir": 10,
-   "breytt": 4,
+   "breytt": 0,
    "daudir": [],
-   "merki": "🟡",
+   "merki": "🟢",
    "lysing": "Meg Ryan ✉️ („You've Got Mail“) — póstvörðurinn. Les, flokkar og tengir tölvupóst beggja félaga (eldklar@, bokhald@eldklar, Brunaholf@, bokhald@brunaholf + brun"
   },
   {
@@ -345,10 +375,25 @@
    "sidast": "2026-11-16",
    "skrif": 8,
    "gaetir": 13,
-   "breytt": 2,
+   "breytt": 3,
    "daudir": [],
    "merki": "🟡",
    "lysing": "QR-merkin og miðaprentunin — Brother PT-P750W, raðnúmerakerfið, QR-skanninn og allar prentleiðirnar. Notaðu þegar miði prentast vitlaust/lítill/óskannanlegur, Q"
+  },
+  {
+   "nafn": "randy-couture",
+   "tegund": "agent",
+   "heim": "slokkvitaeki",
+   "slod": ".claude/agents/randy-couture.md",
+   "hud": null,
+   "emoji": null,
+   "sidast": "2026-11-20",
+   "skrif": 1,
+   "gaetir": 0,
+   "breytt": 0,
+   "daudir": [],
+   "merki": "🟢",
+   "lysing": "Randy Couture 🤼 (Toll Road) — teikninga-túlkur The Expendables: les teikningar (TurboPaint, Ajour Apex, PDF/aðaluppdráttur) og greinir hvaða kerfi eru á þeim, "
   },
   {
    "nafn": "rukkari",
@@ -372,12 +417,12 @@
    "slod": ".claude/agents/sala-reikningar.md",
    "hud": null,
    "emoji": null,
-   "sidast": "2026-11-17",
-   "skrif": 48,
+   "sidast": "2026-11-20",
+   "skrif": 49,
    "gaetir": 39,
-   "breytt": 2,
+   "breytt": 0,
    "daudir": [],
-   "merki": "🟡",
+   "merki": "🟢",
    "lysing": "EINI agentinn sem býr til, leiðréttir, kreditfærir og færir reikninga í Slökkvitæki-appinu — eftir verkferlinu efst í skránni (greiðandi fyrst, lokaathugun síða"
   },
   {
@@ -420,10 +465,25 @@
    "sidast": "2026-11-16",
    "skrif": 3,
    "gaetir": 1,
+   "breytt": 1,
+   "daudir": [],
+   "merki": "🟡",
+   "lysing": "Spider-Man 🕸️ — sölufulltrúinn í Avengers-teymi Tony Stark, „vinalegi nágranninn\" sem þekkir hvert hús í hverfinu. Finnur nýja kúnna (ný fyrirtæki, nýjar byggi"
+  },
+  {
+   "nafn": "terry-crews",
+   "tegund": "agent",
+   "heim": "slokkvitaeki",
+   "slod": ".claude/agents/terry-crews.md",
+   "hud": null,
+   "emoji": null,
+   "sidast": "2026-11-20",
+   "skrif": 1,
+   "gaetir": 0,
    "breytt": 0,
    "daudir": [],
    "merki": "🟢",
-   "lysing": "Spider-Man 🕸️ — sölufulltrúinn í Avengers-teymi Tony Stark, „vinalegi nágranninn\" sem þekkir hvert hús í hverfinu. Finnur nýja kúnna (ný fyrirtæki, nýjar byggi"
+   "lysing": "Terry Crews 💪 (Hale Caesar) — sérfræðingur The Expendables í vatnsúðakerfi / sprinkler: tilboð, þjónustusamningar, EN 12845, byggingavísitala og kúnnar í sprin"
   },
   {
    "nafn": "thema",
@@ -450,9 +510,9 @@
    "sidast": "2026-11-18",
    "skrif": 7,
    "gaetir": 13,
-   "breytt": 0,
+   "breytt": 1,
    "daudir": [],
-   "merki": "🟢",
+   "merki": "🟡",
    "lysing": "Heimdall (Idris Elba) 🌈 gætir hliðsins að kúnnanum: Þjónustugáttin (/gatt, gatt-admin, Tilkynna-QR), opna ársskoðunarformið skoda.html, rýmingaráætlun, vefvers"
   },
   {
@@ -484,6 +544,21 @@
    "daudir": [],
    "merki": "🟡",
    "lysing": "Útlitsgagnrýnandinn (Miranda Priestly) — fer YFIR útlit og hafnar því sem stenst ekki: síma-layout passar alltaf (S26 980 px + venjulegur sími), ekkert klúður í"
+  },
+  {
+   "nafn": "wesley-snipes",
+   "tegund": "agent",
+   "heim": "slokkvitaeki",
+   "slod": ".claude/agents/wesley-snipes.md",
+   "hud": null,
+   "emoji": null,
+   "sidast": "2026-11-20",
+   "skrif": 1,
+   "gaetir": 0,
+   "breytt": 0,
+   "daudir": [],
+   "merki": "🟢",
+   "lysing": "Wesley Snipes 🗡️ (Doc) — sérfræðingur The Expendables í slökkvikerfi eldhús og kæfikerfi: tilboð, verðlistar, kúnnar í slökkvikerfi-þjónustu. Minnst þróaða svæ"
   },
   {
    "nafn": "add-feature",
@@ -552,8 +627,8 @@
    "slod": ".claude/skills/arnold/SKILL.md",
    "hud": null,
    "emoji": null,
-   "sidast": "2026-11-16",
-   "skrif": 19,
+   "sidast": "2026-11-20",
+   "skrif": 20,
    "gaetir": 0,
    "breytt": 0,
    "daudir": [],
@@ -803,6 +878,21 @@
    "lysing": "Layout, CSS and responsive rules specific to the Slokkvitaeki app. Use BEFORE writing any CSS, media query, or layout change in this repo - including mobile/des"
   },
   {
+   "nafn": "tony-stark",
+   "tegund": "skill",
+   "heim": "slokkvitaeki",
+   "slod": ".claude/skills/tony-stark/SKILL.md",
+   "hud": null,
+   "emoji": null,
+   "sidast": "2026-11-20",
+   "skrif": 1,
+   "gaetir": 0,
+   "breytt": 0,
+   "daudir": [],
+   "merki": "🟢",
+   "lysing": "Tony Stark 🦾 — skill ráðgjafans. Hér eru viðmiðunarskrárnar sem agentinn vísar í: Avengers-teymið og delegation, vaxtarstangirnar, tekjuskilgreiningar, morgunr"
+  },
+  {
    "nafn": "uttekt-audit",
    "tegund": "skill",
    "heim": "slokkvitaeki",
@@ -899,12 +989,12 @@
    "slod": ".claude/agents/bokari.md",
    "hud": "Samantha",
    "emoji": "💰",
-   "sidast": "2026-11-16",
-   "skrif": 24,
+   "sidast": "2026-11-20",
+   "skrif": 25,
    "gaetir": 9,
-   "breytt": 6,
+   "breytt": 0,
    "daudir": [],
-   "merki": "🔴",
+   "merki": "🟢",
    "lysing": "Reiknar út Brunahólfs-reikninga og upphæðir: taxtar, VSK, afslættir, Efnislisti, NLSH-samningur, gata-uppgjör (Ajour). Notaðu þegar á að verðleggja vinnu, útbúa"
   },
   {
@@ -921,6 +1011,23 @@
    "daudir": [],
    "merki": "🟢",
    "lysing": "Captain America 🛡️ — markaðsstjórinn í Avengers-teymi Tony Stark. Skrifar færslur og auglýsingar fyrir Facebook/Instagram, heldur efnisdagatal eftir árstíðum ("
+  },
+  {
+   "nafn": "dr-house",
+   "tegund": "agent",
+   "heim": "brunaholf",
+   "slod": ".claude/agents/dr-house.md",
+   "hud": null,
+   "emoji": null,
+   "sidast": "2026-11-20",
+   "skrif": 1,
+   "gaetir": 2,
+   "breytt": 0,
+   "daudir": [
+    "tools/skraning-gatakort-innflutningur.cjs"
+   ],
+   "merki": "🔴",
+   "lysing": "Dr. House 🩻 — sérfræðingurinn í Landspítalaverkinu (NLSH, nýi Landspítalinn Hringbraut, meðferðarkjarni 4.–6. hæð, brunaþéttingar Brunahólfs fyrir ÞG verktaka)"
   },
   {
    "nafn": "endurskodandi",
@@ -959,12 +1066,12 @@
    "slod": ".claude/agents/gagnaleidslur.md",
    "hud": "Statham",
    "emoji": "🥊",
-   "sidast": "2026-11-16",
-   "skrif": 43,
+   "sidast": "2026-11-20",
+   "skrif": 44,
    "gaetir": 13,
-   "breytt": 7,
+   "breytt": 0,
    "daudir": [],
-   "merki": "🔴",
+   "merki": "🟢",
    "lysing": "Gagnaleiðslurnar — Tímavera, Ajour, Payday, Redder, email-innsog, luna-bridge róbótarnir og sjálfvirkni-skráin. Notaðu þegar gögn vantar, innsog brotnar eða spu"
   },
   {
@@ -974,8 +1081,8 @@
    "slod": ".claude/agents/gatakort.md",
    "hud": null,
    "emoji": null,
-   "sidast": "2026-11-14",
-   "skrif": 5,
+   "sidast": "2026-11-20",
+   "skrif": 6,
    "gaetir": 1,
    "breytt": 0,
    "daudir": [],
@@ -1083,10 +1190,10 @@
    "slod": ".claude/agents/kunnaskra.md",
    "hud": "Charlize",
    "emoji": "❄️",
-   "sidast": "2026-11-16",
-   "skrif": 23,
+   "sidast": "2026-11-20",
+   "skrif": 24,
    "gaetir": 9,
-   "breytt": 2,
+   "breytt": 0,
    "daudir": [
     "js/postmoppur.js"
    ],
@@ -1178,9 +1285,9 @@
    "sidast": "2026-11-18",
    "skrif": 29,
    "gaetir": 12,
-   "breytt": 0,
+   "breytt": 1,
    "daudir": [],
-   "merki": "🟢",
+   "merki": "🟡",
    "lysing": "Rukkarinn — einn agent fyrir öll rukkunarmál beggja félaga (Brunahólf + Slökkvitæki): les REIKNINGALOTA-kynninguna, tengingar, Drög-stöð og Þjónustuborð sjálfur"
   },
   {
@@ -1385,8 +1492,8 @@
    "slod": ".claude/skills/gatakort-nytt-husnaedi/SKILL.md",
    "hud": null,
    "emoji": null,
-   "sidast": "2026-11-16",
-   "skrif": 8,
+   "sidast": "2026-11-20",
+   "skrif": 9,
    "gaetir": 0,
    "breytt": 0,
    "daudir": [],
