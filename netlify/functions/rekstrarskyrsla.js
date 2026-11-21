@@ -129,11 +129,17 @@ async function saekja(d) {
     const tilvAf = (m) => (/^payday\|(\d{1,12})$/.exec((m && m.inv_key) || '') || [])[1];
     const tilv = [...new Set(merkt.map(tilvAf).filter(Boolean))];
     if (tilv.length) {
-      const inv = await allt('invoices', `select=id,tilvisun,hofudstoll,status&source=eq.payday&tilvisun=in.(${tilv.join(',')})&order=id.asc`);
+      const inv = await allt('invoices', `select=id,tilvisun,hofudstoll,status,utgafudagur&source=eq.payday&tilvisun=in.(${tilv.join(',')})&order=id.asc`);
       const eftirTilv = new Map(inv.map((i) => [String(i.tilvisun), i]));
+      // Rýni 21.11: aðeins SENT (ógreiddur í Payday — CANCELLED/CREDIT voru aldrei greiðsla) og merktur innan 120 daga frá
+      // útgáfu. 06.07.2026 voru 7 reikningar frá 2022–25 merktir greiddir í einni tiltekt (30,5 m, 235–1.313 dögum eftir
+      // útgáfu); paid_at þar er smellurinn, ekki greiðsludagurinn, og ætti ekki að teljast innborgun þann dag.
+      const DAGUR_MS = 86400000;
       for (const m of merkt) {
         const i = eftirTilv.get(String(tilvAf(m) || ''));
-        if (i && i.status !== 'PAID' && m.paid_at) paydayBh.push({ status: 'PAID', greidsla_date: String(m.paid_at).slice(0, 10), hofudstoll: i.hofudstoll });
+        if (!i || i.status !== 'SENT' || !m.paid_at || !i.utgafudagur || !(Number(i.hofudstoll) > 0)) continue;
+        const dagar = (Date.parse(String(m.paid_at).slice(0, 10)) - Date.parse(String(i.utgafudagur).slice(0, 10))) / DAGUR_MS;
+        if (dagar >= 0 && dagar <= 120) paydayBh.push({ status: 'PAID', greidsla_date: String(m.paid_at).slice(0, 10), hofudstoll: i.hofudstoll });
       }
     }
   } catch (e) { /* sjá að ofan */ }
