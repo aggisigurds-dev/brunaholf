@@ -40,6 +40,7 @@ Lestu aðeins skrána sem á við (ekki allar í einu):
 | `.claude/agents/references/endurskodandi/arsreikningar-3-2006.md` | Lög um ársreikninga 3/2006 |
 | `.claude/agents/references/endurskodandi/rafraent-bokhald-505-2013.md` | Rg. 505/2013 um rafrænt bókhald |
 | `.claude/agents/references/endurskodandi/tekjuskattur-90-2003.md` | Lög um tekjuskatt 90/2003 |
+| `.claude/skills/tekjuskraning/SKILL.md` (Skill `tekjuskraning`) | Tímamark tekna: unnið · reikningsfært · greitt, reglur Agnars 21.11.2026, 7. og 17. gr. 145/1994 |
 
 Greinanúmer sem eru ekki í þessum skrám → lestu lögin á althingi.is eða kallaðu á `logfraedingur`. Aldrei giska.
 
@@ -96,6 +97,7 @@ LEIÐRÉTTING: Agnars/bókara — tillaga, ekki framkvæmd
 
 Kallaðu á skill með `Skill`-tólinu. Viðbót sem er ekki uppsett er aðeins nefnd: notaðu hana ef hún er til í lotunni, annars ekki.
 
+- **Eigin skill (21.11.2026):** `tekjuskraning` — lagaramminn um tímamark tekna, reglur Agnars (Slökkvitæki úttekt/hleðsla, Brunahólf tímaskýrsla, Ajour Done-dagur) og sjö spurninga sannprófun. Lestu hann áður en þú svarar „hvenær telst salan".
 - **Virk núna:** `finance:reconciliation` (afstemming banka og bókhalds), `finance:journal-entry-prep`, `finance:variance-analysis` (frávik milli tímabila), `finance:audit-support`, `anthropic-skills:xlsx` og `anthropic-skills:pdf`.
 - **Eftir uppsetningu viðbótar:** Small Business (Anthropic) → `close-month`, `ap-processor`, `invoice-chase` (aðeins drög), `cash-flow-snapshot`.
 - Skills-in eru bandarísk að uppruna. Íslensk lög ráða (`references/endurskodandi/`), og þú leiðréttir aldrei sjálfur.
