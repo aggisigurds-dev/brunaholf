@@ -143,6 +143,96 @@
   .inn input { height: 40px; padding: 0 12px; border: 1px solid var(--line); border-radius: 10px; font-size: 14px; min-width: 200px; }
   .inn button { height: 40px; padding: 0 18px; border: 0; border-radius: 10px; background: linear-gradient(180deg, var(--orange-hi), var(--orange-lo)); color: var(--on-orange); font-weight: 600; cursor: pointer; }
 
+  /* ===== 21.11.2026 — dýpt og gæði (Agnar: „mátt reyna setja aðeins meiri hq dýpt, details, gæði í hönnunina þarna,
+     hræðilega boring"). Sama útlit og yfirsýnarröndin á Þjónustuborðinu: burstaður navy-málmur, upphleypt spjöld,
+     ljósar brúnir, gljái og ljómi. Aðeins útlit — engar tölur eða reglur breytast hér. ===== */
+  .hetja { position: relative; isolation: isolate; overflow: hidden;
+    background:
+      radial-gradient(55% 140% at 88% -30%, rgba(255,103,2,.26), transparent 55%),
+      radial-gradient(45% 130% at -5% 125%, rgba(47,111,228,.34), transparent 60%),
+      repeating-linear-gradient(0deg, rgba(255,255,255,.03) 0 1px, transparent 1px 2px),
+      repeating-linear-gradient(0deg, rgba(0,0,0,.07) 0 1px, transparent 1px 4px),
+      linear-gradient(180deg, #14386c 0%, #0b2a55 42%, #061a36 100%); }
+  .hetja::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 2px; background: linear-gradient(90deg, #ffb066, #ff6702 22%, rgba(255,103,2,0) 70%); box-shadow: 0 0 18px rgba(255,103,2,.6); }
+  .hetja::after { content: ""; position: absolute; inset: 0; z-index: -1; background-image: radial-gradient(rgba(255,255,255,.055) 1px, transparent 1px); background-size: 16px 16px;
+    -webkit-mask-image: radial-gradient(55% 90% at 72% 25%, #000, transparent); mask-image: radial-gradient(55% 90% at 72% 25%, #000, transparent); }
+  .eyebrow { text-shadow: 0 0 14px rgba(255,138,31,.65); }
+  h1 { background: linear-gradient(180deg, #ffffff 40%, #c4d3ef); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 2px 0 rgba(0,0,0,.45)) drop-shadow(0 0 26px rgba(140,180,255,.25)); }
+  .seg { background: rgba(0,6,18,.45); border-color: rgba(160,190,235,.22); box-shadow: inset 0 1px 3px rgba(0,0,0,.7), 0 1px 0 rgba(255,255,255,.08); }
+  .seg button[aria-pressed="true"], .seg label.on { background: linear-gradient(180deg, #ffa756 0%, #ff6702 48%, #e25000 52%, #f06a14 100%); text-shadow: 0 1px 0 rgba(120,35,0,.6);
+    box-shadow: inset 0 1px 0 rgba(255,235,210,.75), inset 0 -2px 3px rgba(120,30,0,.3), 0 8px 18px -8px rgba(255,103,2,.95), 0 0 0 1px rgba(150,45,0,.55); }
+  .takki-n { background: linear-gradient(180deg, rgba(255,255,255,.13), rgba(255,255,255,.03)); box-shadow: inset 0 1px 0 rgba(255,255,255,.2), 0 4px 10px -4px rgba(0,0,0,.6); }
+
+  /* lykilspjöldin: upphleypt málmgler — ljós brún efst, dökk að neðan, gljái, litaður topplisti og ljómi */
+  .kort article { position: relative; isolation: isolate; overflow: hidden;
+    background:
+      linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,0) 36%),
+      radial-gradient(110% 80% at 50% 0%, rgba(90,150,230,.30), transparent 70%),
+      repeating-linear-gradient(0deg, rgba(255,255,255,.025) 0 1px, transparent 1px 3px),
+      linear-gradient(160deg, #163d77 0%, #0a2550 55%, #061a38 100%);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.28), inset 0 0 0 1px rgba(150,185,235,.22), inset 0 -2px 0 rgba(0,0,0,.45),
+      0 0 0 1px rgba(1,20,45,.55), 0 28px 44px -24px rgba(1,20,45,.95), 0 8px 16px -8px rgba(1,20,45,.5);
+    transition: transform .22s cubic-bezier(.23,1,.32,1), box-shadow .22s; }
+  .kort article::before { content: ""; position: absolute; left: 20px; top: -1px; width: 48px; height: 3px; border-radius: 0 0 3px 3px;
+    background: linear-gradient(90deg, #ff6702, #ffb066); box-shadow: 0 0 12px #ff8a1f, 0 0 26px rgba(255,103,2,.6); }
+  .kort article:nth-child(3)::before { background: linear-gradient(90deg, #2f6fe4, #8db2f7); box-shadow: 0 0 12px #5b8ff0, 0 0 26px rgba(47,111,228,.6); }
+  .kort article:nth-child(4)::before { background: linear-gradient(90deg, #16a34a, #86efac); box-shadow: 0 0 12px #22c55e, 0 0 26px rgba(22,163,74,.6); }
+  .kort article::after { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none; background: radial-gradient(180px 110px at 0 0, rgba(255,138,31,.20), transparent 70%); }
+  .kort article:hover { transform: translateY(-3px); box-shadow: inset 0 1px 0 rgba(255,255,255,.32), inset 0 0 0 1px rgba(255,138,31,.45), inset 0 -2px 0 rgba(0,0,0,.45),
+      0 0 0 1px rgba(1,20,45,.55), 0 34px 50px -24px rgba(1,20,45,1), 0 0 30px -10px rgba(255,138,31,.55); }
+  .ikon { color: #fff; background: radial-gradient(circle at 30% 20%, rgba(255,255,255,.5), transparent 50%), linear-gradient(160deg, #ffa04a, #ff6702 50%, #c94400);
+    box-shadow: inset 0 1px 0 rgba(255,235,210,.75), inset 0 -1px 1px rgba(110,30,0,.5), 0 4px 10px -3px rgba(255,103,2,.9), 0 0 18px -4px rgba(255,138,31,.85); }
+  .ikon svg { filter: drop-shadow(0 1px 0 rgba(110,30,0,.6)); }
+  .kort .hd { color: #dfe6f2; font-weight: 600; }
+  .kort .gildi { font-size: 34px; letter-spacing: -.02em; background: linear-gradient(180deg, #ffffff 35%, #c4d3ef); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 1px 0 rgba(0,0,0,.55)) drop-shadow(0 0 18px rgba(130,175,255,.22)); }
+  .delta { text-shadow: 0 0 8px currentColor; }
+  .delta.upp { background: linear-gradient(180deg, rgba(74,222,128,.24), rgba(22,163,74,.10)); box-shadow: inset 0 0 0 1px rgba(134,239,172,.45), 0 0 14px -6px rgba(74,222,128,.8); }
+  .delta.nidur { background: linear-gradient(180deg, rgba(248,113,113,.26), rgba(220,38,38,.10)); box-shadow: inset 0 0 0 1px rgba(252,165,165,.45), 0 0 14px -6px rgba(248,113,113,.8); }
+  .delta.takt { font-weight: 600; }
+  .skjar { padding: 7px 7px 3px; border-radius: 10px; background: linear-gradient(180deg, rgba(0,6,20,.58), rgba(0,6,20,.32)); box-shadow: inset 0 2px 6px rgba(0,0,0,.75), inset 0 0 0 1px rgba(255,255,255,.04), 0 1px 0 rgba(255,255,255,.1); }
+  .kort svg.spark { height: 48px; filter: drop-shadow(0 0 3px rgba(255,138,31,.85)) drop-shadow(0 0 8px rgba(255,103,2,.45)); }
+  .sundur { padding: 4px 10px; border-radius: 10px; background: rgba(0,6,20,.35); box-shadow: inset 0 1px 3px rgba(0,0,0,.6), 0 1px 0 rgba(255,255,255,.08); }
+  .sundur div { padding: 6px 0; }
+  .sundur div + div { border-top: 1px solid rgba(255,255,255,.07); }
+  .kort .fotur { border-top-color: rgba(255,255,255,.12); }
+
+  /* ljósu spjöldin: fínni dýpt og tákn í upphleyptum reit */
+  .spjald { box-shadow: inset 0 1px 0 #ffffff, 0 0 0 1px rgba(1,31,64,.06), 0 20px 44px -24px rgba(1,31,64,.38), 0 4px 10px -6px rgba(1,31,64,.14); }
+  .spjald.pad > .hausrod h2 > svg, .spjald.pad > h2 > svg { flex: none; box-sizing: content-box; padding: 6px; border-radius: 9px;
+    background: linear-gradient(160deg, #fff4ea, #ffe2c8); box-shadow: inset 0 1px 0 #fff, 0 0 0 1px rgba(255,103,2,.2), 0 4px 10px -4px rgba(255,103,2,.55); }
+  .tafla-haus { position: relative; background: repeating-linear-gradient(0deg, rgba(255,255,255,.03) 0 1px, transparent 1px 2px), radial-gradient(60% 200% at 100% 0%, rgba(255,103,2,.18), transparent 60%), linear-gradient(180deg, #163d77, #0a244a);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.22), inset 0 -1px 0 rgba(0,0,0,.45); }
+  .tafla-haus::after { content: ""; position: absolute; left: 0; right: 0; bottom: -1px; height: 2px; background: linear-gradient(90deg, #ff6702, rgba(255,103,2,0) 45%); }
+  .tafla-haus h2 > svg { box-sizing: content-box; padding: 5px; border-radius: 8px; background: radial-gradient(circle at 30% 20%, rgba(255,255,255,.4), transparent 50%), linear-gradient(160deg, #ffa04a, #ff6702 50%, #c94400);
+    stroke: #fff; box-shadow: inset 0 1px 0 rgba(255,235,210,.7), 0 0 14px -3px rgba(255,138,31,.85); }
+  .rod.haus { background: linear-gradient(180deg, #f4f7fc, #e8eef7); }
+  .rod .val { background: linear-gradient(180deg, rgba(255,103,2,.09), rgba(255,103,2,.035)); box-shadow: inset 1px 0 0 rgba(255,103,2,.22), inset -1px 0 0 rgba(255,103,2,.22); }
+  .reitur .sulubak { height: 5px; box-shadow: inset 0 1px 1px rgba(1,31,64,.15); }
+  .reitur .sulubak i { background: linear-gradient(180deg, #8db2f7, #2f6fe4); opacity: .55; }
+  .reitur.val .sulubak i { background: linear-gradient(180deg, #ffb066, #ff6702); opacity: .95; box-shadow: 0 0 6px rgba(255,103,2,.6); }
+
+  /* tekjuskipting: dökkur innfelldur skjár, glansandi súlur í stiglum, ljómi á valinni súlu */
+  .graf { padding: 18px 16px 10px; border-radius: 14px;
+    background: radial-gradient(80% 60% at 50% 0%, rgba(90,150,230,.24), transparent 70%), repeating-linear-gradient(0deg, rgba(255,255,255,.025) 0 1px, transparent 1px 3px), linear-gradient(180deg, #0f2d5c, #061a36);
+    box-shadow: inset 0 2px 10px rgba(0,0,0,.6), inset 0 0 0 1px rgba(150,185,235,.18), 0 1px 0 #fff, 0 14px 28px -16px rgba(1,31,64,.55); }
+  .sulur { border-bottom-color: rgba(255,255,255,.2); background-image: repeating-linear-gradient(0deg, transparent 0 49px, rgba(255,255,255,.06) 49px 50px); }
+  .sula .tot { color: #e6edf8; text-shadow: 0 1px 0 rgba(0,0,0,.6); }
+  .sula.valin .tot, .merki .valin .n { color: #ffb37a; text-shadow: 0 0 10px rgba(255,138,31,.75); }
+  .merki .n { color: #c8d4e8; } .merki .s { color: #9fb0cc; } .merki .s.warn { color: #f8d98d; }
+  .sula .stafli { position: relative; border-radius: 8px 8px 2px 2px; background: rgba(255,255,255,.04); box-shadow: inset 0 0 0 1px rgba(255,255,255,.08), 0 14px 24px -12px rgba(0,0,0,.9), 0 0 20px -8px rgba(120,170,255,.45); }
+  .sula .stafli::after { content: ""; position: absolute; inset: 0; pointer-events: none; border-radius: inherit; background: linear-gradient(90deg, rgba(255,255,255,.26), rgba(255,255,255,0) 40%, rgba(0,0,0,.18) 100%); }
+  .sula .stafli > div + div { box-shadow: inset 0 1px 0 rgba(255,255,255,.4); }
+  .sula.valin .stafli { outline: none; box-shadow: 0 0 0 2px #ff8a1f, 0 0 28px -2px rgba(255,138,31,.85), 0 14px 24px -12px rgba(0,0,0,.9); }
+  .skyring { background: linear-gradient(180deg, #f4f7fc, #e9eff8); box-shadow: inset 0 1px 3px rgba(1,31,64,.14), 0 1px 0 #fff; }
+  .skyring .lina .ferningur { box-shadow: inset 0 1px 0 rgba(255,255,255,.45), 0 2px 5px rgba(1,31,64,.35); }
+
+  /* heimildir: ljósdíóður */
+  .heimild { background: linear-gradient(180deg, #f7f9fd, #edf2f9); box-shadow: inset 0 1px 0 #fff, 0 0 0 1px rgba(1,31,64,.06), 0 6px 14px -10px rgba(1,31,64,.35); }
+  .pilla.ok .p { box-shadow: 0 0 5px var(--ok), 0 0 11px var(--ok); }
+  .pilla.warn .p { box-shadow: 0 0 5px var(--warn), 0 0 11px var(--warn); }
+
   .bida { opacity: .55; transition: opacity .18s; }
   @media (max-width: 640px) { .wrap { padding: 0 16px; } h1 { font-size: 30px; } }
   @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
@@ -162,6 +252,8 @@
         <button type="button" data-v="gaer">Í gær</button>
         <button type="button" data-v="vika">Þessi vika</button>
         <button type="button" data-v="svika">Síðasta vika</button>
+        <button type="button" data-v="man">Þessi mánuður</button>
+        <button type="button" data-v="sman">Síðasti mánuður</button>
         <label class="dagval" id="velja-takki">
           <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
           <span id="velja-texti">Velja dag</span>
@@ -218,7 +310,7 @@
       <div class="skyringar">
         <span><b>Tekjur Slökkvitækis:</b> lokaðar sölur án vsk eftir stofndegi, kreditnótur dregnar frá, ógildar sölur úti (sama regla og Tekjur í beinni).</span>
         <span><b>Áunnið virði Brunahólfs:</b> rukkanlegir Tímaveru-tímar × dagvinnutaxti verkstaðar í Verðskrá (annars 9.951 kr.) + kláruð göt × samningstaxti (Landspítalinn, Heklureitur). Áætlun, ekki reikningur; Landspítalinn fyrir 5 % geymslufé; yfirvinna ekki reiknuð.</span>
-        <span><b>Greitt til okkar:</b> verslun (kort og reiðufé eftir greiðsludegi) + greiddar kröfur í Payday beggja félaga.</span>
+        <span><b>Greitt til okkar:</b> verslun (kort og reiðufé eftir greiðsludegi) + greiddar kröfur í Payday beggja félaga + reikningar Brunahólfs merktir greiddir í Kröfu yfirliti (t.d. millifærsla framhjá Payday). Án vsk; yfirsýnarröndin á Þjónustuborðinu sýnir sömu greiðslur með vsk.</span>
         <span><b>Tímavera</b> sýnir aðeins vaktir sem búið er að stimpla út; <b>Ajour</b> berst í lotum, svo nýjustu dagar geta verið ófullir.</span>
       </div>
     </section>
@@ -231,7 +323,14 @@
   var $ = function (id) { return document.getElementById(id); };
   var VIKUDAGAR = ['sunnudagur', 'mánudagur', 'þriðjudagur', 'miðvikudagur', 'fimmtudagur', 'föstudagur', 'laugardagur'];
   var MAN = ['janúar', 'febrúar', 'mars', 'apríl', 'maí', 'júní', 'júlí', 'ágúst', 'september', 'október', 'nóvember', 'desember'];
-  var LITIR = { sl: '#ff6702', tim: '#0b2d5f', lsh: '#2f6fe4', hek: '#9cb9f2' };
+  // 21.11.2026 (Agnar: „breyta litunum í súlunum í meira töff"): stiglar á dökkum skjá — eldappelsínugult (SL),
+  // rafblátt (BH tímar), blágrænt (Landspítalinn) og fjólublátt (Heklureitur).
+  var LITIR = {
+    sl: 'linear-gradient(180deg,#ffc28a 0%,#ff7a1a 45%,#e04e00 100%)',
+    tim: 'linear-gradient(180deg,#8fb0ff 0%,#3b5bdb 50%,#1e2f8f 100%)',
+    lsh: 'linear-gradient(180deg,#7cecfb 0%,#06b6d4 50%,#0e7490 100%)',
+    hek: 'linear-gradient(180deg,#dcc0ff 0%,#a855f7 50%,#6b21a8 100%)'
+  };
   var SVG = {
     tot: '<polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/>',
     sl: '<path d="M15 6.5V3a1 1 0 0 0-1-1h-2a1 1 0 0 0-1 1v3.5"/><path d="M9 18h8"/><path d="M18 3h-3"/><path d="M11 3a6 6 0 0 0-6 6v11"/><path d="M5 13h4"/><path d="M17 10a4 4 0 0 0-8 0v10a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2Z"/>',
@@ -273,7 +372,9 @@
   var val = 'idag', valinDagur = null;
   var skyndi = {};
   function dagurFyrirVal() { if (val === 'velja' && valinDagur) return valinDagur; if (val === 'gaer') return plusDagar(idagIso(), -1); return idagIso(); }
-  function dalkur() { return val === 'vika' ? 1 : val === 'svika' ? 2 : 0; }
+  // 21.11.2026 (Agnar: „ef þú gætir bætt inn þessi mánuður og síðasti mánuður líka"): fallið reiknar þau tímabil þegar
+  // (timabil[3] = mánuðurinn til dagsins, [4] = síðasti heili mánuður) — flipinn velur aðeins dálkinn.
+  function dalkur() { return { vika: 1, svika: 2, man: 3, sman: 4 }[val] || 0; }
 
   function stada(texti, villa) { var s = $('stada'); s.hidden = !texti; s.textContent = texti || ''; s.className = 'stada' + (villa ? ' villa' : ''); }
 
@@ -302,7 +403,7 @@
     $('innskraning').hidden = true; $('efni').hidden = false; stada('');
     $('sott').textContent = 'Sótt ' + klukka(g.sott);
     var t = g.timabil;
-    var dagsHeiti = { vika: 'Þessi vika', svika: 'Síðasta vika' }[val];
+    var dagsHeiti = { vika: 'Þessi vika', svika: 'Síðasta vika', man: 'Þessi mánuður', sman: 'Síðasti mánuður' }[val];
     var dd = new Date(g.dagur + 'T00:00:00Z');
     $('dagsetning').textContent = dagsHeiti
       ? dagsHeiti + ' · ' + ddmm(t[hi].fra) + '–' + ddmm(t[hi].til)
@@ -315,36 +416,60 @@
     teiknaHeimildir(g);
   }
 
+  var sparkNr = 0;
   function spark(gildi) {
     var max = Math.max.apply(null, gildi) || 1;
     var pts = gildi.map(function (v, i) { return (i * 120 / Math.max(gildi.length - 1, 1)).toFixed(1) + ',' + (34 - v / max * 30).toFixed(1); });
-    return '<svg class="spark" viewBox="0 0 120 36" preserveAspectRatio="none" aria-hidden="true"><polygon points="0,36 ' + pts.join(' ') + ' 120,36" fill="rgba(255,138,31,0.14)"/><polyline points="' + pts.join(' ') + '" fill="none" stroke="#ff8a1f" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round"/></svg>';
+    // 21.11.2026: fyllingin dofnar niður (stigull) og línan glóir — sama ferilsmál og yfirsýnarröndin.
+    return '<svg class="spark" viewBox="0 0 120 36" preserveAspectRatio="none" aria-hidden="true"><defs><linearGradient id="spk' + (++sparkNr) + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff6702" stop-opacity=".5"/><stop offset="1" stop-color="#ff6702" stop-opacity="0"/></linearGradient></defs>' +
+      '<polygon points="0,36 ' + pts.join(' ') + ' 120,36" fill="url(#spk' + sparkNr + ')"/><polyline points="' + pts.join(' ') + '" fill="none" stroke="#ffb066" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round"/></svg>';
   }
   function delta(nu, fyrr, merki) {
     if (!fyrr) return null;
     var p = Math.round((nu / fyrr - 1) * 100), upp = p >= 0;
     return el('span', { class: 'delta ' + (upp ? 'upp' : 'nidur'), html: svg(upp ? 'upp' : 'nidur', 13, 'currentColor', 2.5) }, [Math.abs(p) + ' % ' + (upp ? 'hærra' : 'lægra') + ' en ' + merki]);
   }
+  // Mánuður: síðasti heili mánuður ber sig saman við mánuðinn á undan; mánuðurinn til dagsins er hálfnaður og fær því
+  // ekki ör upp/niður heldur hlutfall af öllum síðasta mánuði á móti því hve mikið er liðið af þessum.
+  function manNafn(p) { return MAN[new Date(p.fra + 'T00:00:00Z').getUTCMonth()]; }
+  function takti(nu, fyrr, fyrriNafn, lidid) {
+    if (!fyrr) return null;
+    var p = Math.round(nu / fyrr * 100);
+    return el('span', { class: 'delta takt ' + (p >= lidid ? 'upp' : 'nidur') }, [p + ' % af öllum ' + fyrriNafn + ' · ' + lidid + ' % liðið']);
+  }
   function teiknaKort(g, hi, erIdag, ofullt, ajourTil) {
     var k = $('kort'); k.textContent = '';
-    var sb = g.samanburdur[['dag', 'vika', 'svika'][hi]];
-    var hlaupandi = erIdag && hi === 0; // dagurinn stendur enn — ekki borið saman við heilan dag
+    var t = g.timabil;
+    var sb = hi <= 2 ? g.samanburdur[['dag', 'vika', 'svika'][hi]]
+      : hi === 4 ? { nu: { sl: g.sl.tekjur[4], bh: g.bh.virdi[4] }, fyrr: { sl: g.sl.tekjur[5], bh: g.bh.virdi[5] }, merki: 'í ' + manNafn(t[5]) }
+        : null;
+    var hlaupandi = (erIdag && hi === 0) || hi === 3; // dagurinn/mánuðurinn stendur enn — ekki borið saman við heilt tímabil
+    var lidid = 0;
+    if (hi === 3) { var d0 = new Date(t[3].fra + 'T00:00:00Z'), dim = new Date(Date.UTC(d0.getUTCFullYear(), d0.getUTCMonth() + 1, 0)).getUTCDate(); lidid = Math.round(Number(t[3].til.slice(8, 10)) / dim * 100); }
     var rod = g.rod || [];
     var spjald = function (ikon, heiti, gildi, d, sparkGildi, smatt) {
       var a = el('article');
       a.appendChild(el('div', { class: 'hd' }, [el('span', { class: 'ikon', html: svg(ikon) }), heiti]));
       a.appendChild(el('span', { class: 'gildi num', text: kr(gildi) + ' kr.' }));
       if (d) a.appendChild(d);
-      if (sparkGildi) a.appendChild(el('div', { html: spark(sparkGildi) }));
+      if (sparkGildi) a.appendChild(el('div', { class: 'skjar', html: spark(sparkGildi) }));
       a.appendChild(el('span', { class: 'smatt', text: smatt }));
       return a;
     };
     var nu = function (x) { return sb ? sb.nu[x] : 0; }, fyrr = function (x) { return sb ? sb.fyrr[x] : 0; };
-    var dT = hlaupandi ? null : delta(nu('sl') + nu('bh'), fyrr('sl') + fyrr('bh'), sb.merki);
-    var dS = hlaupandi ? null : delta(nu('sl'), fyrr('sl'), sb.merki);
-    var dB = hlaupandi ? null : delta(nu('bh'), fyrr('bh'), sb.merki);
+    var dT, dS, dB;
+    if (hi === 3) {
+      var fn = manNafn(t[4]);
+      dT = takti(g.badir.tekjur[3], g.badir.tekjur[4], fn, lidid);
+      dS = takti(g.sl.tekjur[3], g.sl.tekjur[4], fn, lidid);
+      dB = takti(g.bh.virdi[3], g.bh.virdi[4], fn, lidid);
+    } else {
+      dT = hlaupandi || !sb ? null : delta(nu('sl') + nu('bh'), fyrr('sl') + fyrr('bh'), sb.merki);
+      dS = hlaupandi || !sb ? null : delta(nu('sl'), fyrr('sl'), sb.merki);
+      dB = hlaupandi || !sb ? null : delta(nu('bh'), fyrr('bh'), sb.merki);
+    }
     k.appendChild(spjald('tot', 'Heildartekjur beggja', g.badir.tekjur[hi], dT, rod.map(function (r) { return r.sl + r.bh; }),
-      hlaupandi ? 'Dagurinn stendur enn · línan sýnir síðustu 30 daga' : 'Síðustu 30 dagar · Slökkvitæki + Brunahólf'));
+      (erIdag && hi === 0) ? 'Dagurinn stendur enn · línan sýnir síðustu 30 daga' : 'Síðustu 30 dagar · Slökkvitæki + Brunahólf'));
     k.appendChild(spjald('sl', 'Slökkvitæki · tekjur', g.sl.tekjur[hi], dS, rod.map(function (r) { return r.sl; }),
       'Þar af ' + kr(g.sl.krafa[hi]) + ' kr. sett í kröfu · ' + kr(g.sl.ny[hi]) + ' ný tæki seld'));
     k.appendChild(spjald('bh', 'Brunahólf · áunnið virði', g.bh.virdi[hi], dB, rod.map(function (r) { return r.bh; }),
@@ -384,12 +509,13 @@
     var sk = $('skyring'); sk.textContent = '';
     var p = g.timabil[hi];
     var selTot = STOFNAR.reduce(function (a, s) { return a + s[1][hi]; }, 0);
-    sk.appendChild(el('span', { class: 'titill', text: (['', 'ÞESSI VIKA', 'SÍÐASTA VIKA'][hi] || (g.dagur === g.idag ? 'Í DAG' : 'DAGURINN')) + ' · ' + (p.fra === p.til ? ddmm(p.fra) : ddmm(p.fra) + '–' + ddmm(p.til)) }));
+    sk.appendChild(el('span', { class: 'titill', text: (['', 'ÞESSI VIKA', 'SÍÐASTA VIKA', 'ÞESSI MÁNUÐUR', 'SÍÐASTI MÁNUÐUR'][hi] || (g.dagur === g.idag ? 'Í DAG' : 'DAGURINN')) + ' · ' + (p.fra === p.til ? ddmm(p.fra) : ddmm(p.fra) + '–' + ddmm(p.til)) }));
     STOFNAR.forEach(function (s) {
       sk.appendChild(el('div', { class: 'lina' }, [el('span', { class: 'ferningur', style: 'background:' + s[2] }), el('span', { class: 'nafn', text: s[0] }),
         el('span', { class: 'upph num', text: kr(s[1][hi]) + ' kr.' }), el('span', { class: 'pct num', text: selTot > 0 ? Math.round(s[1][hi] / selTot * 100) + ' %' : '–' })]));
     });
-    sk.appendChild(el('div', { class: 'samtals' }, [el('span', { text: 'Samtals' }), el('span', { class: 'num', text: kr(selTot) + ' kr.' }), el('span')]));
+    // Samtals = sama tala og spjaldið „Heildartekjur beggja" (summa námundaðra hluta gat munað 1 kr.).
+    sk.appendChild(el('div', { class: 'samtals' }, [el('span', { text: 'Samtals' }), el('span', { class: 'num', text: kr(g.badir.tekjur[hi]) + ' kr.' }), el('span')]));
   }
 
   function teiknaToflur(g, hi, ofullt, ajourTil, erIdag) {

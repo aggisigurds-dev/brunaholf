@@ -119,6 +119,24 @@ async function saekja(d) {
   const gogn = { solur, voidIds: voidRadir.map((r) => r.id), vorur, verkbeidnir, verklidur, uttektir, paydaySl, timavera, pricing, ajour,
     holeRates, sentMeta, drog, paydayBh };
   const nyjastGreitt = paydayBh.reduce((a, r) => (r.greidsla_date && r.greidsla_date > a ? r.greidsla_date : a), '');
+  // 21.11.2026 — BH-reikningar sem eru MERKTIR GREIDDIR í Kröfu yfirliti (krofur_yfirlit_meta.paid, t.d. millifærsla
+  // framhjá Payday) en Payday telur ekki greidda töldust hvergi í „Greitt til okkar" — október vantaði R-378 Landspítala
+  // og R-372 Mosfellsbæ (3,32 m án vsk; yfirferð Agnars á yfirsýnarröndinni 21.11). Þeir bætast nú við á paid_at, með
+  // höfuðstól eins og Payday-greiðslurnar. Payday-PAID reikningar eru ekki taldir aftur. Viðbót: bili sóknin stendur
+  // Payday-talan óbreytt. `nyjastGreitt` (ferskleiki Payday) er reiknað á undan, svo það lýsir áfram Payday einu.
+  try {
+    const merkt = await allt('krofur_yfirlit_meta', `select=inv_key,paid_at&paid=eq.true&paid_at=gte.${fraTs}&order=inv_key.asc`);
+    const tilvAf = (m) => (/^payday\|(\d{1,12})$/.exec((m && m.inv_key) || '') || [])[1];
+    const tilv = [...new Set(merkt.map(tilvAf).filter(Boolean))];
+    if (tilv.length) {
+      const inv = await allt('invoices', `select=id,tilvisun,hofudstoll,status&source=eq.payday&tilvisun=in.(${tilv.join(',')})&order=id.asc`);
+      const eftirTilv = new Map(inv.map((i) => [String(i.tilvisun), i]));
+      for (const m of merkt) {
+        const i = eftirTilv.get(String(tilvAf(m) || ''));
+        if (i && i.status !== 'PAID' && m.paid_at) paydayBh.push({ status: 'PAID', greidsla_date: String(m.paid_at).slice(0, 10), hofudstoll: i.hofudstoll });
+      }
+    }
+  } catch (e) { /* sjá að ofan */ }
   return {
     gogn,
     ferskleiki: {
