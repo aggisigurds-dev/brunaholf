@@ -16,7 +16,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/css/theme.css?v=4">
-<link rel="stylesheet" href="/css/fjarmalyfirlit.css?v=5">
+<link rel="stylesheet" href="/css/fjarmalyfirlit.css?v=6">
   <script src="/js/dags-snid.js?v=20260918b"></script>
 </head>
 <body>
@@ -155,6 +155,8 @@
         '<div class="val">'+num(grandDisp)+'<span class="kr">kr</span></div></div>' +
         '<div class="pipe">'+pipe+'</div>' +
       '</div>' +
+      // 22.11.2026 (Agnar: „setja líka hingað“): hvernig gengur reksturinn — unnið (ekki sent) hjá hvoru félagi, ein skýr setning + merkt áætlun
+      '<div id="fy-rekstur" class="fy-rk" aria-live="polite"><span class="fy-rk-d">Sæki reksturinn …</span></div>' +
 
       '<section>'+sh('🧯 Slökkvitæki — kröfur', A.heildar.kr) +
         '<div class="grid">' +
@@ -206,8 +208,33 @@
       var d=res[0], nlsh=res[1];
       if(d.error){ document.getElementById('app').innerHTML='<div class="warn">Villa: '+d.error+'</div>'; return; }
       render(d, nlsh, Date.now());
+      fyReksturHlada();
     }).catch(function(e){
       document.querySelectorAll('.sh-r').forEach(function(b){ b.classList.remove('snuning'); }); document.getElementById('app').innerHTML='<div class="warn">Netvilla: '+e.message+'</div>'; });
+  }
+  // ---- Hvernig gengur reksturinn? (úr /api/rekstur-yfirlit = gegnumstreymi á slokkvitaeki; reglurnar búa þar) ----
+  // Ómælt með ástæðu ef eitthvað bregst — aldrei 0. Hvort félag sér, aldrei lögð saman. Allt úr svarinu fer gegnum esc().
+  function mkrF(n){ if(n==null||!isFinite(n)) return 'ómælt'; var a=Math.abs(n); return (n<0?'−':'')+(a>=1e6?(a/1e6).toFixed(2).replace('.',',')+' m':num(a)+' kr'); }
+  function fyReksturFelag(nafn, b){
+    if(!b || b.omaelt || !b.setning) return '<div class="fy-rk-f"><b>'+esc(nafn)+'</b> <span class="fy-rk-d">ómælt — '+esc((b&&b.omaelt)||'gögn vantar')+'</span></div>';
+    var s=b.setning, o=b.ogreitt||{}, i=b.innheimta||{};
+    var ogr = o.omaelt ? 'ógreitt ómælt' : ('ógreitt '+mkrF(o.kr_an_vsk!=null?o.kr_an_vsk:o.kr_m_vsk)+(o.kr_an_vsk!=null?' án VSK':' m. VSK')+', gjaldfallið '+mkrF(o.gjaldfallid_kr!=null?o.gjaldfallid_kr:o.gjaldfallid_kr_m_vsk));
+    var inn = i.omaelt ? 'innheimta ómæld' : ('innheimtuhlutfall '+(i.hlutfall!=null?String(i.hlutfall).replace('.',',')+' %':'ómælt')+' · greiðsluhraði '+(i.hradi_midgildi!=null?String(i.hradi_midgildi).replace('.',',')+' d':'ómælt'));
+    return '<div class="fy-rk-f"><b>'+esc(nafn)+'</b> '+esc(s.setning)+(s.aaetlun?' <span class="fy-rk-a">'+esc(s.aaetlun.texti)+'</span>':'')+
+      '<div class="fy-rk-d">'+esc(ogr)+' · '+esc(inn)+'</div></div>';
+  }
+  function fyReksturHlada(){
+    var el=document.getElementById('fy-rekstur'); if(!el) return;
+    fetch('/api/rekstur-yfirlit',{credentials:'same-origin',cache:'no-store',headers:{accept:'application/json'}})
+      .then(function(r){ return r.json().catch(function(){ return {}; }).then(function(j){ if(!r.ok) throw new Error((j&&(j.villa||j.error))||('villa '+r.status)); return j; }); })
+      .then(function(j){
+        if(!j||!j.slokkvitaeki||!j.brunaholf) throw new Error('óvænt snið');
+        var e2=document.getElementById('fy-rekstur'); if(!e2) return;
+        e2.innerHTML='<div class="fy-rk-h">Hvernig gengur reksturinn? <span class="fy-rk-d">unnið í mánuðinum, án VSK · félögin aldrei lögð saman</span></div>'+
+          fyReksturFelag('Slökkvitæki', j.slokkvitaeki)+fyReksturFelag('Brunahólf', j.brunaholf)+
+          '<div class="fy-rk-d"><a href="https://slokkvitaeki.netlify.app/#tekjur" target="_top">Tekjur í beinni →</a> · <a href="/rekstur#tekjulidir" target="_top">Tekjuliðir Slökkvitækis →</a></div>';
+      })
+      .catch(function(e){ var e2=document.getElementById('fy-rekstur'); if(e2) e2.innerHTML='<div class="fy-rk-h">Hvernig gengur reksturinn?</div><div class="fy-rk-f"><span class="fy-rk-d">Ómælt — '+esc((e&&e.message)||e)+'</span></div>'; });
   }
   document.getElementById('refresh').onclick=function(e){ e.preventDefault(); load(true); };
   load();

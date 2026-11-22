@@ -107,3 +107,11 @@ section{display:flex;flex-direction:column;gap:10px}
 .cstamp .sh-t{margin-left:0;font-size:10.5px}
 .cstamp .cs-n{opacity:.85}
 @media(max-width:700px){.sh{flex-wrap:wrap}.sh .sh-t{margin-left:auto}}
+
+/* 22.11.2026 — „Hvernig gengur reksturinn?“ (Agnar: „setja líka hingað“): unnið í mánuðinum hjá hvoru félagi, ein skýr setning + merkt áætlun */
+.fy-rk{margin:12px 0;padding:12px 14px;border-radius:12px;background:#fffdf8;border:1px solid rgba(120,90,30,.28);color:#1b2430;font-size:13.5px;line-height:1.45;display:flex;flex-direction:column;gap:8px}
+.fy-rk-h{font-weight:800;font-size:14px}
+.fy-rk-f b{display:inline-block;margin-right:4px}
+.fy-rk-a{display:block;color:#8a5a00;font-size:12.5px;margin-top:2px}
+.fy-rk-d{color:#5b6573;font-size:12.5px}
+.fy-rk a{color:#8a5a00;font-weight:600}

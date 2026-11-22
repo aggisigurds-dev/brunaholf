@@ -401,3 +401,34 @@ test('rekstrarskyrsla.html: tekjuliðakaflinn, tenglarnir og hnappurinn í Fjár
   const fj = fs.readFileSync(path.join(__dirname, '..', 'fjarmalyfirlit.html'), 'utf8');
   assert.match(fj, /<a class="boss-btn[^"]*" href="\/rekstur#tekjulidir" target="_top"[^>]*>📊 Tekjuliðir<\/a>/);
 });
+
+test('rekstur-yfirlit (Fjármála-yfirlit): gegnumstreymi á slokkvitaeki — aðeins stjórnandi, kaka áfram, bilun → 502 með ástæðu; síðan ræsir það eftir render og sýnir „ómælt“ við bilun', async () => {
+  const fyrri = global.fetch; const grunn = gervi(); const sott = []; let hamur = 'ok';
+  global.fetch = async (url, init = {}) => {
+    const u = new URL(url);
+    if (u.hostname.includes('slokkvitaeki')) {
+      sott.push({ slod: u.pathname, kaka: (init.headers || {}).cookie, signal: !!init.signal });
+      if (hamur === 'net') throw new Error('net niðri');
+      if (hamur === 'snid') return { ok: true, status: 200, json: async () => ({ x: 1 }) };
+      return { ok: true, status: 200, json: async () => ({ slokkvitaeki: { man: [], setning: { setning: 'Nóvember til dags: unnið 2,10 m' } }, brunaholf: { man: [] } }) };
+    }
+    return grunn(url, init);
+  };
+  try {
+    const RY = require('../netlify/functions/rekstur-yfirlit.js');
+    assert.equal((await RY.handler({ httpMethod: 'GET', headers: {} })).statusCode, 401);
+    assert.equal((await RY.handler(ev(toki(2)))).statusCode, 403);
+    assert.equal(sott.length, 0);
+    const t = toki(1);
+    const r = await RY.handler({ httpMethod: 'GET', headers: { cookie: 'a=1; hub_user=' + encodeURIComponent(t) }, queryStringParameters: {} });
+    assert.equal(r.statusCode, 200); assert.equal(sott[0].slod, '/api/rekstur-yfirlit'); assert.equal(sott[0].kaka, 'hub_user=' + encodeURIComponent(t)); assert.equal(sott[0].signal, true);
+    for (const [h, vaent] of [['snid', /óvænt snið/], ['net', /náðist ekki/]]) {
+      hamur = h; const x = await RY.handler({ httpMethod: 'GET', headers: { cookie: 'hub_user=' + encodeURIComponent(t) }, queryStringParameters: {} });
+      assert.equal(x.statusCode, 502, h); assert.match(JSON.parse(x.body).villa, vaent, h);
+    }
+  } finally { global.fetch = fyrri; }
+  const fs = require('node:fs'), path = require('node:path');
+  const fj = fs.readFileSync(path.join(__dirname, '..', 'fjarmalyfirlit.html'), 'utf8');
+  assert.match(fj, /id="fy-rekstur"/); assert.match(fj, /fetch\('\/api\/rekstur-yfirlit'/); assert.match(fj, /render\(d, nlsh, Date\.now\(\)\);\s*fyReksturHlada\(\);/);
+  assert.match(fj, /ómælt — '\+esc/, 'ómælt með ástæðu'); assert.match(fj, /félögin aldrei lögð saman/);
+});

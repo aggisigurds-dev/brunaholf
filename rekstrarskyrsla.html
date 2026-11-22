@@ -363,6 +363,10 @@
   #tekjulidir tr.tl-nanar td { white-space: normal; text-align: left; background: rgba(0,8,24,.45); padding: 10px 14px 12px 22px; }
   #tekjulidir tr.tl-nanar table { min-width: 0; font-size: 12px; margin-top: 4px; }
   #tekjulidir tr.tl-nanar td:first-child { position: static; min-width: 0; max-width: none; }
+  #tekjulidir .tl-nanar-i { position: sticky; left: 0; width: calc(var(--tlw, 320px) - 32px); max-width: 100%; }
+  #tekjulidir .tl-nanar-i table { width: 100%; min-width: 0; }
+  #tekjulidir .tl-nanar-i td, #tekjulidir .tl-nanar-i th { white-space: normal; position: static; min-width: 0; max-width: none; background: transparent; }
+  #tekjulidir .tl-nanar-i td:first-child, #tekjulidir .tl-nanar-i th:first-child { text-align: left; }
   #tekjulidir .tl-dauft { color: #a9b8d0; font-size: 12px; }
   #tekjulidir .tl-neg { color: #fca5a5; }
   #tekjulidir .tl-linur { display: flex; flex-wrap: wrap; gap: 10px 18px; font-size: 12.5px; color: #c8d4e8; }
@@ -463,7 +467,7 @@
     <section class="spjald pad dokkt" id="tekjulidir" aria-labelledby="tl-h" style="margin-top:20px" hidden>
       <div class="hausrod">
         <div>
-          <h2 id="tl-h"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--orange-ink)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/></svg>Tekjuliðir Slökkvitækis <button type="button" class="tl-ibtn" id="tl-i" aria-expanded="false" aria-controls="tl-skil" title="Hvernig er reiknað?">ⓘ</button></h2>
+          <h2 id="tl-h"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--orange-ink)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/></svg>Tekjuliðir Slökkvitækis <button type="button" class="tl-ibtn" id="tl-i" aria-expanded="false" aria-controls="tl-skil" aria-label="Hvernig er reiknað?" title="Hvernig er reiknað?">ⓘ</button></h2>
           <span class="lysing" id="tl-undir">Sæki tekjuliði…</span>
         </div>
         <span class="pilla ok" id="tl-pilla" hidden></span>
@@ -504,22 +508,23 @@
     if (d.fyrir_yfirtoku) aukar.push(['fyrir_yfirtoku', 'Fyrir yfirtöku']);
     var haus = '<tr><th scope="col">Flokkur</th>' + mans.map(function (m) { return '<th scope="col" title="' + esc(m) + '">' + esc(manNafn(m)) + '</th>'; }).join('') +
       aukar.map(function (a) { return '<th scope="col">' + esc(a[1]) + '</th>'; }).join('') + '<th scope="col">Samtals</th><th scope="col">%</th></tr>';
-    var heild = d.samtals || 0, rows = '';
+    var heild = d.heild != null ? d.heild : (d.samtals || 0), rows = '';
+    var radSum = function (o) { return (o.samtals || 0) + (o.i_vinnslu || 0) + (o.fyrir_yfirtoku || 0); };       // Samtals = allir dálkar = Σ solur
     d.hopar.forEach(function (h) {
       rows += '<tr class="tl-hopur"><td>' + esc(h.heiti) + '</td>' + mans.map(function (m) { return '<td>' + reit(h.man[m]) + '</td>'; }).join('') +
-        aukar.map(function (a) { return '<td>' + reit(h[a[0]]) + '</td>'; }).join('') + '<td>' + reit(h.samtals) + '</td><td>' + (heild ? (Math.round(h.samtals / heild * 1000) / 10).toString().replace('.', ',') : '–') + '</td></tr>';
+        aukar.map(function (a) { return '<td>' + reit(h[a[0]]) + '</td>'; }).join('') + '<td>' + reit(radSum(h)) + '</td><td>' + (heild ? (Math.round(radSum(h) / heild * 1000) / 10).toString().replace('.', ',') : '–') + '</td></tr>';
       h.flokkar.forEach(function (id) {
         var f = d.flokkar.filter(function (x) { return x.id === id; })[0];
         if (!f) return;
         var o = !!opin[f.id], stk = f.stk != null ? ' <span class="tl-dauft">' + tal(f.stk) + ' stk</span>' : '';
-        rows += '<tr class="tl-flokkur" data-fl="' + esc(f.id) + '"><td><button type="button" class="tl-takki" aria-expanded="' + o + '" aria-controls="tl-n-' + esc(f.id) + '" data-fl="' + esc(f.id) + '"><span class="tl-ors">' + (o ? '▾' : '▸') + '</span><span>' + esc(f.id + ' ' + f.heiti) + stk + '</span></button></td>' +
+        rows += '<tr class="tl-flokkur" data-fl="' + esc(f.id) + '"><td><button type="button" class="tl-takki" aria-expanded="' + o + '"' + (o ? ' aria-controls="tl-n-' + esc(f.id) + '"' : '') + ' data-fl="' + esc(f.id) + '"><span class="tl-ors">' + (o ? '▾' : '▸') + '</span><span>' + esc(f.id + ' ' + f.heiti) + stk + '</span></button></td>' +
           mans.map(function (m) { return '<td>' + reit(f.man[m]) + '</td>'; }).join('') + aukar.map(function (a) { return '<td>' + reit(f[a[0]]) + '</td>'; }).join('') +
-          '<td>' + reit(f.samtals) + '</td><td>' + (heild ? (Math.round(f.samtals / heild * 1000) / 10).toString().replace('.', ',') : '–') + '</td></tr>';
+          '<td>' + reit(radSum(f)) + '</td><td>' + (heild ? (Math.round(radSum(f) / heild * 1000) / 10).toString().replace('.', ',') : '–') + '</td></tr>';
         if (o) rows += nanar(f, mans.length + aukar.length + 3);
       });
     });
     rows += '<tr class="tl-samtals"><td>Samtals</td>' + mans.map(function (m) { return '<td>' + reit(d.samtals_man[m]) + '</td>'; }).join('') +
-      aukar.map(function (a) { return '<td>' + reit(a[0] === 'i_vinnslu' ? d.i_vinnslu : d.fyrir_yfirtoku) + '</td>'; }).join('') + '<td>' + reit(d.samtals) + '</td><td>100</td></tr>';
+      aukar.map(function (a) { return '<td>' + reit(a[0] === 'i_vinnslu' ? d.i_vinnslu : d.fyrir_yfirtoku) + '</td>'; }).join('') + '<td>' + reit(heild) + '</td><td>100</td></tr>';
     return '<div class="tl-skrun" role="region" aria-label="Tekjuliðir eftir mánuðum" tabindex="0"><table>' + haus + rows + '</table></div>';
   }
   // smellur á flokk: stærstu línur/vörur í honum (heiti, stk, kr) — hver tala sýnir hvað er á bak við hana
@@ -528,7 +533,7 @@
     var inni = t.length ? '<table><tr><th scope="col">Lína / vara</th><th scope="col">Stk</th><th scope="col">Kr.</th></tr>' + t.map(function (x) {
       return '<tr><td>' + esc(x.heiti) + (x.stakar ? ' <span class="tl-dauft">(' + esc(x.stakar) + ' línur)</span>' : '') + '</td><td>' + esc(String(x.stk).replace('.', ',')) + '</td><td>' + reit(x.kr) + '</td></tr>';
     }).join('') + '</table><div class="tl-dauft" style="margin-top:6px">Stærstu línurnar yfir allt tímabilið; línur með texta sem kemur aðeins einu sinni fyrir eru ekki sýndar hver fyrir sig.</div>' : '<div class="tl-dauft">Engar línur í þessum flokki.</div>';
-    return '<tr class="tl-nanar" id="tl-n-' + esc(f.id) + '"><td colspan="' + dalkar + '"><b>' + esc(f.id + ' ' + f.heiti) + '</b> — samtals ' + tal(f.samtals) + ' kr.' + inni + '</td></tr>';
+    return '<tr class="tl-nanar" id="tl-n-' + esc(f.id) + '"><td colspan="' + dalkar + '"><div class="tl-nanar-i"><b>' + esc(f.id + ' ' + f.heiti) + '</b> — samtals ' + tal(f.samtals + (f.i_vinnslu || 0) + (f.fyrir_yfirtoku || 0)) + ' kr.' + inni + '</div></td></tr>';
   }
   function solutegundir(d) {
     var mans = d.manudir;
@@ -537,6 +542,7 @@
   }
   function teikna() {
     var d = gogn, sec = el('tekjulidir');
+    var skrun0 = sec.querySelector('.tl-skrun'), sl0 = skrun0 ? skrun0.scrollLeft : 0, fok = document.activeElement && document.activeElement.getAttribute ? document.activeElement.getAttribute('data-fl') : null;
     sec.hidden = false;
     if (!d) return;
     var heild = d.heild != null ? d.heild : d.samtals;
@@ -544,11 +550,15 @@
     var pilla = el('tl-pilla'); pilla.hidden = false;
     pilla.className = 'pilla ' + (d.stemmir ? 'ok' : 'warn');
     pilla.innerHTML = '<span class="p" style="background:currentColor"></span>' + (d.stemmir ? 'Heildin stemmir við lokaðar sölur' : 'Heildin STEMMIR EKKI við lokaðar sölur');
-    var hlutf = d.hopar.map(function (h) { return '<span>' + esc(h.heiti) + ': <b>' + (heild ? (Math.round(h.samtals / heild * 1000) / 10).toString().replace('.', ',') : '–') + ' %</b></span>'; }).join('');
+    var hlutf = d.hopar.map(function (h) { var hs = (h.samtals || 0) + (h.i_vinnslu || 0) + (h.fyrir_yfirtoku || 0); return '<span>' + esc(h.heiti) + ': <b>' + (heild ? (Math.round(hs / heild * 1000) / 10).toString().replace('.', ',') : '–') + ' %</b></span>'; }).join('');
     el('tl-efni').innerHTML = '<div class="tl-linur"><span>Heildin: <b>' + tal(heild) + ' kr.</b> = lokaðar sölur í kerfinu (' + tal(d.heild_solur) + ' kr.)' + (d.stemmir ? ' ✓' : ' ✗') + '</span>' +
       (d.kredit_an_frumsolu ? '<span>' + esc(d.kredit_an_frumsolu) + ' kreditnóta án frumsölu (talin á eigin degi)</span>' : '') + '</div>' +
       '<div class="tl-linur">' + hlutf + '</div>' + toflu(d) + solutegundir(d) +
       '<div class="tl-dauft">Sótt ' + esc(String(d.maelt_at || '').slice(8, 10) + '.' + String(d.maelt_at || '').slice(5, 7) + '. kl. ' + String(d.maelt_at || '').slice(11, 16)) + ' · reikningar sem eru gerðir beint í Payday eru ekki með · CO₂-talan er hylki/stykki, ekki tæki</div>';
+    // hver smellur endurteiknar innihaldið: halda lárétta skruninu og fókusnum (sími: notandinn er ekki hent aftur til vinstri)
+    var skrun1 = sec.querySelector('.tl-skrun');
+    if (skrun1) { sec.style.setProperty('--tlw', skrun1.clientWidth + 'px'); skrun1.scrollLeft = sl0; }
+    if (fok) { var nyr = sec.querySelector('.tl-takki[data-fl=' + JSON.stringify(fok) + ']'); if (nyr && nyr.focus) { try { nyr.focus({ preventScroll: true }); } catch (e) { nyr.focus(); } } }
     var s = d.skilgreining || {};
     el('tl-skil').innerHTML = ['almennt', 'manudir', 'afslattur', 'flokkar', 'fyrirvarar'].filter(function (k) { return s[k]; }).map(function (k) { return '<div>' + esc(s[k]) + '</div>'; }).join('');
     if (location.hash === '#tekjulidir' && !teikna.skrunad) { teikna.skrunad = true; try { sec.scrollIntoView(); } catch (e) { /* skrun er bónus */ } }
