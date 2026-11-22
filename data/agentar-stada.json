@@ -1,6 +1,6 @@
 {
  "utgafa": 1,
- "nyjast": "2026-11-20",
+ "nyjast": "2026-11-21",
  "throskuldur": 6,
  "osnert_dagar": 30,
  "uppspretta": "slokkvitaeki/tools/audit-agentar.cjs --json",
@@ -72,12 +72,12 @@
    "slod": ".claude/agents/bord-flettur.md",
    "hud": null,
    "emoji": null,
-   "sidast": "2026-11-20",
-   "skrif": 72,
+   "sidast": "2026-11-21",
+   "skrif": 73,
    "gaetir": 50,
-   "breytt": 0,
+   "breytt": 2,
    "daudir": [],
-   "merki": "🟢",
+   "merki": "🟡",
    "lysing": "Flettur, borð og navigation í Slökkvitæki-appinu — Þjónustuborð (368) og undirborð, Bakendi, Bílstjóri, Aksturslisti, URL-routing (218), bakk (3 lög) og app-síð"
   },
   {
@@ -135,7 +135,7 @@
    "sidast": "2026-11-16",
    "skrif": 17,
    "gaetir": 8,
-   "breytt": 4,
+   "breytt": 5,
    "daudir": [],
    "merki": "🟡",
    "lysing": "Elon Musk — byggingarstjóri rafkerfisins. As-built yfir tengingar á staðnum: útreikningar (verð, VSK, afsláttur, KPI, TÆKI, FULLBÚIÐ), skjala-lyklar (fyrirtaeki"
@@ -210,7 +210,7 @@
    "sidast": "2026-11-17",
    "skrif": 24,
    "gaetir": 22,
-   "breytt": 4,
+   "breytt": 5,
    "daudir": [],
    "merki": "🟡",
    "lysing": "Hönnuðurinn — lagar útlit, farsímaskjái (mobile view) og hannar skjái/app-view í Slökkvitæki-appinu. Notaðu þegar síða eða flipi lítur illa út, brotnar eða er þ"
@@ -270,7 +270,7 @@
    "sidast": "2026-11-16",
    "skrif": 17,
    "gaetir": 15,
-   "breytt": 3,
+   "breytt": 4,
    "daudir": [],
    "merki": "🟡",
    "lysing": "Viðskiptavina-líkanið (customers_base/fyrirtaeki/uttaeki/vidskiptavinir), DB-skema, base-sameining og póst-merki/póstnúmer á fyrirtækjum. Notaðu fyrir kúnna, ke"
@@ -315,7 +315,7 @@
    "sidast": "2026-11-17",
    "skrif": 17,
    "gaetir": 15,
-   "breytt": 2,
+   "breytt": 3,
    "daudir": [],
    "merki": "🟡",
    "lysing": "Netvörður — gætir öryggisnetsins: kallaðu á hann ÁÐUR og EFTIR breytingu á vörðum leiðum (reikninga-OUT 10/233/254, kennitala 121/pos.js, payday-push, tilbúið 1"
@@ -360,9 +360,9 @@
    "sidast": "2026-11-20",
    "skrif": 13,
    "gaetir": 10,
-   "breytt": 0,
+   "breytt": 1,
    "daudir": [],
-   "merki": "🟢",
+   "merki": "🟡",
    "lysing": "Meg Ryan ✉️ („You've Got Mail“) — póstvörðurinn. Les, flokkar og tengir tölvupóst beggja félaga (eldklar@, bokhald@eldklar, Brunaholf@, bokhald@brunaholf + brun"
   },
   {
@@ -405,7 +405,7 @@
    "sidast": "2026-11-17",
    "skrif": 10,
    "gaetir": 9,
-   "breytt": 2,
+   "breytt": 3,
    "daudir": [],
    "merki": "🟡",
    "lysing": "Rukkarinn — spegill í slokkvitaeki af heimaagentinum í brunaholf: einn agent fyrir öll rukkunarmál beggja félaga; les kynninguna sjálfur, athugar tengingar, Drö"
@@ -420,9 +420,9 @@
    "sidast": "2026-11-20",
    "skrif": 49,
    "gaetir": 39,
-   "breytt": 0,
+   "breytt": 1,
    "daudir": [],
-   "merki": "🟢",
+   "merki": "🟡",
    "lysing": "EINI agentinn sem býr til, leiðréttir, kreditfærir og færir reikninga í Slökkvitæki-appinu — eftir verkferlinu efst í skránni (greiðandi fyrst, lokaathugun síða"
   },
   {
@@ -435,7 +435,7 @@
    "sidast": "2026-11-16",
    "skrif": 25,
    "gaetir": 13,
-   "breytt": 4,
+   "breytt": 5,
    "daudir": [],
    "merki": "🟡",
    "lysing": "Samþykktirnar — á öll svör Agnars á Þjónustuborðinu og vinnur úr þeim. Les biðröðina (svar:samthykkt / vinnsla / endurmeta), ENDURMÆLIR forsendur hvers máls áðu"
@@ -1036,12 +1036,12 @@
    "slod": ".claude/agents/endurskodandi.md",
    "hud": "The Accountant",
    "emoji": "🧮",
-   "sidast": "2026-11-16",
-   "skrif": 4,
+   "sidast": "2026-11-21",
+   "skrif": 5,
    "gaetir": 6,
-   "breytt": 2,
+   "breytt": 0,
    "daudir": [],
-   "merki": "🟡",
+   "merki": "🟢",
    "lysing": "The Accountant 🧮 — sannreynir að fjármálauppsetning kerfisins standist lög: bókhald 145/1994, VSK 50/1988 (reikningsefni, tímabil, innskattur), ársreikningar 3"
   },
   {
@@ -1559,6 +1559,21 @@
    "daudir": [],
    "merki": "🟡",
    "lysing": "Býr til „Staðfesting brunalokana\" (áður „Yfirlýsing vegna brunalokana\"; staðfesting Brunahólfs ehf. til verkkaupa um að brunahólfun, eldvarnarhurðir og brunalok"
+  },
+  {
+   "nafn": "tekjuskraning",
+   "tegund": "skill",
+   "heim": "brunaholf",
+   "slod": ".claude/skills/tekjuskraning/SKILL.md",
+   "hud": null,
+   "emoji": null,
+   "sidast": "2026-11-21",
+   "skrif": 1,
+   "gaetir": 0,
+   "breytt": 0,
+   "daudir": [],
+   "merki": "🟢",
+   "lysing": "Hvenær tekjur Slökkvitækis og Brunahólfs teljast (unnið · reikningsfært · greitt): reglur Agnars frá 21.11.2026, lagaramminn (bókhaldslög 145/1994, VSK-afhendin"
   },
   {
    "nafn": "verkefnalisti",
