@@ -342,6 +342,41 @@
   .bida { opacity: .55; transition: opacity .18s; }
   @media (max-width: 640px) { .wrap { padding: 0 16px; } h1 { font-size: 30px; } }
   @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+
+  /* Tekjuliðir Slökkvitækis (fasi 3, 22.11.2026): flokkur × mánuður; taflan skrunar lárétt INNAN kassa (síminn 390 px: engin lárétt skrun á síðunni) */
+  #tekjulidir { scroll-margin-top: 16px; }
+  #tekjulidir .tl-skrun { overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 10px; box-shadow: inset 0 0 0 1px rgba(150,185,235,.18); background: rgba(0,8,24,.28); }
+  #tekjulidir table { width: 100%; border-collapse: collapse; font-size: 12.5px; min-width: 640px; }
+  #tekjulidir th { position: sticky; top: 0; padding: 8px 10px; text-align: right; font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: #a9b8d0; white-space: nowrap; background: rgb(8,26,56); }
+  #tekjulidir td { padding: 7px 10px; text-align: right; white-space: nowrap; border-top: 1px solid rgba(255,255,255,.07); font-variant-numeric: tabular-nums; color: #e6edf8; }
+  #tekjulidir th:first-child, #tekjulidir td:first-child { text-align: left; position: sticky; left: 0; z-index: 1; background: rgb(8,26,56); min-width: 168px; max-width: 220px; white-space: normal; }
+  #tekjulidir tr.tl-hopur td { font-weight: 700; color: #fff; background: rgb(14,40,80); }
+  #tekjulidir tr.tl-hopur td:first-child { background: rgb(14,40,80); }
+  #tekjulidir tr.tl-flokkur td:first-child { padding-left: 22px; }
+  #tekjulidir tr.tl-flokkur { cursor: pointer; }
+  #tekjulidir tr.tl-flokkur:hover td, #tekjulidir tr.tl-flokkur:focus-within td { background: rgba(255,255,255,.05); }
+  #tekjulidir tr.tl-flokkur:hover td:first-child { background: rgb(18,44,86); }
+  #tekjulidir tr.tl-samtals td { font-weight: 700; color: #fff; border-top: 2px solid rgba(255,138,31,.55); }
+  #tekjulidir .tl-takki { all: unset; cursor: pointer; display: inline-flex; gap: 6px; align-items: baseline; }
+  #tekjulidir .tl-takki:focus-visible { outline: 3px solid var(--orange); outline-offset: 2px; border-radius: 4px; }
+  #tekjulidir .tl-ors { display: inline-block; width: 10px; color: #ff9a45; font-size: 10px; }
+  #tekjulidir tr.tl-nanar td { white-space: normal; text-align: left; background: rgba(0,8,24,.45); padding: 10px 14px 12px 22px; }
+  #tekjulidir tr.tl-nanar table { min-width: 0; font-size: 12px; margin-top: 4px; }
+  #tekjulidir tr.tl-nanar td:first-child { position: static; min-width: 0; max-width: none; }
+  #tekjulidir .tl-dauft { color: #a9b8d0; font-size: 12px; }
+  #tekjulidir .tl-neg { color: #fca5a5; }
+  #tekjulidir .tl-linur { display: flex; flex-wrap: wrap; gap: 10px 18px; font-size: 12.5px; color: #c8d4e8; }
+  #tekjulidir .tl-linur b { color: #fff; }
+  #tekjulidir .tl-skil { font-size: 12.5px; line-height: 1.5; color: #c8d4e8; background: rgba(255,255,255,.06); border-radius: 10px; padding: 12px 14px; display: flex; flex-direction: column; gap: 6px; }
+  #tekjulidir .tl-skil[hidden] { display: none; }
+  #tekjulidir .tl-ibtn { all: unset; cursor: pointer; color: #ff9a45; font-weight: 700; font-size: 13px; padding: 0 4px; border-radius: 4px; }
+  #tekjulidir .tl-ibtn:focus-visible { outline: 3px solid var(--orange); outline-offset: 2px; }
+  #tekjulidir h3 { margin: 6px 0 0; font-size: 13.5px; font-weight: 700; color: #fff; }
+  .tl-tenglar { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0 2px; }
+  .tl-tenglar a { display: inline-flex; align-items: center; min-height: 36px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--nav-line); color: var(--on-navy); text-decoration: none; font-size: 13.5px; font-weight: 600; background: rgba(255,255,255,.06); }
+  .tl-tenglar a:hover { background: var(--nav-hover); }
+  .tl-tenglar a:focus-visible { outline: 3px solid var(--orange); outline-offset: 2px; }
+  @media (max-width: 640px) { #tekjulidir table { font-size: 12px; } #tekjulidir th, #tekjulidir td { padding: 6px 8px; } #tekjulidir th:first-child, #tekjulidir td:first-child { min-width: 132px; } }
 </style>
 </head>
 <body>
@@ -361,6 +396,11 @@
       <div class="eyebrow">SLÖKKVITÆKI · BRUNAHÓLF</div>
       <h1>Rekstrarskýrsla</h1>
       <div class="undir"><span id="dagsetning">Sæki tölur…</span> · allar fjárhæðir í kr. án vsk</div>
+      <nav class="tl-tenglar" aria-label="Tengdar síður">
+        <a href="/#fjarmalyfirlit" target="_top">← Fjármála-yfirlit</a>
+        <a href="/#krofuyfirlit" target="_top">Kröfu yfirlit</a>
+        <a href="#tekjulidir">📊 Tekjuliðir Slökkvitækis</a>
+      </nav>
     </div>
     <div class="stjorn">
       <div class="seg" role="group" aria-label="Velja tímabil" id="tvol">
@@ -420,6 +460,18 @@
 
     <div id="toflur" style="display:flex;flex-direction:column;gap:20px;margin-top:20px"></div>
 
+    <section class="spjald pad dokkt" id="tekjulidir" aria-labelledby="tl-h" style="margin-top:20px" hidden>
+      <div class="hausrod">
+        <div>
+          <h2 id="tl-h"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--orange-ink)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/></svg>Tekjuliðir Slökkvitækis <button type="button" class="tl-ibtn" id="tl-i" aria-expanded="false" aria-controls="tl-skil" title="Hvernig er reiknað?">ⓘ</button></h2>
+          <span class="lysing" id="tl-undir">Sæki tekjuliði…</span>
+        </div>
+        <span class="pilla ok" id="tl-pilla" hidden></span>
+      </div>
+      <div class="tl-skil" id="tl-skil" hidden></div>
+      <div id="tl-efni"></div>
+    </section>
+
     <section class="spjald pad" aria-labelledby="hm-h" style="margin-top:20px">
       <h2 id="hm-h"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--orange-ink)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5V19A9 3 0 0 0 21 19V5"/><path d="M3 12A9 3 0 0 0 21 12"/></svg>Heimildir og ferskleiki</h2>
       <div class="heimildir" id="heimildir"></div>
@@ -433,6 +485,109 @@
   </div>
 </main>
 
+<script>
+// Tekjuliðir Slökkvitækis (fasi 3, 22.11.2026). Gögn: /api/tekjulidir (gegnumstreymi á slokkvitaeki; EITT flokkunarfall þar). Síðan reiknar ekkert nema
+// % og samtölur úr tölunum sem fallið skilar. Allt úr svarinu fer gegnum esc(). Bregðist lesturinn: „ómælt“ með ástæðu — aldrei 0.
+(function () {
+  'use strict';
+  var MAN = ['janúar', 'febrúar', 'mars', 'apríl', 'maí', 'júní', 'júlí', 'ágúst', 'september', 'október', 'nóvember', 'desember'];
+  var el = function (id) { return document.getElementById(id); };
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function tal(n) { var neg = n < 0, s = String(Math.abs(Math.round(Number(n) || 0))), p = []; while (s.length > 3) { p.unshift(s.slice(-3)); s = s.slice(0, -3); } p.unshift(s); return (neg ? '−' : '') + p.join('.'); }
+  function reit(n) { return n ? '<span' + (n < 0 ? ' class="tl-neg"' : '') + '>' + tal(n) + '</span>' : '<span class="tl-dauft">–</span>'; }
+  function manNafn(m) { return MAN[Number(m.slice(5, 7)) - 1].slice(0, 3) + (m.slice(0, 4) !== String(new Date().getUTCFullYear()) ? ' ' + m.slice(2, 4) : ''); }
+  var gogn = null, opin = {}, bid = null, sottKl = 0;
+
+  function toflu(d) {
+    var mans = d.manudir, aukar = [];
+    if (d.i_vinnslu) aukar.push(['i_vinnslu', 'Á verkstæði (ótalið enn)']);
+    if (d.fyrir_yfirtoku) aukar.push(['fyrir_yfirtoku', 'Fyrir yfirtöku']);
+    var haus = '<tr><th scope="col">Flokkur</th>' + mans.map(function (m) { return '<th scope="col" title="' + esc(m) + '">' + esc(manNafn(m)) + '</th>'; }).join('') +
+      aukar.map(function (a) { return '<th scope="col">' + esc(a[1]) + '</th>'; }).join('') + '<th scope="col">Samtals</th><th scope="col">%</th></tr>';
+    var heild = d.samtals || 0, rows = '';
+    d.hopar.forEach(function (h) {
+      rows += '<tr class="tl-hopur"><td>' + esc(h.heiti) + '</td>' + mans.map(function (m) { return '<td>' + reit(h.man[m]) + '</td>'; }).join('') +
+        aukar.map(function (a) { return '<td>' + reit(h[a[0]]) + '</td>'; }).join('') + '<td>' + reit(h.samtals) + '</td><td>' + (heild ? (Math.round(h.samtals / heild * 1000) / 10).toString().replace('.', ',') : '–') + '</td></tr>';
+      h.flokkar.forEach(function (id) {
+        var f = d.flokkar.filter(function (x) { return x.id === id; })[0];
+        if (!f) return;
+        var o = !!opin[f.id], stk = f.stk != null ? ' <span class="tl-dauft">' + tal(f.stk) + ' stk</span>' : '';
+        rows += '<tr class="tl-flokkur" data-fl="' + esc(f.id) + '"><td><button type="button" class="tl-takki" aria-expanded="' + o + '" aria-controls="tl-n-' + esc(f.id) + '" data-fl="' + esc(f.id) + '"><span class="tl-ors">' + (o ? '▾' : '▸') + '</span><span>' + esc(f.id + ' ' + f.heiti) + stk + '</span></button></td>' +
+          mans.map(function (m) { return '<td>' + reit(f.man[m]) + '</td>'; }).join('') + aukar.map(function (a) { return '<td>' + reit(f[a[0]]) + '</td>'; }).join('') +
+          '<td>' + reit(f.samtals) + '</td><td>' + (heild ? (Math.round(f.samtals / heild * 1000) / 10).toString().replace('.', ',') : '–') + '</td></tr>';
+        if (o) rows += nanar(f, mans.length + aukar.length + 3);
+      });
+    });
+    rows += '<tr class="tl-samtals"><td>Samtals</td>' + mans.map(function (m) { return '<td>' + reit(d.samtals_man[m]) + '</td>'; }).join('') +
+      aukar.map(function (a) { return '<td>' + reit(a[0] === 'i_vinnslu' ? d.i_vinnslu : d.fyrir_yfirtoku) + '</td>'; }).join('') + '<td>' + reit(d.samtals) + '</td><td>100</td></tr>';
+    return '<div class="tl-skrun" role="region" aria-label="Tekjuliðir eftir mánuðum" tabindex="0"><table>' + haus + rows + '</table></div>';
+  }
+  // smellur á flokk: stærstu línur/vörur í honum (heiti, stk, kr) — hver tala sýnir hvað er á bak við hana
+  function nanar(f, dalkar) {
+    var t = f.topp || [];
+    var inni = t.length ? '<table><tr><th scope="col">Lína / vara</th><th scope="col">Stk</th><th scope="col">Kr.</th></tr>' + t.map(function (x) {
+      return '<tr><td>' + esc(x.heiti) + (x.stakar ? ' <span class="tl-dauft">(' + esc(x.stakar) + ' línur)</span>' : '') + '</td><td>' + esc(String(x.stk).replace('.', ',')) + '</td><td>' + reit(x.kr) + '</td></tr>';
+    }).join('') + '</table><div class="tl-dauft" style="margin-top:6px">Stærstu línurnar yfir allt tímabilið; línur með texta sem kemur aðeins einu sinni fyrir eru ekki sýndar hver fyrir sig.</div>' : '<div class="tl-dauft">Engar línur í þessum flokki.</div>';
+    return '<tr class="tl-nanar" id="tl-n-' + esc(f.id) + '"><td colspan="' + dalkar + '"><b>' + esc(f.id + ' ' + f.heiti) + '</b> — samtals ' + tal(f.samtals) + ' kr.' + inni + '</td></tr>';
+  }
+  function solutegundir(d) {
+    var mans = d.manudir;
+    return '<h3>Eftir sölutegund</h3><div class="tl-skrun" role="region" aria-label="Tekjur eftir sölutegund" tabindex="0"><table><tr><th scope="col">Sölutegund</th>' + mans.map(function (m) { return '<th scope="col">' + esc(manNafn(m)) + '</th>'; }).join('') + '<th scope="col">Samtals</th></tr>' +
+      d.solutegundir.map(function (t) { return '<tr><td>' + esc(t.heiti) + '</td>' + mans.map(function (m) { return '<td>' + reit(t.man[m]) + '</td>'; }).join('') + '<td>' + reit(t.samtals + (t.i_vinnslu || 0) + (t.fyrir_yfirtoku || 0)) + '</td></tr>'; }).join('') + '</table></div>';
+  }
+  function teikna() {
+    var d = gogn, sec = el('tekjulidir');
+    sec.hidden = false;
+    if (!d) return;
+    var heild = d.heild != null ? d.heild : d.samtals;
+    el('tl-undir').textContent = 'Úr hverju tekjurnar eru gerðar · án vsk · mánuðir eins og „Unnið“ (skoðunarmánuður, klart_at, kredit á dag frumsölu) · smelltu á flokk til að sjá stærstu línurnar';
+    var pilla = el('tl-pilla'); pilla.hidden = false;
+    pilla.className = 'pilla ' + (d.stemmir ? 'ok' : 'warn');
+    pilla.innerHTML = '<span class="p" style="background:currentColor"></span>' + (d.stemmir ? 'Heildin stemmir við lokaðar sölur' : 'Heildin STEMMIR EKKI við lokaðar sölur');
+    var hlutf = d.hopar.map(function (h) { return '<span>' + esc(h.heiti) + ': <b>' + (heild ? (Math.round(h.samtals / heild * 1000) / 10).toString().replace('.', ',') : '–') + ' %</b></span>'; }).join('');
+    el('tl-efni').innerHTML = '<div class="tl-linur"><span>Heildin: <b>' + tal(heild) + ' kr.</b> = lokaðar sölur í kerfinu (' + tal(d.heild_solur) + ' kr.)' + (d.stemmir ? ' ✓' : ' ✗') + '</span>' +
+      (d.kredit_an_frumsolu ? '<span>' + esc(d.kredit_an_frumsolu) + ' kreditnóta án frumsölu (talin á eigin degi)</span>' : '') + '</div>' +
+      '<div class="tl-linur">' + hlutf + '</div>' + toflu(d) + solutegundir(d) +
+      '<div class="tl-dauft">Sótt ' + esc(String(d.maelt_at || '').slice(8, 10) + '.' + String(d.maelt_at || '').slice(5, 7) + '. kl. ' + String(d.maelt_at || '').slice(11, 16)) + ' · reikningar sem eru gerðir beint í Payday eru ekki með · CO₂-talan er hylki/stykki, ekki tæki</div>';
+    var s = d.skilgreining || {};
+    el('tl-skil').innerHTML = ['almennt', 'manudir', 'afslattur', 'flokkar', 'fyrirvarar'].filter(function (k) { return s[k]; }).map(function (k) { return '<div>' + esc(s[k]) + '</div>'; }).join('');
+    if (location.hash === '#tekjulidir' && !teikna.skrunad) { teikna.skrunad = true; try { sec.scrollIntoView(); } catch (e) { /* skrun er bónus */ } }
+  }
+  function villa(texti) {
+    var sec = el('tekjulidir'); sec.hidden = false; gogn = null;
+    el('tl-undir').textContent = 'Tekjuliðir eru ómældir';
+    el('tl-pilla').hidden = true;
+    el('tl-efni').innerHTML = '<div class="tl-dauft">Ómælt — ' + esc(texti) + '. <button type="button" class="tl-takki" id="tl-aftur" style="color:#ff9a45;text-decoration:underline">Reyna aftur</button></div>';
+  }
+  function hlada(fersk) {
+    if (bid) return bid;
+    if (!fersk && gogn && Date.now() - sottKl < 60000) { teikna(); return Promise.resolve(); }
+    el('tekjulidir').hidden = false;
+    if (!gogn) el('tl-efni').innerHTML = '<div class="tl-dauft">Sæki tekjuliði …</div>';
+    bid = fetch('/api/tekjulidir', { credentials: 'same-origin', cache: 'no-store', headers: { accept: 'application/json' } })
+      .then(function (r) {
+        if (r.status === 401 || r.status === 403) { el('tekjulidir').hidden = true; return null; }          // innskráning/aðgangur: aðalsíðan sér um það
+        return r.json().catch(function () { return {}; }).then(function (j) {
+          if (!r.ok) throw new Error((j && (j.villa || j.error)) || ('villa ' + r.status));
+          if (!j || !Array.isArray(j.flokkar) || !Array.isArray(j.hopar) || !Array.isArray(j.manudir)) throw new Error('óvænt snið');
+          return j;
+        });
+      })
+      .then(function (j) { if (j) { gogn = j; sottKl = Date.now(); teikna(); } })
+      .catch(function (e) { villa((e && e.message) || String(e)); })
+      .then(function () { bid = null; });
+    return bid;
+  }
+  document.addEventListener('click', function (ev) {
+    var t = ev.target && ev.target.closest ? ev.target : null;
+    if (!t || !el('tekjulidir') || !el('tekjulidir').contains(t)) return;
+    var i = t.closest('#tl-i'); if (i) { var sk = el('tl-skil'); sk.hidden = !sk.hidden; i.setAttribute('aria-expanded', String(!sk.hidden)); return; }
+    if (t.closest('#tl-aftur')) { hlada(true); return; }
+    var b = t.closest('.tl-takki[data-fl], tr.tl-flokkur'); if (b) { var id = b.getAttribute('data-fl'); opin[id] = !opin[id]; if (gogn) teikna(); }
+  });
+  window.RekstrarTekjulidir = { hlada: hlada, _teikna: teikna };
+})();
+</script>
 <script>
 (function () {
   'use strict';
@@ -553,6 +708,7 @@
     teiknaSkiptingu(g, hi, ofullt, ajourTil);
     teiknaToflur(g, hi, ofullt, ajourTil, erIdag);
     teiknaHeimildir(g);
+    try { if (window.RekstrarTekjulidir) window.RekstrarTekjulidir.hlada(); } catch (e) { /* tekjuliðir mega aldrei fella Rekstrarskýrsluna */ }
   }
 
   var sparkNr = 0;

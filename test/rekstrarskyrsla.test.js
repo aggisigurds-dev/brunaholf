@@ -354,3 +354,50 @@ test('saekja(bhAdeins): SL-töflur eru EKKI sóttar (lat) — bilun í þeim fel
     for (const t of ['solur', 'vorur', 'verkbeidnir', 'verklidur', 'customer_documents', 'payday_invoices_slokk', 'invoice_drafts']) assert.equal(sott.includes(t), false, t + ' sleppt');
   } finally { global.fetch = fyrri; }
 });
+
+// ---- Tekjuliðir Slökkvitækis (fasi 3, 22.11.2026): þunnt gegnumstreymi á slokkvitaeki /api/tekjulidir ----
+test('tekjulidir: aðeins stjórnandi (401/403/405), kaka áfram (aðeins hub_user), 200 gegnum, SL-villa/óvænt snið/net → 502 með ástæðu (aldrei tölur)', async () => {
+  const fyrri = global.fetch; const grunn = gervi(); const sott = [];
+  const flokkar = Array.from({ length: 15 }, (_, i) => ({ id: String(i + 1).padStart(2, '0'), heiti: 'F' + i, man: {}, samtals: 0, topp: [] }));
+  let hamur = 'ok';
+  global.fetch = async (url, init = {}) => {
+    const u = new URL(url);
+    if (u.hostname.includes('slokkvitaeki')) {
+      sott.push({ slod: u.pathname, kaka: (init.headers || {}).cookie, signal: !!init.signal });
+      if (hamur === 'net') throw new Error('net niðri');
+      if (hamur === 'lokad') return { ok: false, status: 401, json: async () => ({ error: 'Innskráning starfsmanns vantar' }) };
+      if (hamur === 'tomt') return { ok: false, status: 503, json: async () => ({ error: 'Tekjuliðir ómældir — vörulistalesturinn skilaði engu' }) };
+      if (hamur === 'snid') return { ok: true, status: 200, json: async () => ({ flokkar: [] }) };
+      return { ok: true, status: 200, json: async () => ({ manudir: ['2026-10', '2026-11'], flokkar, samtals: 123, stemmir: true }) };
+    }
+    return grunn(url, init);
+  };
+  try {
+    const TLF = require('../netlify/functions/tekjulidir.js');
+    assert.equal((await TLF.handler({ httpMethod: 'GET', headers: {} })).statusCode, 401);
+    assert.equal((await TLF.handler(ev(toki(2)))).statusCode, 403);
+    assert.equal((await TLF.handler({ httpMethod: 'POST', headers: {} })).statusCode, 405);
+    assert.equal(sott.length, 0, 'ekkert kall á slokkvitaeki án stjórnanda');
+    const t = toki(1);
+    const r = await TLF.handler({ httpMethod: 'GET', headers: { cookie: 'annad=1; hub_user=' + encodeURIComponent(t) + '; fleira=2' }, queryStringParameters: {} });
+    assert.equal(r.statusCode, 200); const j = JSON.parse(r.body); assert.equal(j.flokkar.length, 15); assert.equal(j.samtals, 123);
+    assert.equal(sott[0].slod, '/api/tekjulidir'); assert.equal(sott[0].kaka, 'hub_user=' + encodeURIComponent(t), 'aðeins hub_user fer áfram'); assert.equal(sott[0].signal, true, '8 s tímamörk');
+    for (const [h, vaent] of [['lokad', /svaraði 401/], ['tomt', /vörulistalesturinn skilaði engu/], ['snid', /óvænt snið/], ['net', /náðist ekki/]]) {
+      hamur = h;
+      const x = await TLF.handler({ httpMethod: 'GET', headers: { cookie: 'hub_user=' + encodeURIComponent(t) }, queryStringParameters: {} });
+      assert.equal(x.statusCode, 502, h); assert.match(JSON.parse(x.body).villa, vaent, h); assert.equal(JSON.parse(x.body).flokkar, undefined, h + ': engar tölur');
+    }
+  } finally { global.fetch = fyrri; }
+});
+
+test('rekstrarskyrsla.html: tekjuliðakaflinn, tenglarnir og hnappurinn í Fjármála-yfirliti eru til; kaflinn er innan #efni (aðeins stjórnandi) og lesinn úr /api/tekjulidir', () => {
+  const fs = require('node:fs'), path = require('node:path');
+  const html = fs.readFileSync(path.join(__dirname, '..', 'rekstrarskyrsla.html'), 'utf8');
+  const efni = html.slice(html.indexOf('<div id="efni"'), html.indexOf('</main>'));
+  assert.match(efni, /<section[^>]*id="tekjulidir"/, 'kaflinn er innan #efni');
+  assert.match(html, /\/api\/tekjulidir/); assert.match(html, /location\.hash/); assert.match(html, /href="\/#fjarmalyfirlit"[^>]*>← Fjármála-yfirlit/); assert.match(html, /href="\/#krofuyfirlit"[^>]*>Kröfu yfirlit/);
+  assert.match(html, /window\.RekstrarTekjulidir\.hlada\(\)/, 'teikna() ræsir kaflann');
+  assert.match(html, /overflow-x:\s*auto/, 'taflan skrunar lárétt innan kassa');
+  const fj = fs.readFileSync(path.join(__dirname, '..', 'fjarmalyfirlit.html'), 'utf8');
+  assert.match(fj, /<a class="boss-btn[^"]*" href="\/rekstur#tekjulidir" target="_top"[^>]*>📊 Tekjuliðir<\/a>/);
+});
