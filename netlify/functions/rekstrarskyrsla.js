@@ -91,33 +91,33 @@ const hafnad = (v) => (v === 503 ? svar(503, { villa: 'Innskráning starfsmanna 
 async function saekja(d, opts = {}) {
   const fra = opts.fra || R.fyrstiDagur(d);
   const bhAdeins = !!opts.bhAdeins;
-  const sl = (p) => (bhAdeins ? Promise.resolve([]) : p);
+  const sl = (f) => (bhAdeins ? Promise.resolve([]) : f());          // LAT: aðeins kallað þegar SL-taflan er sótt (annars ræst sókn sem enginn hlustar á)
   const fraTs = `${fra}T00:00:00Z`;
   const ajourSia = `registration_status=eq.Done&project_name=neq.${encodeURIComponent(R.NLSH_AFRIT)}`
     + `&or=(execution_date.gte.${fra},checked_date.gte.${fra})`;
   const [solur, voidRadir, vorur, verkbeidnir, verklidur, uttektir, paydaySl, timavera, pricing, ajour, holeRates, sentMeta, drog, paydayBh,
     tvNyjast, tvInnlestur, ajNyjast, ajInnlestur, pdSlNyjast] = await Promise.all([
-    sl(allt('solur', `select=id,status,is_credit,credit_of,greitt_med,upphaed_an_vsk,created_at,paid_at,krafa_sent_at,linur&or=(created_at.gte.${fraTs},paid_at.gte.${fraTs},krafa_sent_at.gte.${fraTs})&order=id.asc`)),
-    sl(allt('solur', 'select=id&status=eq.void&order=id.asc')),
-    sl(allt('vorur', 'select=id,nafn,flokkur,virkt&order=id.asc')),
-    sl(allt('verkbeidnir', 'select=id,status,created_at,pickup,eytt_at&eytt_at=is.null&order=id.asc')),
-    sl(allt('verklidur', 'select=job_id,status,eytt_at&eytt_at=is.null&order=id.asc')),
-    sl(allt('customer_documents', `select=doc_date,is_duplicate&doc_type=eq.uttektarskyrsla&source=eq.app&doc_date=gte.${fra}&order=id.asc`)),
-    sl(allt('payday_invoices_slokk', `select=status,paid_date,amount_ex&status=eq.PAID&paid_date=gte.${fra}&order=id.asc`)),
+    sl(() => allt('solur', `select=id,status,is_credit,credit_of,greitt_med,upphaed_an_vsk,created_at,paid_at,krafa_sent_at,linur&or=(created_at.gte.${fraTs},paid_at.gte.${fraTs},krafa_sent_at.gte.${fraTs})&order=id.asc`)),
+    sl(() => allt('solur', 'select=id&status=eq.void&order=id.asc')),
+    sl(() => allt('vorur', 'select=id,nafn,flokkur,virkt&order=id.asc')),
+    sl(() => allt('verkbeidnir', 'select=id,status,created_at,pickup,eytt_at&eytt_at=is.null&order=id.asc')),
+    sl(() => allt('verklidur', 'select=job_id,status,eytt_at&eytt_at=is.null&order=id.asc')),
+    sl(() => allt('customer_documents', `select=doc_date,is_duplicate&doc_type=eq.uttektarskyrsla&source=eq.app&doc_date=gte.${fra}&order=id.asc`)),
+    sl(() => allt('payday_invoices_slokk', `select=status,paid_date,amount_ex&status=eq.PAID&paid_date=gte.${fra}&order=id.asc`)),
     allt('timavera_entries', `select=date,hours,project&date=gte.${fra}&date=lte.${d}&order=id.asc`),
     allt('pricing_guide', 'select=worksite_name,dagvinna_rate,effective_from&order=worksite_name.asc,effective_from.asc.nullsfirst,dagvinna_rate.asc'),
     // sýnin hefur engan einkvæman lykil: raðað eftir ÖLLUM völdum dálkum svo síðurnar gefi alltaf sama mengi
     allt('skr_hub_skraningar', `select=project_name,serial_number,category_group,execution_date,checked_date,registration_status&${ajourSia}`
       + '&order=project_name.asc,serial_number.asc,category_group.asc.nullsfirst,execution_date.asc.nullsfirst,checked_date.asc.nullsfirst'),
     allt('hole_size_rates', 'select=scope,size_min_mm,size_max_mm,rate_an_vsk&category=eq.hole&scope=in.(generic,heklureitur)&order=id.asc'),
-    sl(allt('krofur_yfirlit_meta', `select=inv_key,sent,sent_at&sent=eq.true&sent_at=gte.${fraTs}&order=inv_key.asc`)),
-    sl(allt('invoice_drafts', 'select=worksite_name,work_month,total_m_vsk&order=id.asc')),
+    sl(() => allt('krofur_yfirlit_meta', `select=inv_key,sent,sent_at&sent=eq.true&sent_at=gte.${fraTs}&order=inv_key.asc`)),
+    sl(() => allt('invoice_drafts', 'select=worksite_name,work_month,total_m_vsk&order=id.asc')),
     allt('invoices', `select=status,greidsla_date,hofudstoll&source=eq.payday&status=eq.PAID&greidsla_date=gte.${fra}&order=id.asc`),
     eitt('timavera_entries', 'select=date&order=date.desc'),
     eitt('timavera_entries', 'select=imported_at&imported_at=not.is.null&order=imported_at.desc'),
     eitt('skr_hub_skraningar', 'select=execution_date&execution_date=not.is.null&order=execution_date.desc'),
     eitt('skr_hub_skraningar', 'select=imported_at&imported_at=not.is.null&order=imported_at.desc'),
-    eitt('payday_invoices_slokk', 'select=updated_at&order=updated_at.desc.nullslast'),
+    bhAdeins ? Promise.resolve(null) : eitt('payday_invoices_slokk', 'select=updated_at&order=updated_at.desc.nullslast'),
   ]);
   // Kreditnóta miðast við dagsetningu FRUMSÖLUNNAR (Agnar 22.11.2026). Nótan getur verið í glugganum en frumsalan fyrir hann, svo frumsölur
   // sem vantar í lesturinn eru sóttar sér. Bregðist það heldur nótan eigin degi og er talin í kreditAnFrumsolu (aldrei þögult).
@@ -126,7 +126,7 @@ async function saekja(d, opts = {}) {
     try {
       const hef = new Set(solur.map((r) => Number(r.id)));
       const vantar = [...new Set(solur.filter((r) => r.credit_of != null).map((r) => Number(r.credit_of)).filter((id) => Number.isInteger(id) && id > 0 && !hef.has(id)))];
-      for (let i = 0; i < vantar.length; i += 150) frumsolur.push(...await allt('solur', `select=id,created_at,paid_at&id=in.(${vantar.slice(i, i + 150).join(',')})&order=id.asc`));
+      for (let i = 0; i < vantar.length; i += 150) frumsolur.push(...await allt('solur', `select=id,created_at,paid_at,greitt_med&id=in.(${vantar.slice(i, i + 150).join(',')})&order=id.asc`));
     } catch (e) { frumsolurBrast = true; frumsolur = []; }
   }
   const gogn = { solur, voidIds: voidRadir.map((r) => r.id), frumsolur, vorur, verkbeidnir, verklidur, uttektir, paydaySl, timavera, pricing, ajour,

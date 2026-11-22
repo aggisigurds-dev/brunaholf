@@ -136,7 +136,9 @@ function slokkvitaeki(per, g) {
     // tekjuregla (_tekjur.cjs slokkvitaekiGildar): röð sem vísar á ógilda sölu (credit_of) er úti, hvort sem is_credit er sett eða ekki
     if (s.credit_of != null && voidIds.has(Number(s.credit_of))) continue;
     iTimabilum(per, dagSolu, (i) => { ut.tekjur[i] += upph; });
-    if (s.greitt_med === 'kort' || s.greitt_med === 'reidufe') iTimabilum(per, dagGreitt, (i) => { ut.verslun[i] += upph; });
+    // greiðslumáti frumsölunnar ræður (rýni 22.11: nóta með annan greitt_med en kortasalan féll úr versluninni og salan taldist ein)
+    const greittMed = fs && fs.greitt_med != null ? fs.greitt_med : s.greitt_med;
+    if (greittMed === 'kort' || greittMed === 'reidufe') iTimabilum(per, dagGreitt, (i) => { ut.verslun[i] += upph; });
     if (s.greitt_med === 'reikningur' && !kredit) iTimabilum(per, dagur(s.created_at), (i) => { ut.krafa[i] += upph; ut.reikn[i]++; });
   }
   // verkstæði: eitt tæki = ein verklidur-röð á lifandi verkbeiðni
@@ -301,16 +303,19 @@ function samanburdur(d, rod) {
 //   gjaldfallið = SENT (ekki greiddur í Payday og ekki merktur greiddur í Kröfu yfirliti) með gjalddaga á undan deginum í dag;
 //   greiðsluhraði = miðgildi daga frá útgáfu til greiðslu á reikningum greiddum síðustu 90 daga.
 // Greitt = Payday PAID (greidsla_date) + SENT merktur greiddur í Kröfu yfirliti innan 120 daga frá útgáfu (sama regla og saekja()).
-// radir = invoices (source payday) {tilvisun, status, utgafudagur, gjalddagi, greidsla_date, hofudstoll}; hand = krofur_yfirlit_meta paid.
+// radir = invoices (source payday) {tilvisun, status, utgafudagur, gjalddagi, greidsla_date, hofudstoll}; hand = krofur_yfirlit_meta {inv_key, paid, paid_at, hidden, done}.
+// Reikningar sem eru faldir/kláraðir í Kröfu yfirliti (hidden/done) teljast ekki gjaldfallnir — sama mengi og „Ógreitt núna“.
 function innheimta(radir, hand, idag, fra) {
-  const handAf = new Map();
+  const handAf = new Map(), falid = new Set();
   for (const m of hand || []) {
     const t = (/^payday\|(\d{1,12})$/.exec((m && m.inv_key) || '') || [])[1];
-    if (t && m.paid_at) handAf.set(String(t), dagur(m.paid_at));
+    if (!t) continue;
+    if (m.paid_at && m.paid !== false) handAf.set(String(t), dagur(m.paid_at));
+    if (m.hidden === true || m.done === true) falid.add(String(t));       // falið/klárað í Kröfu yfirliti: ekki gjaldfallin krafa (sama mengi og „Ógreitt núna“)
   }
   const DAGUR_MS = 86400000;
   const dagaMilli = (a, b) => Math.round((Date.parse(b) - Date.parse(a)) / DAGUR_MS);
-  const ut = { fra, greitt_kr: 0, greitt_n: 0, gjaldfallid_kr: 0, gjaldfallid_n: 0, yfir45_kr: 0, yfir45_n: 0, ogreitt_kr: 0, ogreitt_n: 0, hand_n: 0 };
+  const ut = { fra, greitt_kr: 0, greitt_n: 0, gjaldfallid_kr: 0, gjaldfallid_n: 0, yfir45_kr: 0, yfir45_n: 0, ogreitt_kr: 0, ogreitt_n: 0, hand_n: 0, falid_n: 0 };
   const hradi = [];
   const fyrir90 = plusDagar(idag, -90), fyrir45 = plusDagar(idag, -45);
   for (const r of radir || []) {
@@ -328,6 +333,7 @@ function innheimta(radir, hand, idag, fra) {
       continue;
     }
     if (r.status !== 'SENT') continue;
+    if (falid.has(String(r.tilvisun))) { ut.falid_n++; continue; }
     ut.ogreitt_kr += kr; ut.ogreitt_n++;
     const gj = dagur(r.gjalddagi);
     if (gj && gj < idag) {

@@ -284,12 +284,12 @@ test('innheimta: hlutfall = greitt ÷ (greitt + gjaldfallið), handmerkt greitt 
     inv('8', 'CANCELLED', '2026-10-02', '2026-10-16', null, 9999),       // telst hvorki
     inv('9', 'PAID', '2026-05-01', '2026-05-15', '2026-05-20', 5000),    // fyrir gluggann (frá 30.06)
   ];
-  const hand = [{ inv_key: 'payday|7', paid_at: '2026-10-13T08:00:00Z' }, { inv_key: 'payday|4', paid_at: '2027-01-01T00:00:00Z' }];
+  const hand = [{ inv_key: 'payday|7', paid: true, paid_at: '2026-10-13T08:00:00Z' }, { inv_key: 'payday|4', paid_at: '2027-01-01T00:00:00Z' }, { inv_key: 'payday|5', paid: false, hidden: true }];
   const i = R.innheimta(radir, hand, idag, '2026-06-30');
   assert.equal(i.greitt_kr, 800 + 100 + 100 + 300); assert.equal(i.greitt_n, 4); assert.equal(i.hand_n, 1);
-  assert.equal(i.gjaldfallid_kr, 150); assert.equal(i.gjaldfallid_n, 2); assert.equal(i.yfir45_kr, 50);
-  assert.equal(i.ogreitt_kr, 850, 'gjaldfallið + ekki fallið (700)');
-  assert.equal(i.hlutfall, Math.round(1000 * 1300 / 1450) / 10);
+  assert.equal(i.gjaldfallid_kr, 100); assert.equal(i.gjaldfallid_n, 1); assert.equal(i.yfir45_kr, 0, 'reikningur 5 er FALINN í Kröfu yfirliti → ekki gjaldfallinn (sama mengi og „Ógreitt núna“)'); assert.equal(i.falid_n, 1);
+  assert.equal(i.ogreitt_kr, 800, 'gjaldfallið (100) + ekki fallið (700)');
+  assert.equal(i.hlutfall, Math.round(1000 * 1300 / 1400) / 10);
   assert.equal(i.hradi_n, 4); assert.equal(i.hradi_midgildi, 10.5, 'miðgildi af 3, 10, 11 (handmerkt 13.10 − 02.10) og 20 dögum');
   // allt tómt → hlutfall og hraði eru null (ómælt), ekki 0
   const t = R.innheimta([], [], idag, '2026-06-30');
@@ -305,6 +305,8 @@ test('rekstur-manudir: 401/403/405, stjórnandi fær sjö mánuði og innheimtu;
     const svar = (j) => ({ ok: true, status: 200, json: async () => j, text: async () => JSON.stringify(j) });
     if (t === 'timavera_entries' && (u.searchParams.get('select') || '').includes('hours')) return svar([{ date: new Date().toISOString().slice(0, 10), hours: 8, project: 'Verk A' }]);
     if (t === 'invoices' && u.searchParams.get('status') === 'in.(PAID,SENT)') return svar([{ tilvisun: '1', status: 'PAID', utgafudagur: '2026-10-01', gjalddagi: '2026-10-15', greidsla_date: '2026-10-11', hofudstoll: 1000 }]);
+    if (t === 'invoices' && u.searchParams.get('status') === 'eq.PAID') return svar([{ status: 'PAID', greidsla_date: '2026-10-11', hofudstoll: 1000 }]);
+    if (t === 'skr_hub_skraningar' && (u.searchParams.get('select') || '').includes('project_name')) return svar([{ project_name: 'Heklureitur', serial_number: 'A1', category_group: 'Gat Ø20-34', execution_date: '2026-10-11', checked_date: null, registration_status: 'Done' }]);
     return grunn(url);
   };
   try {
@@ -318,10 +320,37 @@ test('rekstur-manudir: 401/403/405, stjórnandi fær sjö mánuði og innheimtu;
     assert.equal(j.man.length, 7); assert.equal(j.man[6].til, j.idag);
     assert.equal(j.man[6].unnid > 0, true, 'tímar í tímaskýrslu skila Unnið (líðandi mánuður)');
     assert.equal(j.innheimta.greitt_kr, 1000); assert.equal(j.innheimta.hlutfall, 100);
-    // lesturinn skilar engu → ómælt með ástæðu
+    // lesturinn skilar engu → fallið BREGST með ástæðu (502) í stað þess að gefa 0 — SL-hliðin segir þá „ómælt“ (rýni 22.11)
     global.fetch = grunn;
-    const r2 = JSON.parse((await RM.handler(ev(toki(1)))).body);
-    assert.match(r2.innheimta.omaelt, /skilaði engu/); assert.equal(r2.innheimta.hlutfall, undefined);
-    assert.equal(r2.man.length, 7, 'mánuðirnir skila sér þótt innheimtan sé ómæld');
+    const r2 = await RM.handler(ev(toki(1)));
+    assert.equal(r2.statusCode, 502); assert.match(JSON.parse(r2.body).villa, /Tímaveru-lesturinn skilaði engu/);
+    // Tímavera til en Payday-greiðslur ekki → líka ómælt
+    global.fetch = async (url) => { const u = new URL(url); const t = u.pathname.replace('/rest/v1/', ''); if (t === 'timavera_entries' && (u.searchParams.get('select') || '').includes('hours')) return { ok: true, status: 200, json: async () => [{ date: '2026-11-10', hours: 8, project: 'Verk A' }], text: async () => '[]' }; if (t === 'skr_hub_skraningar' && (u.searchParams.get('select') || '').includes('project_name')) return { ok: true, status: 200, json: async () => [{ project_name: 'Heklureitur', serial_number: 'A1', category_group: 'Gat Ø20-34', execution_date: '2026-10-11', registration_status: 'Done' }], text: async () => '[]' }; return grunn(url); };
+    const r3 = await RM.handler(ev(toki(1)));
+    assert.equal(r3.statusCode, 502); assert.match(JSON.parse(r3.body).villa, /Greiðslulesturinn skilaði engu/);
+  } finally { global.fetch = fyrri; }
+});
+
+test('kredit með annan greitt_med en frumsalan: greiðslumáti FRUMSÖLUNNAR ræður (verslun jafnast út)', () => {
+  const p = R.timabil('2026-11-17');
+  const s = R.slokkvitaeki(p, { solur: [
+    { id: 1, status: 'final', greitt_med: 'kort', upphaed_an_vsk: 1000, created_at: '2026-10-20T10:00:00Z', paid_at: '2026-10-20T10:00:00Z' },
+    { id: 2, status: 'final', credit_of: 1, greitt_med: 'reikningur', upphaed_an_vsk: -1000, created_at: '2026-11-05T10:00:00Z' },
+  ] });
+  assert.equal(s.verslun[4], 0, 'október: salan (kort) og nótan (skráð á reikning) jafnast út í versluninni'); assert.equal(s.tekjur[4], 0);
+});
+
+test('saekja(bhAdeins): SL-töflur eru EKKI sóttar (lat) — bilun í þeim fellir ekki Brunahólfshlutann', async () => {
+  const fyrri = global.fetch; const sott = [];
+  global.fetch = async (url) => {
+    const t = new URL(url).pathname.replace('/rest/v1/', ''); sott.push(t);
+    if (['solur', 'vorur', 'verkbeidnir', 'verklidur', 'customer_documents', 'payday_invoices_slokk', 'invoice_drafts'].includes(t)) return { ok: false, status: 500, text: async () => 'boom', json: async () => ({}) };
+    return { ok: true, status: 200, json: async () => [], text: async () => '[]' };
+  };
+  try {
+    const RS = require('../netlify/functions/rekstrarskyrsla.js');
+    const r = await RS._saekja('2026-11-17', { fra: '2026-05-01', bhAdeins: true });
+    assert.ok(r.gogn && Array.isArray(r.gogn.timavera));
+    for (const t of ['solur', 'vorur', 'verkbeidnir', 'verklidur', 'customer_documents', 'payday_invoices_slokk', 'invoice_drafts']) assert.equal(sott.includes(t), false, t + ' sleppt');
   } finally { global.fetch = fyrri; }
 });

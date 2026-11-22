@@ -19,7 +19,7 @@ const INNHEIMTA_FRA = '2026-06-30';   // Slökkvitæki fór í Payday 30.06.2026
 async function innheimtaBh(idag) {
   const [radir, hand] = await Promise.all([
     RS._allt('invoices', `select=tilvisun,status,utgafudagur,gjalddagi,greidsla_date,hofudstoll&source=eq.payday&status=in.(PAID,SENT)&utgafudagur=gte.${INNHEIMTA_FRA}&order=id.asc`),
-    RS._allt('krofur_yfirlit_meta', `select=inv_key,paid_at&paid=eq.true&paid_at=gte.${INNHEIMTA_FRA}T00:00:00Z&order=inv_key.asc`),
+    RS._allt('krofur_yfirlit_meta', `select=inv_key,paid,paid_at,hidden,done&or=(paid.eq.true,hidden.eq.true,done.eq.true)&order=inv_key.asc`),
   ]);
   if (!radir.length) return { omaelt: 'reikningalesturinn skilaði engu' };
   return R.innheimta(radir, hand, idag, INNHEIMTA_FRA);
@@ -28,6 +28,11 @@ async function innheimtaBh(idag) {
 async function manudir(idag) {
   const per = R.manudir(idag);
   const { gogn, ferskleiki } = await RS._saekja(idag, { fra: per[0].fra, bhAdeins: true });
+  // Tómur lestur er EKKI 0: Tímavera, Ajour og Payday-greiðslur Brunahólfs eru til í hverjum mánuði, svo engin röð = lesturinn brást
+  // (aðgangsregla, rangur lykill — mælt 17.11.2026: RLS gaf []). Þá bregst fallið og SL-hliðin segir ómælt með ástæðu.
+  if (!(gogn.timavera || []).length) throw new Error('Tímaveru-lesturinn skilaði engu');
+  if (!(gogn.ajour || []).length) throw new Error('Ajour-lesturinn skilaði engu');
+  if (!(gogn.paydayBh || []).length) throw new Error('Greiðslulesturinn skilaði engu');
   const bh = R.brunaholf(per, gogn);
   const kr = (x) => Math.round(x);
   return {
