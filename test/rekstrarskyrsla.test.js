@@ -211,3 +211,117 @@ test('rýni 18.11: kredit án is_credit á ógilda sölu, NLSH eftir checked_dat
   assert.equal(b.lshG[4], 0, 'október: ekkert');
   assert.equal(Math.round(b.lshV[3]), Math.round(2 * 0.5 * 7166 / 1.24));
 });
+
+// ---- 22.11.2026: kreditnótur miðast við dagsetningu FRUMSÖLUNNAR (Agnar: „0 fellur bara út“) ----
+test('kredit í öðrum mánuði en frumsala: nettó 0 í mánuði frumsölunnar og 0 í mánuði nótunnar (tekjur, ný tæki, verslun)', () => {
+  const p = R.timabil('2026-11-17');   // m1 = október, man = nóvember
+  const vorur = [{ id: 5, nafn: 'CO₂ 5 kg. Slökkvitæki', flokkur: 'Slökkvitæki', virkt: true }];
+  const s = R.slokkvitaeki(p, {
+    vorur,
+    solur: [
+      { id: 1, status: 'final', greitt_med: 'kort', upphaed_an_vsk: 1000, created_at: '2026-10-20T10:00:00Z', paid_at: '2026-10-21T10:00:00Z', linur: [{ product_id: 5, qty: 2 }] },
+      { id: 2, status: 'final', is_credit: true, credit_of: 1, greitt_med: 'kort', upphaed_an_vsk: -1000, created_at: '2026-11-05T10:00:00Z', paid_at: '2026-11-05T10:00:00Z', linur: [{ product_id: 5, qty: -2 }] },
+    ],
+  });
+  assert.equal(s.tekjur[4], 0, 'október (frumsalan): salan og nótan jafnast út');
+  assert.equal(s.tekjur[3], 0, 'nóvember (nótan): ekkert');
+  assert.equal(s.ny[4], 0); assert.equal(s.ny[3], 0, 'ný tæki fylgja frumsölunni líka');
+  assert.equal(s.verslun[4], 0); assert.equal(s.verslun[3], 0, 'verslun: nótan á greiðsludag frumsölunnar');
+  assert.equal(s.kreditAnFrumsolu, 0);
+});
+
+test('hluta-kredit: mismunurinn er eftir í mánuði frumsölunnar; frumsala sótt sér (g.frumsolur) þegar hún er fyrir gluggann', () => {
+  const p = R.timabil('2026-11-17');
+  const a = R.slokkvitaeki(p, {
+    solur: [
+      { id: 1, status: 'final', greitt_med: 'reikningur', upphaed_an_vsk: 1000, created_at: '2026-10-20T10:00:00Z' },
+      { id: 2, status: 'final', credit_of: 1, greitt_med: 'reikningur', upphaed_an_vsk: -300, created_at: '2026-11-05T10:00:00Z' },
+    ],
+  });
+  assert.equal(a.tekjur[4], 700, 'október: 1000 − 300'); assert.equal(a.tekjur[3], 0);
+  // frumsalan er ekki í lestrinum (fyrir gluggann) en kemur úr g.frumsolur → nótan fer samt á mánuð frumsölunnar (ágúst = m3)
+  const b = R.slokkvitaeki(p, {
+    solur: [{ id: 2, status: 'final', credit_of: 99, greitt_med: 'reikningur', upphaed_an_vsk: -300, created_at: '2026-11-05T10:00:00Z' }],
+    frumsolur: [{ id: 99, created_at: '2026-08-14T10:00:00Z', paid_at: null }],
+  });
+  assert.equal(b.tekjur[6], -300, 'ágúst'); assert.equal(b.tekjur[3], 0, 'ekki í mánuði nótunnar'); assert.equal(b.kreditAnFrumsolu, 0);
+});
+
+test('kredit án frumsölu: eigin dagur og talin í kreditAnFrumsolu (aldrei þögult); kredit á bakfærða sölu er úti og ekki talin', () => {
+  const p = R.timabil('2026-11-17');
+  const s = R.slokkvitaeki(p, {
+    voidIds: [50],
+    solur: [
+      { id: 2, status: 'final', is_credit: true, greitt_med: 'reikningur', upphaed_an_vsk: -200, created_at: '2026-11-05T10:00:00Z' },      // is_credit án credit_of
+      { id: 3, status: 'final', credit_of: 777, greitt_med: 'reikningur', upphaed_an_vsk: -100, created_at: '2026-11-06T10:00:00Z' },          // frumsala finnst ekki
+      { id: 4, status: 'final', credit_of: 50, greitt_med: 'reikningur', upphaed_an_vsk: -900, created_at: '2026-11-07T10:00:00Z' },           // bakfærð frumsala
+    ],
+  });
+  assert.equal(s.tekjur[3], -300, 'eigin dagur: −200 −100; −900 (bakfært) úti');
+  assert.equal(s.kreditAnFrumsolu, 2);
+});
+
+// ---- „Hvernig gengur reksturinn?“: sjö tímabil og innheimta ----
+test('manudir: sex heilir mánuðir á undan + líðandi mánuður til dags, líka yfir áramót og hlaupár', () => {
+  const t = R.manudir('2026-11-22').map((p) => `${p.fra}..${p.til}`);
+  assert.deepEqual(t, ['2026-05-01..2026-05-31', '2026-06-01..2026-06-30', '2026-07-01..2026-07-31', '2026-08-01..2026-08-31', '2026-09-01..2026-09-30', '2026-10-01..2026-10-31', '2026-11-01..2026-11-22']);
+  assert.equal(R.manudir('2028-03-10')[5].til, '2028-02-29');
+  assert.equal(R.manudir('2027-01-05')[0].fra, '2026-07-01');
+  assert.equal(R.manudir('2026-11-22').length, 7);
+});
+
+test('innheimta: hlutfall = greitt ÷ (greitt + gjaldfallið), handmerkt greitt innan 120 d telst, miðgildi greiðsludaga síðustu 90 d', () => {
+  const idag = '2026-11-22';
+  const inv = (tilv, status, utg, gj, gr, kr) => ({ tilvisun: tilv, status, utgafudagur: utg, gjalddagi: gj, greidsla_date: gr, hofudstoll: kr });
+  const radir = [
+    inv('1', 'PAID', '2026-10-01', '2026-10-15', '2026-10-11', 800),     // 10 d
+    inv('2', 'PAID', '2026-10-05', '2026-10-19', '2026-10-25', 100),     // 20 d
+    inv('3', 'PAID', '2026-10-06', '2026-10-20', '2026-10-09', 100),     // 3 d
+    inv('4', 'SENT', '2026-10-10', '2026-10-24', null, 100),             // gjaldfallinn, 29 d → ekki yfir 45
+    inv('5', 'SENT', '2026-08-01', '2026-08-15', null, 50),              // gjaldfallinn, yfir 45 d
+    inv('6', 'SENT', '2026-11-18', '2026-12-02', null, 700),             // ekki fallinn
+    inv('7', 'SENT', '2026-10-02', '2026-10-16', null, 300),             // handmerktur greiddur 13.10 → greiddur
+    inv('8', 'CANCELLED', '2026-10-02', '2026-10-16', null, 9999),       // telst hvorki
+    inv('9', 'PAID', '2026-05-01', '2026-05-15', '2026-05-20', 5000),    // fyrir gluggann (frá 30.06)
+  ];
+  const hand = [{ inv_key: 'payday|7', paid_at: '2026-10-13T08:00:00Z' }, { inv_key: 'payday|4', paid_at: '2027-01-01T00:00:00Z' }];
+  const i = R.innheimta(radir, hand, idag, '2026-06-30');
+  assert.equal(i.greitt_kr, 800 + 100 + 100 + 300); assert.equal(i.greitt_n, 4); assert.equal(i.hand_n, 1);
+  assert.equal(i.gjaldfallid_kr, 150); assert.equal(i.gjaldfallid_n, 2); assert.equal(i.yfir45_kr, 50);
+  assert.equal(i.ogreitt_kr, 850, 'gjaldfallið + ekki fallið (700)');
+  assert.equal(i.hlutfall, Math.round(1000 * 1300 / 1450) / 10);
+  assert.equal(i.hradi_n, 4); assert.equal(i.hradi_midgildi, 10.5, 'miðgildi af 3, 10, 11 (handmerkt 13.10 − 02.10) og 20 dögum');
+  // allt tómt → hlutfall og hraði eru null (ómælt), ekki 0
+  const t = R.innheimta([], [], idag, '2026-06-30');
+  assert.equal(t.hlutfall, null); assert.equal(t.hradi_midgildi, null);
+});
+
+test('rekstur-manudir: 401/403/405, stjórnandi fær sjö mánuði og innheimtu; innheimta ómæld ef lesturinn skilar engu', async () => {
+  const fyrri = global.fetch;
+  const grunn = gervi();
+  global.fetch = async (url) => {
+    const u = new URL(url);
+    const t = u.pathname.replace('/rest/v1/', '');
+    const svar = (j) => ({ ok: true, status: 200, json: async () => j, text: async () => JSON.stringify(j) });
+    if (t === 'timavera_entries' && (u.searchParams.get('select') || '').includes('hours')) return svar([{ date: new Date().toISOString().slice(0, 10), hours: 8, project: 'Verk A' }]);
+    if (t === 'invoices' && u.searchParams.get('status') === 'in.(PAID,SENT)') return svar([{ tilvisun: '1', status: 'PAID', utgafudagur: '2026-10-01', gjalddagi: '2026-10-15', greidsla_date: '2026-10-11', hofudstoll: 1000 }]);
+    return grunn(url);
+  };
+  try {
+    const RM = require('../netlify/functions/rekstur-manudir.js');
+    assert.equal((await RM.handler({ httpMethod: 'GET', headers: {} })).statusCode, 401);
+    assert.equal((await RM.handler(ev(toki(2)))).statusCode, 403);
+    assert.equal((await RM.handler({ httpMethod: 'POST', headers: {} })).statusCode, 405);
+    const r = await RM.handler(ev(toki(1)));
+    assert.equal(r.statusCode, 200);
+    const j = JSON.parse(r.body);
+    assert.equal(j.man.length, 7); assert.equal(j.man[6].til, j.idag);
+    assert.equal(j.man[6].unnid > 0, true, 'tímar í tímaskýrslu skila Unnið (líðandi mánuður)');
+    assert.equal(j.innheimta.greitt_kr, 1000); assert.equal(j.innheimta.hlutfall, 100);
+    // lesturinn skilar engu → ómælt með ástæðu
+    global.fetch = grunn;
+    const r2 = JSON.parse((await RM.handler(ev(toki(1)))).body);
+    assert.match(r2.innheimta.omaelt, /skilaði engu/); assert.equal(r2.innheimta.hlutfall, undefined);
+    assert.equal(r2.man.length, 7, 'mánuðirnir skila sér þótt innheimtan sé ómæld');
+  } finally { global.fetch = fyrri; }
+});

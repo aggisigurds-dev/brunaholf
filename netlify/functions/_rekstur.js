@@ -7,6 +7,9 @@
 // EIN skilgreining per tölu — engin ný regla búin til hér:
 //  • Tekjur Slökkvitækis = tekjuregla slokkvitaeki/netlify/functions/_tekjur.cjs (slokkvitaekiGildar): solur status
 //    'final', upphaed_an_vsk eftir created_at, kreditnóta á ógilda sölu úti.
+//    KREDITNÓTUR MIÐAST VIÐ DAGSETNINGU FRUMSÖLUNNAR (Agnar 22.11.2026: „0 fellur bara út“): nóta (credit_of → frumsala) telst á
+//    created_at frumsölunnar (tekjur, ný tæki) og paid_at||created_at hennar (verslun), svo salan og nótan jafnast út í sama
+//    tímabili. Finnist frumsalan ekki (g.frumsolur) heldur nótan eigin degi og er talin í ut.kreditAnFrumsolu — aldrei þögult.
 //  • Ný slökkvitæki = public.solulina_vara/solulina_magn (slokkvitaeki sql/vorur_selt_og_birgdahreyfing.sql),
 //    vorur.flokkur 'Slökkvitæki', allar 'final' sölur (kredit ber neikvætt magn).
 //  • Rukkanlegir tímar = Tímavera án K.ORUKKANLEGT og K.GATA (_krofu-flokkun.js); virði = klst × dagvinnutaxti
@@ -60,6 +63,14 @@ function heitiTimabils(p, d) {
   if (p.k === 'man') return { n: m, s: `${ddmm(p.fra)}–${ddmm(p.til)}` };
   return { n: m, s: 'heill mánuður' };
 }
+// „Hvernig gengur reksturinn?“ (22.11.2026): sex heilir mánuðir á undan + líðandi mánuður til dags — sjö tímabil, sama lögun og
+// timabil() svo brunaholf()/slokkvitaeki() nýtist óbreytt.
+function manudir(d) {
+  const t = [];
+  for (let i = 6; i >= 1; i--) t.push({ k: 'm' + i, fra: manFyrsti(d, i), til: manSidasti(d, i) });
+  t.push({ k: 'man', fra: manFyrsti(d), til: d });
+  return t.map((p) => ({ ...p, heiti: heitiTimabils(p, d) }));
+}
 // Fyrsti dagur sem gögn þarf að sækja frá: elsti mánuðurinn eða 35 dagar aftur (röðin + samanburður vikna).
 function fyrstiDagur(d) { const a = manFyrsti(d, 3), b = plusDagar(d, -34); return a < b ? a : b; }
 
@@ -100,22 +111,32 @@ function slokkvitaeki(per, g) {
     inn: tomt(), ut: tomt(), sent: tomt(), sentN: tomt(), greitt: tomt(), greittN: tomt(), verkstaedi: { nu: 0, bida: 0 } };
   const voidIds = new Set((g.voidIds || []).map(Number));
   const kort = vorurKort(g.vorur);
+  // frumsölur kreditnóta: úr sama lestri eða g.frumsolur (sótt sér, því nótan getur verið í öðru tímabili en frumsalan)
+  const frum = new Map();
+  for (const s of g.frumsolur || []) frum.set(Number(s.id), s);
+  for (const s of g.solur || []) frum.set(Number(s.id), s);
+  ut.kreditAnFrumsolu = 0;
   for (const s of g.solur || []) {
     const st = String(s.status || '');
     const upph = tala(s.upphaed_an_vsk);
     if (st !== 'void' && s.krafa_sent_at) iTimabilum(per, dagur(s.krafa_sent_at), (i) => { ut.sent[i] += upph; ut.sentN[i]++; });
     if (st !== 'final') continue;
+    // Kreditnóta fylgir frumsölunni: dagsetning hennar ræður tímabilinu (Agnar 22.11.2026)
+    const fs = s.credit_of != null ? frum.get(Number(s.credit_of)) : null;
+    if ((s.credit_of != null || s.is_credit === true) && !fs && !(s.credit_of != null && voidIds.has(Number(s.credit_of)))) ut.kreditAnFrumsolu++;
+    const dagSolu = dagur((fs || s).created_at);
+    const dagGreitt = dagur((fs || s).paid_at || (fs || s).created_at);
     // ný tæki: allar lokaðar sölur, eins og v_vorur_selt
     if (Array.isArray(s.linur)) {
       let q = 0;
       for (const l of s.linur) { const v = solulinaVara(l, kort); if (v && v.flokkur === 'Slökkvitæki') q += solulinaMagn(l); }
-      if (q) iTimabilum(per, dagur(s.created_at), (i) => { ut.ny[i] += q; });
+      if (q) iTimabilum(per, dagSolu, (i) => { ut.ny[i] += q; });
     }
     const kredit = s.is_credit === true;
     // tekjuregla (_tekjur.cjs slokkvitaekiGildar): röð sem vísar á ógilda sölu (credit_of) er úti, hvort sem is_credit er sett eða ekki
     if (s.credit_of != null && voidIds.has(Number(s.credit_of))) continue;
-    iTimabilum(per, dagur(s.created_at), (i) => { ut.tekjur[i] += upph; });
-    if (s.greitt_med === 'kort' || s.greitt_med === 'reidufe') iTimabilum(per, dagur(s.paid_at || s.created_at), (i) => { ut.verslun[i] += upph; });
+    iTimabilum(per, dagSolu, (i) => { ut.tekjur[i] += upph; });
+    if (s.greitt_med === 'kort' || s.greitt_med === 'reidufe') iTimabilum(per, dagGreitt, (i) => { ut.verslun[i] += upph; });
     if (s.greitt_med === 'reikningur' && !kredit) iTimabilum(per, dagur(s.created_at), (i) => { ut.krafa[i] += upph; ut.reikn[i]++; });
   }
   // verkstæði: eitt tæki = ein verklidur-röð á lifandi verkbeiðni
@@ -275,6 +296,54 @@ function samanburdur(d, rod) {
   };
 }
 
+// INNHEIMTA Brunahólfs (án vsk, höfuðstóll) — sama skilgreining og hjá Slökkvitæki (payday_invoices_slokk), svo tölurnar séu samanburðarhæfar:
+//   innheimtuhlutfall = greitt ÷ (greitt + gjaldfallið ógreitt) á reikningum útgefnum frá `fra`;
+//   gjaldfallið = SENT (ekki greiddur í Payday og ekki merktur greiddur í Kröfu yfirliti) með gjalddaga á undan deginum í dag;
+//   greiðsluhraði = miðgildi daga frá útgáfu til greiðslu á reikningum greiddum síðustu 90 daga.
+// Greitt = Payday PAID (greidsla_date) + SENT merktur greiddur í Kröfu yfirliti innan 120 daga frá útgáfu (sama regla og saekja()).
+// radir = invoices (source payday) {tilvisun, status, utgafudagur, gjalddagi, greidsla_date, hofudstoll}; hand = krofur_yfirlit_meta paid.
+function innheimta(radir, hand, idag, fra) {
+  const handAf = new Map();
+  for (const m of hand || []) {
+    const t = (/^payday\|(\d{1,12})$/.exec((m && m.inv_key) || '') || [])[1];
+    if (t && m.paid_at) handAf.set(String(t), dagur(m.paid_at));
+  }
+  const DAGUR_MS = 86400000;
+  const dagaMilli = (a, b) => Math.round((Date.parse(b) - Date.parse(a)) / DAGUR_MS);
+  const ut = { fra, greitt_kr: 0, greitt_n: 0, gjaldfallid_kr: 0, gjaldfallid_n: 0, yfir45_kr: 0, yfir45_n: 0, ogreitt_kr: 0, ogreitt_n: 0, hand_n: 0 };
+  const hradi = [];
+  const fyrir90 = plusDagar(idag, -90), fyrir45 = plusDagar(idag, -45);
+  for (const r of radir || []) {
+    const utg = dagur(r.utgafudagur), kr = tala(r.hofudstoll);
+    if (!utg || utg < fra || !(kr > 0)) continue;
+    let greiddur = null;
+    if (r.status === 'PAID' && r.greidsla_date) greiddur = dagur(r.greidsla_date);
+    else if (r.status === 'SENT' && handAf.has(String(r.tilvisun))) {
+      const dm = dagaMilli(utg, handAf.get(String(r.tilvisun)));
+      if (dm >= 0 && dm <= 120 && handAf.get(String(r.tilvisun)) <= idag) { greiddur = handAf.get(String(r.tilvisun)); ut.hand_n++; }
+    }
+    if (greiddur) {
+      ut.greitt_kr += kr; ut.greitt_n++;
+      if (greiddur >= fyrir90 && greiddur <= idag) { const dm = dagaMilli(utg, greiddur); if (dm >= 0) hradi.push(dm); }
+      continue;
+    }
+    if (r.status !== 'SENT') continue;
+    ut.ogreitt_kr += kr; ut.ogreitt_n++;
+    const gj = dagur(r.gjalddagi);
+    if (gj && gj < idag) {
+      ut.gjaldfallid_kr += kr; ut.gjaldfallid_n++;
+      if (gj < fyrir45) { ut.yfir45_kr += kr; ut.yfir45_n++; }
+    }
+  }
+  const nefnari = ut.greitt_kr + ut.gjaldfallid_kr;
+  ut.hlutfall = nefnari > 0 ? Math.round((1000 * ut.greitt_kr) / nefnari) / 10 : null;
+  hradi.sort((a, b) => a - b);
+  ut.hradi_n = hradi.length;
+  ut.hradi_midgildi = hradi.length ? (hradi.length % 2 ? hradi[(hradi.length - 1) / 2] : (hradi[hradi.length / 2 - 1] + hradi[hradi.length / 2]) / 2) : null;
+  for (const k of ['greitt_kr', 'gjaldfallid_kr', 'yfir45_kr', 'ogreitt_kr']) ut[k] = Math.round(ut[k]);
+  return ut;
+}
+
 function skyrsla(d, g) {
   const per = timabil(d);
   const sl = slokkvitaeki(per, g);
@@ -296,4 +365,4 @@ function skyrsla(d, g) {
   };
 }
 
-module.exports = { skyrsla, timabil, fyrstiDagur, slokkvitaeki, brunaholf, solulinaVara, solulinaMagn, vorurKort, heklaTaxtar, taxtar, nlshVirdi, manudagur, plusDagar, NLSH_AFRIT };
+module.exports = { skyrsla, timabil, manudir, innheimta, fyrstiDagur, slokkvitaeki, brunaholf, solulinaVara, solulinaMagn, vorurKort, heklaTaxtar, taxtar, nlshVirdi, manudagur, plusDagar, NLSH_AFRIT };
