@@ -268,7 +268,7 @@ function brunaholf(per, g) {
     if (r.status !== 'PAID') continue;
     iTimabilum(per, dagur(r.greidsla_date), (i) => { ut.greitt[i] += tala(r.hofudstoll); ut.greittN[i]++; });
   }
-  for (let i = 0; i < 7; i++) ut.virdi[i] = ut.tima[i] + ut.lshV[i] + ut.hekV[i];
+  for (let i = 0; i < per.length; i++) ut.virdi[i] = ut.tima[i] + ut.lshV[i] + ut.hekV[i];
   return ut;
 }
 
@@ -296,6 +296,66 @@ function samanburdur(d, rod) {
     vika: { nu: summa(man, d), fyrr: summa(plusDagar(man, -7), plusDagar(d, -7)), merki: 'sömu daga í fyrri viku' },
     svika: { nu: summa(plusDagar(man, -7), plusDagar(man, -1)), fyrr: summa(plusDagar(man, -14), plusDagar(man, -8)), merki: 'vikuna á undan' },
   };
+}
+
+// ── UNNIÐ EFTIR VERKSTAÐ (fasi 4, Agnar 22.11.2026: „Brunahólf ... sundurliðaðu eftir verkstað × mánuður“) ─────────────────────────────────────
+// SÖMU reglur og brunaholf() (engin ný regla): rukkanlegir Tímaveru-tímar × dagvinnutaxti verkstaðar (9.951 ef verkstað vantar í Verðskrá — merkt
+// „án taxta“) + kláruð göt (Landspítalinn: stakir serial × studull × taxti ÷ 1,24 eftir checked_date; Heklureitur: eftir execution_date × hole_size_rates;
+// önnur göt eru ekki verðlögð og talin sér). Verkstaður = nafn verks, Landspítalaverk samnefnd „Landsspitalinn“ og Heklureitur „Heklu reitur“.
+// Σ allra raða = brunaholf().virdi á sömu tímabilum (prófað). per = tímabil (hvaða fjöldi sem er).
+const LSH_VERK = 'Landsspitalinn', HEKLA_VERK = 'Heklu reitur';
+function verkLykill(nafn) {
+  const n = String(nafn || '').trim();
+  if (NLSH_NAMES.includes(n)) return LSH_VERK;
+  if (HEKLU_NOFN.includes(n)) return HEKLA_VERK;
+  return n;
+}
+// Samanburðarlykill: Verðskráin leitar án tillits til stafastærðar (taxtar()), svo raðir og reikningar gera það líka — „Orkureitur“ og „orkureitur“ eru EITT verk.
+const verkKey = (nafn) => verkLykill(nafn).toLowerCase();
+function verkstadir(per, g) {
+  const n = per.length, nul = () => new Array(n).fill(0);
+  const rows = new Map();
+  const rad = (nafn) => { const k = verkKey(nafn); if (!rows.has(k)) rows.set(k, { verk: verkLykill(nafn), key: k, klst: nul(), tima_kr: nul(), got: nul(), got_kr: nul(), unnid: nul(), taxti: null, an_taxta: false }); return rows.get(k); };
+  const tx = taxtar(g.pricing);
+  for (const e of g.timavera || []) {
+    if (!rukkanlegt(e.project)) continue;
+    const h = tala(e.hours), taxti = tx.get(String(e.project || '').trim().toLowerCase());
+    const r = rad(verkLykill(e.project));
+    r.taxti = taxti || SJALFGEFINN_TAXTI; if (!taxti) r.an_taxta = true;
+    iTimabilum(per, dagur(e.date), (i) => { r.klst[i] += h; r.tima_kr[i] += h * (taxti || SJALFGEFINN_TAXTI); });
+  }
+  const nlshNofn = new Set(NLSH_NAMES);
+  const done = [];
+  for (const r of g.ajour || []) {
+    if (r.registration_status !== 'Done' || r.project_name === NLSH_AFRIT) continue;
+    const dd = dagur(nlshNofn.has(r.project_name) ? (r.checked_date || r.execution_date) : (r.execution_date || r.checked_date));
+    if (!dd) continue;
+    done.push({ ...r, dd });
+  }
+  const heklaTaxti = heklaTaxtar(g.holeRates);
+  const onnur = nul();
+  per.forEach((p, i) => {
+    const inni = done.filter((r) => r.dd >= p.fra && r.dd <= p.til);
+    const nl = nlshVirdi(inni.filter((r) => nlshNofn.has(r.project_name)));
+    if (nl.stakar || nl.an_vsk) { const r = rad(LSH_VERK); r.got[i] += nl.stakar; r.got_kr[i] += nl.an_vsk; }
+    for (const r of inni) {
+      if (nlshNofn.has(r.project_name)) continue;
+      if (HEKLU_NOFN.includes(r.project_name) && r.execution_date && /^gat/i.test(String(r.category_group || ''))) {
+        const t = heklaTaxti(r.category_group);
+        if (t != null) { const x = rad(HEKLA_VERK); x.got[i]++; x.got_kr[i] += t; continue; }
+      }
+    }
+    // önnur göt (ekki verðlögð): stakir project|serial sem eru ekki Landspítali og ekki verðlögð Heklureitsgöt
+    const verdlagt = new Set(inni.filter((r) => HEKLU_NOFN.includes(r.project_name) && r.execution_date && /^gat/i.test(String(r.category_group || '')) && heklaTaxti(r.category_group) != null).map((r) => `${r.project_name}|${r.serial_number}`));
+    onnur[i] = new Set(inni.filter((r) => !nlshNofn.has(r.project_name) && !verdlagt.has(`${r.project_name}|${r.serial_number}`)).map((r) => `${r.project_name}|${r.serial_number}`)).size;
+  });
+  const lista = [...rows.values()].map((r) => {
+    for (let i = 0; i < n; i++) r.unnid[i] = r.tima_kr[i] + r.got_kr[i];
+    return r;
+  }).sort((a, b) => b.unnid.reduce((x, y) => x + y, 0) - a.unnid.reduce((x, y) => x + y, 0));
+  const samtals = nul(), klst = nul(), got = nul();
+  for (const r of lista) for (let i = 0; i < n; i++) { samtals[i] += r.unnid[i]; klst[i] += r.klst[i]; got[i] += r.got[i]; }
+  return { rows: lista, samtals, klst, got, onnur_got: onnur };
 }
 
 // INNHEIMTA Brunahólfs (án vsk, höfuðstóll) — sama skilgreining og hjá Slökkvitæki (payday_invoices_slokk), svo tölurnar séu samanburðarhæfar:
@@ -371,4 +431,4 @@ function skyrsla(d, g) {
   };
 }
 
-module.exports = { skyrsla, timabil, manudir, innheimta, fyrstiDagur, slokkvitaeki, brunaholf, solulinaVara, solulinaMagn, vorurKort, heklaTaxtar, taxtar, nlshVirdi, manudagur, plusDagar, NLSH_AFRIT };
+module.exports = { skyrsla, timabil, manudir, innheimta, verkstadir, verkLykill, verkKey, fyrstiDagur, slokkvitaeki, brunaholf, solulinaVara, solulinaMagn, vorurKort, heklaTaxtar, taxtar, nlshVirdi, manudagur, plusDagar, NLSH_AFRIT };

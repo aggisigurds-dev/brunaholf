@@ -42,6 +42,25 @@ body{
 .grand .pipe .pv.gold{color:var(--gold-300)}
 .grand .pipe .ps{font-size:10.5px;color:var(--on-dark-mute);margin-top:6px;white-space:nowrap;font-weight:500;letter-spacing:.02em}
 
+/* 22.11.2026 (fasi 3b): „Staðan núna“ — þrjár aðskildar tölur á félag í stað einnar heildar-pípu; platan er hlekkur á Tekjuliði */
+a.grand2{display:block;color:var(--on-dark);text-decoration:none}
+a.grand2:hover{filter:brightness(1.06)}
+a.grand2:focus-visible{outline:3px solid var(--gold-300);outline-offset:3px}
+.grand2 .g2-f{position:relative;padding:14px 0 4px;border-top:1px solid rgba(255,255,255,.09);margin-top:14px}
+.grand2 .lbl + .g2-f{margin-top:12px}
+.grand2 .g2-nafn{font-family:var(--font-display);font-size:18px;font-weight:700;color:var(--gold-300)}
+.grand2 .g2-man{font-size:11.5px;color:var(--on-dark-mute);margin-top:3px;line-height:1.4}
+.grand2 .g2-tolur{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px 22px;margin-top:12px}
+.grand2 .pl{font-size:9.5px;font-weight:700;letter-spacing:.14em;color:var(--on-dark-mute);text-transform:uppercase}
+.grand2 .gv{font-family:var(--font-mono);font-size:24px;font-weight:700;color:var(--on-dark);margin-top:7px;line-height:1;white-space:nowrap;font-variant-numeric:tabular-nums}
+.grand2 .gv .kr{font-size:12px;font-weight:600;margin-left:5px;color:var(--on-dark-mute)}
+.grand2 .ps{font-size:10.5px;color:var(--on-dark-mute);margin-top:6px;font-weight:500;letter-spacing:.02em;line-height:1.35}
+.grand2 .g2-fot{position:relative;margin-top:14px;font-size:12px;font-weight:700;color:var(--gold-300);text-align:right}
+@media(max-width:780px){
+  .grand2 .g2-tolur{grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 14px}
+  .grand2 .gv{font-size:19px}
+}
+
 /* Kaflaskil: plata · Playfair heiti · samtala · gull-hárlína */
 section{display:flex;flex-direction:column;gap:10px}
 .sh{display:flex;align-items:baseline;gap:10px;padding:4px 4px 0}

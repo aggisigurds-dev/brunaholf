@@ -398,6 +398,7 @@
     "rekstrarskyrsla.html",
     "netlify/functions/rekstrarskyrsla.js",
     "netlify/functions/rekstur-manudir.js",
+    "netlify/functions/tekjulidir-bh.js",
     "netlify/functions/_rekstur.js"
    ],
    "yfir": null,

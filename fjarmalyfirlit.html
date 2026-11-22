@@ -16,7 +16,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/css/theme.css?v=4">
-<link rel="stylesheet" href="/css/fjarmalyfirlit.css?v=6">
+<link rel="stylesheet" href="/css/fjarmalyfirlit.css?v=7">
   <script src="/js/dags-snid.js?v=20260918b"></script>
 </head>
 <body>
@@ -127,34 +127,35 @@
     var nlshMonthKr = nlshCur ? (+nlshCur.revenue_m_vsk||0) : 0;
     var nlshCumKr = nlshBy.length ? (+nlshBy[nlshBy.length-1].cum_revenue_m_vsk||0) : 0;
     var nlshList = nlshBy.slice().reverse().map(function(m){ return { label: mlabel(m.month), sub: (m.holes||0)+' göt', kr: +m.revenue_m_vsk||0 }; });
-    var grandDisp = (+d.grand_total||0) + nlshMonthKr;
     var A=d.slokk, warnHtml = (d.warnings&&d.warnings.length)? '<div class="warn">⚠ '+d.warnings.map(function(w){return w.replace(/</g,'&lt;');}).join('<br>')+'</div>' : '';
     var mon3 = MON3[(+String(d.month||'').split('-')[1])-1] || '';
     var meta = document.getElementById('fy-meta');
     if(meta) meta.textContent = 'Uppfært '+new Date(d.generated_at).toLocaleString('is-IS')+' · taxti '+kr(d.taxti_mvsk)+'/klst m/vsk (9.951 × 1,24) · rukkanlegir Tímavera-verkstaðir án Slökkvitæki-innri / NLSH';
 
-    // Pípu-dálkarnir á dökku slab-inu: það sem myndar heildar-pípuna.
-    var fmtKlst = function(n){ return (Math.round((+n||0)*100)/100).toLocaleString('is-IS',{minimumFractionDigits:0,maximumFractionDigits:2}); };
-    var pipe = [
-      ['Slökkvitæki', A.heildar.kr, ''],
-      ['Brunahólf Payday', d.bru_payday_ogreitt.kr, ''],
-      // nettó: tímar sem eru þegar í drögum/kröfum mánaðarins teljast ekki aftur (18.09.2026)
-      ['Tímavera · '+mon3, (d.timavera_manudur.netto_kr!=null ? d.timavera_manudur.netto_kr : d.timavera_manudur.kr), 'gold',
-        // 16.10.2026 (Agnar: „tímaveru stundir virðast ekki vera koma inn á fjármálayfirlit"): 0 þýðir að tímarnir eru þegar í drögum
-        // (Ósent) og eru ekki taldir aftur — segjum það í stað þess að láta töluna líta út eins og tóm gögn.
-        (d.timavera_manudur.klst>0 ? (d.timavera_manudur.i_drogum_klst>0 ? (fmtKlst(d.timavera_manudur.klst)+' klst · '+(d.timavera_manudur.i_drogum_klst>=d.timavera_manudur.klst-0.005 ? 'allt' : fmtKlst(d.timavera_manudur.i_drogum_klst))+' í drögum') : fmtKlst(d.timavera_manudur.klst)+' klst') : 'engar færslur'),
-        'Tímar úr Tímaveru í '+mon3+': '+d.timavera_manudur.klst+' klst ('+kr(d.timavera_manudur.kr)+'). Þegar komnir í drög/kröfur: '+(d.timavera_manudur.i_drogum_klst||0)+' klst ('+kr(d.timavera_manudur.i_drogum_kr||0)+') — teljast í Ósent, ekki tvisvar. Talan hér er það sem er EKKI enn komið í drög.'],
-      (nlshBy.length ? ['NLSH · '+mon3, nlshMonthKr, 'gold'] : null),
-      ['Ósent', d.bru_osendar.kr, '']
-    ].filter(Boolean).map(function(p){ return '<div'+(p[4]?' title="'+esc(p[4])+'"':'')+'><div class="pl">'+esc(p[0])+'</div><div class="pv '+p[2]+'">'+num(p[1])+'</div>'+(p[3]?'<div class="ps">'+esc(p[3])+'</div>':'')+'</div>'; }).join('');
+    // 22.11.2026 (Agnar, fasi 3b): „Heildar-pípa“ lagði saman ólíka hluti (ógreitt, drög, áunnið; m. og án vsk) í eina tölu. Nú eru þrjár AÐSKILDAR tölur
+    // á félag og platan opnar Tekjuliði. Ógreitt og Ósent eru nákvæmlega tölurnar á spjöldunum neðar (d); „Unnið en ekki gefið út“ kemur úr
+    // /api/rekstur-yfirlit (unnið − reikningsfært í líðandi mánuði, án vsk) og er fyllt inn af fyReksturHlada(). Ósent (drög) og „unnið en ekki gefið út“
+    // skarast að hluta (drögin eru unnin vinna) — þess vegna eru þær aldrei lagðar saman. NLSH·mánuður var áður lagður við pípuna: Landspítalaverk eru ekki í
+    // invoice_drafts (mælt 22.11: 0 drög á Landspítala í öllum mánuðum), svo hann skarast ekki við Ósent; hann er hluti af „unnið“ Brunahólfs og kortið hans stendur áfram.
+    var g2Tala = function(merki, o, undir){
+      var ok = o && o.kr!=null && isFinite(o.kr);
+      return '<div><div class="pl">'+esc(merki)+'</div><div class="gv">'+(ok ? num(o.kr)+'<span class="kr">kr</span>' : 'ómælt')+'</div><div class="ps">'+esc(ok ? (o.n!=null ? o.n+' '+undir : undir) : 'gögn vantar')+'</div></div>';
+    };
+    var g2Felag = function(nafn, id, ogr, osent, osentEining){   // osentEining: „kröfur“ (Slökkvitæki) / „drög“ (Brunahólf) — eins og spjöldin neðar
+      return '<div class="g2-f"><div class="g2-nafn">'+esc(nafn)+'</div><div class="g2-man" id="fy-g2-man-'+id+'">Sæki mánuðinn …</div>' +
+        '<div class="g2-tolur">' + g2Tala('Ógreitt · sent og óborgað', ogr, 'kröfur · m. VSK') + g2Tala('Ósent · ekki sent', osent, osentEining+' · m. VSK') +
+          '<div><div class="pl">Unnið en ekki gefið út</div><div class="gv" id="fy-g2-og-'+id+'">…</div><div class="ps" id="fy-g2-ogs-'+id+'">án VSK · sæki …</div></div>' +
+        '</div></div>';
+    };
 
     document.getElementById('app').innerHTML =
       warnHtml +
-      '<div class="boss-slab grand"><span class="coin"></span>' +
-        '<div><div class="lbl"><span class="boss-plate dark">00</span><span class="t">Heildar-pípa · allt óinnheimt / óuppgert</span></div>' +
-        '<div class="val">'+num(grandDisp)+'<span class="kr">kr</span></div></div>' +
-        '<div class="pipe">'+pipe+'</div>' +
-      '</div>' +
+      '<a class="boss-slab grand grand2" href="/rekstur#tekjulidir" target="_top" title="Opna Tekjuliði í Rekstrarskýrslu">' +
+        '<span class="coin"></span>' +
+        '<div class="lbl"><span class="boss-plate dark">00</span><span class="t">Staðan núna · þrjár tölur á félag, aldrei lagðar saman</span></div>' +
+        g2Felag('Slökkvitæki', 'sl', A.ogreitt_payday, A.osendar, 'kröfur') + g2Felag('Brunahólf', 'bh', d.bru_payday_ogreitt, d.bru_osendar, 'drög') +
+        '<div class="g2-fot">Tekjuliðir og Rekstrarskýrsla →</div>' +
+      '</a>' +
       // 22.11.2026 (Agnar: „setja líka hingað“): hvernig gengur reksturinn — unnið (ekki sent) hjá hvoru félagi, ein skýr setning + merkt áætlun
       '<div id="fy-rekstur" class="fy-rk" aria-live="polite"><span class="fy-rk-d">Sæki reksturinn …</span></div>' +
 
@@ -229,12 +230,23 @@
       .then(function(r){ return r.json().catch(function(){ return {}; }).then(function(j){ if(!r.ok) throw new Error((j&&(j.villa||j.error))||('villa '+r.status)); return j; }); })
       .then(function(j){
         if(!j||!j.slokkvitaeki||!j.brunaholf) throw new Error('óvænt snið');
+        fyG2('sl', j.slokkvitaeki); fyG2('bh', j.brunaholf);
         var e2=document.getElementById('fy-rekstur'); if(!e2) return;
         e2.innerHTML='<div class="fy-rk-h">Hvernig gengur reksturinn? <span class="fy-rk-d">unnið í mánuðinum, án VSK · félögin aldrei lögð saman</span></div>'+
           fyReksturFelag('Slökkvitæki', j.slokkvitaeki)+fyReksturFelag('Brunahólf', j.brunaholf)+
-          '<div class="fy-rk-d"><a href="https://slokkvitaeki.netlify.app/#tekjur" target="_top">Tekjur í beinni →</a> · <a href="/rekstur#tekjulidir" target="_top">Tekjuliðir Slökkvitækis →</a></div>';
+          '<div class="fy-rk-d"><a href="https://slokkvitaeki.netlify.app/#tekjur" target="_top">Tekjur í beinni →</a> · <a href="/rekstur#tekjulidir" target="_top">Tekjuliðir Slökkvitækis →</a> · <a href="/rekstur#tekjulidir-bh" target="_top">Tekjuliðir Brunahólfs →</a></div>';
       })
-      .catch(function(e){ var e2=document.getElementById('fy-rekstur'); if(e2) e2.innerHTML='<div class="fy-rk-h">Hvernig gengur reksturinn?</div><div class="fy-rk-f"><span class="fy-rk-d">Ómælt — '+esc((e&&e.message)||e)+'</span></div>'; });
+      .catch(function(e){ ['sl','bh'].forEach(function(id){ fyG2(id, {omaelt:(e&&e.message)||String(e)}); }); var e2=document.getElementById('fy-rekstur'); if(e2) e2.innerHTML='<div class="fy-rk-h">Hvernig gengur reksturinn?</div><div class="fy-rk-f"><span class="fy-rk-d">Ómælt — '+esc((e&&e.message)||e)+'</span></div>'; });
+  }
+  // „Unnið en ekki gefið út“ á plötunni: unnið − reikningsfært í líðandi mánuði (án vsk), úr sama svari og „Hvernig gengur reksturinn?“. Aldrei 0 við bilun.
+  function fyG2(id, b){
+    var man=document.getElementById('fy-g2-man-'+id), og=document.getElementById('fy-g2-og-'+id), ogs=document.getElementById('fy-g2-ogs-'+id);
+    if(!man||!og||!ogs) return;
+    var m = b && !b.omaelt && b.man && b.man.length ? b.man[b.man.length-1] : null;
+    if(!m || m.unnid==null || m.reikningsfaert==null || m.ogefid==null){ man.textContent='Mánuðurinn er ómældur'; og.textContent='ómælt'; ogs.textContent='án VSK · '+((b&&b.omaelt)||(m&&(m.ogefid_omaelt||m.omaelt))||'gögn vantar'); return; }
+    man.textContent=mlabel(m.man)+' til dags (án VSK): unnið '+mkrF(m.unnid)+' · reikningsfært '+mkrF(m.reikningsfaert)+' · greitt '+mkrF(m.greitt);
+    if(m.ogefid>0){ og.innerHTML=num(m.ogefid)+'<span class="kr">kr</span>'; ogs.textContent='unnið '+mkrF(m.unnid)+' − reikningsfært '+mkrF(m.reikningsfaert)+' · án VSK · áætlun'; }
+    else { og.textContent='ekkert'; ogs.textContent='reikningsfært '+mkrF(m.reikningsfaert)+' er umfram unnið '+mkrF(m.unnid)+' · án VSK'; }
   }
   document.getElementById('refresh').onclick=function(e){ e.preventDefault(); load(true); };
   load();
