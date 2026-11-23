@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <script src="/js/hub-bru.js"></script><!-- lota 13: innfelld síða fær tóka frá appinu (_vord.js) -->
+<script src="/js/sb-starfstok.js?v=20261123a"></script><!-- 23.11.2026: starfsmannatákn á bein Supabase-köll (anon fær 401 síðan 09:36) -->
 <meta name="color-scheme" content="light"/>
 <!-- Sama Force-Dark vörn og aðrar hub-síður (sjá pdftools.html). -->
 <style>html{color-scheme:light}html,body{color-scheme:only light}</style>
@@ -130,7 +131,10 @@
 <script>
 (function () {
   'use strict';
-  const SB = window.supabase.createClient('https://osfdzskyvisifcwyjkuk.supabase.co', 'sb_publishable_YVpznM5EK01qOdevQwOcIg_rMjTkT7f');
+  // 23.11.2026: anon hefur ekkert GRANT á app_settings, customer_documents og viewunum síðan 09:36 (rls_starfsfolk_20261123).
+  // Innskráður starfsmaður les með tákninu úr /api/sb-toki (js/sb-starfstok.js); null → opinberi lykillinn eins og áður.
+  const SB = window.supabase.createClient('https://osfdzskyvisifcwyjkuk.supabase.co', 'sb_publishable_YVpznM5EK01qOdevQwOcIg_rMjTkT7f',
+    { accessToken: async () => (window.__sbToki ? await window.__sbToki() : null) });
   if (window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
   const SKJAL = /netlify\.app$/.test(location.hostname) ? '/api/skjal?id=' : 'https://brunaholf.netlify.app/api/skjal?id=';
   const HRINGUR = 5;   // Agnar: hlaðið á 5 ára fresti

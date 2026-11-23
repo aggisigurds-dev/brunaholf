@@ -148,6 +148,13 @@ eða `get_advisors` (security) fyrir heildarlistann með remediation-hlekkjum.
 
 ## Lærdómur
 
+- **23.11.2026 — Brunahólfs-síður lesa grunninn sem `authenticated`.** Frá `rls_starfsfolk_20261123` (09:36) hefur anon ekkert GRANT á
+  127 töflum. `/api/sb-toki` (sb-toki.js) staðfestir hub_user sjálft og skilar PostgREST-tákni (role authenticated, claim `rola`).
+  `SUPABASE_JWT_SECRET` er AÐEINS í Netlify-umhverfi Slökkvitækis, svo fallið sækir táknið til slokkvitaeki `/api/hub-adgangar` með
+  sömu köku og tekur það aðeins gilt fyrir sama uid og rola. Sé leyndarmálið sett hér myntar `_sb-jwt.js` það sjálft (afrit af
+  slokkvitaeki `_sb-jwt.cjs`). Vafrinn: `js/sb-starfstok.js` (`window.__sbToki()` + fetch-millilag á hýsil verkefnisins/`rest/v1`),
+  hlaðið á index, jarvis og hledsluaaetlun. Innfellt í appinu (iframe) fylgir kakan ekki → enn anon. Próf: `test/sb-toki.test.js`,
+  `test/sb-starfstok.test.js`.
 - **16.11.2026 — `P.requireStaff` er ÓVIRKT í loftinu** (HUB_STAFF_PASSWORD ekki sett; charlize 2475, 2530). Tvö föll voru birt „varin“ með því og stóðu opin
   í mínútur/klst: `/api/odin` (lokað 20:10) og nýja virknin á `/api/verkkaupar` (samningsviðræður, `body_preview` pósta; lokað með `notandi(event)`).
   Regla: ný föll nota hub_user-staðfestinguna (`notandi(event)` í odin.js / postmoppur.js / verkkaupar.js) og fella LOKAÐ (401/503/502); eftir

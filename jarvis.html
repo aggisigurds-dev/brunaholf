@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <script src="/js/hub-bru.js"></script><!-- lota 13: innfelld síða fær tóka frá appinu (_vord.js) -->
+<script src="/js/sb-starfstok.js?v=20261123a"></script><!-- 23.11.2026: starfsmannatákn á bein Supabase-köll (anon fær 401 síðan 09:36) -->
 <!-- Villuvöktun: FYRST og ÓSEINKAÐ, svo hún grípi líka villur í
      boot-kóðanum. `defer` hefði látið hana ræsast Á EFTIR inline-
      scriptunum og þá sæist einmitt versta tegundin ekki. -->
@@ -2229,11 +2230,17 @@ document.addEventListener('visibilitychange', function(){ if(synilegt()) sakja()
     { key:'dss',       label:'Gagnalindir',       url:'/api/data-sources-status', base:3100 }
   ];
   async function _measure(t){
+    // 23.11.2026: anon hefur ekkert GRANT á app_settings síðan 09:36 (rls_starfsfolk_20261123) → mælirinn sýndi falskt
+    // NIÐRI (401). Starfsmannatáknið (js/sb-starfstok.js) er sótt ÁÐUR en klukkan fer af stað, svo kallið til
+    // /api/sb-toki teljist ekki með í svartíma gagnagrunnsins.
+    var sbTok = null;
+    if (t.apikey && window.__sbToki) { try { sbTok = await window.__sbToki(); } catch(e){ sbTok = null; } }
     var t0 = (window.performance && performance.now) ? performance.now() : Date.now();
     var code = 0;
     try{
       var ctrl = new AbortController(), to = setTimeout(function(){ ctrl.abort(); }, 12000);
       var h = t.apikey ? { apikey: t.apikey } : {};
+      if (sbTok) h.Authorization = 'Bearer ' + sbTok;
       var r = await fetch(t.url, { headers:h, cache:'no-store', signal:ctrl.signal });
       clearTimeout(to); code = r.status; await r.arrayBuffer();
     }catch(e){ code = 0; }
