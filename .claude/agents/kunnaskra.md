@@ -392,6 +392,9 @@ Spurning um Landspítalann (nýja, Hringbraut) sem snýst um stöðu, tölur eð
 | Verkeftirlit | COWI (Arnar Ingi Þórsson), um Hilmi hjá ÞG Verk | ekki kúnni; ekkert fer þangað nema Agnar eða Anni sendi |
 Ekki stofna nýja kúnnaröð fyrir Landspítalann, COWI eða Nýjan Landspítala ohf. án orða Agnars: greiðandinn er ÞG verktakar.
 
+## Breyting á kt, nafni og heimilisfangi fyrirtækis — sjálfvirk keðja og viðvörun (23.11.2026)
+Þú átt greiðandann (`customers_base`) og kt. Starfsfólk breytir aðeins reitnum á fyrirtækjaspjaldinu; kveikjur á `fyrirtaeki` (`sql/2026-11-23_kt_breyting_faerist.sql`, `sql/2026-11-23_audkenni_vidvorun.sql` í slokkvitaeki) færa `customer_base_id` og allt sem hangir á honum, nafn á skjöl/mál/CRM/tæki/eigin greiðanda og heimilisfang á eigin greiðanda. `customer_id` (fyrirtaeki.id) breytist ALDREI. Greiðandi er færður AÐEINS ef kt hans = kt staðarins og enginn annar staður deilir honum — rekstrarfélög, deildir greiðendur og „annar greiðandi“ (verkstaður → móðurfélag) eru þitt og Agnars: sjáðu `select * from v_audkenni_vidvaranir;` og `select audkenni_afleidingar(<id>, …)`. Aldrei sameina félög án Agnars. Rofi: `app_kv.kt_breyting_sjalfvirk.virkt`. Leiðarvísir og Óðinn regla 51: `docs/BREYTA-AUDKENNUM-FYRIRTAEKIS.md`.
+
 ## Grunnreglur allra agenta (04.11.2026)
 1. Enginn ber of mikið: ef verk snertir annað svið → kallaðu á forráðamann þess (sjá Tengsl), ekki giska.
 2. Veiddu úr þínum töflum (gagnakortið í docs/AGENTASKRA.md) og skráðu reglur sem bíta í charlize_knowledge (topic = þitt heiti).

@@ -272,6 +272,9 @@ Afrit: `backup_20260809_document_pairs`. Sama lexía og annars staðar í skjali
 - Brunakerfisskýrsla og slökkvitækja-úttektarskýrsla eru aðskildar fyrir hvert fyrirtæki og ár — önnur má aldrei fylla reit hinnar; fyrirtæki getur haft báðar þjónustur. [lotur 3de57db5, 9b70f49c]
 - Tvær geymslur eru fyrir sömu úttektarskýrslu: `app_settings.arsskodun_customers` (saga per ár) og `arsskodun_report_facts` — stærsta gildran í kerfinu; vertu viss um hvor geymslan svarar spurningunni. [C#448]
 
+## Pör eftir breytingu á kt/nafni/heimilisfangi fyrirtækis (23.11.2026)
+Þegar kt staðar breytist og hann var sinn eigin greiðandi færir `kt_breyting_faera` pörin (`document_pairs`) á nýja greiðandann — nema lykillinn (greiðandi, ár, tegund, staður) rekist á; þá stendur eldra parið eftir hjá gamla greiðandanum (saga) og nýja parið ræður. Hjá nýja greiðandanum getur því komið tvítak af pari fyrir sama ár: EKKI eyða — skráðu það og vísaðu á `kunnaskra`/Agnar. Greiðandi sem deilist eða er annar aðili er ekki færður. Nafn og heimilisfang breyta ekki pörum (aðeins `customer_documents.customer_name`). Sjá `docs/BREYTA-AUDKENNUM-FYRIRTAEKIS.md` í slokkvitaeki.
+
 ## Grunnreglur allra agenta (04.11.2026)
 1. Enginn ber of mikið: ef verk snertir annað svið → kallaðu á forráðamann þess (sjá Tengsl), ekki giska.
 2. Veiddu úr þínum töflum (gagnakortið í docs/AGENTASKRA.md) og skráðu reglur sem bíta í charlize_knowledge (topic = þitt heiti).
