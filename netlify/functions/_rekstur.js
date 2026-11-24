@@ -30,6 +30,7 @@ const SJALFGEFINN_TAXTI = 9951;
 const VSK = 1.24;
 const NLSH_AFRIT = 'NLSH 5-6. hæð · gatakort';
 const HEKLU_NOFN = ['Heklureitur', 'Heklu reitur'];
+const nlshNofn = new Set(NLSH_NAMES);
 const MAN = ['janúar', 'febrúar', 'mars', 'apríl', 'maí', 'júní', 'júlí', 'ágúst', 'september', 'október', 'nóvember', 'desember'];
 const VIKUDAGAR = ['sunnudagur', 'mánudagur', 'þriðjudagur', 'miðvikudagur', 'fimmtudagur', 'föstudagur', 'laugardagur'];
 
@@ -201,6 +202,23 @@ function heklaTaxtar(rates) {
   };
 }
 
+// Sami dagur og brunaholf() telur gatið á: Done, afrit úti. Landspítalinn = checked_date (annars
+// execution_date); önnur verk = execution_date (annars checked_date). „Nýjasta skráning" á skýrslunni
+// verður að nota þetta — hrátt max(execution_date) lendir á afritinu, þar sem framkvaemt_fra er fyllt
+// en talan sjálf les checked_date á raunverkinu.
+function ajourDags(r) {
+  if (!r || r.registration_status !== 'Done' || r.project_name === NLSH_AFRIT) return null;
+  return dagur(nlshNofn.has(r.project_name) ? (r.checked_date || r.execution_date) : (r.execution_date || r.checked_date));
+}
+function ajourNyjast(radir) {
+  let best = '';
+  for (const r of radir || []) {
+    const dd = ajourDags(r);
+    if (dd && dd > best) best = dd;
+  }
+  return best || null;
+}
+
 // NLSH-virði (án vsk) fyrir safn raða: stakir serial per (category_group, mánuður) × studull × taxti ÷ 1,24.
 function nlshVirdi(radir) {
   const hopar = new Map();
@@ -232,14 +250,11 @@ function brunaholf(per, g) {
     const rate = tx.get(String(e.project || '').trim().toLowerCase()) || SJALFGEFINN_TAXTI;
     iTimabilum(per, dagur(e.date), (i) => { ut.klst[i] += h; ut.tima[i] += h * rate; });
   }
-  // Ajour: lokin göt (Done), afritið af NLSH úti. Dagsetning eftir uppgjörsreglu verksins svo talan stemmi við
-  // uppgjörssíðuna: Landspítalinn = checked_date, annars execution_date (nlsh-uppgjor.js); önnur verk = execution_date
-  // (gata-uppgjor.js), annars checked_date.
-  const nlshNofn = new Set(NLSH_NAMES);
+  // Ajour: lokin göt (Done), afritið af NLSH úti. Dagsetning = ajourDags() svo talan og
+  // „ná til"-merkið noti sama dag (Landspítalinn = checked_date, önnur verk = execution_date).
   const done = [];
   for (const r of g.ajour || []) {
-    if (r.registration_status !== 'Done' || r.project_name === NLSH_AFRIT) continue;
-    const dd = dagur(nlshNofn.has(r.project_name) ? (r.checked_date || r.execution_date) : (r.execution_date || r.checked_date));
+    const dd = ajourDags(r);
     if (!dd) continue;
     done.push({ ...r, dd });
   }
@@ -431,4 +446,4 @@ function skyrsla(d, g) {
   };
 }
 
-module.exports = { skyrsla, timabil, manudir, innheimta, verkstadir, verkLykill, verkKey, fyrstiDagur, slokkvitaeki, brunaholf, solulinaVara, solulinaMagn, vorurKort, heklaTaxtar, taxtar, nlshVirdi, manudagur, plusDagar, NLSH_AFRIT };
+module.exports = { skyrsla, timabil, manudir, innheimta, verkstadir, verkLykill, verkKey, fyrstiDagur, slokkvitaeki, brunaholf, solulinaVara, solulinaMagn, vorurKort, heklaTaxtar, taxtar, nlshVirdi, manudagur, plusDagar, ajourDags, ajourNyjast, NLSH_AFRIT };

@@ -96,7 +96,7 @@ async function saekja(d, opts = {}) {
   const ajourSia = `registration_status=eq.Done&project_name=neq.${encodeURIComponent(R.NLSH_AFRIT)}`
     + `&or=(execution_date.gte.${fra},checked_date.gte.${fra})`;
   const [solur, voidRadir, vorur, verkbeidnir, verklidur, uttektir, paydaySl, timavera, pricing, ajour, holeRates, sentMeta, drog, paydayBh,
-    tvNyjast, tvInnlestur, ajNyjast, ajInnlestur, pdSlNyjast] = await Promise.all([
+    tvNyjast, tvInnlestur, ajInnlestur, pdSlNyjast] = await Promise.all([
     sl(() => allt('solur', `select=id,status,is_credit,credit_of,greitt_med,upphaed_an_vsk,created_at,paid_at,krafa_sent_at,linur&or=(created_at.gte.${fraTs},paid_at.gte.${fraTs},krafa_sent_at.gte.${fraTs})&order=id.asc`)),
     sl(() => allt('solur', 'select=id&status=eq.void&order=id.asc')),
     sl(() => allt('vorur', 'select=id,nafn,flokkur,virkt&order=id.asc')),
@@ -115,7 +115,6 @@ async function saekja(d, opts = {}) {
     allt('invoices', `select=status,greidsla_date,hofudstoll&source=eq.payday&status=eq.PAID&greidsla_date=gte.${fra}&order=id.asc`),
     eitt('timavera_entries', 'select=date&order=date.desc'),
     eitt('timavera_entries', 'select=imported_at&imported_at=not.is.null&order=imported_at.desc'),
-    eitt('skr_hub_skraningar', 'select=execution_date&execution_date=not.is.null&order=execution_date.desc'),
     eitt('skr_hub_skraningar', 'select=imported_at&imported_at=not.is.null&order=imported_at.desc'),
     bhAdeins ? Promise.resolve(null) : eitt('payday_invoices_slokk', 'select=updated_at&order=updated_at.desc.nullslast'),
   ]);
@@ -160,7 +159,9 @@ async function saekja(d, opts = {}) {
     gogn,
     ferskleiki: {
       timavera: { nyjast: tvNyjast && tvNyjast.date, innlestur: tvInnlestur && tvInnlestur.imported_at },
-      ajour: { nyjast: ajNyjast && ajNyjast.execution_date, innlestur: ajInnlestur && ajInnlestur.imported_at },
+      // Sami dagur og talan (ajourDags): ekki hrátt max(execution_date). Það lenti á einni röð í
+      // afritinu „NLSH … gatakort" (framkvaemt_fra) á meðan Landspítalinn telur checked_date.
+      ajour: { nyjast: R.ajourNyjast(ajour), innlestur: ajInnlestur && ajInnlestur.imported_at },
       payday_sl: pdSlNyjast ? { samstillt: pdSlNyjast.updated_at } : null,
       payday_bh: { nyjasta_greidsla: nyjastGreitt || null },
       frumsolur_brast: frumsolurBrast,

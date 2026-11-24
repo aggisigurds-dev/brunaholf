@@ -141,6 +141,19 @@ test('skýrslan: dagleg röð 30 daga og samanburður vikudaga', () => {
   assert.equal(s.badir.tekjur[0], 300);
 });
 
+test('ajourNyjast: sami dagur og talan — afrit og hrátt execution_date ráða ekki', () => {
+  assert.equal(R.ajourDags({ project_name: 'NLSH 5-6. hæð', registration_status: 'Done', execution_date: '2026-10-30', checked_date: '2026-11-23' }), '2026-11-23');
+  assert.equal(R.ajourDags({ project_name: 'Heklureitur', registration_status: 'Done', execution_date: '2026-11-12', checked_date: '2026-11-20' }), '2026-11-12');
+  assert.equal(R.ajourDags({ project_name: 'NLSH 5-6. hæð · gatakort', registration_status: 'Done', execution_date: '2026-11-30' }), null);
+  assert.equal(R.ajourDags({ project_name: 'NLSH 5-6. hæð', registration_status: 'Published', checked_date: '2026-11-24' }), null);
+  assert.equal(R.ajourNyjast([
+    { project_name: 'NLSH 5-6. hæð · gatakort', registration_status: 'Done', execution_date: '2026-11-30', checked_date: '2026-11-30' },
+    { project_name: 'NLSH 5-6. hæð', registration_status: 'Done', execution_date: null, checked_date: '2026-11-23' },
+    { project_name: 'Heklureitur', registration_status: 'Done', execution_date: '2026-11-12', checked_date: '2026-11-20' },
+  ]), '2026-11-23');
+  assert.equal(R.ajourNyjast([]), null);
+});
+
 // ---- fallið: aðgangur ----
 const LEYND = 'leynd-session-lykill';
 const PW = '2026-10-19T12:00:00Z';
@@ -338,6 +351,29 @@ test('kredit með annan greitt_med en frumsalan: greiðslumáti FRUMSÖLUNNAR r�
     { id: 2, status: 'final', credit_of: 1, greitt_med: 'reikningur', upphaed_an_vsk: -1000, created_at: '2026-11-05T10:00:00Z' },
   ] });
   assert.equal(s.verslun[4], 0, 'október: salan (kort) og nótan (skráð á reikning) jafnast út í versluninni'); assert.equal(s.tekjur[4], 0);
+});
+
+test('ferskleiki Ajour: nýjast er dagurinn sem talan notar, ekki execution_date á afritinu', async () => {
+  const fyrri = global.fetch;
+  const svar = (j) => ({ ok: true, status: 200, json: async () => j, text: async () => JSON.stringify(j) });
+  global.fetch = async (url) => {
+    const u = new URL(url);
+    const t = u.pathname.replace('/rest/v1/', '');
+    const sel = u.searchParams.get('select') || '';
+    if (t === 'skr_hub_skraningar' && sel.includes('project_name')) return svar([
+      { project_name: 'NLSH 5-6. hæð · gatakort', serial_number: 'X', category_group: 'Plast Ø20-34', execution_date: '2026-11-30', checked_date: '2026-11-30', registration_status: 'Done' },
+      { project_name: 'NLSH 5-6. hæð', serial_number: 'A', category_group: 'Plast Ø20-34', execution_date: null, checked_date: '2026-11-23', registration_status: 'Done' },
+      { project_name: 'Heklureitur', serial_number: 'H', category_group: 'Gat Ø20-34', execution_date: '2026-11-12', checked_date: null, registration_status: 'Done' },
+    ]);
+    if (t === 'skr_hub_skraningar' && sel === 'imported_at') return svar([{ imported_at: '2026-11-23T21:12:11Z' }]);
+    return svar([]);
+  };
+  try {
+    const RS = require('../netlify/functions/rekstrarskyrsla.js');
+    const r = await RS._saekja('2026-11-24');
+    assert.equal(r.ferskleiki.ajour.nyjast, '2026-11-23');
+    assert.equal(r.ferskleiki.ajour.innlestur, '2026-11-23T21:12:11Z');
+  } finally { global.fetch = fyrri; }
 });
 
 test('saekja(bhAdeins): SL-töflur eru EKKI sóttar (lat) — bilun í þeim fellir ekki Brunahólfshlutann', async () => {

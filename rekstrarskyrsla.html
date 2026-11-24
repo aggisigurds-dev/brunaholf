@@ -281,14 +281,12 @@
   .spjald.dokkt .graf { background: linear-gradient(180deg, rgba(0,8,24,.38), rgba(0,8,24,.16)); box-shadow: inset 0 2px 8px rgba(0,0,0,.5), inset 0 0 0 1px rgba(150,185,235,.12), 0 1px 0 rgba(255,255,255,.07); }
   .spjald.dokkt .sulur { height: 270px; }
   .sula .stafli { border-radius: 7px 7px 2px 2px; box-shadow: inset 0 0 0 1px rgba(255,255,255,.10), 0 0 0 1px rgba(0,0,0,.45), 0 16px 26px -12px rgba(0,0,0,.95); }
-  .sula .stafli > div { box-shadow: inset 0 1px 0 rgba(255,255,255,.38), inset 0 -1px 0 rgba(0,0,0,.55); }
-  /* burstaður málmur eins og á áferðinni frá Agnari: mjúkar, óreglulegar láréttar rákir (SVG-hávaði teygður lárétt),
-     ekki jafnar línur. Sama áferð liggur í bakgrunni síðunnar. */
-  :root { --burstad: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='700' height='420'><filter id='f' x='0' y='0' width='100%25' height='100%25'><feTurbulence type='fractalNoise' baseFrequency='0.002 0.05' numOctaves='4' seed='11' stitchTiles='stitch'/><feColorMatrix type='matrix' values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 1.5 -0.5'/></filter><rect width='100%25' height='100%25' filter='url(%23f)'/></svg>"); }
-  .sula .stafli::after { display: block !important; background: var(--burstad) 0 0 / 700px 420px; mix-blend-mode: soft-light; opacity: .6; }
+  /* 24.11.2026: engin burstuð áferð né glans yfir súlunum. Þunn dökk lína á milli hluta, sami litur í hverjum flokki. */
+  .sula .stafli > div { box-shadow: none; }
+  .sula .stafli > div + div { box-shadow: inset 0 1px 0 rgba(2,8,20,.85); }
+  .sula .stafli::after { display: none !important; }
   .sula .stafli.tom::after { display: none !important; }
   .sula .stafli.tom { background: rgba(255,255,255,.035); box-shadow: inset 0 0 0 1px rgba(150,185,235,.22); }
-  body::before { content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none; background: var(--burstad) 0 0 / 1100px 660px; mix-blend-mode: soft-light; opacity: .16; }
   .sula.valin .stafli { box-shadow: 0 0 0 2px #ffa04a, 0 0 0 4px rgba(255,103,2,.25), 0 0 30px -2px rgba(255,138,31,.9), 0 16px 26px -12px rgba(0,0,0,.95); }
   .spjald.dokkt .skyring { background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.025)); box-shadow: inset 0 1px 0 rgba(255,255,255,.14), inset 0 0 0 1px rgba(150,185,235,.22), 0 18px 30px -20px rgba(0,0,0,.9); }
   .spjald.dokkt .skyring .titill { color: #c8d4e8; }
@@ -297,7 +295,7 @@
   .spjald.dokkt .skyring .lina .upph { color: #fff; }
   .spjald.dokkt .skyring .lina .pct { color: #a9b8d0; }
   .spjald.dokkt .skyring .samtals { font-size: 16px; color: #fff; }
-  .spjald.dokkt .skyring .lina .ferningur { width: 16px; height: 16px; border-radius: 4px; box-shadow: inset 0 1px 0 rgba(255,255,255,.55), 0 0 0 1px rgba(0,0,0,.4), 0 2px 6px rgba(0,0,0,.6); }
+  .spjald.dokkt .skyring .lina .ferningur { width: 16px; height: 16px; border-radius: 4px; box-shadow: 0 0 0 1px rgba(0,0,0,.45); }
 
   /* ===== „Nær mockupi" (Agnar 21.11.2026): ávöl höfuðslá með koparkanti og glóandi blettum, flöt glerkort án dökkra
      kassa utan um línurit, koparrammi um Tekjuskiptingu, dekkri sía með ljóma í miðju. ===== */
@@ -336,7 +334,13 @@
   .spjald.dokkt .hausrod h2 > svg { background: none; box-shadow: none; }
   .spjald.dokkt .skyring { background: rgba(255,255,255,.035); box-shadow: inset 0 0 0 1px rgba(150,185,235,.22); border-radius: 14px; }
 
-  @media (max-width: 640px) { .merki-bh img { height: 38px; } .sla { min-height: 56px; padding: 0 18px; } .hetja { padding-top: 18px; } }
+  @media (max-width: 640px) {
+    .merki-bh img { height: 38px; } .sla { min-height: 56px; padding: 0 18px; } .hetja { padding-top: 18px; }
+    .spjald.dokkt .sulur, .spjald.dokkt .merki { gap: 4px; }
+    .sula .tot, .merki .n { font-size: 10px; }
+    .merki .n { white-space: normal; line-height: 1.15; }
+    .merki .s { font-size: 9px; }
+  }
   @media (prefers-reduced-motion: reduce) { .takki-n.snyst svg, .sott.blikk { animation: none; } }
 
   .bida { opacity: .55; transition: opacity .18s; }
@@ -739,26 +743,14 @@
   var $ = function (id) { return document.getElementById(id); };
   var VIKUDAGAR = ['sunnudagur', 'mánudagur', 'þriðjudagur', 'miðvikudagur', 'fimmtudagur', 'föstudagur', 'laugardagur'];
   var MAN = ['janúar', 'febrúar', 'mars', 'apríl', 'maí', 'júní', 'júlí', 'ágúst', 'september', 'október', 'nóvember', 'desember'];
-  // 21.11.2026 (Agnar, með mockupi: „gera súlurnar aðeins bjartari, brushed metal style"): burstaður málmur — fínar
-  // láréttar burstarákir yfir málmstigli. Kopar (SL), blágrænn (BH tímar), fjólublár (Landspítalinn), gull (Heklureitur).
-  // Sami strengur fer í súlurnar og ferningana í skýringunni, svo hann er alltaf notaður sem `background`, aldrei `color`.
-  // Agnar: „neeii alllllt of bjart" → „farðu frekar í upprunalega sem ég sendi þér" → „hræðilegt" (jafnar rákir litu út
-  // eins og skjálínur). Nú eins og á mockupinu: mattur dökkur málmur, ljós brún efst og ljómi frá vinstri, engar rákir.
-  // 21.11 (Agnar, útgáfa „A · Blátt stál og vínrautt"): vínrautt (Slökkvitæki), blátt stál (Brunahólf tímar), stálgrátt
-  // (Landspítalinn) og brons (Heklureitur), með ljósi efst í miðju hvers hluta og dekkri hliðum.
-  var MALMUR = function (a, b, ljos) {
-    ljos = ljos == null ? .20 : ljos;
-    return 'linear-gradient(180deg,rgba(255,255,255,.22) 0,rgba(255,255,255,0) 4px),'
-      + 'radial-gradient(85% 75% at 50% 0%,rgba(255,255,255,' + ljos + '),rgba(255,255,255,0) 78%),'
-      + 'linear-gradient(90deg,rgba(0,0,0,.30) 0%,rgba(0,0,0,0) 24%,rgba(0,0,0,0) 76%,rgba(0,0,0,.32) 100%),'
-      + 'linear-gradient(180deg,' + a + ',' + b + ')';
-  };
+  // 24.11.2026 (Agnar): súlurnar eiga að vera jafnar, ekki burstuð/rákótt málmáferð. Einn mjúkur
+  // lóðréttur stígull per flokk — sami strengur í súlunum og ferningunum, alltaf `background`.
+  var JOFN = function (toppur, grunnur) { return 'linear-gradient(180deg,' + toppur + ',' + grunnur + ')'; };
   var LITIR = {
-    // Agnar: „ég vil ekki bleikan" → „settu frekar dimm rauðan" — dimmrautt (bordeaux), lítið ljós yfir svo það fari ekki út í bleikt
-    sl: MALMUR('#6f1925', '#3a0b13', .05),
-    tim: MALMUR('#2b6199', '#153b66'),
-    lsh: MALMUR('#6b7788', '#3f4957'),
-    hek: MALMUR('#b17c49', '#704b2b')
+    sl: JOFN('#8d2c3a', '#6e1c28'),
+    tim: JOFN('#3a74b0', '#1e4e84'),
+    lsh: JOFN('#8b97a6', '#5e6a78'),
+    hek: JOFN('#c4925c', '#8d5c32')
   };
   var SVG = {
     tot: '<polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/>',
