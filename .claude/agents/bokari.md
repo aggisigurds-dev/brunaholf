@@ -101,6 +101,14 @@ viðvörun). Vistast sem venjuleg drög „Heklu reitur" (gatalínur í `materia
 `materials_total`=0, `fixed_total`=samtala → Kröfu yfirlit sýnir fast verð) + PDF `efnislisti_pdf`.
 Greiðandi: Framkvæmdafélagið Laugavegur ehf. kt. 680921-2020. Sannreynt: apríl 2026 = 1.629.608
 m.vsk, nákvæmlega Gatastærðir-blaðið (með 3 ókláruðum + Ø1700-1799 á 1710-1759 bætt við handvirkt).
+
+**`?aunnid=1`-hamur (25.11.2026, Agnar „áunnið eins og Landspítalinn, reikna eins og efnislistinn"):** `/api/gata-uppgjor?worksite=Heklureitur&aunnid=1`
+sleppir mánaðarsíu (→ `holes` = NÚVERANDI heild kláraðra gata, núverandi stærðir) og sækir rukkuð drög (`status=invoiced`). Skilar `aunnid`:
+`current_value_m_vsk` (heildarverðmæti núna), `billed_kr` (Σ invoice `total_m_vsk`), **`aunnid_net_m_vsk` = current − billed (AÐALTALAN, áreiðanleg)**, plús
+`by_size` (current−billed per stærð × verð, signed svo endurstærð göt reiknist rétt). **GILDRA:** eldri Efnislistar (jan–apr 2026) geyma TÓMT
+`materials_jsonb` → per-stærð `billed` vantar fyrir þá, svo `per_staerd_total_m_vsk` OFMETUR (18,8 m vs rétt 7,6 m). Notaðu ALLTAF `aunnid_net_m_vsk`
+(byggt á raunverulegum reikningsupphæðum); `vantar_sundurlidun` listar mánuðina sem vantar efni. Birt les-only í Kröfu yfirliti (`.kyf-heklu-stada`,
+`renderHekluStada`), telst EKKI í pípu-tölur (CG). Mælt live 25.11.: núv. 24,06 m / 2.216 göt, rukkað 16,47 m, áunnið 7,59 m.
 Ajour-raðir Heklureits samstilltar af luna-bridge `ajour-yfirlit.js` (`syncVerkefnaRadir`, app_kv
 `ajour_radir_sync`) — CSV-útflutningurinn nær aðeins yfir NLSH.
 Glugginn á EIGIÐ mánaðarval (`#hk-man`) og drögin eru `DRAFTS[ws|mánuður gluggans]` — ekki
