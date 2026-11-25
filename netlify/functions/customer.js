@@ -160,7 +160,7 @@ exports.handler = async (event) => {
       const dashed = baseKtDigits.slice(0, 6) + '-' + baseKtDigits.slice(6);
       const rIn = await sbGet(
         `invoices?or=(kt_greidanda.eq.${encodeURIComponent(dashed)},kt_greidanda.eq.${baseKtDigits})` +
-        `&select=tilvisun,source,customer_name,kt_greidanda,gjalddagi,eindagi,hofudstoll,upphaed_total,status,greidsla_date,worksite_match,imported_at` +
+        `&select=tilvisun,source,customer_name,kt_greidanda,utgafudagur,gjalddagi,eindagi,hofudstoll,upphaed_total,status,greidsla_date,worksite_match,imported_at` +
         `&order=gjalddagi.desc.nullslast&limit=500`
       );
       if (rIn.ok) invoices = await rIn.json();
