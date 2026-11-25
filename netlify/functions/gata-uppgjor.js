@@ -51,7 +51,10 @@ exports.handler = async (event) => {
   const rateScope = WORKSITE_RATE_SCOPE[canonKey] || null;
   // ?klarad=1 → aðeins kláraðar brunalokanir (registration_status Done). Heklureits-Efnislistinn
   // rukkar „fjölda kláraðra gata per mánuð"; eldri kallarar (Dalvegur) telja áfram allt.
-  const klarad = qs.klarad === '1' || qs.klarad === 'true';
+  // ?aunnid=1 → áunnið-hamur (25.11.2026): núverandi HEILD kláraðra gata (allir mánuðir) mínus rukkuð heild
+  // per stærð × verð. Reiknar „eins og í efnislistanum" svo endurstærð göt skekki ekki (sjá neðar). Þvingar klarad.
+  const aunnid = qs.aunnid === '1' || qs.aunnid === 'true';
+  const klarad = aunnid || qs.klarad === '1' || qs.klarad === 'true';
 
   const monthStart = `${month}-01`;
   const [year, mm] = month.split('-').map(Number);
@@ -78,9 +81,13 @@ exports.handler = async (event) => {
 
   const ajourFilter = `project_name=in.(${ajourNames.map(n => `"${n}"`).join(',')})`;
   const scopes = rateScope ? `scope=in.(generic,${rateScope})` : 'scope=eq.generic';
-  const [ajour, rates, bandRates, nyjast, seinast, syncKv] = await Promise.all([
+  // aunnid: engin mánaðarsía → `groupCounts`/`holes` verða NÚVERANDI HEILD. Annars venjuleg mánaðar-talning.
+  const execBounds = aunnid ? '' : `&execution_date=gte.${monthStart}&execution_date=lt.${monthEnd}`;
+  // Rukkuð drög verkstaðarins (aðeins aunnid): „Heklu" nær bæði „Heklureitur" og „Heklu reitur".
+  const draftTok = String(canonKey || worksite).slice(0, 5);
+  const [ajour, rates, bandRates, nyjast, seinast, syncKv, billedDrafts] = await Promise.all([
     fetchAll('skr_hub_skraningar',
-      `select=category_group,execution_date,registration_status&${ajourFilter}&execution_date=gte.${monthStart}&execution_date=lt.${monthEnd}&category_group=ilike.Gat*`),
+      `select=category_group,execution_date,registration_status&${ajourFilter}${execBounds}&category_group=ilike.Gat*`),
     fetchAll('hole_size_rates', `select=scope,size_min_mm,size_max_mm,size_label,rate_an_vsk,notes&${scopes}&category=eq.hole&order=size_min_mm.asc`),
     fetchAll('hole_size_rates', `select=category,size_min_mm,size_label,rate_an_vsk&scope=eq.generic&category=in.(kragi,bordi)&order=category.asc,size_min_mm.asc`),
     // Ferskleiki gagnanna: síðasti innlestur + nýjasta skráning verkefnisins (óháð mánuði)
@@ -88,6 +95,7 @@ exports.handler = async (event) => {
     fetchAll('skr_hub_skraningar', `select=execution_date&${ajourFilter}&order=execution_date.desc.nullslast&limit=1`).catch(() => []),
     // luna-bridge ajour-yfirlit.js skráir hvenær verkefnaraðir voru síðast samstilltar (líka þegar ekkert nýtt kom)
     fetchAll('app_kv', 'select=value&key=eq.ajour_radir_sync').catch(() => []),
+    aunnid ? fetchAll('invoice_drafts', `select=materials_jsonb,work_month,status&worksite_name=ilike.*${draftTok}*&status=eq.invoiced`).catch(() => []) : Promise.resolve([]),
   ]);
   const syncInfo = ((syncKv[0] || {}).value || {})[canonKey] || null;
 
@@ -173,6 +181,40 @@ exports.handler = async (event) => {
   const bands_m_vsk = bandsOverride != null ? bandsOverride : 0;
   const total_m_vsk = holes_m_vsk + bands_m_vsk;
 
+  // ── Áunnið (25.11.2026, Agnar „reikna eins og í efnislistanum"): fyrir hverja stærð,
+  //    (NÚVERANDI heild kláraðra gata − RUKKUÐ heild á sendum Efnislistum) × verð per gat, lagt saman.
+  //    Meðhöndlar endurstærð göt rétt: stærð sem lækkar gefur mínus, ný stærð plús. „Rukkað" = status invoiced
+  //    (ósent drög teljast enn áunnið). `holes` er núverandi heild því aunnid-hamur sleppti mánaðarsíunni. ──
+  let aunnidOut = null;
+  if (aunnid) {
+    const billedBySize = new Map();
+    for (const d of (billedDrafts || [])) {
+      let mats = d.materials_jsonb;
+      if (typeof mats === 'string') { try { mats = JSON.parse(mats); } catch { mats = []; } }
+      for (const el of (Array.isArray(mats) ? mats : [])) {
+        if (!el || !el.gat) continue;
+        const sl = String(el.size_label || ''); const q = Number(el.qty) || 0;
+        if (sl) billedBySize.set(sl, (billedBySize.get(sl) || 0) + q);
+      }
+    }
+    const rateByLabel = new Map(allRates.map((r) => [r.size_label, Number(r.rate_an_vsk)]));
+    const currentByLabel = new Map(holes.map((h) => [h.size_label, h.stakar]));
+    const labels = new Set([...currentByLabel.keys(), ...billedBySize.keys()]);
+    const by_size = []; let an_vsk = 0, cur_got = 0, bill_got = 0;
+    for (const sl of labels) {
+      const cur = currentByLabel.get(sl) || 0, bill = billedBySize.get(sl) || 0;
+      const rate = Number(rateByLabel.get(sl) || 0), diff = cur - bill, an = diff * rate;
+      an_vsk += an; cur_got += cur; bill_got += bill;
+      by_size.push({ size_label: sl, current: cur, billed: bill, diff, rate_an_vsk: rate, aunnid_an_vsk: an, aunnid_m_vsk: Math.round(an * 1.24) });
+    }
+    by_size.sort((a, b) => b.aunnid_an_vsk - a.aunnid_an_vsk);
+    aunnidOut = {
+      by_size, total_an_vsk: an_vsk, total_m_vsk: Math.round(an_vsk * 1.24),
+      current_got: cur_got, billed_got: bill_got, diff_got: cur_got - bill_got,
+      billed_months: (billedDrafts || []).map((d) => d.work_month).filter(Boolean).sort(),
+    };
+  }
+
   // Bönd/Kragar rate tables (kragi = Eldvarnarkragi, bordi = Eldvarnar borði/band).
   // Quantities are entered manually in the form (not in Ajour); these are the
   // unit prices the form multiplies against the entered magn.
@@ -188,6 +230,7 @@ exports.handler = async (event) => {
     rate_scope: rateScope || 'generic',
     klarad,
     holes,
+    aunnid: aunnidOut,
     all_rates: allRates,
     by_day: byDay,
     opnar: Object.entries(opnar).map(([group, stakar]) => ({ group, stakar })),
