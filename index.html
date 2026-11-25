@@ -19517,7 +19517,11 @@ async function renderKrofuyfirlit(t){
   // notandinn faldi hana núna (hiddenSet í localStorage). serverHidden er sótt í
   // hverri hleðslu svo þrep-3 (reiknað í vafra, hefur ekkert inv.hidden) haldist
   // falið þvert á tæki/vafra — það var ástæðan fyrir að faldar „poppuðu upp" hjá hinum.
-  const invHidden = inv => !!(inv && (inv.hidden || hiddenSet.has(inv.inv_key) || serverHidden.has(inv.inv_key)));
+  // 25.11.2026 (Agnar: „Já, laga það"): FALIÐ ER AÐEINS ÞAÐ SEM ÞJÓNNINN SEGIR. Staðbundna felan (hiddenSet, localStorage
+  // ky_hidden_v1) lét sömu síðu sýna ólíkt Ósent/Samtals á ólíkum vélum (mælt: „Dalvegur 18", 185.160 kr, falin aðeins á vél
+  // Agnars) og cg_entries flakkaði eftir því hvaða vél opnaði síðast — gegn reglu 15.10.2026. hiddenSet er nú aðeins LESIÐ til
+  // að bjóða upp á að færa gamla staðbundna felu á þjóninn (borðinn .kyf-lokal-banner), aldrei til að fela.
+  const invHidden = inv => !!(inv && (inv.hidden || serverHidden.has(inv.inv_key)));
   // Bjartsýnis-uppfærsla: setja hidden-flagg beint á in-memory röð (öll þrep).
   function setInvHidden(key, val){
     for(const bag of [state.data&&state.data.tier1, state.data&&state.data.tier2, state.tier3])
@@ -19528,8 +19532,8 @@ async function renderKrofuyfirlit(t){
   // endurhleðsla lagar það. Þess vegna er þetta EINA leiðin sem má breyta feluninni:
   // hún snertir allar heimildirnar í einu og er samhverf (falið ↔ ekki falið).
   function beitaHidden(key, falid){
-    if(falid) hiddenSet.add(key); else hiddenSet.delete(key);
-    persistHidden();
+    // 25.11.2026: ekkert skrifað í staðbundnu feluna lengur — aðeins hreinsað úr henni (þjónninn ræður)
+    if(hiddenSet.delete(key)) persistHidden();
     if(falid) serverHidden.add(key); else serverHidden.delete(key);
     if(state.data){
       if(!Array.isArray(state.data.hidden_keys)) state.data.hidden_keys = [];
@@ -19661,6 +19665,7 @@ async function renderKrofuyfirlit(t){
 
       <div class="kyf-warn"></div>
       <div class="kyf-lp-banner"></div>
+      <div class="kyf-lokal-banner"></div>
 
       <div class="kyf-t2-bar">
         <span class="kyf-t2-bar-lbl"></span>
@@ -20941,6 +20946,46 @@ async function renderKrofuyfirlit(t){
             <button class="kyf-show-likely boss-btn ivory sm" type="button" style="margin-left:6px">Sýna þessar →</button></span>
           </div>`
         : '';
+    }
+
+    // Gömul STAÐBUNDIN fela (25.11.2026): raðir í núverandi gögnum sem voru faldar aðeins í þessum vafra. Þær teljast nú með,
+    // eins og á öllum öðrum vélum. Borðinn býður einn smell: fela þær á þjóninum (sama leið og 🙈 Fela, svarið lesið til baka)
+    // eða sleppa þeim úr minni vélarinnar. Engin skrif á þjóninn nema við smell.
+    const lokalBox = $view.querySelector('.kyf-lokal-banner');
+    if(lokalBox){
+      const strays = [], seen = new Set();
+      for(const bag of [state.data&&state.data.tier1, state.data&&state.data.tier2, state.tier3])
+        for(const d of ((bag&&bag.debtors)||[])) for(const iv of (d.invoices||[])){
+          const k = iv.inv_key;
+          if(!k || seen.has(k) || !hiddenSet.has(k) || iv.hidden || serverHidden.has(k)) continue;
+          seen.add(k); strays.push({ key:k, kr:Number(iv.amount)||0, nafn: iv.customer || d.customer || iv.worksite || k });
+        }
+      if(!strays.length){ lokalBox.innerHTML = ''; }
+      else {
+        const kr = strays.reduce((a,s)=>a+s.kr,0);
+        lokalBox.innerHTML = `<div class="kyf-lpbox">
+            <span style="font-size:18px">🖥</span>
+            <span><b>${strays.length} ${strays.length===1?'röð var falin':'raðir voru faldar'} aðeins á þessari vél (${fmtKr(kr)})</b> — ${esc(strays.slice(0,4).map(s=>s.nafn).join(', '))}${strays.length>4?' …':''}.
+            Þær teljast nú með eins og á öllum vélum.
+            <button class="kyf-lokal-fela boss-btn ivory sm" type="button" style="margin-left:6px">🙈 Fela á öllum vélum</button>
+            <button class="kyf-lokal-syna boss-btn ivory sm" type="button" style="margin-left:4px">👁 Sýna þær</button>
+            <span class="kyf-lokal-stada" style="margin-left:6px"></span></span>
+          </div>`;
+        const stada = lokalBox.querySelector('.kyf-lokal-stada'), takkar = lokalBox.querySelectorAll('button');
+        lokalBox.querySelector('.kyf-lokal-fela').onclick = async () => {
+          takkar.forEach(t=>t.disabled=true); stada.textContent = 'Vista…';
+          let tokst = 0; const mistokst = [];
+          for(const s of strays){
+            const sv = await vistaHidden(s.key, true);
+            if(sv.ok && sv.hidden === true){ beitaHidden(s.key, true); tokst++; } else mistokst.push(s.nafn);
+          }
+          if(mistokst.length){ stada.textContent = tokst+' falin · mistókst: '+mistokst.join(', '); takkar.forEach(t=>t.disabled=false); }
+          renderList();
+        };
+        lokalBox.querySelector('.kyf-lokal-syna').onclick = () => {
+          strays.forEach(s=>hiddenSet.delete(s.key)); persistHidden(); renderList();
+        };
+      }
     }
 
     // Aðeins líklega-greitt raðir (þrep 1).
