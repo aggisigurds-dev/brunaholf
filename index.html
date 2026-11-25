@@ -19663,6 +19663,7 @@ async function renderKrofuyfirlit(t){
       </aside>
       </div>
 
+      <div class="kyf-heklu-stada"></div>
       <div class="kyf-warn"></div>
       <div class="kyf-lp-banner"></div>
       <div class="kyf-lokal-banner"></div>
@@ -21530,8 +21531,61 @@ async function renderKrofuyfirlit(t){
     }catch(_){ _grTs = 0; }
   }
 
+  // Heklureitur-staða (25.11.2026, Agnar „áunnið eins og landsspítalinn … les-only staða"): lokuð göt + reiknuð
+  // tala (göt × verðskrá, /api/gata-uppgjor klarad=1) per mánuð, með rukkunarstöðu úr drögunum. TELUR EKKI í
+  // pípu-tölurnar (CG) — hrein staða svo uppsafnað sjáist án tvítalningar. Heklureitur fyrst (fjölstaða síðar).
+  let _hekluTs = 0;
+  async function renderHekluStada(force){
+    const box = $view && $view.querySelector('.kyf-heklu-stada'); if(!box) return;
+    if(!force && box.dataset.loaded && Date.now() - _hekluTs < 60000) return;
+    _hekluTs = Date.now();
+    const d = new Date();
+    const months = Array.from({length:12}, (_,k)=>{ const x = new Date(d.getFullYear(), d.getMonth()-k, 1); return x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0'); });
+    const stadaFor = m => {
+      const dr = REVIEWS['Heklu reitur|'+m] || REVIEWS['Heklureitur|'+m];
+      if(!dr) return { t:'—', c:'' };
+      const s = String(dr.status||'');
+      if(s==='invoiced') return { t:'Rukkað', c:'greitt' };
+      if(s==='merged')   return { t:'Samreikningur', c:'greitt' };
+      if(s==='skipped'||s==='void') return { t:'Sleppt', c:'' };
+      return { t:'Ósent drög', c:'osent' };
+    };
+    let res;
+    try{
+      res = await Promise.all(months.map(m =>
+        fetch('/api/gata-uppgjor?worksite=Heklureitur&month='+encodeURIComponent(m)+'&klarad=1', { cache:'no-store' })
+          .then(r=>r.ok?r.json():null).catch(()=>null)
+          .then(j => {
+            const holes = (j && j.holes) || [];
+            const got = holes.reduce((a,h)=>a+(Number(h.stakar)||0), 0);
+            const opnar = (j && j.opnar) ? Object.values(j.opnar).reduce((a,n)=>a+(Number(n)||0), 0) : 0;
+            return { month:m, got, opnar, amount: Math.round(Number(j && j.totals && j.totals.total_m_vsk) || 0) };
+          })));
+    }catch(_){ return; }
+    const rows = res.filter(r => r.got>0 || r.amount>0).sort((a,b)=>a.month<b.month?1:-1);
+    if(!rows.length){ box.innerHTML = ''; box.dataset.loaded = '1'; return; }
+    const totGot = rows.reduce((a,r)=>a+r.got,0), totAmt = rows.reduce((a,r)=>a+r.amount,0);
+    const MN = ['jan','feb','mar','apr','maí','jún','júl','ágú','sep','okt','nóv','des'];
+    const monLbl = m => { const [y,mm]=m.split('-'); return (MN[+mm-1]||mm)+' ’'+y.slice(2); };
+    box.dataset.loaded = '1';
+    box.innerHTML =
+      '<details class="boss-panel kyf-heklu" open style="padding:12px 14px">'
+      + '<summary style="cursor:pointer;font-weight:700;color:var(--ink)">🧱 Heklureitur — brunalokanir · uppsafnað '+fmtNum(totGot)+' göt · '+fmtNum(totAmt)+' kr</summary>'
+      + '<div style="font-size:11.5px;color:var(--muted);margin:6px 0 8px">Kláruð göt × verðskrá (Ajour). Til upplýsinga — <b>telst ekki</b> með í pípu-tölunum að ofan.</div>'
+      + '<table style="width:100%;border-collapse:collapse;font-size:12.5px">'
+      + '<thead><tr style="text-align:left;color:var(--muted)"><th style="padding:3px 6px;font-weight:600">Mánuður</th><th style="padding:3px 6px;text-align:right;font-weight:600">Lokuð göt</th><th style="padding:3px 6px;text-align:right;font-weight:600">Reiknuð tala m/vsk</th><th style="padding:3px 6px;font-weight:600">Staða</th></tr></thead><tbody>'
+      + rows.map(r => { const s = stadaFor(r.month);
+          return '<tr style="border-top:1px solid var(--line-2,#e5ddd0)"><td style="padding:4px 6px;font-weight:600">'+esc(monLbl(r.month))+'</td>'
+            + '<td style="padding:4px 6px;text-align:right">'+fmtNum(r.got)+(r.opnar?' <span style="color:var(--muted);font-size:11px">(+'+fmtNum(r.opnar)+' opin)</span>':'')+'</td>'
+            + '<td style="padding:4px 6px;text-align:right;font-weight:600">'+fmtNum(r.amount)+' kr</td>'
+            + '<td style="padding:4px 6px">'+(s.c?'<span class="boss-badge '+s.c+'">'+esc(s.t)+'</span>':'<span style="color:var(--muted)">'+esc(s.t)+'</span>')+'</td></tr>';
+        }).join('')
+      + '</tbody><tfoot><tr style="border-top:2px solid var(--line-1,#cdbfa6);font-weight:800"><td style="padding:5px 6px">Uppsafnað</td><td style="padding:5px 6px;text-align:right">'+fmtNum(totGot)+'</td><td style="padding:5px 6px;text-align:right">'+fmtNum(totAmt)+' kr</td><td></td></tr></tfoot></table></details>';
+  }
+
   async function load(force){
     saekjaGreidslur(!!force);
+    renderHekluStada(!!force);
     const meta = $view.querySelector('#kyf-meta');
     const cache = (!force && window.__KYF_CACHE) || null;
     if(cache && cache.data){
