@@ -171,6 +171,10 @@ async function fillGataCard(box, ws) {
 // Les-only; útgefnar fjárhæðir (utgafudagur, fallback gjalddagi), ekki innheimt.
 function renderHreyfingar(invoices) {
   if (!invoices || !invoices.length) return '';
+  // Telja hverja hreyfingu EINU sinni: landsbankinn_krafnir er innheimtuspegill
+  // sömu Payday-reikninga (sama upphæð, enginn utgafudagur) — annars tvítalning.
+  invoices = invoices.filter(i => i && i.source !== 'landsbankinn_krafnir');
+  if (!invoices.length) return '';
   const CY = new Date().getUTCFullYear();
   const dOf = i => (i.utgafudagur || i.gjalddagi || '');
   const amt = i => Number(i.upphaed_total != null ? i.upphaed_total : i.hofudstoll) || 0;
