@@ -134,6 +134,32 @@ function fmtKr(n) { return Math.round(Number(n)||0).toLocaleString('is-IS').repl
 function fmtDate(d) { if (!d) return ''; const m = d.match(/^(\d{4})-(\d{2})-(\d{2})/); return m ? `${parseInt(m[3])}. ${MONTHS[parseInt(m[2])]} ${m[1]}` : d; }
 function el(id) { return document.getElementById(id); }
 
+// Gata-verkefni (hole-billing verkstaðir) → kúnnar sem bera þá. Birtir les-only gata-stöðu á prófíl kúnnans
+// (25.11.2026, Agnar: „Heklureitur-stöðu á fyrirtækjaprófílinn þeirra"). Lykill = kennitala án bandstriks.
+const GATA_WORKSITE_CUSTOMERS = {
+  '6809212020': ['Heklureitur'],  // Framkvæmdafélagið Laugavegur ehf.
+  '5601922319': ['Heklureitur'],  // Eykt ehf.
+};
+function fmtMonthShort(m) { return m ? (String(m).slice(5) + '.' + String(m).slice(0, 4)) : ''; }
+async function fillGataCard(box, ws) {
+  let j;
+  try { j = await fetch('/api/gata-uppgjor?worksite=' + encodeURIComponent(ws) + '&aunnid=1', { cache: 'no-store' }).then(r => r.ok ? r.json() : null); }
+  catch (_) { box.innerHTML = '<div class="empty">Náði ekki í gata-stöðu.</div>'; return; }
+  const a = j && j.aunnid;
+  if (!a) { box.innerHTML = '<div class="empty">Engin gata-staða.</div>'; return; }
+  const opin = a.open_drafts || [];
+  const kpi = (l, v, strong) => `<div style="min-width:150px"><div class="meta" style="font-size:11px">${esc(l)}</div><div style="font-weight:${strong ? 800 : 700};font-size:${strong ? 16 : 14}px${strong ? ';color:var(--warn)' : ''}">${v}</div></div>`;
+  box.innerHTML =
+    `<div style="display:flex;gap:20px;flex-wrap:wrap;margin-bottom:8px">`
+    + kpi('Áunnið · eftir að senda', fmtKr(a.unsent_m_vsk) + ' kr', true)
+    + kpi('Göt kláruð (alls)', fmtKr(a.current_got) + ' göt')
+    + `</div>`
+    + (opin.length
+        ? `<div class="meta" style="font-size:12px;margin-bottom:4px">Opin drög (óútgefin): ` + opin.map(d => fmtMonthShort(d.work_month) + ' — ' + fmtKr(d.total_m_vsk) + ' kr').join(' · ') + `</div>`
+        : `<div class="meta" style="font-size:12px;margin-bottom:4px">Engin opin drög — allt sent.</div>`)
+    + `<div class="meta" style="font-size:11px">Áunnið = Efnislistar mánaðarins sem eru ekki enn komnir í reikning — allt annað er sent og greitt (sjá Reikningar-spjaldið). Les-only.</div>`;
+}
+
 // Pre-load service-customer dropdown
 async function loadDropdown() {
   try {
@@ -213,6 +239,12 @@ function render(d) {
     html += `<span class="b ${cls}" title="${esc(last_contact.from || '')}${last_contact.subject ? ' — ' + esc(last_contact.subject) : ''}">✉️ Síðast í sambandi: ${esc(fmtDate(last_contact.received_at))}${last_contact.unreplied ? ' (ósvarað)' : ''}</span>`;
   }
   html += '</div></div>';
+
+  // Gata-staða (les-only) — aðeins fyrir kúnna sem bera hole-billing verkstaði (Heklureitur o.fl.)
+  const gataWs = GATA_WORKSITE_CUSTOMERS[String(base.kennitala || '').replace(/\D/g, '')] || [];
+  for (const ws of gataWs) {
+    html += '<div class="card"><h2>🧱 ' + esc(ws) + ' — gata-staða</h2><div class="gata-card" data-ws="' + esc(ws) + '"><div class="meta">Hleð…</div></div></div>';
+  }
 
   // AI advisor
   if (ai_flags && ai_flags.length) {
@@ -317,6 +349,7 @@ function render(d) {
   html += '<details><summary>Sjá raw JSON</summary><pre style="font:11px ui-monospace,Menlo,monospace;overflow:auto;background:#f8fafc;padding:10px;border-radius:6px">' + esc(JSON.stringify(d, null, 2)) + '</pre></details>';
 
   el('out').innerHTML = html;
+  document.querySelectorAll('.gata-card').forEach(box => fillGataCard(box, box.dataset.ws));
 }
 
 function renderDocRow(i) {

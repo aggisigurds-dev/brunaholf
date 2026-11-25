@@ -95,7 +95,7 @@ exports.handler = async (event) => {
     fetchAll('skr_hub_skraningar', `select=execution_date&${ajourFilter}&order=execution_date.desc.nullslast&limit=1`).catch(() => []),
     // luna-bridge ajour-yfirlit.js skráir hvenær verkefnaraðir voru síðast samstilltar (líka þegar ekkert nýtt kom)
     fetchAll('app_kv', 'select=value&key=eq.ajour_radir_sync').catch(() => []),
-    aunnid ? fetchAll('invoice_drafts', `select=materials_jsonb,work_month,status,total_m_vsk&worksite_name=ilike.*${draftTok}*&status=eq.invoiced`).catch(() => []) : Promise.resolve([]),
+    aunnid ? fetchAll('invoice_drafts', `select=work_month,status,total_m_vsk&worksite_name=ilike.*${draftTok}*`).catch(() => []) : Promise.resolve([]),
   ]);
   const syncInfo = ((syncKv[0] || {}).value || {})[canonKey] || null;
 
@@ -181,51 +181,29 @@ exports.handler = async (event) => {
   const bands_m_vsk = bandsOverride != null ? bandsOverride : 0;
   const total_m_vsk = holes_m_vsk + bands_m_vsk;
 
-  // ── Áunnið (25.11.2026, Agnar „reikna eins og í efnislistanum"): fyrir hverja stærð,
-  //    (NÚVERANDI heild kláraðra gata − RUKKUÐ heild á sendum Efnislistum) × verð per gat, lagt saman.
-  //    Meðhöndlar endurstærð göt rétt: stærð sem lækkar gefur mínus, ný stærð plús. „Rukkað" = status invoiced
-  //    (ósent drög teljast enn áunnið). `holes` er núverandi heild því aunnid-hamur sleppti mánaðarsíunni. ──
+  // ── Áunnið (25.11.2026, Agnar: „notumst bara við verkin sem eru skráð per mánuð fyrir Heklureit").
+  //    Áunnið sem á eftir að senda = OPIN drög (status 'draft') — Efnislistar mánaðarins sem eru ekki komnir í reikning.
+  //    Allt sem er 'invoiced' er sent (og í reynd greitt). Eldri aðferðin (núv. gata-verðmæti − rukkað) var RÖNG og er
+  //    fallin: reikningarnir bera líka bönd/kraga/metra/akstur, svo gata-verðmæti má ekki draga frá reikningsupphæð.
+  //    Holes-verðmæti er hér AÐEINS til upplýsingar. `holes` er núverandi heild því aunnid-hamur sleppti mánaðarsíunni. ──
   let aunnidOut = null;
   if (aunnid) {
-    const billedBySize = new Map();
-    for (const d of (billedDrafts || [])) {
-      let mats = d.materials_jsonb;
-      if (typeof mats === 'string') { try { mats = JSON.parse(mats); } catch { mats = []; } }
-      for (const el of (Array.isArray(mats) ? mats : [])) {
-        if (!el || !el.gat) continue;
-        const sl = String(el.size_label || ''); const q = Number(el.qty) || 0;
-        if (sl) billedBySize.set(sl, (billedBySize.get(sl) || 0) + q);
-      }
-    }
-    const rateByLabel = new Map(allRates.map((r) => [r.size_label, Number(r.rate_an_vsk)]));
-    const currentByLabel = new Map(holes.map((h) => [h.size_label, h.stakar]));
-    const labels = new Set([...currentByLabel.keys(), ...billedBySize.keys()]);
-    const by_size = []; let an_vsk = 0, cur_got = 0, bill_got = 0;
-    for (const sl of labels) {
-      const cur = currentByLabel.get(sl) || 0, bill = billedBySize.get(sl) || 0;
-      const rate = Number(rateByLabel.get(sl) || 0), diff = cur - bill, an = diff * rate;
-      an_vsk += an; cur_got += cur; bill_got += bill;
-      by_size.push({ size_label: sl, current: cur, billed: bill, diff, rate_an_vsk: rate, aunnid_an_vsk: an, aunnid_m_vsk: Math.round(an * 1.24) });
-    }
-    by_size.sort((a, b) => b.aunnid_an_vsk - a.aunnid_an_vsk);
-    // Eldri Efnislistar (jan–apr 2026) geyma TÓMT materials_jsonb → per-stærð rukkun vantar, svo per-stærð diff OFMETUR
-    // áunnið. Áreiðanlega talan (AÐAL): NÚVERANDI heildarverðmæti gata − RAUNVERULEGA rukkað (invoice total_m_vsk).
-    // Varfærin (gólf) því gömlu reikningarnir geta borið bönd/kraga sem dragast þá frá gata-verðmætinu.
-    const billed_kr = (billedDrafts || []).reduce((a, d) => a + (Number(d.total_m_vsk) || 0), 0);
-    const vantar_sundurlidun = (billedDrafts || []).filter((d) => {
-      let m = d.materials_jsonb; if (typeof m === 'string') { try { m = JSON.parse(m); } catch { m = []; } }
-      return !(Array.isArray(m) && m.some((e) => e && e.gat));
-    }).map((d) => d.work_month).filter(Boolean).sort();
+    const allDrafts = (billedDrafts || []).filter((d) => d && d.status !== 'skipped');
+    const openDrafts = allDrafts.filter((d) => d.status === 'draft');
+    const invoicedDrafts = allDrafts.filter((d) => d.status === 'invoiced');
+    const sum = (arr) => arr.reduce((a, d) => a + (Number(d.total_m_vsk) || 0), 0);
+    const invoicedMonths = invoicedDrafts.map((d) => d.work_month).filter(Boolean).sort();
+    const current_got = holes.reduce((a, h) => a + (Number(h.stakar) || 0), 0);
     aunnidOut = {
-      // AÐAL-talan — áreiðanleg óháð því að gömul materials vanti:
-      current_value_m_vsk: holes_m_vsk,      // núverandi heildarverðmæti allra kláraðra gata (núverandi stærðir)
-      billed_kr,                              // raunverulega rukkað (sendir reikningar)
-      aunnid_net_m_vsk: Math.max(0, holes_m_vsk - billed_kr),
-      current_got: cur_got, billed_got_known: bill_got, diff_got: cur_got - bill_got,
-      billed_months: (billedDrafts || []).map((d) => d.work_month).filter(Boolean).sort(),
-      vantar_sundurlidun,                     // mánuðir án per-stærð efnis (per-stærð diff ónákvæm fyrir þá)
-      // Per-stærð sundurliðun — nákvæm AÐEINS fyrir mánuði með efni; ofmetur heild vegna tómu mánaðanna:
-      by_size, per_staerd_total_m_vsk: Math.round(an_vsk * 1.24),
+      unsent_m_vsk: sum(openDrafts),                 // AÐAL: áunnið sem á eftir að senda = opin drög
+      open_drafts: openDrafts
+        .map((d) => ({ work_month: d.work_month, total_m_vsk: Number(d.total_m_vsk) || 0 }))
+        .sort((a, b) => String(a.work_month).localeCompare(String(b.work_month))),
+      invoiced_m_vsk: sum(invoicedDrafts),           // heild Efnislista sem komnir eru í reikning (gegnum Drög-stöð)
+      invoiced_months: invoicedMonths,
+      last_invoiced_month: invoicedMonths[invoicedMonths.length - 1] || null,
+      current_value_m_vsk: holes_m_vsk,              // AÐEINS til upplýsingar: núverandi verðmæti allra kláraðra gata
+      current_got,
     };
   }
 
