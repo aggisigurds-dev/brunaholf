@@ -181,6 +181,14 @@ bankagreiðsla.
 > snert (`til`), gata-/fastverðsverk fá 409. Sameiningin stofnar fyrst og kallar svo `merge`. Drög sem eru þegar
 > samreikningur (`merged_from`) eru ekki boðin í nýja sameiningu. Próf: `test/drog-timar-handvirkt.test.js`.
 
+> **25.11.2026 — Payday-reikningur speglast á efnislistann (Agnar: „downloada reikningum inn í kerfið til baka og festast á gamla
+> efnislistann … sjálfkrafa við pörun").** Þegar kerfið parar Payday-reikning við drög (K.sjalfvirkTenging eða bein
+> payday_invoice_id→invoices.id) speglar bakgrunnsfallið `payday-reikningur-spegla-background` (cron 20 7,15 UTC, job
+> `payday-reikningur-spegla`) PDF-ið inn í `efnislisti_documents` sem `doc_type='payday_reikningur'` á sama verkstað|mánuð og
+> efnislistinn. Kjarninn er `payday-reikningur-vista.js` (`vista()`, hugfast; sækir PDF með `payday-invoice-pdf.saekjaPdfBuffer`,
+> LES aðeins úr Payday). Í Kröfu yfirliti birtist „🧾 Payday reikningur" við hlið „📄 Efnislisti"; „Fyrri reikningar" (flipi 06)
+> opnar sama vistaða PDF svo parið lifir eftir að röðin fer úr Ógreitt. Afturkræft: DELETE /api/efnislisti-docs {drive_file_id}.
+
 Sýnin les `/api/krofu-yfirlit-bru` (spjöld), ekki `krofur-yfirlit` (tafla). Þrep 1 = reikningar
 (Payday), þrep 2 = drög (`invoice_drafts`, úr fallinu), þrep 3 = reiknað í vafranum
 (`computeTier3` í index.html → `state.tier3`, lyklar `timavera|<ws>|<mán>`, `nlsh|<mán>`,
