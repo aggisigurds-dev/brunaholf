@@ -96,7 +96,7 @@ exports.handler = async (event) => {
     drafts = await sbAll('invoice_drafts', 'select=worksite_name,work_month,total_m_vsk,status,hours_dagvinna,hours_eftirvinna');
   } catch (e) { warnings.push('invoice_drafts lestur mistókst — ósendir reikningar gætu vantað'); }
   try {
-    meta = await sbAll('krofur_yfirlit_meta', 'select=inv_key,hidden,paid');
+    meta = await sbAll('krofur_yfirlit_meta', 'select=inv_key,hidden,paid,sent,done');
   } catch (e) { /* meta valfrjálst */ }
   try {
     // Tímavera: núverandi mánuður + 4 mánuðir á undan (nóg fyrir „eldra"-áunnið).
@@ -189,6 +189,15 @@ exports.handler = async (event) => {
     // þrep-2 reglan breytist þar — það er einmitt það sem gerðist áður.
     if (t2.total != null) C_osendar.kr = Math.round(+t2.total || 0);
     if (t2.n != null) C_osendar.n = +t2.n || 0;
+    // „Sent í bókun" er farið úr tier2 og situr í tier1 (bidur_porun) þar til krafan parast.
+    // Sama upphæð á heima í ógreiddu hér, annars hverfur hún úr báðum spjöldum.
+    const t1 = kyRes.v.tier1 || {};
+    for (const d of (t1.debtors || [])) for (const iv of (d.invoices || [])) {
+      if (!iv.bidur_porun || iv.hidden || iv.done) continue;
+      const amt = +iv.amount || 0;
+      if (amt <= 0) continue;
+      add(B, amt, { label: iv.worksite || iv.customer || '—', sub: (iv.work_month || 'sent í bókun') + ' · bíður pörunar', kr: Math.round(amt) });
+    }
   } catch (e) {
     // Kröfu yfirlit náðist ekki — fallum aftur á gömlu staðbundnu regluna svo
     // spjaldið standi ekki tómt, en SEGJUM frá: talan getur þá vikið frá CG-02.
@@ -201,7 +210,8 @@ exports.handler = async (event) => {
       if (lc(d.status) === 'skipped') continue;
       if (amt <= 0 || wm < cutoff) continue;
       const mt = metaBy.get(`draftinv|${d.worksite_name}|${wm}`) || {};
-      if (mt.paid || mt.hidden) continue;
+      if (mt.paid || mt.hidden || mt.done) continue;
+      if (mt.sent) { add(B, amt, { label: d.worksite_name || '—', sub: wm + ' · sent í bókun', kr: Math.round(amt) }); continue; }
       add(C_osendar, amt, { label: d.worksite_name || '—', sub: wm, kr: Math.round(amt) });
     }
     for (const r of invoices) {

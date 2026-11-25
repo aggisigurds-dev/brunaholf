@@ -19412,12 +19412,12 @@ async function renderKrofuyfirlit(t){
     liklega: ['Líklega greitt',   'Innborgun fannst í banka — staðfestu með ✓ Greitt'],
     payday:  ['Í Payday',         'Reikningur sendur úr Payday, bíður gjalddaga'],
     osent:   ['Ósent',            'Drög tilbúin, ekki send'],
-    bokun:   ['Sent í bókun',     'Skjölin farin á bókarann, krafa ekki send enn'],
+    bokun:   ['Sent í bókun',     'Skjölin farin á bókarann. Telur með ógreiddu þar til krafan í Payday parast við drögin'],
     send:    ['Krafa send',       'Krafan merkt send — kemur í Ógreitt þegar Payday skilar henni'],
     timi:    ['Tími eftir',       'Tímar skráðir í Tímaveru, engin drög enn']
   };
   function kyStada(inv, tier){
-    if(tier===1) return inv.likely_paid ? 'liklega' : (inv.days_overdue!=null && inv.days_overdue>0) ? 'ogreitt' : 'payday';
+    if(tier===1) return inv.bidur_porun ? 'bokun' : inv.likely_paid ? 'liklega' : (inv.days_overdue!=null && inv.days_overdue>0) ? 'ogreitt' : 'payday';
     if(tier===2) return sentMarked(inv) ? 'send' : inv.sent ? 'bokun' : 'osent';
     return 'timi';
   }
@@ -20200,6 +20200,7 @@ async function renderKrofuyfirlit(t){
         + ((inv.vidbot && !inv.eftir_sameiningu) ?' · <b title="Drögin í Gerð Reikninga voru vistuð '+esc(fmtDate(inv.vistad_dags))+' með '+(Math.round((Number(inv.vistad_klst)||0)*10)/10).toLocaleString('is-IS')+' klst. Þetta eru tímarnir sem hafa bæst við í Tímaveru síðan — þeir eru ekki í drögunum. Meðan mánuðurinn stendur fara þeir sjálfir inn á 2 tíma fresti (drog-timar); eldri mánuði: opnaðu Gerð Reikninga, 📥 sæktu tímana og vistaðu.">＋ nýir tímar síðan drög voru vistuð '+esc(fmtDate(inv.vistad_dags))+'</b>' : '');
     } else {
       sub = esc(inv.source||'');
+      if(inv.bidur_porun) sub += ' · bíður pörunar við kröfuna';
       if(tier===2 && inv.source==='gerd-drög'){
         const vb = vidbotFyrir(inv.worksite, inv.work_month);
         if(vb) sub += ' · <b title="Tímar sem hafa bæst við í Tímaveru síðan drögin voru vistuð '+esc(fmtDate(vb.vistad_dags))+' — þeir eru EKKI í drögunum enn. Meðan mánuðurinn stendur fara þeir SJÁLFIR inn á 2 tíma fresti (drog-timar, 10 mín eftir Tímaveru-sókn); eldri mánuði: opnaðu Gerð Reikninga, 📥 sæktu tímana og vistaðu. Viltu handstýra tímunum: skrifaðu 🔒tímar í athugasemd dragsins.">＋ '+(Math.round((Number(vb.hours)||0)*10)/10).toLocaleString('is-IS')+' klst nýir síðan vistað '+esc(fmtDate(vb.vistad_dags))+' · ≈ '+fmtNum(vb.amount)+' kr</b>';
@@ -20269,8 +20270,8 @@ async function renderKrofuyfirlit(t){
           ${tier===2?'<span style="flex:1 1 0;min-width:0"></span>':''}
           ${noteHtml}
           <span class="ky-amt ky-num">${fmtNum(inv.amount)}<span class="boss-kr">kr</span></span>
-          ${(tier===2||tier===3)?wfStrip(inv, tier):''}
-          <div class="ky-actrow" style="display:flex;gap:6px;flex-shrink:0">${actChips(inv, tier)}</div>
+          ${(tier===2||tier===3||inv.bidur_porun)?wfStrip(inv, inv.bidur_porun?2:tier):''}
+          <div class="ky-actrow" style="display:flex;gap:6px;flex-shrink:0">${actChips(inv, inv.bidur_porun?2:tier)}</div>
         </div>
         <div class="ky-detail" style="display:none">
           <div style="display:flex;flex-wrap:wrap;gap:12px 28px">${detailCells}</div>

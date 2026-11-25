@@ -110,7 +110,7 @@ async function list() {
     sbAll('invoices?select=id,source,customer_name,kt_greidanda,upphaed_total,hofudstoll,status,utgafudagur,gjalddagi,eindagi,greidsla_date,worksite_match,tilvisun'),
     sbAll('invoice_drafts?select=worksite_name,customer_name,kennitala,total_m_vsk,status,merged_into,work_month,payday_invoice_id'),
     sbAll('customer_worksite_map?select=customer_name,worksite_name,kt_greidanda,confidence,tilvisun,retention_pct'),
-    sbAll('krofur_yfirlit_meta?select=inv_key,hidden,paid,done'),
+    sbAll('krofur_yfirlit_meta?select=inv_key,hidden,paid,done,sent'),
   ]);
   const { metaBy, tenging, tvitekin } = flokkunarGrunnur({ pg, inv, drafts, map, meta });
   // verkstaður → greiðandi (verðskrá ræður, kortið fyllir í eyður)
@@ -159,7 +159,7 @@ async function list() {
   }
   for (const d of drafts) {
     const mt = metaBy.get(K.draftKey(d));
-    if (!K.erOsent(d, tenging, mt) || !K.iSummu(mt)) continue;
+    if (!K.iSummu(mt) || (!K.erOsent(d, tenging, mt) && !K.erSentIBokun(d, tenging, mt))) continue;
     // 16.11.2026: drög án greiðanda (hvorki á drögunum né í korti/verðskrá) sáust HVERGI í Viðskiptavinum — Sidumuli 21
     // (1.470.729 kr), NESDEKK og Gullslètta 18 stóðu aðeins í Kröfu yfirliti, svo ósent var 1,9 m.kr. lægra hér. Þau birtast nú
     // undir heiti verkstaðarins, merkt `an_greidanda`, eins og Kröfu yfirlit sýnir þau.
@@ -167,7 +167,10 @@ async function list() {
     const name = eigandi || d.worksite_name;
     if (!name) continue;
     const a = get(name);
-    a.osent += kr(d.total_m_vsk);
+    // Sent í bókun er ekki ósent — sama upphæð telur með ógreiddu þar til krafan parast (erSentIBokun er ósatt þegar pörun er til).
+    if (K.erOsent(d, tenging, mt)) a.osent += kr(d.total_m_vsk);
+    else if (K.erSentIBokun(d, tenging, mt)) a.ogreitt += kr(d.total_m_vsk);
+    else continue;
     if (/^\d{4}-\d{2}$/.test(String(d.work_month || ''))) virkni(a, d.work_month + '-15');
     if (!eigandi) a.an_greidanda = true;
   }
@@ -199,7 +202,7 @@ async function nytt() {
     sb('customer_info?select=customer_name,kennitala,contact_email,invoice_email'),
     sbAll('customer_worksite_map?select=customer_name,worksite_name,kt_greidanda,confidence,netfang'),
     sbAll('invoice_drafts?select=worksite_name,customer_name,kennitala,total_m_vsk,status,merged_into,work_month,payday_invoice_id'),
-    sbAll('krofur_yfirlit_meta?select=inv_key,hidden,paid,done'),
+    sbAll('krofur_yfirlit_meta?select=inv_key,hidden,paid,done,sent'),
     sbAll('timavera_entries?select=date,hours,employee,project&date=gte.' + fra45 + '&order=date.desc'),
     sbAll('email_digest?select=id,account,folder,sender_name,sender_email,to_addresses,subject,snippet,received_at&received_at=gte.' + fra14 + 'T00:00:00Z' + ekkiPersonulegt + '&order=received_at.desc').catch(() => []),
     sb('invoices?select=id,source,tilvisun,customer_name,kt_greidanda,upphaed_total,status,utgafudagur,gjalddagi,greidsla_date&source=eq.payday&or=(utgafudagur.gte.' + fra14 + ',greidsla_date.gte.' + fra14 + ',gjalddagi.gte.' + fra14 + ')&limit=500').catch(() => []),
@@ -249,7 +252,7 @@ async function detail(name, medPost) {
     sb('pricing_guide?select=worksite_name,customer_name'),
     sbAll('customer_worksite_map?select=customer_name,worksite_name,kt_greidanda,confidence,tilvisun,retention_pct'),
     sbAll('invoices?select=id,source,customer_name,kt_greidanda,upphaed_total,hofudstoll,status,gjalddagi,tilvisun'),
-    sbAll('krofur_yfirlit_meta?select=inv_key,hidden,paid,done'),
+    sbAll('krofur_yfirlit_meta?select=inv_key,hidden,paid,done,sent'),
   ]);
   const { metaBy, tenging, tvitekin } = flokkunarGrunnur({ pg: allPg, inv: allInv, drafts, map: allMap, meta });
   const info = infoRows[0] || { customer_name: name };
@@ -275,11 +278,13 @@ async function detail(name, medPost) {
   // 16.11.2026: prófíll „án greiðanda" heitir eftir verkstaðnum — drög hans án greiðanda eiga heima hér (sjá list()).
   const anGreidanda = (d) => !d.customer_name && String(d.worksite_name || '').trim().toLowerCase() === name.toLowerCase();
   const sami = (d) => String(d.customer_name || '').trim().toLowerCase() === name.toLowerCase() || (ktN && normKt(d.kennitala) === ktN) || anGreidanda(d);
-  const drog = drafts.filter((d) => { const mt = metaBy.get(K.draftKey(d)); return K.erOsent(d, tenging, mt) && K.iSummu(mt) && (sami(d) || wsNames.includes(d.worksite_name)); })
-    .map((d) => ({ worksite_name: d.worksite_name, work_month: d.work_month, total_m_vsk: kr(d.total_m_vsk), hours: Number(d.hours_dagvinna) || 0,
+  const aDrogum = (d) => { const mt = metaBy.get(K.draftKey(d)); return K.iSummu(mt) && (sami(d) || wsNames.includes(d.worksite_name)); };
+  const drogKort = (d) => ({ worksite_name: d.worksite_name, work_month: d.work_month, total_m_vsk: kr(d.total_m_vsk), hours: Number(d.hours_dagvinna) || 0,
       notes: String(d.notes || '').trim().slice(0, 300),       // 16.11.2026: athugasemd draganna fer í „Um verkið"
       // 16.11.2026: hvað vantar á drögin SJÁLF til að senda (tools/osent-upplysingar.cjs les þetta). Aðeins heiti reita, engin gildi.
-      heimilisfang: String(d.heimilisfang || '').trim(), vantar: N.vantarADrog(d) }));
+      heimilisfang: String(d.heimilisfang || '').trim(), vantar: N.vantarADrog(d) });
+  const drog = drafts.filter((d) => aDrogum(d) && K.erOsent(d, tenging, metaBy.get(K.draftKey(d)))).map(drogKort);
+  const iBokun = drafts.filter((d) => aDrogum(d) && K.erSentIBokun(d, tenging, metaBy.get(K.draftKey(d)))).map(drogKort);
 
   // Samskipti: póstar sem nefna verkstaðina eða greiðandann (email_digest = brunaholf-pósthólfið)
   const orParts = [];
@@ -385,7 +390,8 @@ async function detail(name, medPost) {
   const iSum = (v) => !v.falid && kr(v.upphaed_total) > 0;
   const samtals = {
     krofur: inv2.filter((v) => v.stada !== 'drog' && v.stada !== 'ogilt' && v.stada !== 'kredit').length,   // 16.11.2026: kreditreikningar teljast ekki (listinn sleppti þeim þegar)
-    ogreitt: inv2.filter((v) => v.stada === 'ogreitt' && iSum(v)).reduce((a, v) => a + kr(v.upphaed_total), 0),
+    ogreitt: inv2.filter((v) => v.stada === 'ogreitt' && iSum(v)).reduce((a, v) => a + kr(v.upphaed_total), 0)
+      + iBokun.reduce((a, d) => a + d.total_m_vsk, 0),
     greitt: inv2.filter((v) => v.stada === 'greitt').reduce((a, v) => a + kr(v.upphaed_total), 0),
     osent: drog.reduce((a, d) => a + d.total_m_vsk, 0)
       + inv2.filter((v) => v.stada === 'drog' && iSum(v)).reduce((a, v) => a + kr(v.upphaed_total), 0),

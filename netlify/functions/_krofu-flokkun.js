@@ -189,9 +189,10 @@ function flokkaReikning(r, mt) {
   return 'ogreitt';
 }
 
-/* Er invoice_drafts-röð ÓSEND? Sama regla og þrep 2 í Kröfu yfirliti: staðan er ekki invoiced/void/skipped/merged,
- * engin Payday-röð hangir á henni (payday_invoice_id eða sjálfvirk tenging), upphæð > 0, ekki handvirkt merkt greitt. */
-function erOsent(d, tenging, mt) {
+/* Grunnurinn undir ósent: staðan er ekki invoiced/void/skipped/merged, engin Payday-röð hangir á drögunum
+ * (payday_invoice_id eða sjálfvirk tenging), upphæð > 0, ekki handvirkt merkt greitt. `sent` er EKKI hér —
+ * „Sent í bókun" er ekki lengur ósent (erOsent) en telst ógreitt þar til krafan parast (erSentIBokun). */
+function grunnOsent(d, tenging, mt) {
   if (EKKI_OSENT.has(String(d.status || ''))) return false;
   if (d.payday_invoice_id != null) return false;
   if (d.merged_into) return false;
@@ -199,6 +200,21 @@ function erOsent(d, tenging, mt) {
   if (!((+d.total_m_vsk || 0) > 0)) return false;
   if (mt && mt.paid) return false;
   return true;
+}
+
+/* Er invoice_drafts-röð ÓSEND? Sama regla og þrep 2 í Kröfu yfirliti, nema drög merkt „Sent í bókun"
+ * (krofur_yfirlit_meta.sent). Þau eru farin úr húsi til bókarans og eiga ekki heima í ósent. */
+function erOsent(d, tenging, mt) {
+  if (mt && mt.sent) return false;
+  return grunnOsent(d, tenging, mt);
+}
+
+/* „Sent í bókun" en krafan er ekki komin inn í Payday (engin sjálfvirk pörun, ekkert payday_invoice_id,
+ * ekki „Krafa send"). Telst með ógreiddu þar til pörunin tekur drögin út og Payday-röðin stendur ein eftir.
+ * `done` (krafa send) er ekki hér — sú röð er þegar tekin úr summum. */
+function erSentIBokun(d, tenging, mt) {
+  if (!mt || !mt.sent || mt.done) return false;
+  return grunnOsent(d, tenging, mt);
 }
 
 // Telst röðin í summum? Faldar raðir og „📨 Krafa send" (done) teljast ekki — sama og rollup í Kröfu yfirliti.
@@ -248,4 +264,4 @@ function kreditPor(invoices) {
   return out;
 }
 
-module.exports = { digits, lc, PAID, CREDIT, DRAFT, EKKI_OSENT, ORUKKANLEGT, GATA, invKey, draftKey, greidendur, sjalfvirkTenging, tvitekinPaydayDrog, flokkaReikning, erOsent, iSummu, tvifarar, kreditPor };
+module.exports = { digits, lc, PAID, CREDIT, DRAFT, EKKI_OSENT, ORUKKANLEGT, GATA, invKey, draftKey, greidendur, sjalfvirkTenging, tvitekinPaydayDrog, flokkaReikning, grunnOsent, erOsent, erSentIBokun, iSummu, tvifarar, kreditPor };
