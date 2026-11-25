@@ -14,12 +14,46 @@
 const { freshAccessToken, json, cors } = require('./_google');
 
 const MAX_BYTES = 10 * 1024 * 1024;
+const SUPABASE_URL = process.env.SUPABASE_URL;
+const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const SB_BUCKET = 'efnislisti-pdf';
+
+// Supabase-hýst skjal (drive_file_id = 'sb:<path>', t.d. payday-reikningur-vista / pdf-store) birtist INLINE
+// eins og Drive-skjölin — ekki niðurhal. 25.11.2026 (Agnar: „sést ekki"): Payday-reikningurinn var opnaður á
+// krossa-léns public_url Supabase, sem vafrar/öpp hlaða oft niður í stað þess að sýna. Hér kemur hann samhliða.
+async function serveSb(rawPath) {
+  if (!SUPABASE_URL || !SUPABASE_KEY) return json(500, { error: 'Supabase env vantar' });
+  const path = String(rawPath || '').split('?')[0].replace(/^\/+/, '');
+  if (!path || path.includes('..')) return json(400, { error: 'ógilt sb-stíg' });
+  const enc = path.split('/').map((s) => encodeURIComponent(s)).join('/');
+  let r;
+  try {
+    r = await fetch(`${SUPABASE_URL}/storage/v1/object/${SB_BUCKET}/${enc}`, { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } });
+  } catch (e) { return json(502, { error: String((e && e.message) || e) }); }
+  if (!r.ok) return json(r.status === 404 ? 404 : 502, { error: 'sb-skjal ' + r.status });
+  const buf = Buffer.from(await r.arrayBuffer());
+  if (buf.length > MAX_BYTES) return { statusCode: 302, headers: { Location: `${SUPABASE_URL}/storage/v1/object/public/${SB_BUCKET}/${enc}`, 'access-control-allow-origin': '*' }, body: '' };
+  const name = (path.split('/').pop() || 'skjal.pdf').replace(/[^\x20-\x7E]/g, '_').replace(/"/g, '');
+  const ct = /\.pdf$/i.test(name) ? 'application/pdf' : (r.headers.get('content-type') || 'application/octet-stream');
+  return {
+    statusCode: 200,
+    headers: {
+      'content-type': ct,
+      'content-disposition': 'inline; filename="' + name + '"',
+      'cache-control': 'private, max-age=3600',
+      'access-control-allow-origin': '*',
+    },
+    body: buf.toString('base64'),
+    isBase64Encoded: true,
+  };
+}
 
 exports.handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') return { statusCode: 204, headers: cors(), body: '' };
   if (event.httpMethod !== 'GET') return json(405, { error: 'Method not allowed' });
 
   const id = ((event.queryStringParameters || {}).id || '').trim();
+  if (id.startsWith('sb:')) return serveSb(id.slice(3));
   if (!/^[\w-]{10,}$/.test(id)) return json(400, { error: 'gilt id vantar' });
 
   let token;

@@ -13925,7 +13925,8 @@ async function renderGerdReikninga(t){
           // opnast hér fyrir eldri verk svo hann hverfi ekki; annars handvirkt tengdur 'invoice'; annars prentuð drög.
           try{ const r = await fetch('/api/efnislisti-docs?worksite=' + encodeURIComponent(name) + '&month=' + encodeURIComponent(m)); const j = r.ok ? await r.json() : { rows: [] }; const rows = j.rows || [];
             const inv = rows.find(x => x.doc_type==='payday_reikningur' && (x.public_url || x.drive_file_id)) || rows.find(x => x.doc_type==='invoice' && (x.public_url || x.drive_file_id));
-            if(inv){ window.open(inv.public_url || ('/api/skjal?id=' + encodeURIComponent(inv.drive_file_id)), '_blank', 'noopener'); return; } }catch(_){}
+            // sb:-hýst skjöl gegnum /api/skjal (inline); Drive/annað um public_url. (Agnar 25.11: „sést ekki".)
+            if(inv){ const sb = String(inv.drive_file_id||'').startsWith('sb:'); window.open(sb ? ('/api/skjal?id=' + encodeURIComponent(inv.drive_file_id)) : (inv.public_url || ('/api/skjal?id=' + encodeURIComponent(inv.drive_file_id))), '_blank', 'noopener'); return; } }catch(_){}
           if(d && typeof printSavedInvoice === 'function') printSavedInvoice(d); }));
         host.querySelectorAll('.gb-saga-r.hasd').forEach(row => row.addEventListener('click', e => { if(e.target.closest('button')) return; const m = row.dataset.sagaM;
           const st = K('gr-hd-status'); if(st && st.classList.contains('unsaved') && !confirm('Drögin eru óvistuð og glugginn lokast. Opna ' + sagaMan(m) + ' samt?')) return;
@@ -20237,8 +20238,11 @@ async function renderKrofuyfirlit(t){
     // speglaði Payday-reikningurinn (payday-reikningur-spegla-background → efnislisti_documents doc_type='payday_reikningur')
     // birtist hér við hlið efnislistans svo parið haldist saman og hverfi ekki þegar röðin fer úr Ógreitt. Aðeins lestur.
     const _reikDoc = (_sjLykill ? (EFDOCS[_sjLykill]||[]) : []).find(d=>d.doc_type==='payday_reikningur' && bhDocUrl(d));
+    // 25.11.2026 (Agnar: „sést ekki"): opna gegnum /api/skjal (samlægt, inline) þegar skjalið er Supabase-hýst (sb:) —
+    // krossa-léns public_url Supabase hleðst niður í stað þess að birtast í appinu/símanum. Drive-skjöl halda sínum hlekk.
+    const _reikHref = _reikDoc ? (String(_reikDoc.drive_file_id||'').startsWith('sb:') ? ('/api/skjal?id=' + encodeURIComponent(_reikDoc.drive_file_id)) : bhDocUrl(_reikDoc)) : '';
     const reikPdfLine = _reikDoc
-      ? `<div class="ky-bank"><a href="${esc(bhDocUrl(_reikDoc))}" target="_blank" rel="noopener" onclick="event.stopPropagation()" title="${esc(_reikDoc.title||'Payday reikningur')} — reikningurinn eins og Payday gaf hann út, vistaður í kerfinu" style="color:var(--green-deep,#2e6b43);font-weight:600;text-decoration:none">🧾 Payday reikningur</a></div>`
+      ? `<div class="ky-bank"><a href="${esc(_reikHref)}" target="_blank" rel="noopener" onclick="event.stopPropagation()" title="${esc(_reikDoc.title||'Payday reikningur')} — reikningurinn eins og Payday gaf hann út, vistaður í kerfinu" style="color:var(--green-deep,#2e6b43);font-weight:600;text-decoration:none">🧾 Payday reikningur</a></div>`
       : '';
     // Mánaðar-plata (skönnun eftir mánuði) — úr gjalddaga, annars vinnumánuði (þrep 3).
     // Samreikningur: platan sýnir ALLA mánuðina sem reikningurinn nær yfir.
