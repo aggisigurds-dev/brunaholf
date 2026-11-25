@@ -225,12 +225,17 @@ exports.handler = async (event) => {
     // syna_alltaf þarf ekki lengur að lyfta röð yfir girðinguna — hún er farin.
     if (amt <= 0) continue;
     if (mt.paid) continue;   // falið er sent áfram (hidden:true), bara greitt er sleppt
+    // „Sent í bókun" er ekki ósent. Drögin færast í ógreitt (tier1) þar til sjálfvirk pörun
+    // (hér að ofan, `continue`) finnur kröfuna sem verið er að setja inn — þá dettur dragið út
+    // og aðeins Payday-röðin stendur eftir. `done` (krafa send) situr áfram í tier2 en utan summu.
     // Leysa verkstaðar-nafn í greiðanda svo öll drögin lendi undir sama greiðanda
     // (t.d. Landsspítalinn-drög → ÞG verktakar). Fellur til baka á upprunalega
     // nafnið ef enginn greiðandi finnst í customer_worksite_map.
     const payer = resolvePayer(d.worksite_name) || resolvePayer(d.customer_name);
-    t2.push({
+    const bidurPorun = K.erSentIBokun(d, sjalfvirkTenging, mt);
+    (bidurPorun ? t1 : t2).push({
       inv_key: key, id: null, tilvisun: null, source: 'gerd-drög',
+      bidur_porun: bidurPorun,
       kt: (payer && payer.kt) || digits(d.kennitala),
       customer: (payer && payer.customer) || d.customer_name || d.worksite_name || '(verkstaður)',
       gjalddagi: null, days_overdue: null, amount: amt, note: mt.note || null, hidden: !!mt.hidden,
@@ -255,7 +260,7 @@ exports.handler = async (event) => {
   // parið vinnur (cost 0), svo R-296 stendur réttilega eftir ómerkt.
   const pairs = [];
   for (const row of t1) {
-    if (row.hidden) continue;                  // falin röð grípur ekki bankagreiðslu
+    if (row.hidden || row.bidur_porun) continue;   // falin röð og drög sem bíða pörunar grípa ekki bankagreiðslu
     const kt = row.kt;
     if (!kt || !inflowByKt.has(kt)) continue;
     const tolLow = Math.max(5000, row.amount * 0.01);
@@ -300,7 +305,7 @@ exports.handler = async (event) => {
     // Payday-drög sem voru sameinuð ógreiddum reikningi (detta úr Ósent, lifa í töflunni) — gagnsæi fyrir yfirferð.
     tvitekin_payday_drog: [...tvitekin].map(([k, r]) => ({ drog: k, reikningur: r.tilvisun, amount: +r.upphaed_total || +r.hofudstoll || 0 })),
     likely_paid: { n: likely.length, kr: likely.reduce((a, r) => a + r.amount, 0) },
-    note: 'Ógreitt = allir reikningar sem eru hvorki greiddir, kreditfærðir né drög. Payday SENT telst ógreitt (útistandandi). likely_paid = fannst greitt í banka en enn ógreitt í Payday.',
+    note: 'Ógreitt = ógreiddir Payday-reikningar auk draga sem eru merkt „Sent í bókun" og hafa ekki parast við kröfuna enn (bidur_porun). Þegar pörunin tekst dettur dragið út og aðeins krafan stendur eftir. Ósent = drög sem eru ekki send í bókun. likely_paid = fannst greitt í banka en enn ógreitt í Payday.',
   });
 };
 
