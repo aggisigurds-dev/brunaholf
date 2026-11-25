@@ -32,7 +32,11 @@ exports.handler = async (event) => {
 
   try {
     // Newest Ajour export, anywhere in Drive (or inside &folder=ID).
-    const qParts = ["name contains 'AjourRegistrationData'", 'trashed=false'];
+    // 25.11.2026 (Agnar: „nærð ekki að sjúga inn heklureitagögnin"): leitin skilaði MÖPPUNNI
+    // „Gögn - AjourRegistrationData" (nafn passaði, modifiedTime nýjast) og ingesterinn fékk
+    // möppu-id → Drive 403 „Only files with binary content can be downloaded". Krefjumst nú
+    // text/csv svo hvorki mappa né Google Sheet (sem alt=media getur ekki sótt) veljist.
+    const qParts = ["name contains 'AjourRegistrationData'", "mimeType = 'text/csv'", 'trashed=false'];
     if (p.folder) qParts.unshift(`'${p.folder.replace(/'/g, "\\'")}' in parents`);
     const params = new URLSearchParams({
       q: qParts.join(' and '),
