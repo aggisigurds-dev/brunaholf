@@ -1,6 +1,6 @@
 {
  "utgafa": 1,
- "nyjast": "2026-11-23",
+ "nyjast": "2026-11-24",
  "throskuldur": 6,
  "osnert_dagar": 30,
  "uppspretta": "slokkvitaeki/tools/audit-agentar.cjs --json",
@@ -72,10 +72,10 @@
    "slod": ".claude/agents/bord-flettur.md",
    "hud": null,
    "emoji": null,
-   "sidast": "2026-11-23",
-   "skrif": 74,
+   "sidast": "2026-11-24",
+   "skrif": 75,
    "gaetir": 50,
-   "breytt": 2,
+   "breytt": 4,
    "daudir": [],
    "merki": "🟡",
    "lysing": "Flettur, borð og navigation í Slökkvitæki-appinu — Þjónustuborð (368) og undirborð, Bakendi, Bílstjóri, Aksturslisti, URL-routing (218), bakk (3 lög) og app-síð"
@@ -150,9 +150,9 @@
    "sidast": "2026-11-23",
    "skrif": 13,
    "gaetir": 11,
-   "breytt": 0,
+   "breytt": 2,
    "daudir": [],
-   "merki": "🟢",
+   "merki": "🟡",
    "lysing": "M (Judi Dench) 🕴️ — stjóri fyrirtækja í þjónustu. Opnar hvert mál um eitt fyrirtæki á charlize_yfirlit(kt) og kúnnaminni, vísar á sérfræðing (kunnaskra: kt/rek"
   },
   {
@@ -207,12 +207,12 @@
    "slod": ".claude/agents/joker.md",
    "hud": "Joker",
    "emoji": "🃏",
-   "sidast": "2026-11-17",
-   "skrif": 24,
+   "sidast": "2026-11-24",
+   "skrif": 26,
    "gaetir": 22,
-   "breytt": 6,
+   "breytt": 0,
    "daudir": [],
-   "merki": "🔴",
+   "merki": "🟢",
    "lysing": "Hönnuðurinn — lagar útlit, farsímaskjái (mobile view) og hannar skjái/app-view í Slökkvitæki-appinu. Notaðu þegar síða eða flipi lítur illa út, brotnar eða er þ"
   },
   {
@@ -237,12 +237,12 @@
    "slod": ".claude/agents/kodafraedingur.md",
    "hud": "Lisbeth Salander",
    "emoji": "🖤",
-   "sidast": "2026-11-17",
-   "skrif": 7,
-   "gaetir": 21,
-   "breytt": 5,
+   "sidast": "2026-11-24",
+   "skrif": 9,
+   "gaetir": 24,
+   "breytt": 0,
    "daudir": [],
-   "merki": "🟡",
+   "merki": "🟢",
    "lysing": "Kóðafræðingurinn (Lisbeth Salander) — gætir þess að RÉTTA aðferðin sé notuð í kóðavinnu í Slökkvitæki-appinu: patch-mynstrið (IIFE, wrap, ?v= cache-bump), engin"
   },
   {
@@ -255,7 +255,7 @@
    "sidast": "2026-11-16",
    "skrif": 7,
    "gaetir": 7,
-   "breytt": 3,
+   "breytt": 4,
    "daudir": [],
    "merki": "🟡",
    "lysing": "Kortin og geocode-kerfið — Leaflet, mapfix-merkin, Nominatim-proxyið, Staðfangaskrá HMS, geocode_cache lögin þrjú og kill-dots sagan. Notaðu þegar pinnar vantar"
@@ -270,7 +270,7 @@
    "sidast": "2026-11-16",
    "skrif": 17,
    "gaetir": 15,
-   "breytt": 4,
+   "breytt": 5,
    "daudir": [],
    "merki": "🟡",
    "lysing": "Viðskiptavina-líkanið (customers_base/fyrirtaeki/uttaeki/vidskiptavinir), DB-skema, base-sameining og póst-merki/póstnúmer á fyrirtækjum. Notaðu fyrir kúnna, ke"
@@ -345,7 +345,7 @@
    "sidast": "2026-11-17",
    "skrif": 6,
    "gaetir": 5,
-   "breytt": 1,
+   "breytt": 2,
    "daudir": [],
    "merki": "🟡",
    "lysing": "Öpp-sérfræðingurinn (Ant-Man) — á app-skelina „firestarter\" (261 PAGES/APPS, 316, 354), app-síðurnar br-* (iframe á brunaholf), síðuskipti í öppunum, zoom og sk"
@@ -360,7 +360,7 @@
    "sidast": "2026-11-20",
    "skrif": 13,
    "gaetir": 10,
-   "breytt": 3,
+   "breytt": 4,
    "daudir": [],
    "merki": "🟡",
    "lysing": "Meg Ryan ✉️ („You've Got Mail“) — póstvörðurinn. Les, flokkar og tengir tölvupóst beggja félaga (eldklar@, bokhald@eldklar, Brunaholf@, bokhald@brunaholf + brun"
@@ -420,7 +420,7 @@
    "sidast": "2026-11-23",
    "skrif": 57,
    "gaetir": 40,
-   "breytt": 1,
+   "breytt": 3,
    "daudir": [],
    "merki": "🟡",
    "lysing": "EINI agentinn sem býr til, leiðréttir, kreditfærir og færir reikninga í Slökkvitæki-appinu — eftir verkferlinu efst í skránni (greiðandi fyrst, lokaathugun síða"
@@ -872,7 +872,7 @@
    "sidast": "2026-11-10",
    "skrif": 7,
    "gaetir": 19,
-   "breytt": 9,
+   "breytt": 10,
    "daudir": [],
    "merki": "🔴",
    "lysing": "Layout, CSS and responsive rules specific to the Slokkvitaeki app. Use BEFORE writing any CSS, media query, or layout change in this repo - including mobile/des"
