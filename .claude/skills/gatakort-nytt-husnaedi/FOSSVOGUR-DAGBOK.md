@@ -86,6 +86,32 @@ passa í sinn reit (0H ×0,875, 1H ×0,773, 2H ×0,878, 3H ×0,900, 4H–7H ×1,
 sín eigin rastamynd (135–196 ppi) og engin sameiginleg hnit eru til. Aðeins til að skoða; grunnmyndir verksins eru óskölluðu myndirnar
 í gagnagrunninum. Prófað: 4H–7H á borðinu eru pixil fyrir pixil eins og frummyndirnar. Ekki prófað á síma.
 
+## 25.11.2026 (síðar) — Fossvogur tengdur í viðmótið
+
+**Beiðni Agnars (orðrétt):** „Matt tengja fossvoginn betur. Svo eg geti sed hann eins og landsspitalann".
+
+**Mælt áður en nokkuð var breytt:** Fossvogur var þegar í Byggingar, Vinna, Gatakort, Skýrsla og Categories/schema, en flipar efst á öllum
+Apex-síðum báru ekki `?verk=` og Gatakort og Skýrsla opna sjálfgefið fyrsta verk með „gatakort“ í heiti (lægsta id = NLSH). Verk 9 náðist
+því aðeins með `?verk=9` í slóðinni og hver smellur á flipa fór aftur á Landspítalann. Verkið sést á Byggingar-síðunni (3 byggingar, Fossvogur
+með 8 teikningar).
+
+**Gert (Kjarni, PR #336, squash `ca6d493`):** ný `skraning/VerkTengill.tsx` á Gatakort, Skýrslu, Vinnu, Byggingar og Skráning & QA.
+Hlekkirnir efst bera verkið úr slóðinni þegar smellt er (Byggingar velur verk með `history.replaceState`, því er slóðin lesin við smell);
+á Gatakort, Skýrslu og Vinnu er verkaval fremst í flipastikunni (ekki í `.aj-right`, sem er falið á síma). Valið er flakk, ekkert í
+localStorage. `SkyrslaClient.tsx` sýnir athugasemd fyrir verk sem heitir ekki NLSH: skýrslan er föst á hæðir 6H/5H/4H og deildir S1–S5.
+
+**Prófað:** `tsc --noEmit` 0 villur; Playwright (skrif stöðvuð, 0 náðu í gegn) á staðbundnum þjóni og aftur á `kjarni.vercel.app` eftir birtingu:
+val á Fossvogi → `?verk=9`; Skýrsla, Vinna og Gatakort bera `?verk=9`; Byggingar → velja Fossvog → Gatakort ber `?verk=9`; Skýrsla NLSH án
+athugasemdar, Skýrsla Fossvogs með hana; x-staða flipa óbreytt meðan listinn berst; sími 390 px: valið sýnilegt, engin lárétt skrun síðunnar.
+Vercel-forskoðunin (SSO-varin, 302) var ekki prófuð. Ekki prófað á síma Agnars.
+
+**Enn ólíkt Landspítalanum (mælt/skoðað):**
+- 0 skráningar og engin lög; engin áætlun.
+- Deildahnapparnir S1–S5 á Gatakorti birtast líka á Fossvogi (föst NLSH-gildi í `KortClient`); þeir segja ekkert um Fossvog.
+- Stöðuskýrslan er NLSH-föst (sjá athugasemdina í henni).
+- Yfirsýn og Greining bera ekki verk áfram. Í prófunarkeyrslu með skrif stöðvuð sýndu þær báðar villuspjald („Application error“), bæði fyrir verk 4 og 9;
+  orsök ómæld (líklega stöðvuðu skrifin), ekki hluti af þessari breytingu.
+
 ## Opið / ómælt
 - Merkin: hvað rautt, gult og blátt þýðir (líklega á glærum 9–10), hvort þau eigi að verða skráningar eða áætluð göt.
 - Verkkaupi, og hvort þetta verður verk í Ajour (þá verður `ajour_nafn` sett — aðeins eftir að uppgjör er skoðað).
