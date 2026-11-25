@@ -95,7 +95,7 @@ exports.handler = async (event) => {
     fetchAll('skr_hub_skraningar', `select=execution_date&${ajourFilter}&order=execution_date.desc.nullslast&limit=1`).catch(() => []),
     // luna-bridge ajour-yfirlit.js skráir hvenær verkefnaraðir voru síðast samstilltar (líka þegar ekkert nýtt kom)
     fetchAll('app_kv', 'select=value&key=eq.ajour_radir_sync').catch(() => []),
-    aunnid ? fetchAll('invoice_drafts', `select=materials_jsonb,work_month,status&worksite_name=ilike.*${draftTok}*&status=eq.invoiced`).catch(() => []) : Promise.resolve([]),
+    aunnid ? fetchAll('invoice_drafts', `select=materials_jsonb,work_month,status,total_m_vsk&worksite_name=ilike.*${draftTok}*&status=eq.invoiced`).catch(() => []) : Promise.resolve([]),
   ]);
   const syncInfo = ((syncKv[0] || {}).value || {})[canonKey] || null;
 
@@ -208,10 +208,24 @@ exports.handler = async (event) => {
       by_size.push({ size_label: sl, current: cur, billed: bill, diff, rate_an_vsk: rate, aunnid_an_vsk: an, aunnid_m_vsk: Math.round(an * 1.24) });
     }
     by_size.sort((a, b) => b.aunnid_an_vsk - a.aunnid_an_vsk);
+    // Eldri Efnislistar (jan–apr 2026) geyma TÓMT materials_jsonb → per-stærð rukkun vantar, svo per-stærð diff OFMETUR
+    // áunnið. Áreiðanlega talan (AÐAL): NÚVERANDI heildarverðmæti gata − RAUNVERULEGA rukkað (invoice total_m_vsk).
+    // Varfærin (gólf) því gömlu reikningarnir geta borið bönd/kraga sem dragast þá frá gata-verðmætinu.
+    const billed_kr = (billedDrafts || []).reduce((a, d) => a + (Number(d.total_m_vsk) || 0), 0);
+    const vantar_sundurlidun = (billedDrafts || []).filter((d) => {
+      let m = d.materials_jsonb; if (typeof m === 'string') { try { m = JSON.parse(m); } catch { m = []; } }
+      return !(Array.isArray(m) && m.some((e) => e && e.gat));
+    }).map((d) => d.work_month).filter(Boolean).sort();
     aunnidOut = {
-      by_size, total_an_vsk: an_vsk, total_m_vsk: Math.round(an_vsk * 1.24),
-      current_got: cur_got, billed_got: bill_got, diff_got: cur_got - bill_got,
+      // AÐAL-talan — áreiðanleg óháð því að gömul materials vanti:
+      current_value_m_vsk: holes_m_vsk,      // núverandi heildarverðmæti allra kláraðra gata (núverandi stærðir)
+      billed_kr,                              // raunverulega rukkað (sendir reikningar)
+      aunnid_net_m_vsk: Math.max(0, holes_m_vsk - billed_kr),
+      current_got: cur_got, billed_got_known: bill_got, diff_got: cur_got - bill_got,
       billed_months: (billedDrafts || []).map((d) => d.work_month).filter(Boolean).sort(),
+      vantar_sundurlidun,                     // mánuðir án per-stærð efnis (per-stærð diff ónákvæm fyrir þá)
+      // Per-stærð sundurliðun — nákvæm AÐEINS fyrir mánuði með efni; ofmetur heild vegna tómu mánaðanna:
+      by_size, per_staerd_total_m_vsk: Math.round(an_vsk * 1.24),
     };
   }
 

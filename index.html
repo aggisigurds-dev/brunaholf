@@ -21531,56 +21531,39 @@ async function renderKrofuyfirlit(t){
     }catch(_){ _grTs = 0; }
   }
 
-  // Heklureitur-staða (25.11.2026, Agnar „áunnið eins og landsspítalinn … les-only staða"): lokuð göt + reiknuð
-  // tala (göt × verðskrá, /api/gata-uppgjor klarad=1) per mánuð, með rukkunarstöðu úr drögunum. TELUR EKKI í
-  // pípu-tölurnar (CG) — hrein staða svo uppsafnað sjáist án tvítalningar. Heklureitur fyrst (fjölstaða síðar).
+  // Heklureitur-staða (25.11.2026, Agnar „áunnið eins og landsspítalinn … reikna eins og í efnislistanum"): les-only.
+  // ÁUNNIÐ = núverandi heildarverðmæti allra kláraðra gata (núverandi stærðir) − RAUNVERULEGA rukkað (sendir reikningar).
+  // Reiknað eins og Efnislistinn: núverandi heild per stærð; endurstærð göt skekkja ekki (/api/gata-uppgjor?aunnid=1).
+  // TELUR EKKI í pípu-tölurnar (CG) — hrein staða. Varfærið gólf: eldri reikningar (jan–apr) geyma ekki stærðaskiptingu.
   let _hekluTs = 0;
   async function renderHekluStada(force){
     const box = $view && $view.querySelector('.kyf-heklu-stada'); if(!box) return;
     if(!force && box.dataset.loaded && Date.now() - _hekluTs < 60000) return;
     _hekluTs = Date.now();
-    const d = new Date();
-    const months = Array.from({length:12}, (_,k)=>{ const x = new Date(d.getFullYear(), d.getMonth()-k, 1); return x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0'); });
-    const stadaFor = m => {
-      const dr = REVIEWS['Heklu reitur|'+m] || REVIEWS['Heklureitur|'+m];
-      if(!dr) return { t:'—', c:'' };
-      const s = String(dr.status||'');
-      if(s==='invoiced') return { t:'Rukkað', c:'greitt' };
-      if(s==='merged')   return { t:'Samreikningur', c:'greitt' };
-      if(s==='skipped'||s==='void') return { t:'Sleppt', c:'' };
-      return { t:'Ósent drög', c:'osent' };
-    };
-    let res;
-    try{
-      res = await Promise.all(months.map(m =>
-        fetch('/api/gata-uppgjor?worksite=Heklureitur&month='+encodeURIComponent(m)+'&klarad=1', { cache:'no-store' })
-          .then(r=>r.ok?r.json():null).catch(()=>null)
-          .then(j => {
-            const holes = (j && j.holes) || [];
-            const got = holes.reduce((a,h)=>a+(Number(h.stakar)||0), 0);
-            const opnar = (j && j.opnar) ? Object.values(j.opnar).reduce((a,n)=>a+(Number(n)||0), 0) : 0;
-            return { month:m, got, opnar, amount: Math.round(Number(j && j.totals && j.totals.total_m_vsk) || 0) };
-          })));
-    }catch(_){ return; }
-    const rows = res.filter(r => r.got>0 || r.amount>0).sort((a,b)=>a.month<b.month?1:-1);
-    if(!rows.length){ box.innerHTML = ''; box.dataset.loaded = '1'; return; }
-    const totGot = rows.reduce((a,r)=>a+r.got,0), totAmt = rows.reduce((a,r)=>a+r.amount,0);
-    const MN = ['jan','feb','mar','apr','maí','jún','júl','ágú','sep','okt','nóv','des'];
-    const monLbl = m => { const [y,mm]=m.split('-'); return (MN[+mm-1]||mm)+' ’'+y.slice(2); };
+    let j;
+    try{ j = await fetch('/api/gata-uppgjor?worksite=Heklureitur&aunnid=1', { cache:'no-store' }).then(r=>r.ok?r.json():null); }
+    catch(_){ return; }
+    const a = j && j.aunnid; if(!a){ box.innerHTML=''; box.dataset.loaded='1'; return; }
     box.dataset.loaded = '1';
+    const tops = (a.by_size||[]).filter(s => s.diff !== 0).slice(0, 8);
+    const vantar = (a.vantar_sundurlidun||[]);
+    const kpi = (lbl, val, strong) => '<div><div style="font-size:11px;color:var(--muted)">'+lbl+'</div><div style="font-weight:'+(strong?800:700)+';font-size:'+(strong?15:13.5)+'px'+(strong?';color:var(--gold-deep,#9a7b2e)':'')+'">'+val+'</div></div>';
     box.innerHTML =
       '<details class="boss-panel kyf-heklu" open style="padding:12px 14px">'
-      + '<summary style="cursor:pointer;font-weight:700;color:var(--ink)">🧱 Heklureitur — brunalokanir · uppsafnað '+fmtNum(totGot)+' göt · '+fmtNum(totAmt)+' kr</summary>'
-      + '<div style="font-size:11.5px;color:var(--muted);margin:6px 0 8px">Kláruð göt × verðskrá (Ajour). Til upplýsinga — <b>telst ekki</b> með í pípu-tölunum að ofan.</div>'
-      + '<table style="width:100%;border-collapse:collapse;font-size:12.5px">'
-      + '<thead><tr style="text-align:left;color:var(--muted)"><th style="padding:3px 6px;font-weight:600">Mánuður</th><th style="padding:3px 6px;text-align:right;font-weight:600">Lokuð göt</th><th style="padding:3px 6px;text-align:right;font-weight:600">Reiknuð tala m/vsk</th><th style="padding:3px 6px;font-weight:600">Staða</th></tr></thead><tbody>'
-      + rows.map(r => { const s = stadaFor(r.month);
-          return '<tr style="border-top:1px solid var(--line-2,#e5ddd0)"><td style="padding:4px 6px;font-weight:600">'+esc(monLbl(r.month))+'</td>'
-            + '<td style="padding:4px 6px;text-align:right">'+fmtNum(r.got)+(r.opnar?' <span style="color:var(--muted);font-size:11px">(+'+fmtNum(r.opnar)+' opin)</span>':'')+'</td>'
-            + '<td style="padding:4px 6px;text-align:right;font-weight:600">'+fmtNum(r.amount)+' kr</td>'
-            + '<td style="padding:4px 6px">'+(s.c?'<span class="boss-badge '+s.c+'">'+esc(s.t)+'</span>':'<span style="color:var(--muted)">'+esc(s.t)+'</span>')+'</td></tr>';
-        }).join('')
-      + '</tbody><tfoot><tr style="border-top:2px solid var(--line-1,#cdbfa6);font-weight:800"><td style="padding:5px 6px">Uppsafnað</td><td style="padding:5px 6px;text-align:right">'+fmtNum(totGot)+'</td><td style="padding:5px 6px;text-align:right">'+fmtNum(totAmt)+' kr</td><td></td></tr></tfoot></table></details>';
+      + '<summary style="cursor:pointer;font-weight:700;color:var(--ink)">🧱 Heklureitur — áunnið (órukkað): '+fmtNum(a.aunnid_net_m_vsk)+' kr</summary>'
+      + '<div style="display:flex;gap:22px;flex-wrap:wrap;margin:10px 0 6px">'
+        + kpi('Núverandi heild', fmtNum(a.current_value_m_vsk)+' kr · '+fmtNum(a.current_got)+' göt')
+        + kpi('Rukkað', fmtNum(a.billed_kr)+' kr')
+        + kpi('Áunnið (órukkað)', fmtNum(a.aunnid_net_m_vsk)+' kr', true)
+      + '</div>'
+      + '<div style="font-size:11px;color:var(--muted);margin-bottom:8px">Verðmæti allra kláraðra gata (núverandi stærðir) − raunverulega rukkað. Les-only — telst <b>ekki</b> í pípu-tölunum. '
+        + (vantar.length ? 'Varfærið gólf: eldri reikningar ('+vantar.map(m=>m.slice(5)+'/'+m.slice(2,4)).join(', ')+') geyma ekki stærðaskiptingu.' : '') + '</div>'
+      + (tops.length
+          ? '<table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr style="text-align:left;color:var(--muted)"><th style="padding:3px 6px;font-weight:600">Stærð</th><th style="padding:3px 6px;text-align:right;font-weight:600">Nú</th><th style="padding:3px 6px;text-align:right;font-weight:600">Rukkað*</th><th style="padding:3px 6px;text-align:right;font-weight:600">Mismunur</th></tr></thead><tbody>'
+            + tops.map(s => '<tr style="border-top:1px solid var(--line-2,#e5ddd0)"><td style="padding:3px 6px">'+esc(s.size_label)+'</td><td style="padding:3px 6px;text-align:right">'+fmtNum(s.current)+'</td><td style="padding:3px 6px;text-align:right">'+fmtNum(s.billed)+'</td><td style="padding:3px 6px;text-align:right;font-weight:600">'+(s.diff>0?'+':'')+fmtNum(s.diff)+'</td></tr>').join('')
+            + '</tbody></table><div style="font-size:10.5px;color:var(--muted);margin-top:4px">*Rukkað per stærð þekkt aðeins fyrir nýlega reikninga (sep/okt). Heildartalan „Áunnið" að ofan notar raunverulegar reikningsupphæðir, svo hún er rétt þótt eldri stærðaskipting vanti.</div>'
+          : '')
+      + '</details>';
   }
 
   async function load(force){
