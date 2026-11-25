@@ -59,6 +59,41 @@ async function finnaUuid(tilvisun) {
   return { uuid: hit.id, via: 'payday-leit' };
 }
 
+// Sækir PDF-bæti reiknings beint úr Payday. Skilar { buf, uuid, via, tilvisun }.
+// Kastar Error með .code ('ekki_til' | 'payday' | 'ekki_pdf') svo kallarinn (HTTP-fallið OG
+// payday-reikningur-vista speglunin) geti svarað rétt. LES AÐEINS — skrifar engu í Payday.
+async function saekjaPdfBuffer({ tilvisun, uuid } = {}) {
+  tilvisun = String(tilvisun || '').trim().replace(/^R-?/i, '');
+  uuid = String(uuid || '').trim();
+  let via = 'uuid';
+  if (!uuid) {
+    const f = await finnaUuid(tilvisun); uuid = f.uuid; via = f.via;
+    if (!uuid) { const e = new Error(`Reikningur ${tilvisun} fannst hvorki í Payday-speglinum né í Payday — keyrðu /api/payday-pull og reyndu aftur`); e.code = 'ekki_til'; e.via = f.via; throw e; }
+  } else if (!isGuid(uuid)) { const e = new Error('uuid er ekki GUID'); e.code = 'ekki_pdf'; throw e; }
+
+  const token = await pull.getAccessToken();
+  const pr = await fetch(`${pull.API_BASE}/invoices/${encodeURIComponent(uuid)}/pdf`, {
+    headers: { Authorization: `Bearer ${token}`, 'Api-Version': pull.API_VERSION, Accept: 'application/pdf, application/json' },
+    signal: AbortSignal.timeout(20000),
+  });
+  if (!pr.ok) { const e = new Error(`Payday PDF ${pr.status}: ${(await pr.text()).slice(0, 300)}`); e.code = 'payday'; e.uuid = uuid; e.via = via; throw e; }
+
+  const ct = pr.headers.get('content-type') || '';
+  let buf;
+  if (/json/i.test(ct)) {
+    // Varúð: skjölin sýna ekkert svarsnið — ef Payday pakkar PDF-inu í JSON (base64) er það tekið hér.
+    const j = await pr.json();
+    const b64 = typeof j === 'string' ? j : (j.pdf || j.data || j.content || j.file || j.base64 || null);
+    if (!b64) { const e = new Error('Payday skilaði JSON án PDF'); e.code = 'ekki_pdf'; e.uuid = uuid; throw e; }
+    buf = Buffer.from(String(b64).replace(/^data:[^,]*,/, ''), 'base64');
+  } else {
+    buf = Buffer.from(await pr.arrayBuffer());
+  }
+  if (buf.subarray(0, 4).toString('latin1') !== '%PDF') { const e = new Error('Svar Payday er ekki PDF'); e.code = 'ekki_pdf'; e.uuid = uuid; e.content_type = ct; throw e; }
+  return { buf, uuid, via, tilvisun };
+}
+exports.saekjaPdfBuffer = saekjaPdfBuffer;
+
 exports.handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') return { statusCode: 204, headers: cors(), body: '' };
   if (event.httpMethod !== 'GET') return json(405, { error: 'GET only' });
@@ -67,36 +102,12 @@ exports.handler = async (event) => {
 
   const q = event.queryStringParameters || {};
   const tilvisun = String(q.tilvisun || '').trim().replace(/^R-?/i, '');
-  let uuid = String(q.uuid || '').trim();
-  if (!uuid && !tilvisun) return json(400, { error: 'tilvisun eða uuid vantar' });
-  if (uuid && !isGuid(uuid)) return json(400, { error: 'uuid er ekki GUID' });
+  const uuidIn = String(q.uuid || '').trim();
+  if (!uuidIn && !tilvisun) return json(400, { error: 'tilvisun eða uuid vantar' });
+  if (uuidIn && !isGuid(uuidIn)) return json(400, { error: 'uuid er ekki GUID' });
 
   try {
-    let via = 'uuid';
-    if (!uuid) { const f = await finnaUuid(tilvisun); uuid = f.uuid; via = f.via;
-      if (!uuid) return json(404, { error: `Reikningur ${tilvisun} fannst hvorki í Payday-speglinum né í Payday — keyrðu /api/payday-pull og reyndu aftur`, via }); }
-
-    const token = await pull.getAccessToken();
-    const pr = await fetch(`${pull.API_BASE}/invoices/${encodeURIComponent(uuid)}/pdf`, {
-      headers: { Authorization: `Bearer ${token}`, 'Api-Version': pull.API_VERSION, Accept: 'application/pdf, application/json' },
-      signal: AbortSignal.timeout(20000),
-    });
-    if (!pr.ok) return json(502, { error: `Payday PDF ${pr.status}`, detail: (await pr.text()).slice(0, 300), uuid, via });
-
-    const ct = pr.headers.get('content-type') || '';
-    let buf;
-    if (/json/i.test(ct)) {
-      // Varúð: skjölin sýna ekkert svarsnið — ef Payday pakkar PDF-inu í JSON (base64) er það tekið hér.
-      const j = await pr.json();
-      const b64 = typeof j === 'string' ? j : (j.pdf || j.data || j.content || j.file || j.base64 || null);
-      if (!b64) return json(502, { error: 'Payday skilaði JSON án PDF', keys: Object.keys(j || {}), uuid });
-      buf = Buffer.from(String(b64).replace(/^data:[^,]*,/, ''), 'base64');
-    } else {
-      buf = Buffer.from(await pr.arrayBuffer());
-    }
-    if (buf.subarray(0, 4).toString('latin1') !== '%PDF') {
-      return json(502, { error: 'Svar Payday er ekki PDF', content_type: ct, bytes: buf.length, head: buf.subarray(0, 80).toString('utf8'), uuid });
-    }
+    const { buf, uuid } = await saekjaPdfBuffer({ tilvisun, uuid: uuidIn });
     return {
       statusCode: 200,
       headers: {
@@ -109,6 +120,9 @@ exports.handler = async (event) => {
       isBase64Encoded: true,
     };
   } catch (e) {
+    if (e && e.code === 'ekki_til') return json(404, { error: e.message, via: e.via });
+    if (e && e.code === 'payday') return json(502, { error: e.message, uuid: e.uuid, via: e.via });
+    if (e && e.code === 'ekki_pdf') return json(502, { error: e.message, uuid: e.uuid, content_type: e.content_type });
     return json(500, { error: String((e && e.message) || e) });
   }
 };

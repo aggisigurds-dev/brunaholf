@@ -290,6 +290,14 @@
 [functions."payday-pull-background"]
   schedule = "0 7,15 * * *"
 
+# Payday-reikningur → efnislisti (25.11.2026, Agnar: „downloada reikningum inn í kerfið til baka og
+# festast á gamla efnislistann … sjálfkrafa við pörun"). Speglar PDF paraðra Payday-reikninga inn í
+# efnislisti_documents (doc_type='payday_reikningur') á sama verkstað/mánuð og efnislistinn, svo parið
+# haldist saman og hverfi ekki þegar röðin fer úr Kröfu yfirliti. 20 mín eftir payday-pull svo pörunin
+# sé fersk. LES úr Payday, skrifar aðeins í okkar Storage/docs (afturkræft). job_name payday-reikningur-spegla.
+[functions."payday-reikningur-spegla-background"]
+  schedule = "20 7,15 * * *"
+
 # Redder-reikningar: línur + verkstaður úr PDF-unum í Drive (05.10.2026). Póstlesarinn skráir aðeins
 # hausinn og Drive-lesarinn var bara keyrður með takka — september sat línulaus á „(ótengt)". Þrisvar
 # á dag í nyir-ham: aðeins reikningar sem vantar eða eru póst-haus án lína; eldri reikningar ósnertir.

@@ -13920,10 +13920,13 @@ async function renderGerdReikninga(t){
             const d0 = docs[0]; if(!d0){ alert('Ekkert Efnislista-PDF vistað fyrir ' + sagaMan(m) + '.'); return; }
             window.open(d0.public_url || ('/api/skjal?id=' + encodeURIComponent(d0.drive_file_id)), '_blank', 'noopener');
           }catch(err){ alert('Náði ekki í skjalalistann: ' + (err.message||err)); } finally { b.disabled = false; } }));
-        host.querySelectorAll('[data-saga-inv]').forEach(b => b.addEventListener('click', async e => { e.stopPropagation(); const m = b.dataset.sagaInv; const d = DRAFTS[name + '|' + m]; if(!d) return;
-          try{ const r = await fetch('/api/efnislisti-docs?worksite=' + encodeURIComponent(name) + '&month=' + encodeURIComponent(m) + '&doc_type=invoice'); const j = r.ok ? await r.json() : { rows: [] }; const inv = (j.rows||[])[0];
-            if(inv && (inv.public_url || inv.drive_file_id)){ window.open(inv.public_url || ('/api/skjal?id=' + encodeURIComponent(inv.drive_file_id)), '_blank', 'noopener'); return; } }catch(_){}
-          if(typeof printSavedInvoice === 'function') printSavedInvoice(d); }));
+        host.querySelectorAll('[data-saga-inv]').forEach(b => b.addEventListener('click', async e => { e.stopPropagation(); const m = b.dataset.sagaInv; const d = DRAFTS[name + '|' + m];
+          // 25.11.2026: speglaði Payday-reikningurinn (doc_type='payday_reikningur') er raunverulegi reikningurinn —
+          // opnast hér fyrir eldri verk svo hann hverfi ekki; annars handvirkt tengdur 'invoice'; annars prentuð drög.
+          try{ const r = await fetch('/api/efnislisti-docs?worksite=' + encodeURIComponent(name) + '&month=' + encodeURIComponent(m)); const j = r.ok ? await r.json() : { rows: [] }; const rows = j.rows || [];
+            const inv = rows.find(x => x.doc_type==='payday_reikningur' && (x.public_url || x.drive_file_id)) || rows.find(x => x.doc_type==='invoice' && (x.public_url || x.drive_file_id));
+            if(inv){ window.open(inv.public_url || ('/api/skjal?id=' + encodeURIComponent(inv.drive_file_id)), '_blank', 'noopener'); return; } }catch(_){}
+          if(d && typeof printSavedInvoice === 'function') printSavedInvoice(d); }));
         host.querySelectorAll('.gb-saga-r.hasd').forEach(row => row.addEventListener('click', e => { if(e.target.closest('button')) return; const m = row.dataset.sagaM;
           const st = K('gr-hd-status'); if(st && st.classList.contains('unsaved') && !confirm('Drögin eru óvistuð og glugginn lokast. Opna ' + sagaMan(m) + ' samt?')) return;
           try{ close(); }catch(_){} grOpenWorksite(name, m); }));
@@ -20225,10 +20228,17 @@ async function renderKrofuyfirlit(t){
     // reikningar, svo R-364 (Tindasel) og R-386 (Rafís) stóðu án Efnislista þótt PDF-ið væri til.
     const _vd = (tier===1 && _sjK.length!==3) ? vinnuDrog(inv, 1) : null;
     const _sjLykill = _sjK.length===3 ? (_sjK[1]+'|'+_sjK[2]) : ((_vd && _vd.worksite_name && _vd.work_month) ? (_vd.worksite_name+'|'+_vd.work_month) : '');
-    const _sjDocs = (_sjLykill ? (EFDOCS[_sjLykill]||[]) : []).filter(d=>d.doc_type!=='innra' && d.doc_type!=='timabok_pdf' && bhDocUrl(d));
+    const _sjDocs = (_sjLykill ? (EFDOCS[_sjLykill]||[]) : []).filter(d=>d.doc_type!=='innra' && d.doc_type!=='timabok_pdf' && d.doc_type!=='payday_reikningur' && bhDocUrl(d));
     const _sjDoc = _sjDocs.find(d=>d.is_primary) || _sjDocs.find(d=>/pdf/.test(d.doc_type||'')) || _sjDocs[0] || null;
     const sendPdfLine = _sjDoc
       ? `<div class="ky-bank"><a data-ky-sendpdf href="${esc(bhDocUrl(_sjDoc))}" target="_blank" rel="noopener" onclick="event.stopPropagation()" title="${esc(_sjDoc.title||'Efnislisti')} — sundurliðunin sem fylgdi reikningnum" style="color:var(--blue-deep,#1d4f7a);font-weight:600;text-decoration:none">📄 Efnislisti · sundurliðun</a></div>`
+      : '';
+    // 25.11.2026 (Agnar: „downloada reikningum inn í kerfið til baka og festast á gamla efnislistann … sjálfkrafa við pörun"):
+    // speglaði Payday-reikningurinn (payday-reikningur-spegla-background → efnislisti_documents doc_type='payday_reikningur')
+    // birtist hér við hlið efnislistans svo parið haldist saman og hverfi ekki þegar röðin fer úr Ógreitt. Aðeins lestur.
+    const _reikDoc = (_sjLykill ? (EFDOCS[_sjLykill]||[]) : []).find(d=>d.doc_type==='payday_reikningur' && bhDocUrl(d));
+    const reikPdfLine = _reikDoc
+      ? `<div class="ky-bank"><a href="${esc(bhDocUrl(_reikDoc))}" target="_blank" rel="noopener" onclick="event.stopPropagation()" title="${esc(_reikDoc.title||'Payday reikningur')} — reikningurinn eins og Payday gaf hann út, vistaður í kerfinu" style="color:var(--green-deep,#2e6b43);font-weight:600;text-decoration:none">🧾 Payday reikningur</a></div>`
       : '';
     // Mánaðar-plata (skönnun eftir mánuði) — úr gjalddaga, annars vinnumánuði (þrep 3).
     // Samreikningur: platan sýnir ALLA mánuðina sem reikningurinn nær yfir.
@@ -20265,6 +20275,7 @@ async function renderKrofuyfirlit(t){
             ${bankLine}
             ${sameinadLine}
             ${sendPdfLine}
+            ${reikPdfLine}
             ${noteInline}
           </div>
           ${tier===2?'<span style="flex:1 1 0;min-width:0"></span>':''}
