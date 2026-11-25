@@ -18,6 +18,24 @@
 <link rel="stylesheet" href="/css/theme.css?v=4">
 <link rel="stylesheet" href="/css/fjarmalyfirlit.css?v=7">
   <script src="/js/dags-snid.js?v=20260918b"></script>
+<style>
+  /* Tekjur eftir ári — söguleg reikninguð tekjusamantekt, bæði félög */
+  .fy-ta{margin:22px 0 8px}
+  .fy-ta .ta-head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+  .fy-ta .ta-head h2{font-family:'Playfair Display',Georgia,serif;font-size:20px;margin:0;color:var(--boss-ink,#141210)}
+  .fy-ta .ta-sub{font-size:12px;color:var(--boss-muted,#6b6257)}
+  .ta-wrap{overflow-x:auto;border:1px solid var(--boss-line,#e7e0d4);border-radius:14px;background:var(--boss-panel,#fff)}
+  table.ta{width:100%;border-collapse:collapse;font-size:13px;min-width:460px}
+  table.ta th,table.ta td{padding:9px 12px;text-align:right;border-bottom:1px solid var(--boss-line,#eee5d6);font-variant-numeric:tabular-nums}
+  table.ta th{font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:var(--boss-muted,#8a7f70);font-weight:700;background:var(--boss-wash,#faf7f1)}
+  table.ta td.ar,table.ta th.ar{text-align:left;font-weight:700}
+  table.ta td .mv{display:block;font-size:10.5px;color:var(--boss-muted,#9a9185);font-weight:400;margin-top:1px}
+  table.ta td.tot{font-weight:800;color:var(--boss-gold-deep,#8a6a1f)}
+  table.ta tr.cur td{background:var(--boss-wash,#fbf6ec)}
+  table.ta tr.cur td.ar::after{content:' · í ár';font-weight:400;font-size:10px;color:var(--boss-muted,#9a9185)}
+  table.ta .flag{display:inline-block;font-size:9.5px;color:#9a6400;font-weight:700;margin-left:4px}
+  .fy-ta .ta-foot{font-size:11px;color:var(--boss-muted,#8a7f70);line-height:1.55;margin-top:8px}
+</style>
 </head>
 <body>
 <!-- Boss-þema (2026-09-03) — fyrirmynd: docs/design-boss/pages/fjarmala-yfirlit-boss.html -->
@@ -42,6 +60,7 @@
     <span data-sync-workflow="payday" data-sync-label="Payday"></span>
   </div>
   <div id="app"><div class="loading"><span class="boss-medallion ghost">🔥</span><span>Sæki tölur…</span></div></div>
+  <div id="tekjur-ar-wrap" class="fy-ta"></div>
 </div>
 
 <script>
@@ -248,8 +267,37 @@
     if(m.ogefid>0){ og.innerHTML=num(m.ogefid)+'<span class="kr">kr</span>'; ogs.textContent='unnið '+mkrF(m.unnid)+' − reikningsfært '+mkrF(m.reikningsfaert)+' · án VSK · áætlun'; }
     else { og.textContent='ekkert'; ogs.textContent='reikningsfært '+mkrF(m.reikningsfaert)+' er umfram unnið '+mkrF(m.unnid)+' · án VSK'; }
   }
-  document.getElementById('refresh').onclick=function(e){ e.preventDefault(); load(true); };
+  // ---- Tekjur eftir ári (söguleg reikninguð tekjusamantekt, bæði félög) úr /api/tekjur-ar ----
+  function taMkr(n){ if(n==null||!isFinite(n)) return '—'; var a=Math.abs(n); var s=(a>=1e6?(a/1e6).toFixed(1).replace('.',','):(Math.round(a/1e3))+' þ'); return (n<0?'−':'')+s+(a>=1e6?' m':''); }
+  function taCell(o, aaetlad){
+    if(!o) return '<td>—</td>';
+    var flag = aaetlad ? '<span class="flag" title="án VSK áætlað ÷1,24 (Stólpi geymir enga nettótölu)">≈</span>' : (o.ofullkomid ? '<span class="flag" title="stopul Payday-saga fyrir 2024">stopul</span>' : '');
+    return '<td title="'+num(o.an_vsk)+' kr án vsk · '+num(o.m_vsk)+' kr m.vsk">'+taMkr(o.an_vsk)+flag+'<span class="mv">'+taMkr(o.m_vsk)+' m.vsk</span></td>';
+  }
+  function tekjurArHlada(){
+    var wrap=document.getElementById('tekjur-ar-wrap'); if(!wrap) return;
+    wrap.innerHTML='<div class="ta-head"><h2>📅 Tekjur eftir ári</h2><span class="ta-sub">sæki…</span></div>';
+    fetch('/api/tekjur-ar',{cache:'no-store'}).then(function(r){ return r.json(); }).then(function(d){
+      if(!d||d.error){ wrap.innerHTML='<div class="warn">Tekjur eftir ári: '+esc((d&&d.error)||'villa')+'</div>'; return; }
+      var ys=(d.years||[]).filter(function(y){ return y.ar>=2022; });
+      var body=ys.map(function(y){
+        var cur = y.ar===d.current_year ? ' class="cur"' : '';
+        return '<tr'+cur+'><td class="ar">'+y.ar+'</td>'+
+          taCell(y.bru,false)+taCell(y.slokk, y.slokk.an_vsk_aaetlad)+
+          '<td class="tot" title="'+num(y.samtals.an_vsk)+' kr án vsk · '+num(y.samtals.m_vsk)+' kr m.vsk">'+taMkr(y.samtals.an_vsk)+'<span class="mv">'+taMkr(y.samtals.m_vsk)+' m.vsk</span></td></tr>';
+      }).join('');
+      wrap.innerHTML =
+        '<div class="ta-head"><h2>📅 Tekjur eftir ári</h2><span class="ta-sub">reikningað (án VSK) · Brunahólf + Slökkvitæki · '+stampTxt(Date.parse(d.generated_at)||Date.now(),'sótt')+'</span></div>'+
+        '<div class="ta-wrap"><table class="ta"><thead><tr><th class="ar">Ár</th><th>Brunahólf</th><th>Slökkvitæki</th><th>Samtals</th></tr></thead><tbody>'+body+'</tbody></table></div>'+
+        '<div class="ta-foot">Reikningaðar fjárhæðir (útgefnir reikningar/sölur), ekki ársreikningur. <b>Án VSK</b> er aðaltalan, <b>m.vsk</b> fyrir neðan. '+
+        'Brunahólf = Payday (raun-nettó). Slökkvitæki fyrir '+esc(d.switch_date)+' = Stólpi (<b>≈</b> án-vsk áætlað ÷1,24), eftir það = sölukerfið (raun-nettó). '+
+        d.current_year+' er líðandi ár (hálft). <b>stopul</b> = Payday-saga Brunahólfs nær illa fyrir 2024. Fyrir 2026 voru félögin aðskilin.'+
+        (d.warnings&&d.warnings.length?'<br>⚠ '+d.warnings.map(function(w){return esc(w);}).join('<br>'):'')+'</div>';
+    }).catch(function(e){ wrap.innerHTML='<div class="warn">Tekjur eftir ári — netvilla: '+esc(e.message)+'</div>'; });
+  }
+  document.getElementById('refresh').onclick=function(e){ e.preventDefault(); load(true); tekjurArHlada(); };
   load();
+  tekjurArHlada();
 </script>
 <script src="/js/hub-sync-buttons.js?v=20260919a" defer></script>
 </body>
