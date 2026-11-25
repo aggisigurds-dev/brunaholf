@@ -270,7 +270,7 @@
   // ---- Tekjur eftir ári (söguleg reikninguð tekjusamantekt, bæði félög) úr /api/tekjur-ar ----
   function taMkr(n){ if(n==null||!isFinite(n)) return '—'; var a=Math.abs(n); var s=(a>=1e6?(a/1e6).toFixed(1).replace('.',','):(Math.round(a/1e3))+' þ'); return (n<0?'−':'')+s+(a>=1e6?' m':''); }
   function taCell(o, aaetlad){
-    if(!o) return '<td>—</td>';
+    if(!o || !o.n) return '<td title="engin gögn þetta ár">—<span class="mv">engin gögn</span></td>';
     var flag = aaetlad ? '<span class="flag" title="án VSK áætlað ÷1,24 (Stólpi geymir enga nettótölu)">≈</span>' : (o.ofullkomid ? '<span class="flag" title="stopul Payday-saga fyrir 2024">stopul</span>' : '');
     return '<td title="'+num(o.an_vsk)+' kr án vsk · '+num(o.m_vsk)+' kr m.vsk">'+taMkr(o.an_vsk)+flag+'<span class="mv">'+taMkr(o.m_vsk)+' m.vsk</span></td>';
   }
