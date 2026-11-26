@@ -111,29 +111,25 @@ exports.handler = async (event) => {
     // milli greiðenda, engir staðir sameinaðir (kunnaskra-reglur). Bygging án bösu er
     // tengd við aðalbösu hópsins (eina leiðin til að hún eigi greiðanda).
     if (action === 'add-building') {
+      // ⛔ Agnar 26.11.2026: „Það má ekki breyta byggingarupplýsingunum inn í rekstrarfélög samt."
+      // Þessi aðgerð breytir ALDREI rekstrarfelag-merki bösu né customer_base_id byggingar
+      // (það væri að færa byggingu/greiðanda milli rekstrarfélaga). Hún setur AÐEINS þjónustu-
+      // merki (er_i_thjonustu / thjonusta_brunakerfi) á byggingu sem er ÞEGAR í hópnum.
       const fid = parseInt(body.fyrirtaeki_id, 10);
       const rekstrarfelag = (body.rekstrarfelag || '').trim();
-      const primaryBaseId = parseInt(body.primary_base_id, 10);
       if (!fid) return json(400, { error: 'fyrirtaeki_id vantar' });
-      if (!rekstrarfelag) return json(400, { error: 'rekstrarfelag (hópsheiti) vantar' });
       try {
         const frows = await sbGet(`fyrirtaeki?id=eq.${fid}&select=id,nafn,heimilisfang,customer_base_id,er_i_thjonustu,kennitala,netfang,simi,tengilidur,thjonusta_brunakerfi&limit=1`).then(r => r.json());
         if (!frows.length) return json(404, { error: `Engin fyrirtaeki.id=${fid}` });
         const f = frows[0];
-        // 1) tryggja að bygging eigi bösu í hópnum
-        if (f.customer_base_id) {
-          // setja rekstrarfelag-merkið á bösuna (afturkræft) ef það er ekki þegar rétt
-          const br = await sbGet(`customers_base?id=eq.${f.customer_base_id}&select=id,rekstrarfelag&limit=1`).then(r => r.json());
-          if (br.length && (br[0].rekstrarfelag || '').trim() !== rekstrarfelag) {
-            await sbPatch(`customers_base?id=eq.${f.customer_base_id}`, { rekstrarfelag });
-          }
-        } else if (primaryBaseId) {
-          await sbPatch(`fyrirtaeki?id=eq.${fid}`, { customer_base_id: primaryBaseId });
-          f.customer_base_id = primaryBaseId;
-        } else {
-          return json(400, { error: 'Byggingin á enga bösu og engin aðalbösa gefin' });
+        // Byggingin verður að vera ÞEGAR í hópnum (bösu hennar með sama rekstrarfelag-merki).
+        // Annars er hafnað — við breytum ENGU til að „þvinga" hana inn.
+        let iHopi = false;
+        if (f.customer_base_id && rekstrarfelag) {
+          const br = await sbGet(`customers_base?id=eq.${f.customer_base_id}&select=rekstrarfelag&limit=1`).then(r => r.json());
+          iHopi = br.length && (br[0].rekstrarfelag || '').trim() === rekstrarfelag;
         }
-        // 2) þjónusta
+        if (!iHopi) return json(409, { error: 'Byggingin tilheyrir ekki þessu rekstrarfélagi. Tenging byggingar við rekstrarfélag er gerð í kúnnaskránni, ekki héðan.' });
         const patch = { er_i_thjonustu: true };
         if (body.brunakerfi === true) patch.thjonusta_brunakerfi = true;
         const r = await sbPatch(`fyrirtaeki?id=eq.${fid}&select=id,nafn,heimilisfang,er_i_thjonustu,kennitala,netfang,simi,tengilidur,customer_base_id,thjonusta_brunakerfi`, patch);
