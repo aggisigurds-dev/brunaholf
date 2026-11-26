@@ -20214,6 +20214,8 @@ async function renderKrofuyfirlit(t){
         const vb = vidbotFyrir(inv.worksite, inv.work_month);
         if(vb) sub += ' · <b title="Tímar sem hafa bæst við í Tímaveru síðan drögin voru vistuð '+esc(fmtDate(vb.vistad_dags))+' — þeir eru EKKI í drögunum enn. Meðan mánuðurinn stendur fara þeir SJÁLFIR inn á 2 tíma fresti (drog-timar, 10 mín eftir Tímaveru-sókn); eldri mánuði: opnaðu Gerð Reikninga, 📥 sæktu tímana og vistaðu. Viltu handstýra tímunum: skrifaðu 🔒tímar í athugasemd dragsins.">＋ '+(Math.round((Number(vb.hours)||0)*10)/10).toLocaleString('is-IS')+' klst nýir síðan vistað '+esc(fmtDate(vb.vistad_dags))+' · ≈ '+fmtNum(vb.amount)+' kr</b>';
       }
+      // Heklureitur líðandi mánaðar: upphæðin er LIFANDI gata-uppgjör (uppfærist út mánuðinn), ekki frosna dragið.
+      if(inv._hekluLive) sub += ' · <b title="Upphæðin er núverandi verðmæti kláraðra gata þennan mánuð (gata-uppgjör), uppfærist sjálfkrafa þegar fleiri göt klárast — eins og Tímavera-áætlun Landspítalans. Drögin sjálf uppfærast við mánaðarlok.">⟳ lifandi gata-staða</b>';
     }
     // Líklega-greitt vísbending (banka-krossvísun): grænn blær + skýringarlína.
     const lp = tier===1 && inv.likely_paid && inv.bank;
@@ -20963,7 +20965,19 @@ async function renderKrofuyfirlit(t){
         if(ci.length) cur.push({...d, invoices:ci, outstanding_kr:ci.reduce((a,i)=>a+(i.amount||0),0)});
         if(pi.length) prior.push({...d, invoices:pi, outstanding_kr:pi.reduce((a,i)=>a+(i.amount||0),0)});
       } return {cur, prior}; };
-    const _l2s = splitMon(l2);
+    // Heklureitur líðandi mánaðar (Agnar 26.11.2026: „bara að þessi tala sé að uppfærast út mánuðinn ef eitthvað bætist við,
+    // eins og með landsspitalann"): gata-drögin bera FROSNA upphæð (vistað snapshot). Við yfirskrifum hana með LIFANDI
+    // gata-uppgjör-tölu líðandi mánaðar (state.hekluLive, sótt í load) svo talan vaxi út mánuðinn eins og Tímavera-áætlun ÞG.
+    const hekLive = (state.hekluLive && Number(state.hekluLive.m_vsk));
+    const l2live = (hekLive != null && !isNaN(hekLive)) ? l2.map(d=>{
+      let changed=false;
+      const invs=(d.invoices||[]).map(iv=>{
+        if(iv.source==='gerd-drög' && iv.work_month===CURMON && /heklu/i.test(String(iv.worksite||''))){ changed=true; return {...iv, amount:hekLive, _hekluLive:true}; }
+        return iv;
+      });
+      return changed ? {...d, invoices:invs, outstanding_kr:invs.reduce((a,i)=>a+(i.amount||0),0)} : d;
+    }) : l2;
+    const _l2s = splitMon(l2live);
     const l2sent = _l2s.prior;   // Ósent = fyrri mánuðir
     const l2aun  = _l2s.cur;     // ósend drög líðandi mánaðar → birtast í Áunnið
     renderCards(l1, l2sent, l2aun.concat(l3));
@@ -21571,8 +21585,23 @@ async function renderKrofuyfirlit(t){
   // Laugavegur · Heklu reitur" sem birtast nú (eins og öll önnur vinna) sem venjulegt spjald í Áunnið-þrepinu. Göt/invoiced-sagan
   // er áfram í /api/gata-uppgjor?aunnid=1 og í Efnislistanum sjálfum. Þetta leysti „annað format"-athugasemd Agnars.
 
+  // Lifandi gata-tala Heklureits fyrir líðandi mánuð (Agnar 26.11.2026): draga-talan er frosinn snapshot; sækjum núverandi
+  // gata-uppgjör svo talan í Áunnið uppfærist út mánuðinn eins og Tímavera-áætlun Landspítalans. Vistað á state.hekluLive;
+  // renderList yfirskrifar upphæð Heklureits-dragsins með henni.
+  async function saekjaHekluLive(force){
+    if(state.hekluLive !== undefined && !force) return;
+    const CM = new Date().toISOString().slice(0,7);
+    try{
+      const j = await fetch('/api/gata-uppgjor?worksite=Heklureitur&month='+CM, { cache:'no-store' }).then(r=>r.ok?r.json():null);
+      const t = j && j.totals;
+      state.hekluLive = t ? { m_vsk: Number(t.total_m_vsk)||0, got: (j.holes||[]).reduce((a,h)=>a+(Number(h.stakar)||0),0) } : null;
+    }catch(_){ if(state.hekluLive===undefined) state.hekluLive = null; return; }
+    if(state.data) renderList();   // teikna aftur með lifandi tölunni þegar hún berst
+  }
+
   async function load(force){
     saekjaGreidslur(!!force);
+    saekjaHekluLive(!!force);
     const meta = $view.querySelector('#kyf-meta');
     const cache = (!force && window.__KYF_CACHE) || null;
     if(cache && cache.data){
