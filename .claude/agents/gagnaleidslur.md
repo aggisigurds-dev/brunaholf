@@ -158,6 +158,15 @@ for several Supabase tables this app reads:
   Columns matched fuzzily by header substring (`dagsetning`/`date`,
   `inn`, `út`/`ut`/`out`, `tímar`/`hours`, `starfsma…`/`employee`,
   `verkefn…`/`project`).
+- **⚠️ Dálkur sem vantar í útflutninginn (26.11.2026):** í Ajour velur notandinn dálkana sem fara út. „AjourRegistrationData
+  (31).csv“ og „(32)“ og XML-ið „(4)“ báru EKKI `ExecutionDateFrom`/`ExecutionDateTo` (maí-útflutningurinn bar þá). Hub-innlesturinn
+  sendi þá `execution_date: null` og merge-duplicates skrifaði NULL yfir 27.321 röð → Heklureitur (gata-uppgjor, `_rekstur`,
+  Unnið) sýndi 0 göt í öllum mánuðum. **Lagað:** `ajour-ingest-drive-background.js` sendir ekki reit sem á engan dálk í hausnum
+  (`REITIR_UR_DALKUM`, `status.vantar_dalka`; próf `test/ajour-ingest-vantar-dalk.test.js`). **Endurheimt:** `execution_date =
+  registration_created_date` fyrir 16.013 raðir utan NLSH, afrit `ajour_registrations_afrit_exec_20261126` (RLS á, afturköllun
+  í comment). Forsendan mæld: `ExecutionDateFrom` = stofndagur í 766/766 (maí, NLSH) og 6/6 (raðir sem héldu gildi); okt.-reikningur
+  Heklureits (#343) 535 Done = 535 eftir endurheimt. NLSH var ekki snert (uppgjörið les `checked_date` fyrst).
+  `luna-bridge/ajour-ingest.py` á skrifstofuvélinni hefur sömu veikleika — óbreytt þar (ekki í þessu repói).
 - **`ajour-ingest.py`** — reads the latest `AjourRegistrationData*.csv`
   from Downloads, upserts to `ajour_registrations`. CSV is
   semicolon-delimited UTF-8-with-BOM. Dedupe key:

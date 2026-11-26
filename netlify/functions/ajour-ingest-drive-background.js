@@ -30,6 +30,17 @@ const BATCH = 500;
 const DATE_COLS = ['ExecutionDateFrom', 'RegistrationCreatedDate', 'CheckListItemCheckedDate'];
 // sjálfgefið ef dálkur sker ekki úr (allir dagar ≤ 12): það sem sést hefur í öllum skrám hingað til
 const DAY_FIRST_SJALFGEFID = { ExecutionDateFrom: true, RegistrationCreatedDate: true, CheckListItemCheckedDate: false };
+// Reitur í ajour_registrations → dálkur í útflutningnum. Í Ajour velur notandinn dálkana sem fara út, svo dálkur getur vantað.
+// Vanti hann er reiturinn EKKI sendur: upsert með merge-duplicates skrifar þá ekki NULL yfir gildið sem er í töflunni.
+// Tilefni 26.11.2026: „AjourRegistrationData (31).csv" bar ekki ExecutionDateFrom, og innlesturinn skrifaði NULL yfir
+// execution_date í 27.321 röð. Heklureitur (gata-uppgjor, _rekstur) telur eftir þeim dálki og sýndi 0 göt í öllum mánuðum.
+// Endurheimt með afriti í ajour_registrations_afrit_exec_20261126 (ExecutionDateFrom = stofndagur, mælt 772/772).
+const REITIR_UR_DALKUM = {
+  registration_type: 'RegistrationType', registration_status: 'RegistrationStatus', category_group: 'CategoryGroup',
+  category: 'Category', category1: 'Category1', checklist_item: 'CheckListItem', checked_date: 'CheckListItemCheckedDate',
+  checked_by_user: 'CheckListItemCheckedByUser', execution_date: 'ExecutionDateFrom', receiver_company: 'ReceiverCompany',
+  longitude: 'Longitude', latitude: 'Latitude', registration_created_date: 'RegistrationCreatedDate',
+};
 
 exports.handler = async (event) => {
   const p = event.queryStringParameters || {};
@@ -142,6 +153,12 @@ exports.handler = async (event) => {
       });
     });
     const allar = [...regs.values()];
+    // Dálkar sem útflutningurinn ber ekki: reiturinn fer ekki með, svo gildið í töflunni stendur (sjá REITIR_UR_DALKUM).
+    const sleppa = Object.keys(REITIR_UR_DALKUM).filter((reitur) => idx[REITIR_UR_DALKUM[reitur]] == null);
+    if (!status.drawing_header) sleppa.push('drawing_name');
+    if (!status.subject_header) sleppa.push('subject');
+    status.vantar_dalka = sleppa;
+    if (sleppa.length) for (const r of allar) for (const k of sleppa) delete r[k];
     for (let i = 0; i < allar.length; i += BATCH) {
       const rows = allar.slice(i, i + BATCH);
       await upsert(rows);
