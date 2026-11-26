@@ -221,7 +221,7 @@ exports.handler = async (event) => {
 
     // 1b) Rekstrarfélags-HÓPUR (26.11.2026, redesign): prófíllinn sýnir ALLAN hópinn,
     // ekki eina bösu. `rekstrarfelag` (frítexti) hópar margar customers_base-raðir
-    // (Bílabúð Benna = 868 + Nesdekk 55 + Vagneignir 1260 = 5 byggingar). AÐEINS LESIÐ
+    // (eitt rekstrarfélag getur borið margar bösur/kt með mörgum byggingum). AÐEINS LESIÐ
     // og aggregerað — ekkert er sameinað, ekki breytt kt, ekki null-að fyrirtaeki_id.
     // Tóm rekstrarfelag → hópurinn er bara þessi eina bösa (bakveg-samhæfni).
     const rekstrarfelag = (base.rekstrarfelag || '').trim();
