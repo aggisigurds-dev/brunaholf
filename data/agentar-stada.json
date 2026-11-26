@@ -1,6 +1,6 @@
 {
  "utgafa": 1,
- "nyjast": "2026-11-24",
+ "nyjast": "2026-11-25",
  "throskuldur": 6,
  "osnert_dagar": 30,
  "uppspretta": "slokkvitaeki/tools/audit-agentar.cjs --json",
@@ -72,9 +72,9 @@
    "slod": ".claude/agents/bord-flettur.md",
    "hud": null,
    "emoji": null,
-   "sidast": "2026-11-24",
-   "skrif": 75,
-   "gaetir": 50,
+   "sidast": "2026-11-25",
+   "skrif": 76,
+   "gaetir": 55,
    "breytt": 4,
    "daudir": [],
    "merki": "🟡",
@@ -210,9 +210,9 @@
    "sidast": "2026-11-24",
    "skrif": 26,
    "gaetir": 22,
-   "breytt": 0,
+   "breytt": 4,
    "daudir": [],
-   "merki": "🟢",
+   "merki": "🟡",
    "lysing": "Hönnuðurinn — lagar útlit, farsímaskjái (mobile view) og hannar skjái/app-view í Slökkvitæki-appinu. Notaðu þegar síða eða flipi lítur illa út, brotnar eða er þ"
   },
   {
@@ -240,9 +240,9 @@
    "sidast": "2026-11-24",
    "skrif": 9,
    "gaetir": 24,
-   "breytt": 0,
+   "breytt": 1,
    "daudir": [],
-   "merki": "🟢",
+   "merki": "🟡",
    "lysing": "Kóðafræðingurinn (Lisbeth Salander) — gætir þess að RÉTTA aðferðin sé notuð í kóðavinnu í Slökkvitæki-appinu: patch-mynstrið (IIFE, wrap, ?v= cache-bump), engin"
   },
   {
@@ -327,12 +327,12 @@
    "slod": ".claude/agents/odin.md",
    "hud": "Óðinn",
    "emoji": "👁️",
-   "sidast": "2026-11-23",
-   "skrif": 7,
+   "sidast": "2026-11-25",
+   "skrif": 9,
    "gaetir": 3,
-   "breytt": 1,
+   "breytt": 0,
    "daudir": [],
-   "merki": "🟡",
+   "merki": "🟢",
    "lysing": "Óðinn 👁️ — UMSJÓNARMAÐUR SAMÞYKKTA OG VERKEFNALISTANS, ráðinn af Agnari 16.11.2026. Stendur á milli lota, varða og Agnars — tekur við öllu sem vill verða samþy"
   },
   {
@@ -342,12 +342,12 @@
    "slod": ".claude/agents/opp.md",
    "hud": "Ant-Man",
    "emoji": "🐜",
-   "sidast": "2026-11-17",
-   "skrif": 6,
+   "sidast": "2026-11-25",
+   "skrif": 7,
    "gaetir": 5,
-   "breytt": 2,
+   "breytt": 0,
    "daudir": [],
-   "merki": "🟡",
+   "merki": "🟢",
    "lysing": "Öpp-sérfræðingurinn (Ant-Man) — á app-skelina „firestarter\" (261 PAGES/APPS, 316, 354), app-síðurnar br-* (iframe á brunaholf), síðuskipti í öppunum, zoom og sk"
   },
   {
@@ -420,7 +420,7 @@
    "sidast": "2026-11-23",
    "skrif": 57,
    "gaetir": 40,
-   "breytt": 3,
+   "breytt": 4,
    "daudir": [],
    "merki": "🟡",
    "lysing": "EINI agentinn sem býr til, leiðréttir, kreditfærir og færir reikninga í Slökkvitæki-appinu — eftir verkferlinu efst í skránni (greiðandi fyrst, lokaathugun síða"
@@ -510,7 +510,7 @@
    "sidast": "2026-11-18",
    "skrif": 7,
    "gaetir": 13,
-   "breytt": 1,
+   "breytt": 2,
    "daudir": [],
    "merki": "🟡",
    "lysing": "Heimdall (Idris Elba) 🌈 gætir hliðsins að kúnnanum: Þjónustugáttin (/gatt, gatt-admin, Tilkynna-QR), opna ársskoðunarformið skoda.html, rýmingaráætlun, vefvers"
@@ -540,7 +540,7 @@
    "sidast": "2026-11-16",
    "skrif": 3,
    "gaetir": 5,
-   "breytt": 4,
+   "breytt": 5,
    "daudir": [],
    "merki": "🟡",
    "lysing": "Útlitsgagnrýnandinn (Miranda Priestly) — fer YFIR útlit og hafnar því sem stenst ekki: síma-layout passar alltaf (S26 980 px + venjulegur sími), ekkert klúður í"
@@ -989,8 +989,8 @@
    "slod": ".claude/agents/bokari.md",
    "hud": "Samantha",
    "emoji": "💰",
-   "sidast": "2026-11-20",
-   "skrif": 25,
+   "sidast": "2026-11-25",
+   "skrif": 26,
    "gaetir": 9,
    "breytt": 0,
    "daudir": [],
@@ -1054,7 +1054,7 @@
    "sidast": "2026-11-16",
    "skrif": 27,
    "gaetir": 15,
-   "breytt": 8,
+   "breytt": 9,
    "daudir": [],
    "merki": "🔴",
    "lysing": "Framendi og flipar Brunahólfs-hubbsins — hvaða síður eru til, hvað hver gerir, hvernig þær tengjast og hvar í index.html (2 MB, aldrei lesin í heilu) eitthvað b"
@@ -1069,9 +1069,9 @@
    "sidast": "2026-11-20",
    "skrif": 44,
    "gaetir": 13,
-   "breytt": 0,
+   "breytt": 1,
    "daudir": [],
-   "merki": "🟢",
+   "merki": "🟡",
    "lysing": "Gagnaleiðslurnar — Tímavera, Ajour, Payday, Redder, email-innsog, luna-bridge róbótarnir og sjálfvirkni-skráin. Notaðu þegar gögn vantar, innsog brotnar eða spu"
   },
   {
@@ -1193,7 +1193,7 @@
    "sidast": "2026-11-23",
    "skrif": 25,
    "gaetir": 10,
-   "breytt": 0,
+   "breytt": 2,
    "daudir": [
     "js/postmoppur.js"
    ],
@@ -1282,12 +1282,12 @@
    "slod": ".claude/agents/rukkari.md",
    "hud": "Jóakim aðalönd",
    "emoji": "🦆",
-   "sidast": "2026-11-18",
-   "skrif": 29,
+   "sidast": "2026-11-25",
+   "skrif": 30,
    "gaetir": 12,
-   "breytt": 1,
+   "breytt": 0,
    "daudir": [],
-   "merki": "🟡",
+   "merki": "🟢",
    "lysing": "Rukkarinn — einn agent fyrir öll rukkunarmál beggja félaga (Brunahólf + Slökkvitæki): les REIKNINGALOTA-kynninguna, tengingar, Drög-stöð og Þjónustuborð sjálfur"
   },
   {
