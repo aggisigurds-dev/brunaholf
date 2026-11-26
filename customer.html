@@ -214,6 +214,42 @@
   .mk-bpill.none{background:#f0f1f4;color:#7a828f}
   .mk-bmore{font-size:12px;font-weight:600;padding:2px}
   .mk-bmore button{background:none;border:none;color:var(--red);cursor:pointer;font:inherit}
+  /* v8 (26.11): stat-strip, þétt spjöld, ENGAR tómar raðir, þráður inline */
+  .mk-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+  .mk-st{background:var(--surface);border:1px solid var(--line2);border-radius:10px;padding:9px 6px;text-align:center;min-width:0}
+  .mk-st .n{font-family:var(--mkdisp);font-weight:800;font-size:21px;color:var(--ink-900);line-height:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .mk-st .n.mono{font-family:var(--mkmono);font-weight:700;font-size:18px}
+  .mk-st .n.amber{color:var(--amber)}
+  .mk-st .l{font-size:10px;color:var(--ink-500);margin-top:4px;font-weight:600;font-family:var(--mkmono);text-transform:uppercase;letter-spacing:.03em}
+  .mk-grid2{display:grid;grid-template-columns:1fr 1fr;gap:11px;align-items:start}
+  .mk-card{background:var(--surface);border:1px solid var(--line2);border-radius:11px;box-shadow:0 1px 2px rgba(20,30,50,.05);overflow:hidden}
+  .mk-chead{display:flex;align-items:center;gap:7px;padding:8px 13px;border-bottom:1px solid var(--line)}
+  .mk-clabel{font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-500);font-weight:700;font-family:var(--mkmono);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .mk-cbadge{margin-left:auto;font-size:10.5px;font-weight:700;color:#5a3c00;background:#ffe3a6;border-radius:999px;padding:2px 9px;flex:none}
+  .mk-cbadge.ok{color:#14532d;background:#cdeedb}
+  .mk-tfoot{padding:7px 13px;border-top:1px solid var(--line);font-size:11.5px;color:var(--ink-500);font-family:var(--mkmono)}
+  .mk-cc{padding:10px 13px;display:flex;flex-direction:column;gap:6px}
+  .mk-crow{display:flex;align-items:baseline;gap:9px;font-size:13.5px;min-height:20px}
+  .mk-crow .k{color:var(--ink-500);min-width:66px;flex:none;font-size:12px}
+  .mk-crow .v{color:var(--ink-900);font-weight:600;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .mk-crow .v.mono{font-family:var(--mkmono);font-weight:500}
+  .mk-crow .v.red{color:var(--red)}
+  .mk-cplus{margin-left:auto;height:22px;padding:0 9px;border-radius:6px;background:var(--stub);border:1px solid var(--line2);color:var(--ink-600);font-size:11.5px;font-weight:700;font-family:var(--mkmono);cursor:pointer;flex:none}
+  .mk-cplus:hover{background:#eceff4}
+  .mk-missing{display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--ink-500);padding-top:6px;border-top:1px dashed var(--line2);margin-top:2px}
+  .mk-addmini{margin-left:auto;height:24px;padding:0 10px;border-radius:6px;background:#fff;border:1px dashed var(--line2);color:var(--green);font-size:12px;font-weight:700;font-family:var(--mksans);cursor:pointer}
+  .mk-threadc{display:flex;gap:9px;padding:10px 13px}
+  .mk-brow2{display:grid;grid-template-columns:30px minmax(0,1fr) auto;gap:10px;align-items:center;padding:8px 13px;border-top:1px solid var(--line)}
+  .mk-brow2:first-child{border-top:none}
+  .mk-bn{font-weight:700;font-size:13px;color:var(--ink-900);line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .mk-ba{font-size:11.5px;color:var(--ink-500);font-family:var(--mkmono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .mk-note1{width:100%;height:38px;box-sizing:border-box;border-radius:9px;background:var(--surface);border:1px solid var(--line2);color:var(--ink-900);padding:0 13px;font-family:var(--mksans);font-size:13.5px}
+  .mk-note1::placeholder{color:#97a0ae}
+  .mk-note1:focus{outline:none;border-color:#e7b7b7;box-shadow:0 0 0 3px rgba(201,42,42,.08);height:70px}
+  .mk-gobtn{width:100%;min-height:46px;border-radius:11px;font-family:var(--mksans);font-weight:700;font-size:15px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;color:#fff;border:1px solid var(--green-d);background:linear-gradient(180deg,#1f8043,var(--green-d));box-shadow:inset 0 1px 0 rgba(255,255,255,.18)}
+  .mk-gobtn svg{width:17px;height:17px}
+  @media(max-width:720px){ .mk-grid2{grid-template-columns:1fr} .mk-st .n{font-size:18px} .mk-st .n.mono{font-size:16px} }
+  @media(max-width:420px){ .mk-stats{grid-template-columns:repeat(2,1fr)} }
   .mk-utvikkad{margin-top:6px}
   .mk-utvikkad>summary{cursor:pointer;font-size:13px;font-weight:600;color:#334155;padding:8px 2px}
   /* Modal — Bæta við byggingu. Vars endurteknar hér því gluggi er festur á <body>, utan .mk-wrap. */
