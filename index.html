@@ -18929,8 +18929,8 @@ async function renderTvMaeting(t){
    ═══════════════════════════════════════════════════════════════════════ */
 window.CG_REGISTRY = [
   {id:'CG-01', label:'Ógreitt',           tab:'krofuyfirlit', formula:'Σ ógreiddar kröfur (þrep 1) úr /api/debtors'},
-  {id:'CG-02', label:'Ósent',             tab:'krofuyfirlit', formula:'Σ ósend drög (þrep 2) úr /api/krofu-yfirlit-bru — raðir sem eru ekki faldar. Fjármála-yfirlit les SÖMU tölu þaðan.'},
-  {id:'CG-03', label:'Tími eftir',        tab:'krofuyfirlit', formula:'Óinnheimtir Tímavera-tímar × dagvinnutaxti m.vsk (áætlaðar tekjur)'},
+  {id:'CG-02', label:'Ósent',             tab:'krofuyfirlit', formula:'Σ ósend drög (þrep 2) fyrir utan líðandi mánuð, úr /api/krofu-yfirlit-bru — raðir sem eru ekki faldar. Fjármála-yfirlit les SÖMU tölu þaðan.'},
+  {id:'CG-03', label:'Áunnið í mán.',     tab:'krofuyfirlit', formula:'Vinna líðandi mánaðar, óinnheimt: Tímavera-tímar × dagvinnutaxti m.vsk + ósend drög mánaðarins (áætlaðar tekjur)'},
   {id:'CG-04', label:'Samtals í pípunni', tab:'krofuyfirlit', formula:'CG-01 + CG-02 + CG-03'},
 ];
 window.CG_VALUES = (function(){ try{ return JSON.parse(localStorage.getItem('cg_values')||'{}'); }catch(_){ return {}; } })();
@@ -19166,8 +19166,8 @@ async function renderSkyrslur(t){
   if(!Array.isArray(reports)) reports = [
     {name:'Óinnheimt virði — klárað en ógreitt', ids:['CG-01','CG-02','CG-03'], note:'Heildar-verðmæti sem er unnið/klárað en peningurinn ekki kominn í hús (óinnheimtar tekjur)'},
     {name:'Ógreitt — sent, bíður greiðslu', ids:['CG-01'], note:'Kröfur sendar en enn ógreiddar'},
-    {name:'Ósent — bíður sendingar', ids:['CG-02'], note:'Drög sem á eftir að senda sem kröfu'},
-    {name:'Óinnvoiceað — klárað, ekki rukkað', ids:['CG-03'], note:'Vinna búin en enginn reikningur/krafa gerð enn (Tímavera-áætlun)'},
+    {name:'Ósent — bíður sendingar', ids:['CG-02'], note:'Drög sem á eftir að senda sem kröfu (fyrir utan líðandi mánuð)'},
+    {name:'Áunnið í mánuðinum — klárað, ekki sent', ids:['CG-03'], note:'Vinna líðandi mánaðar sem er unnin en enn ekki send í bókun / komin í Payday (Tímavera-áætlun + ósend drög mánaðarins)'},
   ];
   window.__cgReports = reports;
   window.__cgSaveReports = ()=>{ try{ localStorage.setItem('cg_reports', JSON.stringify(reports)); }catch(_){} try{ fetch('/api/app-state',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({ key:'cg_reports', value: reports })}).then(r=>{ if(!r.ok) throw new Error('HTTP '+r.status); cgVistunVilla(null); }).catch(cgVistunVilla); }catch(e){ cgVistunVilla(e); } };
@@ -19418,7 +19418,7 @@ async function renderKrofuyfirlit(t){
     osent:   ['Ósent',            'Drög tilbúin, ekki send'],
     bokun:   ['Sent í bókun',     'Skjölin farin á bókarann. Telur með ógreiddu þar til krafan í Payday parast við drögin'],
     send:    ['Krafa send',       'Krafan merkt send — kemur í Ógreitt þegar Payday skilar henni'],
-    timi:    ['Tími eftir',       'Tímar skráðir í Tímaveru, engin drög enn']
+    timi:    ['Áunnið',           'Tímar skráðir í Tímaveru þennan mánuð, engin drög enn']
   };
   function kyStada(inv, tier){
     if(tier===1) return inv.bidur_porun ? 'bokun' : inv.likely_paid ? 'liklega' : (inv.days_overdue!=null && inv.days_overdue>0) ? 'ogreitt' : 'payday';
@@ -19647,8 +19647,8 @@ async function renderKrofuyfirlit(t){
         <div class="kyf-help-body">
           <div style="font-weight:700;color:var(--ink);margin-bottom:4px">Þrepin þrjú</div>
           <div><b>🔴 Ógreiddar</b> — reikningar sem eru <b>sendir</b> en enn óborgaðir (Payday SENT + Landsbanki + handvirkir).</div>
-          <div><b>🟡 Ósendar</b> — <b>drög</b> sem á eftir að senda (enginn gjalddagi enn).</div>
-          <div><b>⚪ Tími eftir</b> — vinna sem er unnin en <b>óinnvoiceað</b> (Tímavera-tímar × dagvinnutaxti m.vsk = áætlaðar tekjur í pípunni).</div>
+          <div><b>🟡 Ósendar</b> — <b>drög</b> sem á eftir að senda, <b>fyrir utan líðandi mánuð</b> (enginn gjalddagi enn).</div>
+          <div><b>⚪ Áunnið í mánuðinum</b> — vinna <b>líðandi mánaðar</b> sem er unnin en enn ekki send í bókun / komin í Payday (Tímavera-tímar × dagvinnutaxti m.vsk <b>+ ósend drög mánaðarins</b> = áætlaðar tekjur í pípunni).</div>
           <div style="font-weight:700;color:var(--ink);margin:10px 0 4px">Aldurs-litir (gjalddagi)</div>
           <div><span class="boss-badge greitt">grænt ≤30D</span> &nbsp;<span class="boss-badge osent">gull 31–60D</span> &nbsp;<span class="boss-badge ogreitt">terra &gt;60D</span> — hve langt síðan gjalddagi rann út.</div>
           <div style="font-weight:700;color:var(--ink);margin:10px 0 4px">🏦 Líklega þegar greitt</div>
@@ -19663,7 +19663,6 @@ async function renderKrofuyfirlit(t){
       </aside>
       </div>
 
-      <div class="kyf-heklu-stada"></div>
       <div class="kyf-warn"></div>
       <div class="kyf-lp-banner"></div>
       <div class="kyf-lokal-banner"></div>
@@ -19888,8 +19887,8 @@ async function renderKrofuyfirlit(t){
     $view.querySelector('.kyf-cards').innerHTML =
       kpi('Ógreitt', tot1, n1+' '+(n1===1?'krafa':'kröfur')+' · '+l1.length+' aðilar', 'var(--red)', 'CG-01') +
       kpi('Ósent', tot2, n2+' drög · '+l2.length+' aðilar', '', 'CG-02') +
-      kpi('Tími eftir', tot3, t3sub, '', 'CG-03') +
-      kpi('Samtals í pípunni', tot1+tot2+tot3, 'ógreitt + ósent + áætlaðar tekjur', '', 'CG-04', true);
+      kpi('Áunnið í mán.', tot3, t3sub, '', 'CG-03') +
+      kpi('Samtals í pípunni', tot1+tot2+tot3, 'ógreitt + ósent + áunnið', '', 'CG-04', true);
     // 29.10.2026 (664205fc): CG-01…04 fara líka í sameiginlega safnið (cg_entries) svo Skýrslur sjái þau á hverri tölvu.
     // Aðeins eftir FULLA hleðslu (t3ok = þrep 3 reiknað í þessari opnun) og þegar ekkert mistókst — annars færi hálf tala
     // í safnið (t.d. „Tími eftir" = 0 við fyrstu málun, eða tóm þrep 3 þegar verðskrá náðist ekki).
@@ -20335,23 +20334,25 @@ async function renderKrofuyfirlit(t){
 
   // Per-fyrirtæki: eitt spjald per greiðanda með öll þrjú þrepin saman
   // (🔴 ógreitt · 🟡 ósent · ⚪ tími eftir). Sameinar l1/l2/l3 eftir kt (annars nafni).
-  function renderCompanyView(l1,l2,l3){
+  function renderCompanyView(l1,l2,l2cur,l3){
     const normName = s => String(s||'').trim().toLowerCase().replace(/\s+/g,' ');
     // name → kt úr ÖLLUM þrepum sem HAFA kt, svo kt-lausar raðir (t.d.
-    // NLSH-punktavirði skráð sem „ÞG verktakar ehf." án kt í ⚪ Tími-þrepinu)
+    // NLSH-punktavirði skráð sem „ÞG verktakar ehf." án kt í ⚪ Áunnið-þrepinu)
     // sameinist rétta fyrirtæki í stað þess að lenda á sér-spjaldi.
+    // 26.11.2026: l2cur = ósend drög líðandi mánaðar (bucket '2c') teljast með Áunnið en rendera sem þrep 2 (sameina-hakið).
     const nameToKt = new Map();
-    for(const arr of [l1,l2,l3]) for(const d of (arr||[])){ const kt=ktDigits(d.kt); const nn=normName(d.customer); if(kt && nn && !nameToKt.has(nn)) nameToKt.set(nn, kt); }
+    for(const arr of [l1,l2,l2cur,l3]) for(const d of (arr||[])){ const kt=ktDigits(d.kt); const nn=normName(d.customer); if(kt && nn && !nameToKt.has(nn)) nameToKt.set(nn, kt); }
     const keyf = d => { const kt=ktDigits(d.kt); if(kt) return kt; const nn=normName(d.customer); return nameToKt.get(nn) || nn; };
     const map = new Map();
     const add = (arr,tier)=>{ for(const d of (arr||[])){ const k=keyf(d); let g=map.get(k);
       if(!g) map.set(k, g={ kt:d.kt||'', customer:d.customer, t:{} });
       if(!g.kt && d.kt) g.kt=d.kt; if(!g.customer && d.customer) g.customer=d.customer;
       g.t[tier]=d; } };
-    add(l1,1); add(l2,2); add(l3,3);
+    add(l1,1); add(l2,2); add(l2cur,'2c'); add(l3,3);
     let companies = [...map.values()].map(g=>{
-      const s1=g.t[1]?g.t[1].outstanding_kr:0, s2=g.t[2]?g.t[2].outstanding_kr:0, s3=g.t[3]?g.t[3].outstanding_kr:0;
-      return {...g, s1,s2,s3, total:s1+s2+s3};
+      const s1=g.t[1]?g.t[1].outstanding_kr:0, s2=g.t[2]?g.t[2].outstanding_kr:0,
+            s2c=g.t['2c']?g.t['2c'].outstanding_kr:0, s3=g.t[3]?g.t[3].outstanding_kr:0;
+      return {...g, s1,s2,s2c,s3, sAun:s2c+s3, total:s1+s2+s2c+s3};
     });
     const q=(state.search||'').trim().toLowerCase(), qd=q.replace(/\D/g,'');
     if(q) companies = companies.filter(c=> String(c.customer||'').toLowerCase().indexOf(q)!==-1 || (qd.length>=3 && ktDigits(c.kt).indexOf(qd)!==-1));
@@ -20375,7 +20376,7 @@ async function renderKrofuyfirlit(t){
      * hann bindur á öllum `listEl` og hausinn er þar inni. */
     const selBtn = `<button class="kyf-t2-sel-toggle boss-btn ${t2SelectMode?'obsidian':'ivory'} sm" type="button" title="Haka í þau drög sem eiga að sameinast">${t2SelectMode?'✗ Hætta':'☑ Velja'}</button>`;
     const head = `<div class="ky-sec"><h2>Per fyrirtæki</h2><span class="ky-sec-n">${companies.length} fyrirtæki</span>${selBtn}<span class="ky-sec-total ky-num">${fmtNum(total)} <span class="boss-kr">kr</span></span></div>`+
-      `<div class="ky-sec-sub">Ógreitt + ósent + tímauppsöfnun saman á hvert fyrirtæki.</div>`;
+      `<div class="ky-sec-sub">Ógreitt + ósent + áunnið í mánuðinum saman á hvert fyrirtæki.</div>`;
     if(!companies.length) return head + emptyBox(state.search?'Ekkert passar við leit':'Engin fyrirtæki');
     const badge=(cls,label,val)=> `<span class="boss-badge ${cls} ky-num">${label} ${fmtNum(val)} kr</span>`;
     // 05.10.2026: Tími eftir-blokk sem á aðeins línur sem eru sameinaðar drögunum (vidbot) birtist ekki tóm
@@ -20391,17 +20392,18 @@ async function renderKrofuyfirlit(t){
       <div class="ky-card">
         <div class="ky-card-head" role="button" tabindex="0" title="Smelltu til að opna/loka">
           <span class="ky-caret">▾</span>
-          ${bannerMynd([...((c.t[1]||{}).invoices||[]), ...((c.t[2]||{}).invoices||[]), ...((c.t[3]||{}).invoices||[])])}
+          ${bannerMynd([...((c.t[1]||{}).invoices||[]), ...((c.t[2]||{}).invoices||[]), ...((c.t['2c']||{}).invoices||[]), ...((c.t[3]||{}).invoices||[])])}
           <div style="display:flex;flex-direction:column;gap:6px;min-width:0">
-            <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap">${nafnTengill(c.customer, c.kt, wsDisp(c.customer)||'(óþekkt)')}${c.kt?`<span class="ky-kt">kt ${esc(ktFmt(c.kt))}</span>`:''}${greidHaus([...((c.t[2]||{}).invoices||[]), ...((c.t[3]||{}).invoices||[])], c.customer, c.kt)}</div>
-            <div class="ky-tags" style="margin-top:0">${c.s1?badge('ogreitt','Ógreitt',c.s1):''}${c.s2?badge('osent','Ósent',c.s2):''}${c.s3?badge('','Tími',c.s3):''}${sameinaBtn((c.t[2]||{}).invoices||[], (c.t[3]||{}).invoices||[])}</div>
+            <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap">${nafnTengill(c.customer, c.kt, wsDisp(c.customer)||'(óþekkt)')}${c.kt?`<span class="ky-kt">kt ${esc(ktFmt(c.kt))}</span>`:''}${greidHaus([...((c.t[2]||{}).invoices||[]), ...((c.t['2c']||{}).invoices||[]), ...((c.t[3]||{}).invoices||[])], c.customer, c.kt)}</div>
+            <div class="ky-tags" style="margin-top:0">${c.s1?badge('ogreitt','Ógreitt',c.s1):''}${c.s2?badge('osent','Ósent',c.s2):''}${c.sAun?badge('','Áunnið',c.sAun):''}${sameinaBtn([...((c.t[2]||{}).invoices||[]), ...((c.t['2c']||{}).invoices||[])], (c.t[3]||{}).invoices||[])}</div>
           </div>
           <div class="ky-total"><div class="l">Samtals</div><div class="v ky-num">${fmtNum(c.total)} <span class="boss-kr">kr</span></div></div>
         </div>
         <div class="ky-card-rows" style="display:block">
           ${tierBlock(c.t[1],1,'Ógreitt','#b5522a')}
           ${tierBlock(c.t[2],2,'Ósendar','#c9a54a')}
-          ${tierBlock(c.t[3],3,'Tími eftir','#8f8776')}
+          ${tierBlock(c.t['2c'],2,'Áunnið (drög)','#8f8776')}
+          ${tierBlock(c.t[3],3,'Áunnið (tímar)','#8f8776')}
         </div>
       </div>`).join('');
     return head + body;
@@ -20470,14 +20472,30 @@ async function renderKrofuyfirlit(t){
     return header + body;
   }
 
+  // Áunnið í mánuðinum (26.11.2026): einn haus yfir BÆÐI ósend drög líðandi mánaðar (þrep 2 — hakið/vinnuslár haldast)
+  // OG Tímavera-áætlanir mánaðarins (þrep 3). Drögin rendera sem þrep 2 og tímarnir sem þrep 3 svo hvor um sig haldi sínum
+  // aðgerðum; samtala/fjöldi leggst saman í hausnum.
+  function aunnidSection(l2cur, l3live, subtitle){
+    const d2 = searchSort(l2cur), d3 = searchSort(l3live);
+    const total = sumKr(l2cur)+sumKr(l3live), n = countN(l2cur)+countN(l3live), adilar = l2cur.length+l3live.length;
+    const header = `<div class="ky-sec"><i class="boss-led" style="--led:#8f8776;align-self:center"></i><h2>⚪ Áunnið í mánuðinum</h2>`+
+      `<span class="ky-sec-n">${n} ${n===1?'liður':'liðir'} · ${adilar} ${adilar===1?'aðili':'aðilar'}</span>`+
+      `<span class="ky-sec-total ky-num">${fmtNum(total)} <span class="boss-kr">kr</span></span></div>`+
+      (subtitle?`<div class="ky-sec-sub">${esc(subtitle)}</div>`:'');
+    const body = (d2.length||d3.length)
+      ? d2.map(d=>renderDebtor(d,2)).join('') + d3.map(d=>renderDebtor(d,3)).join('')
+      : emptyBox(state.search?'Ekkert passar við leit':'Ekkert áunnið í mánuðinum enn');
+    return header + body;
+  }
+
   // Gulur viðvörunar-borði: bakenda-`warnings` (mistókst lestur) + verðskrá/verkstaða
   // sem náðist ekki (áætlanir faldar). Tómt → enginn borði (happy path óbreyttur).
   function renderMoneyWarn(){
     const box = $view.querySelector('.kyf-warn'); if(!box) return;
     const msgs = [];
     for(const m of ((state.data && state.data.warnings) || [])) if(m) msgs.push(String(m));
-    if(state.pgFailed) msgs.push('Verðskrá náðist ekki — sjálfgefnir taxtar (9.951/14.927) hefðu verið notaðir, svo „Tími eftir"-áætlanir eru faldar því þær gætu verið rangar.');
-    else if(state.wsFailed) msgs.push('Verkstaða-gögn náðust ekki — „Tími eftir"-áætlanir gætu verið ófullkomnar.');
+    if(state.pgFailed) msgs.push('Verðskrá náðist ekki — sjálfgefnir taxtar (9.951/14.927) hefðu verið notaðir, svo „Áunnið"-áætlanir eru faldar því þær gætu verið rangar.');
+    else if(state.wsFailed) msgs.push('Verkstaða-gögn náðust ekki — „Áunnið"-áætlanir gætu verið ófullkomnar.');
     if(!msgs.length){ box.innerHTML = ''; return; }
     box.innerHTML = '<div class="kyf-warnbox">'
       + msgs.map(m=>'<div style="display:flex;gap:8px;align-items:flex-start"><span style="font-size:15px;flex-shrink:0">⚠</span><span>'+esc(m)+'</span></div>').join('')
@@ -20933,7 +20951,22 @@ async function renderKrofuyfirlit(t){
     const l1 = liveDebtors(((state.data.tier1)||{}).debtors || []);
     const l2 = liveDebtors(((state.data.tier2)||{}).debtors || []);
     const l3 = liveDebtors(((state.tier3)||{}).debtors || []);
-    renderCards(l1, l2, l3);
+    // Áunnið í mánuðinum (Agnar 26.11.2026): „Tími eftir" → „Áunnið í mánuðinum" = vinna LÍÐANDI mánaðar sem er unnin en
+    // enn ekki send í bókun / komin í Payday. Ósent = ósend drög FYRIR UTAN líðandi mánuð. Ósend drög þessa mánaðar flytjast
+    // því úr Ósent inn í Áunnið (við hlið Tímavera-áætlananna). Drögin eru RENDERUÐ ÁFRAM SEM ÞREP 2 (renderDebtor(_,2)) svo
+    // sameina-hakið og vinnuslár haldist — aðeins flokkunin færist. Bakendinn tryggir að verkstaðar-mánuður sé annaðhvort
+    // vistuð drög (þrep 2) EÐA Tímavera-áætlun (þrep 3), svo ekkert tvítelst.
+    const CURMON = new Date().toISOString().slice(0,7);
+    const splitMon = debtors => { const cur=[], prior=[];
+      for(const d of (debtors||[])){ const ci=[], pi=[];
+        for(const iv of (d.invoices||[])){ if(iv.work_month && String(iv.work_month) >= CURMON) ci.push(iv); else pi.push(iv); }
+        if(ci.length) cur.push({...d, invoices:ci, outstanding_kr:ci.reduce((a,i)=>a+(i.amount||0),0)});
+        if(pi.length) prior.push({...d, invoices:pi, outstanding_kr:pi.reduce((a,i)=>a+(i.amount||0),0)});
+      } return {cur, prior}; };
+    const _l2s = splitMon(l2);
+    const l2sent = _l2s.prior;   // Ósent = fyrri mánuðir
+    const l2aun  = _l2s.cur;     // ósend drög líðandi mánaðar → birtast í Áunnið
+    renderCards(l1, l2sent, l2aun.concat(l3));
 
     // Líklega-greitt banner (fjöldi/upphæð úr lifandi þrepi 1 svo tölur lækki þegar merkt er greitt).
     const likelyRows = l1.flatMap(d=>(d.invoices||[]).filter(i=>i.likely_paid));
@@ -20993,18 +21026,18 @@ async function renderKrofuyfirlit(t){
     const onlyLikely = ds => ds.map(d=>{ const invs=(d.invoices||[]).filter(i=>i.likely_paid);
       return invs.length ? {...d, invoices:invs, outstanding_kr:invs.reduce((a,i)=>a+i.amount,0)} : null; }).filter(Boolean);
 
-    const t3sub = 'Óinnvoiceaðir Tímavera-tímar × dagvinnutaxti m.vsk — áætlaðar tekjur í pípunni'+
-      (state.newest ? ' · yfirstandandi mánuður aðeins til '+dayMon(state.newest)+' (hluti)' : '');
+    const t3sub = 'Vinna líðandi mánaðar, unnin en enn ekki send í bókun / komin í Payday — Tímavera-tímar × dagvinnutaxti m.vsk + ósend drög mánaðarins'+
+      (state.newest ? ' · til '+dayMon(state.newest)+' (hluti)' : '');
     let html = '';
     if(state.tierFilter==='company'){
-      html += renderCompanyView(l1, l2, l3);
+      html += renderCompanyView(l1, l2sent, l2aun, l3);
     } else if(state.tierFilter==='likely'){
       html += section(1,'🏦','Líklega þegar greitt','Enn ógreiddar í Payday en fundust greiddar í banka (sama kt + upphæð) — smelltu ✓ Greitt til að staðfesta.', onlyLikely(l1));
     } else {
       const show = k => state.tierSel.has(k);
       if(show('t1')) html += section(1,'🔴','Ógreiddar kröfur','Sendir reikningar sem eru enn óborgaðir — Payday SENT + Landsbanki + handvirkir.', l1);
-      if(show('t2')) html += section(2,'🟡','Ósendar kröfur','Drög sem á eftir að senda (engir gjalddagar enn).', l2);
-      if(show('t3')) html += section(3,'⚪','Tími eftir að senda', t3sub, l3);
+      if(show('t2')) html += section(2,'🟡','Ósendar kröfur','Drög sem á eftir að senda, fyrir utan líðandi mánuð (engir gjalddagar enn).', l2sent);
+      if(show('t3')) html += aunnidSection(l2aun, l3, t3sub);
     }
     listEl.innerHTML = html;
 
@@ -21534,37 +21567,12 @@ async function renderKrofuyfirlit(t){
   // Heklureitur-staða (25.11.2026, Agnar „notumst bara við verkin sem eru skráð per mánuð fyrir Heklureit"): les-only.
   // ÁUNNIÐ (eftir að senda) = OPIN drög (óútgefnir Efnislistar) — ekki núv.gata-verðmæti − rukkað (sú aðferð var röng:
   // reikningarnir bera líka bönd/kraga/metra/akstur). Allt 'invoiced' er sent og greitt. TELUR EKKI í pípu-tölurnar (CG).
-  let _hekluTs = 0;
-  async function renderHekluStada(force){
-    const box = $view && $view.querySelector('.kyf-heklu-stada'); if(!box) return;
-    if(!force && box.dataset.loaded && Date.now() - _hekluTs < 60000) return;
-    _hekluTs = Date.now();
-    let j;
-    try{ j = await fetch('/api/gata-uppgjor?worksite=Heklureitur&aunnid=1', { cache:'no-store' }).then(r=>r.ok?r.json():null); }
-    catch(_){ return; }
-    const a = j && j.aunnid; if(!a){ box.innerHTML=''; box.dataset.loaded='1'; return; }
-    box.dataset.loaded = '1';
-    const mlabel = (m) => m ? (String(m).slice(5)+'.'+String(m).slice(0,4)) : '';
-    const opin = (a.open_drafts||[]);
-    const kpi = (lbl, val, strong) => '<div><div style="font-size:11px;color:var(--muted)">'+lbl+'</div><div style="font-weight:'+(strong?800:700)+';font-size:'+(strong?15:13.5)+'px'+(strong?';color:var(--gold-deep,#9a7b2e)':'')+'">'+val+'</div></div>';
-    box.innerHTML =
-      '<details class="boss-panel kyf-heklu" open style="padding:12px 14px">'
-      + '<summary style="cursor:pointer;font-weight:700;color:var(--ink)">🧱 Heklureitur — áunnið (eftir að senda): '+fmtNum(a.unsent_m_vsk)+' kr</summary>'
-      + '<div style="display:flex;gap:22px;flex-wrap:wrap;margin:10px 0 6px">'
-        + kpi('Áunnið · eftir að senda', fmtNum(a.unsent_m_vsk)+' kr', true)
-        + kpi('Göt kláruð (alls)', fmtNum(a.current_got)+' göt')
-      + '</div>'
-      + (opin.length
-          ? '<div style="font-size:12px;color:var(--ink);margin-bottom:6px">Opin drög (óútgefin): '
-            + opin.map(d => mlabel(d.work_month)+' — '+fmtNum(d.total_m_vsk)+' kr').join(' · ')+'</div>'
-          : '<div style="font-size:12px;color:var(--muted);margin-bottom:6px">Engin opin drög — allt sent.</div>')
-      + '<div style="font-size:11px;color:var(--muted)">Áunnið = Efnislistar mánaðarins sem eru ekki enn komnir í reikning — allt annað er sent og greitt. Les-only — telst <b>ekki</b> í pípu-tölunum.</div>'
-      + '</details>';
-  }
+  // Heklureitur — áunnið (26.11.2026): sér les-only panelinn var fjarlægður. Hann duplíkeraði gerd-drögin „Framkvæmdafélagið
+  // Laugavegur · Heklu reitur" sem birtast nú (eins og öll önnur vinna) sem venjulegt spjald í Áunnið-þrepinu. Göt/invoiced-sagan
+  // er áfram í /api/gata-uppgjor?aunnid=1 og í Efnislistanum sjálfum. Þetta leysti „annað format"-athugasemd Agnars.
 
   async function load(force){
     saekjaGreidslur(!!force);
-    renderHekluStada(!!force);
     const meta = $view.querySelector('#kyf-meta');
     const cache = (!force && window.__KYF_CACHE) || null;
     if(cache && cache.data){
