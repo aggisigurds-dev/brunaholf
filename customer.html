@@ -298,7 +298,7 @@
     .mk-col{border-right:none;border-bottom:1px solid var(--line)}
     .mk-col:last-child{border-bottom:none}
     .mk-brow{grid-template-columns:30px minmax(0,1fr);gap:8px}
-    .mk-bchips,.mk-bpill{grid-column:2;justify-content:flex-start}
+    .mk-brow .mk-bchips,.mk-brow .mk-bpill{grid-column:2;justify-content:flex-start}
   }
   </style>
   <script src="/js/dags-snid.js?v=20260918b"></script>
@@ -623,39 +623,73 @@ function mkProfile(d){
   const base = d.base || {}, sites = d.sites || [];
   const yearNow = new Date().getUTCFullYear();
   const name = g.name || base.nafn || '(nafnlaus)';
-  const hsub = g.is_group
-    ? 'Rekstrarfélag · hópur: ' + (g.bases || []).map(b => esc(b.nafn)).join(' · ')
-    : (base.heimilisfang ? esc(base.heimilisfang) : 'Fyrirtæki' + (g.rekstrarfelag ? ' · ' + esc(g.rekstrarfelag) : ''));
-  const kt = g.is_group ? '—' : (base.kennitala ? esc(fmtKt(base.kennitala)) : '—');
-  const ktTitle = g.is_group ? (g.bases || []).map(b => (b.nafn || '') + ' ' + fmtKt(b.kennitala)).join(' · ') : '';
+  const nBasa = (g.bases || []).length || 1;
+  const hsub = g.is_group ? `Rekstrarfélag · ${nBasa} bösur` : (base.heimilisfang ? esc(base.heimilisfang) : (g.rekstrarfelag ? 'Rekstrarfélag' : 'Fyrirtæki'));
 
-  // Netföng
+  // Árs-tekjur stutt (stór tala passar ekki í mjóan flís): ≥1 m.kr → „1,9 m"
+  const tekjur = Number(sum.ars_tekjur_m_vsk || 0);
+  const tekjurStutt = tekjur >= 1e6 ? (tekjur / 1e6).toFixed(1).replace('.', ',') + ' m' : fmtKr(tekjur);
+
+  // Netföng — toppsendandi fyrstur
   const top = comms.top_address || (emails[0] && emails[0].addr) || '';
   const others = emails.filter(e => e.addr !== top);
-  const emailHtml = top
-    ? `<span class="v mono red">${esc(top)}</span>` + (others.length ? `<button class="mk-plus" type="button" data-mk-emails>+${others.length}</button>` : '')
-    : '<span class="v mk-dash">—</span>';
 
-  // Mælar
-  const svarUnrepl = comms.last_contact && comms.last_contact.unreplied;
-  const svarTxt = comms.last_contact ? (svarUnrepl ? 'Svar bíður' : 'Svarað') : (comms.faerslur_12man ? 'Í sambandi' : 'Engin samskipti');
+  // Samskipti
+  const lc = comms.last_contact, svarUnrepl = lc && lc.unreplied;
+  const tfootBits = [];
+  if ((comms.opnar_beidnir || 0) > 0) tfootBits.push(`${comms.opnar_beidnir} opnar beiðnir`);
+  if ((comms.faerslur_12man || 0) > 0) tfootBits.push(`${comms.faerslur_12man} færslur / 12 mán`);
+  const samskiptiCard = lc
+    ? `<div class="mk-card">
+        <div class="mk-chead"><span class="mk-dia"></span><span class="mk-clabel">Samskipti · ${esc(top)}</span><span class="mk-cbadge ${svarUnrepl?'':'ok'}">${svarUnrepl?'Svar bíður':'Svarað'}</span></div>
+        <div class="mk-threadc"><span class="mk-ava">${esc(initials(contact.tengilidur || top)).toUpperCase()}</span>
+          <div style="min-width:0;flex:1 1 auto">
+            <div class="mk-thd-top"><span class="mk-thd-name">${esc(contact.tengilidur || top)}</span><span class="mk-thd-meta">${esc(mkDate(lc.received_at))}</span></div>
+            <div class="mk-thd-sub">${esc(lc.subject || '(án efnis)')}</div>
+            <div class="mk-thd-body">${esc(lc.snippet || '')}</div>
+          </div></div>
+        ${tfootBits.length ? `<div class="mk-tfoot">${tfootBits.join(' · ')}</div>` : ''}
+      </div>`
+    : `<div class="mk-card">
+        <div class="mk-chead"><span class="mk-dia"></span><span class="mk-clabel">Samskipti${top?' · '+esc(top):''}</span></div>
+        <div class="mk-cc"><span class="mk-srcnote">${(comms.faerslur_12man||0)>0 ? comms.faerslur_12man+' færslur / 12 mán — enginn óafgreiddur þráður.' : 'Engin samskipti skráð við netföng félagsins.'}</span></div>
+      </div>`;
 
-  // Byggingarlisti
-  const SHOWN = window._mkAllBuildings ? sites.length : 6;
+  // Tengiliðaspjald — AÐEINS reitir með gildi fá röð; tómir fara í eina dofna „vantar"-línu.
+  const rows = [];
+  if (contact.simi) rows.push(`<div class="mk-crow"><span class="k">Sími</span><span class="v mono">${esc(contact.simi)}</span></div>`);
+  if (contact.tengilidur) rows.push(`<div class="mk-crow"><span class="k">Tengiliður</span><span class="v">${esc(contact.tengilidur)}</span></div>`);
+  if (!g.is_group && base.kennitala) rows.push(`<div class="mk-crow"><span class="k">Kennitala</span><span class="v mono">${esc(fmtKt(base.kennitala))}</span></div>`);
+  if (top) rows.push(`<div class="mk-crow"><span class="k">Netfang</span><span class="v mono red">${esc(top)}</span>${others.length?`<button class="mk-cplus" type="button" data-mk-emails>+${others.length}</button>`:''}</div>`);
+  const vantar = [];
+  if (!contact.simi) vantar.push('síma');
+  if (!contact.tengilidur) vantar.push('tengilið');
+  if (!g.is_group && !base.kennitala) vantar.push('kennitölu');
+  if (!top) vantar.push('netfang');
+  const missingLine = vantar.length
+    ? `<div class="mk-missing">${vantar.join(', ').replace(/^./,c=>c.toUpperCase())} vantar<button class="mk-addmini" type="button" data-mk-utvikka>+ bæta við</button></div>`
+    : (g.is_group ? `<div class="mk-missing">${nBasa} kennitölur í hópnum<button class="mk-addmini" type="button" data-mk-emails>sjá netföng</button></div>` : '');
+  const contactCard = `<div class="mk-card"><div class="mk-cc">${rows.join('')}${missingLine}</div></div>`;
+
+  // Byggingalisti — 3 sýndar, þéttar raðir (nafn + staða/ár + pilla), svo „og N til viðbótar"
+  const SHOWN = window._mkAllBuildings ? sites.length : 3;
   const brow = (s) => {
-    const chips = [];
-    if (s.svc_slokkvitaeki) chips.push('<span class="mk-chip s">Slökkvitæki</span>');
-    if (s.svc_brunakerfi) chips.push('<span class="mk-chip b">Brunakerfi</span>');
     let pill = '<span class="mk-bpill none">Engin úttekt</span>';
-    if (s.last_uttekt_year >= yearNow) pill = `<span class="mk-bpill ok">Úttekt ${s.last_uttekt_year}</span>`;
+    if (s._nytt) pill = '<span class="mk-bpill wait">Nýskráð</span>';
+    else if (s.last_uttekt_year >= yearNow) pill = `<span class="mk-bpill ok">Úttekt ${s.last_uttekt_year}</span>`;
     else if (s.last_uttekt_year) pill = `<span class="mk-bpill wait">Síðast ${s.last_uttekt_year}</span>`;
-    const area = s.heimilisfang ? esc(s.heimilisfang) : (s.base_nafn ? esc(s.base_nafn) : '');
-    return `<div class="mk-brow"><span class="mk-bthumb"></span>`
-      + `<div class="mk-bmain"><div class="mk-bname">${esc(s.nafn || '?')}</div><div class="mk-barea">${area}</div></div>`
-      + `<span class="mk-bchips">${chips.join('') || '<span class="mk-barea">—</span>'}</span>${pill}</div>`;
+    const sub = s._nytt ? 'bætt við í dag' : (s.heimilisfang ? esc(s.heimilisfang) : (s.base_nafn ? esc(s.base_nafn) : '—'));
+    return `<div class="mk-brow2"><span class="mk-bthumb"></span>`
+      + `<div class="mk-bmain"><div class="mk-bn">${esc(s.nafn || '?')}</div><div class="mk-ba">${sub}</div></div>${pill}</div>`;
   };
   const shownSites = sites.slice(0, SHOWN);
   const moreN = sites.length - shownSites.length;
+  const buildingsCard = `<div class="mk-card">
+      <div class="mk-chead"><span class="mk-dia"></span><span class="mk-clabel">Byggingar (${sites.length})</span><span style="flex:1 1 auto"></span>
+        <span class="mk-clabel" style="letter-spacing:0;text-transform:none">${sum.sites_in_service||0} í þjónustu</span></div>
+      ${shownSites.map(brow).join('') || '<div class="mk-cc"><span class="mk-srcnote">Engar byggingar skráðar.</span></div>'}
+      ${moreN > 0 ? `<div class="mk-bmore" style="padding:8px 13px;border-top:1px solid var(--line)"><button type="button" data-mk-allbygg>og ${moreN} ${moreN===1?'bygging':'byggingar'} til viðbótar →</button></div>` : ''}
+    </div>`;
 
   return `<div class="mk-wrap" id="mk-wrap">
     <div class="mk-hdr">
@@ -669,46 +703,16 @@ function mkProfile(d){
       <button class="mk-hbtn" type="button" data-mk-utvikka><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>Breyta</button>
     </div>
     <div class="mk-body">
-      <div class="mk-toprow">
-        <div class="mk-panel">
-          <div class="mk-phead"><span class="mk-dia"></span><span class="mk-plabel">Árs-tekjur m. vsk</span></div>
-          <div class="mk-pbody">
-            <div class="mk-kpi">${fmtKr(sum.ars_tekjur_m_vsk || 0)} <span class="cur">kr</span></div>
-            <div class="mk-cap">${sum.byggingar || sites.length} byggingar · ${sum.ars_reikningar || 0} reikningar ${yearNow}</div>
-          </div>
-        </div>
-        <div class="mk-panel">
-          <div class="mk-phead"><span class="mk-dia"></span><span class="mk-plabel">Samskipti${top ? ' · ' + esc(top) : ''}</span><span class="mk-pgrow"></span>
-            ${comms.last_contact ? '<button class="mk-link" type="button" data-mk-log>Opna póstsögu</button>' : ''}</div>
-          <div class="mk-pbody">
-            <div class="mk-svar ${svarUnrepl ? '' : 'ok'}">${esc(svarTxt)}</div>
-            <div class="mk-smeta"><span><b>${comms.osvarad || 0}</b> ósvarað</span><span><b>${comms.opnar_beidnir || 0}</b> opnar beiðnir</span><span><b>${comms.faerslur_12man || 0}</b> færslur / 12 mán</span></div>
-          </div>
-        </div>
+      <div class="mk-stats">
+        <div class="mk-st"><div class="n amber">${tekjurStutt}</div><div class="l">kr/ár</div></div>
+        <div class="mk-st"><div class="n mono">${sum.slokkvitaeki_taeki_total || 0}</div><div class="l">slökkvitæki</div></div>
+        <div class="mk-st"><div class="n mono">${sum.sites_with_2026_uttekt || 0}/${sum.sites_in_service || 0}</div><div class="l">úttekt</div></div>
+        <div class="mk-st"><div class="n mono ${(comms.osvarad||0)>0?'amber':''}">${comms.osvarad || 0}</div><div class="l">ósvarað</div></div>
       </div>
-
-      <div class="mk-cols">
-        <div class="mk-col">
-          <div class="mk-sec"><span class="mk-dia"></span><h3>Staður og samband</h3></div>
-          <div class="mk-frow"><span class="k">Kennitala</span><span class="v mono ${kt==='—'?'mk-dash':''}"${ktTitle?` title="${esc(ktTitle)}"`:''}>${kt}</span></div>
-          <div class="mk-frow"><span class="k">Sími</span>${contact.simi ? `<span class="v mono">${esc(contact.simi)}</span>` : '<span class="v mk-dash">—</span>'}</div>
-          <div class="mk-frow"><span class="k">Tengiliður</span>${contact.tengilidur ? `<span class="v">${esc(contact.tengilidur)}</span>` : '<span class="v mk-dash">—</span>'}</div>
-          <div class="mk-frow"><span class="k">Netfang</span>${emailHtml}</div>
-        </div>
-        <div class="mk-col">
-          <div class="mk-sec"><span class="mk-dia"></span><h3>Tæki og skoðanir</h3></div>
-          <div class="mk-frow"><span class="k">Slökkvitæki</span><span class="v mono">${sum.slokkvitaeki_taeki_total || 0}</span><span class="small">· ${sum.slokk_skyrslur_ar || 0} skýrslur ${yearNow}</span></div>
-          <div class="mk-frow"><span class="k">Brunakerfi</span><span class="v mono">${sum.brunakerfi_skyrslur_total || 0}</span><span class="small">skýrslur · ${sum.bk_skyrslur_ar || 0} í ${yearNow}</span></div>
-          <div class="mk-frow"><span class="k">Með úttekt</span><span class="v mono">${sum.sites_with_2026_uttekt || 0} / ${sum.sites_in_service || 0}</span></div>
-        </div>
-        <div class="mk-col">
-          <div class="mk-sec"><span class="mk-dia"></span><h3>Byggingar</h3></div>
-          <div class="mk-frow"><span class="k">Í yfirliti</span><span class="v mono">${sites.length}</span></div>
-          <div class="mk-frow"><span class="k">Í þjónustu</span><span class="v mono">${sum.sites_in_service || 0}</span></div>
-          <div class="mk-frow"><button class="mk-link" type="button" data-mk-addbygg><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>Bæta við byggingu</button></div>
-        </div>
+      <div class="mk-grid2">
+        ${samskiptiCard}
+        ${contactCard}
       </div>
-
       <div class="mk-expand" id="mk-emailbox" style="display:none">
         <div class="mk-emailgrid">
           ${top ? `<span class="mk-email top">${esc(top)} <span class="mk-tag">sendir mest</span></span>` : ''}
@@ -716,28 +720,9 @@ function mkProfile(d){
         </div>
         <div class="mk-srcnote">Öll netföng eru sótt úr byggingum — engin eru slegin inn á rekstrarfélagið sjálft.</div>
       </div>
-
-      ${comms.last_contact ? `<div class="mk-thread" id="mk-logbox" style="display:none">
-        <span class="mk-ava">${esc(initials(contact.tengilidur || top)).toUpperCase()}</span>
-        <div style="min-width:0;flex:1 1 auto">
-          <div class="mk-thd-top"><span class="mk-thd-name">${esc(contact.tengilidur || top)}</span><span class="mk-thd-meta">${esc(mkDate(comms.last_contact.received_at))} · ${esc(top)}</span><span class="mk-thd-badge ${svarUnrepl?'':'ok'}">${svarUnrepl ? 'Svar bíður' : 'Svarað'}</span></div>
-          <div class="mk-thd-sub">${esc(comms.last_contact.subject || '(án efnis)')}</div>
-          <div class="mk-thd-body">${esc(comms.last_contact.snippet || '')}</div>
-        </div>
-      </div>` : ''}
-
-      <div class="mk-noterow">
-        <textarea class="mk-noteinp" id="mk-note" rows="1" placeholder="Skrifa athugasemd um rekstraraðilann… (vistast sjálfkrafa)">${esc(base.general_notes || '')}</textarea>
-        <span class="mk-notest" id="mk-notest"></span>
-      </div>
-
-      <div class="mk-reclaim">
-        <div class="mk-recrow"><span class="mk-plabel">Byggingar / húsfélög</span></div>
-        <div class="mk-blist">
-          ${shownSites.map(brow).join('') || '<div class="mk-srcnote">Engar byggingar skráðar.</div>'}
-          ${moreN > 0 ? `<div class="mk-bmore"><button type="button" data-mk-allbygg>og ${moreN} byggingar til viðbótar →</button></div>` : ''}
-        </div>
-      </div>
+      ${buildingsCard}
+      <input class="mk-note1" id="mk-note" type="text" aria-label="Athugasemd um rekstraraðilann" placeholder="Athugasemd um rekstraraðilann… (vistast sjálfkrafa)" value="${esc(base.general_notes || '')}">
+      <button class="mk-gobtn" type="button" data-mk-addbygg><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>Bæta við byggingu</button>
     </div>
   </div>`;
 }
@@ -889,26 +874,23 @@ async function mkPost(body){
 function wireProfile(d){
   const g = d.group || {}, base = d.base || {};
   const wrap = el('mk-wrap'); if (!wrap) return;
-  const on = (sel, ev, fn) => { const e = wrap.querySelector(sel); if (e) e.addEventListener(ev, fn); };
+  const on = (sel, ev, fn) => wrap.querySelectorAll(sel).forEach(e => e.addEventListener(ev, fn));
   on('[data-mk-emails]', 'click', () => { const b = el('mk-emailbox'); if (b) b.style.display = b.style.display === 'none' ? '' : 'none'; });
-  on('[data-mk-log]', 'click', () => { const b = el('mk-logbox'); if (b) b.style.display = b.style.display === 'none' ? '' : 'none'; });
   on('[data-mk-allbygg]', 'click', () => { window._mkAllBuildings = true; render(LAST_DATA); });
   on('[data-mk-utvikka]', 'click', () => { window._mkDetailOpen = true; render(LAST_DATA); const dt = document.querySelector('.mk-utvikkad'); if (dt) dt.scrollIntoView({ behavior:'smooth', block:'start' }); });
   on('[data-mk-addbygg]', 'click', () => openAddBuilding(d));
   on('[data-mk-addsvc]', 'click', () => toggleBrunakerfiService(d));
   const dt = document.querySelector('.mk-utvikkad'); if (dt) dt.addEventListener('toggle', () => { window._mkDetailOpen = dt.open; });
 
-  // Athugasemd — autosave á aðalbösu hópsins
-  const note = el('mk-note'), st = el('mk-notest');
+  // Athugasemd — ein lína, autosave á aðalbösu hópsins
+  const note = el('mk-note');
   if (note) {
-    const grow = () => { note.style.height = 'auto'; note.style.height = Math.min(220, note.scrollHeight) + 'px'; };
-    grow();
     const save = mkDebounce(async () => {
-      try { st.textContent = '… vista'; await mkPost({ action:'save-note', base_id: g.primary_base_id || base.id, general_notes: note.value });
-        st.textContent = '✓ vistað'; if (LAST_DATA && LAST_DATA.base) LAST_DATA.base.general_notes = note.value; setTimeout(()=>{ if(st) st.textContent=''; }, 2500);
-      } catch (e) { st.textContent = '✗ ' + (e.message || e); }
+      try { note.title = 'Vista…'; await mkPost({ action:'save-note', base_id: g.primary_base_id || base.id, general_notes: note.value });
+        note.title = '✓ vistað'; if (LAST_DATA && LAST_DATA.base) LAST_DATA.base.general_notes = note.value;
+      } catch (e) { note.title = '✗ ' + (e.message || e); }
     }, 900);
-    note.addEventListener('input', () => { grow(); save(); });
+    note.addEventListener('input', save);
   }
 }
 
