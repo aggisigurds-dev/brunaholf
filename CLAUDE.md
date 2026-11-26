@@ -121,24 +121,6 @@ data from Ajour, Google Drive/Sheets/Gmail integration, and a tilbod
 
 ---
 
-## 🏢 Rekstrarfélags-prófíll — customer.html í Miðakerfi-þema (26.11.2026)
-
-`customer.html` („Kúnna-yfirlit") var endurhannað í þétta **Miðakerfi — Brunastál** útlitið (ljós stálplata, dökkblár
-málmhaus, rautt ◆, Playfair/JetBrains/IBM Plex). Gamli ~520px bólgni prófíllinn er efst skipt út fyrir: dökkan haus með
-þjónustumerkjum (Slökkvitæki/Brunakerfi/+ Þjónusta), tvo mæla (árs-tekjur + samskipti), þriggja-dálka spjald (Staður og
-samband / Tæki og skoðanir / Byggingar), útvíkkanleg netföng, athugasemdareit og byggingalista. Gömlu nákvæmu spjöldin
-(ár-grid, reikningar, skjalaritun, hreyfingar) búa áfram í „📂 Útvíkkað" neðst — **engin virkni fjarlægð**. Scoped CSS: `.mk-*`.
-
-**`/api/customer` (customer.js) víkkað til að sýna ALLAN rekstrarfélags-hópinn**, ekki eina bösu: `base.rekstrarfelag`
-(frítexti) hópar margar `customers_base`-raðir (eitt rekstrarfélag getur borið margar bösur/kt með mörgum byggingum). Nýir
-reitir í svari: `group`, `emails` (sameinuð úr byggingum, toppsendandi merktur), `comms` (bundið við toppsendanda í
-`email_digest` — í stað lénaleitar sem skilaði „engir póstar á @benni.is"), `services`, `contact`, + aggr-tölur í `summary`.
-**AÐEINS lesið og aggregerað** — ekkert sameinað, engri kt breytt, ekkert `fyrirtaeki_id`/`customer_base_id` null-að.
-Nýjar POST-aðgerðir (innskráning gegnum `_vord`): `add-building` (setur rekstrarfelag-merki á bösu byggingar — afturkræft,
-engin eignabreyting), `add-service` (handvirkt `fyrirtaeki.thjonusta_brunakerfi`, afturkræft), `save-note`. Leit:
-`GET ?leita_bygg=`. Dálkurinn `fyrirtaeki.thjonusta_brunakerfi` (nullable boolean, additive) bættur við —
-`sql/2026-11-26_fyrirtaeki_thjonusta_brunakerfi.sql`. Eigandi: `kunnaskra`.
-
 ## 🧭 HVER KANN HVAÐ — byrjaðu hér
 
 Þekkingin sem áður var í þessu skjali (31.000 tokens sem hlóðust í **hverri einustu
