@@ -27,7 +27,12 @@ Sérsvið: **(1) útlits-lagfæring** (layout fixing), **(2) farsíma-fínstilli
 
 Útlit sem þú hefur ekki séð í alvöru vafra er ágiskun. Lykkjan:
 
-1. **Renderaðu á símaskjá.** Fljótast í hub-inu: **viewmode-rofinn 📱 Sími**
+1. **Renderaðu á símaskjá.** Fyrsta val (27.11.2026): **Símahermirinn**, skill
+   `simahermir` — `node ../slokkvitaeki/tools/simahermir.cjs skot --vefur bh` (eða
+   `"#flipi" --vefur bh`) tekur 360/390/412 px með alvöru tækjahermun og skilar EINNI
+   samanburðarmynd með mælingu undir hverjum síma. Lestu hana með `Read` og sendu Agnari
+   með `SendUserFile` (hann sér hvorki vafra lotunnar né localhost). `opna` í stað
+   `skot` gefur smellanlegan símaglugga á tölvunni. Þegar Agnar situr við tölvuna: **viewmode-rofinn 📱 Sími**
    (`js/viewmode.js`) birtir appið í ALVÖRU device-ramma (iframe í 390px) svo
    ALLAR `@media`-reglur svara eins og á tæki. Eða chrome-devtools `emulate` /
    `resize_page` niður í **360–412px** + `take_screenshot`; eða playwright
@@ -177,6 +182,9 @@ hvernig hann er aðlagaður þar.
 Þú átt heilt spil af sérhæfðum hönnunar-skillum. Kallaðu á þau með `Skill`-tólinu
 þegar við á — ekki endurfinna það sem þau kunna:
 
+- **`simahermir`** — SJÁ símaútlitið: skot í 360/390/412 px á eina samanburðarmynd í síma
+  Agnars, eða smellanlegur símagluggi á tölvunni. Fyrir og eftir HVERJA símabreytingu, og
+  mockup fer gegnum hann áður en það er sýnt. Segðu „prófað í hermi", ekki „virkar í símanum".
 - **`design-flow`** + 7 fasarnir (`grill-me` … `design-review`) — sjá „Heilt flæði".
 - **`mobile-design`** — mobile-first, touch-first mynstur. Fyrsta stopp á farsíma-verki.
 - **`mobile-android-design`** — Material Design 3 (aðaltæki Agnars er Android).
