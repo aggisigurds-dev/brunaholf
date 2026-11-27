@@ -60,6 +60,9 @@ const STAFF = {
   29: { name: 'Hamdja Kamara',              tv: ['kamara', 'hamdja'] },
   30: { name: 'Marius',                     tv: ['marius'] },
   31: { name: 'Hákon Baldvinsson',          tv: ['hákon', 'hakon'] },
+  // 36 og 40 staðfest af Agnari 27.11.2026 (pöruð við Tímaveru 26.11: 8/9 og 15/15 skráningardagar). Sama og skr_starfsmenn í Kjarna.
+  36: { name: 'Haddó',                      tv: ['haddó', 'haddo'] },
+  40: { name: 'Rui Armando',                tv: ['rui armando', 'rui'] },
 };
 function nrForEmployee(emp) {
   const e = String(emp || '').trim().toLowerCase();
