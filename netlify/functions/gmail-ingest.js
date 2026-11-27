@@ -251,6 +251,19 @@ exports.handler = async (event) => {
           }
           const attachment_names = collectAttachmentNames(payloadTre);
 
+          // 27.11.2026 (Agnar: „Ég vil geta svarað nýjum póstum samdægurs og fengið hjálp við það"): body_preview var
+          // aðeins Gmail-brotið (~200 stafir), svo póstdrögin (postur-jafnodum) sáu hálfa setningu og báðu kúnnann
+          // um það sem hann var búinn að skrifa. Innkominn póstur fær nú allan textann (texti/plain, annars html án
+          // merkja), upp í 4.000 stafi. Bregðist það stendur brotið eins og áður. Sendur póstur óbreyttur.
+          let heillTexti = '';
+          if (!sentFolder) {
+            try {
+              const fr = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${id}?format=full&fields=${encodeURIComponent(TEXTA_FIELDS)}`,
+                { headers: { Authorization: `Bearer ${token}` } });
+              if (fr.ok) heillTexti = textiUrPayload((await fr.json()).payload);
+            } catch (_) { /* brotið dugar */ }
+          }
+
           // INBOX/SENT/UNREAD eru skilin eftir - `folder` ber tha stadreynd thegar,
           // og UNREAD segir bara hvort EINHVER hafi opnad postinn i Gmail.
           const merki = merkjaNofn
@@ -282,7 +295,7 @@ exports.handler = async (event) => {
             to_addresses: hh.to || null,
             subject: hh.subject || '',
             snippet: snippetOf(snippetText),
-            body_preview: snippetText.slice(0, 4000),
+            body_preview: (heillTexti.length > snippetText.length ? heillTexti : snippetText).slice(0, 4000),
             is_question: sentFolder ? false : looksLikeQuestion({
               subject: hh.subject, bodyText: snippetText, fromAddr: from.address,
             }),
@@ -397,6 +410,25 @@ function collectAttachmentNames(payload) {
 }
 
 // Gmail snippets come HTML-entity-encoded (&amp; &#39; …). Decode the few that matter.
+// 27.11.2026: allur texti skeytis úr Gmail-payload (format=full). text/plain fremst, annars html án merkja.
+const TEXTA_FIELDS = 'payload(mimeType,body/data,parts(mimeType,body/data,parts(mimeType,body/data,parts(mimeType,body/data))))';
+function textiUrPayload(p) {
+  let plain = '', html = '';
+  const b64 = (d) => Buffer.from(String(d).replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString('utf8');
+  const ganga = (x) => {
+    if (!x) return;
+    const d = x.body && x.body.data;
+    if (d && x.mimeType === 'text/plain' && !plain) plain = b64(d);
+    else if (d && x.mimeType === 'text/html' && !html) html = b64(d);
+    (x.parts || []).forEach(ganga);
+  };
+  ganga(p);
+  let t = plain || html.replace(/<(style|script)[\s\S]*?<\/\1>/gi, '').replace(/<br\s*\/?>/gi, '\n').replace(/<\/(p|div|tr|li)>/gi, '\n').replace(/<[^>]+>/g, ' ');
+  t = decodeEntities(t).replace(/&nbsp;/g, ' ');
+  return t.replace(/\r/g, '').replace(/[ \t ]+/g, ' ').replace(/ *\n */g, '\n').replace(/\n{3,}/g, '\n\n').trim();
+}
+module.exports._textiUrPayload = textiUrPayload;
+
 function decodeEntities(s) {
   return (s || '')
     .replace(/&amp;/g, '&')
