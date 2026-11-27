@@ -158,6 +158,15 @@ for several Supabase tables this app reads:
   Columns matched fuzzily by header substring (`dagsetning`/`date`,
   `inn`, `út`/`ut`/`out`, `tímar`/`hours`, `starfsma…`/`employee`,
   `verkefn…`/`project`).
+- **📍 Staðsetning Ajour-punkta á teikningu (27.11.2026):** CSV/XML-útflutningurinn ber hana EKKI (`Longitude`/`Latitude` eru GPS
+  og tóm). Hún fæst aðeins úr `luna-bridge/ajour-hnit.js --project <strengur>` (keyrir `ajour-export-allt.js` án mynda og PDF, aðeins
+  lestur) → `app_kv['ajour_hnit:<slug verks>']` = `{teikningar:[{fileId,nafn,w,h,mynd}], punktar:[{nr,fileId,x,y}]}` (x/y í pixlum
+  quality-myndar, 3763×2658 fyrir A1) + `verkstadir/ajour/quality/<fileId>.jpg`. `app_kv` er RLS-varið: lesið með service-lykli/MCP.
+  **Aðeins skrifstofuvélin** (`VEL_NAFN=skrifstofa`, `C:\Users\Slokkvitaeki\luna-bridge`) hefur Ajour-aðgangsorðin; á DESKTOP-M5FO3I6
+  (skipanahólfið, watcher-verkið `ajour-hnit-fjallabodin`) fellur þetta á útrunninni lotu og opnar bara innskráningarglugga í 5 mín.
+  Skrifstofuvélin keyrir hvorki `heartbeat.js` né sækir kóða sjálf. Úr skýjalotu: skilaboð í lotu þar bíða ólesin meðan hún er
+  aðgerðalaus; tímasett einskiptisverk inn í lotuna (`create_trigger` með `persistent_session_id`) vekur hana og keyrir þetta.
+  Fyrsta notkun: hreyfingar Lukasz og Nour í Fjallaböðunum (603 punktar, 6 teikningar).
 - **⚠️ Dálkur sem vantar í útflutninginn (26.11.2026):** í Ajour velur notandinn dálkana sem fara út. „AjourRegistrationData
   (31).csv“ og „(32)“ og XML-ið „(4)“ báru EKKI `ExecutionDateFrom`/`ExecutionDateTo` (maí-útflutningurinn bar þá). Hub-innlesturinn
   sendi þá `execution_date: null` og merge-duplicates skrifaði NULL yfir 27.321 röð → Heklureitur (gata-uppgjor, `_rekstur`,
