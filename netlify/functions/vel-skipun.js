@@ -42,6 +42,10 @@ const UPPSKRIFTIR = [
     skel: 'py', cmd: 'ajour-ingest.py', mappa: 'repo' },
   { id: 'lifsmark', heiti: '💓 Senda lífsmark núna', lysing: 'Uppfærir stöðuna á borðinu strax.',
     skel: 'node', cmd: 'heartbeat.js', mappa: 'repo' },
+  // 27.11.2026: staðsetning Ajour-punkta á teikningum Fjallaböðanna (greining á hreyfingum starfsmanna í húsinu).
+  // Aðeins lestur í Ajour; skilar raðnúmeri, teikningu og x/y í app_kv['ajour_hnit:fjallabodin-thjorsardal'].
+  { id: 'ajour-hnit-fjallabodin', heiti: '📍 Ajour-hnit: Fjallaböðin', lysing: 'Sækir staðsetningu punkta á teikningum Fjallaböðanna úr Ajour (aðeins lestur) og vistar á Supabase.',
+    skel: 'node', cmd: 'ajour-hnit.js', args: ['--project', 'Fjallab'], mappa: 'repo' },
   // ── Claude-API-vinnslur (Agentakerfið 2.0 fasi 6, 04.11.2026) — keyra í luna-bridge með ANTHROPIC_API_KEY úr .env. Skrifa AÐEINS
   //    í postur_ai_*, charlize_inbox (pending), thjonustubeidni (tag samthykki). Agnar samþykkir allt í biðstofu/Þjónustuborði. ──
   { id: 'postur-greining', heiti: '🤖 Póstgreining (Claude)', lysing: 'Sækir batch gærdagsins í postur_ai_yfirlit og sendir nýjan póst í greiningu (Haiku, Batches API).',
