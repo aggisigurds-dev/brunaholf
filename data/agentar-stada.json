@@ -1,6 +1,6 @@
 {
  "utgafa": 1,
- "nyjast": "2026-11-25",
+ "nyjast": "2026-11-26",
  "throskuldur": 6,
  "osnert_dagar": 30,
  "uppspretta": "slokkvitaeki/tools/audit-agentar.cjs --json",
@@ -72,10 +72,10 @@
    "slod": ".claude/agents/bord-flettur.md",
    "hud": null,
    "emoji": null,
-   "sidast": "2026-11-25",
-   "skrif": 76,
+   "sidast": "2026-11-26",
+   "skrif": 77,
    "gaetir": 55,
-   "breytt": 4,
+   "breytt": 2,
    "daudir": [],
    "merki": "🟡",
    "lysing": "Flettur, borð og navigation í Slökkvitæki-appinu — Þjónustuborð (368) og undirborð, Bakendi, Bílstjóri, Aksturslisti, URL-routing (218), bakk (3 lög) og app-síð"
@@ -345,9 +345,9 @@
    "sidast": "2026-11-25",
    "skrif": 7,
    "gaetir": 5,
-   "breytt": 0,
+   "breytt": 2,
    "daudir": [],
-   "merki": "🟢",
+   "merki": "🟡",
    "lysing": "Öpp-sérfræðingurinn (Ant-Man) — á app-skelina „firestarter\" (261 PAGES/APPS, 316, 354), app-síðurnar br-* (iframe á brunaholf), síðuskipti í öppunum, zoom og sk"
   },
   {
@@ -417,12 +417,12 @@
    "slod": ".claude/agents/sala-reikningar.md",
    "hud": null,
    "emoji": null,
-   "sidast": "2026-11-23",
-   "skrif": 57,
+   "sidast": "2026-11-26",
+   "skrif": 58,
    "gaetir": 40,
-   "breytt": 4,
+   "breytt": 0,
    "daudir": [],
-   "merki": "🟡",
+   "merki": "🟢",
    "lysing": "EINI agentinn sem býr til, leiðréttir, kreditfærir og færir reikninga í Slökkvitæki-appinu — eftir verkferlinu efst í skránni (greiðandi fyrst, lokaathugun síða"
   },
   {
@@ -450,7 +450,7 @@
    "sidast": "2026-11-23",
    "skrif": 17,
    "gaetir": 9,
-   "breytt": 1,
+   "breytt": 2,
    "daudir": [],
    "merki": "🟡",
    "lysing": "Fyllir út úttektarskýrslur LIVE gegnum Cowork/MCP og skilar heimsókninni „í vinnslu“ — klárar ALDREI reikning (það gerir sala-reikningar). Skrifar úttektar-text"
@@ -1066,12 +1066,12 @@
    "slod": ".claude/agents/gagnaleidslur.md",
    "hud": "Statham",
    "emoji": "🥊",
-   "sidast": "2026-11-20",
-   "skrif": 44,
+   "sidast": "2026-11-26",
+   "skrif": 45,
    "gaetir": 13,
-   "breytt": 1,
+   "breytt": 0,
    "daudir": [],
-   "merki": "🟡",
+   "merki": "🟢",
    "lysing": "Gagnaleiðslurnar — Tímavera, Ajour, Payday, Redder, email-innsog, luna-bridge róbótarnir og sjálfvirkni-skráin. Notaðu þegar gögn vantar, innsog brotnar eða spu"
   },
   {
