@@ -1,6 +1,6 @@
 {
  "utgafa": 1,
- "nyjast": "2026-11-26",
+ "nyjast": "2026-11-27",
  "throskuldur": 6,
  "osnert_dagar": 30,
  "uppspretta": "slokkvitaeki/tools/audit-agentar.cjs --json",
@@ -75,7 +75,7 @@
    "sidast": "2026-11-26",
    "skrif": 77,
    "gaetir": 55,
-   "breytt": 2,
+   "breytt": 5,
    "daudir": [],
    "merki": "🟡",
    "lysing": "Flettur, borð og navigation í Slökkvitæki-appinu — Þjónustuborð (368) og undirborð, Bakendi, Bílstjóri, Aksturslisti, URL-routing (218), bakk (3 lög) og app-síð"
@@ -102,8 +102,8 @@
    "slod": ".claude/agents/center-hotel.md",
    "hud": "Center Hótel-agentinn (kúnna-agent, engin rödd)",
    "emoji": "🏨",
-   "sidast": "2026-11-17",
-   "skrif": 5,
+   "sidast": "2026-11-27",
+   "skrif": 6,
    "gaetir": 1,
    "breytt": 0,
    "daudir": [],
@@ -207,10 +207,10 @@
    "slod": ".claude/agents/joker.md",
    "hud": "Joker",
    "emoji": "🃏",
-   "sidast": "2026-11-24",
-   "skrif": 26,
-   "gaetir": 22,
-   "breytt": 4,
+   "sidast": "2026-11-27",
+   "skrif": 27,
+   "gaetir": 23,
+   "breytt": 1,
    "daudir": [],
    "merki": "🟡",
    "lysing": "Hönnuðurinn — lagar útlit, farsímaskjái (mobile view) og hannar skjái/app-view í Slökkvitæki-appinu. Notaðu þegar síða eða flipi lítur illa út, brotnar eða er þ"
@@ -420,9 +420,9 @@
    "sidast": "2026-11-26",
    "skrif": 58,
    "gaetir": 40,
-   "breytt": 0,
+   "breytt": 3,
    "daudir": [],
-   "merki": "🟢",
+   "merki": "🟡",
    "lysing": "EINI agentinn sem býr til, leiðréttir, kreditfærir og færir reikninga í Slökkvitæki-appinu — eftir verkferlinu efst í skránni (greiðandi fyrst, lokaathugun síða"
   },
   {
@@ -863,6 +863,21 @@
    "lysing": "Take a real rendered screenshot of a page (or drive a form / verify a UI change) from a Claude Code web/remote session, where plain Playwright fails every time "
   },
   {
+   "nafn": "simahermir",
+   "tegund": "skill",
+   "heim": "slokkvitaeki",
+   "slod": ".claude/skills/simahermir/SKILL.md",
+   "hud": null,
+   "emoji": null,
+   "sidast": "2026-11-27",
+   "skrif": 3,
+   "gaetir": 2,
+   "breytt": 0,
+   "daudir": [],
+   "merki": "🟢",
+   "lysing": "Símahermirinn — sjá hvernig síða, sýn eða mockup lítur út í síma ÁÐUR en Agnar þarf að opna hana. Eitt tól (tools/simahermir.cjs), tveir hamir. „skot\" tekur myn"
+  },
+  {
    "nafn": "slokkvitaeki-layout",
    "tegund": "skill",
    "heim": "slokkvitaeki",
@@ -992,9 +1007,9 @@
    "sidast": "2026-11-25",
    "skrif": 26,
    "gaetir": 9,
-   "breytt": 0,
+   "breytt": 1,
    "daudir": [],
-   "merki": "🟢",
+   "merki": "🟡",
    "lysing": "Reiknar út Brunahólfs-reikninga og upphæðir: taxtar, VSK, afslættir, Efnislisti, NLSH-samningur, gata-uppgjör (Ajour). Notaðu þegar á að verðleggja vinnu, útbúa"
   },
   {
@@ -1066,8 +1081,8 @@
    "slod": ".claude/agents/gagnaleidslur.md",
    "hud": "Statham",
    "emoji": "🥊",
-   "sidast": "2026-11-26",
-   "skrif": 45,
+   "sidast": "2026-11-27",
+   "skrif": 46,
    "gaetir": 13,
    "breytt": 0,
    "daudir": [],
@@ -1143,12 +1158,12 @@
    "slod": ".claude/agents/joker.md",
    "hud": "Joker",
    "emoji": "🃏",
-   "sidast": "2026-11-16",
-   "skrif": 7,
-   "gaetir": 6,
-   "breytt": 1,
+   "sidast": "2026-11-27",
+   "skrif": 8,
+   "gaetir": 7,
+   "breytt": 0,
    "daudir": [],
-   "merki": "🟡",
+   "merki": "🟢",
    "lysing": "Hönnuðurinn — lagar útlit, farsímaskjái (mobile view) og hannar skjái/app-view í Brunahólfs-hubbinum. Notaðu þegar flipi eða síða lítur illa út, brotnar eða er "
   },
   {
@@ -1392,7 +1407,7 @@
    "gaetir": 0,
    "breytt": 0,
    "daudir": [],
-   "merki": "🟢",
+   "merki": "⚪",
    "lysing": "How to add a feature to the Brunahólf hub — the tab pattern (add to DEFAULT_STATE.tabs, write renderXxx(t), hook the renderTab dispatcher), the iframe-embed pat"
   },
   {
@@ -1437,7 +1452,7 @@
    "gaetir": 0,
    "breytt": 0,
    "daudir": [],
-   "merki": "🟢",
+   "merki": "⚪",
    "lysing": "The Boss theme for Brunahólf / Slökkvitæki back-office pages — black steel chrome, cream paper surfaces, gold metal accents, Playfair titles, Plex Mono labels. "
   },
   {
@@ -1452,7 +1467,7 @@
    "gaetir": 1,
    "breytt": 0,
    "daudir": [],
-   "merki": "🟢",
+   "merki": "⚪",
    "lysing": "Layout, CSS and responsive rules specific to the Brunaholf hub. Use BEFORE writing any CSS, media query, or layout change in this repo - including mobile/deskto"
   },
   {
@@ -1546,6 +1561,21 @@
    "lysing": "Take a real rendered screenshot of a page (or drive a form / verify a UI change) from a Claude Code web/remote session, where plain Playwright fails every time "
   },
   {
+   "nafn": "simahermir",
+   "tegund": "skill",
+   "heim": "brunaholf",
+   "slod": ".claude/skills/simahermir/SKILL.md",
+   "hud": null,
+   "emoji": null,
+   "sidast": "2026-11-27",
+   "skrif": 1,
+   "gaetir": 2,
+   "breytt": 0,
+   "daudir": [],
+   "merki": "🟢",
+   "lysing": "Símahermirinn — sjá hvernig síða, flipi eða mockup í Brunahólfs-hubbnum lítur út í síma ÁÐUR en Agnar þarf að opna hana. „skot\" tekur mynd í 360/390/412 px með "
+  },
+  {
    "nafn": "stadfesting-brunalokana",
    "tegund": "skill",
    "heim": "brunaholf",
@@ -1587,7 +1617,7 @@
    "gaetir": 1,
    "breytt": 0,
    "daudir": [],
-   "merki": "🟢",
+   "merki": "⚪",
    "lysing": "The Verkefnalisti task board workflow (Agnar's Claude task board) — how to pick up work at the start of a session, move a task through beidni → i_vinnu → i_yfir"
   },
   {
